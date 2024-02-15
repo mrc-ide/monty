@@ -290,23 +290,6 @@ mcstate_sample_hmc <- function(model, n_steps, initial) {
 }
 
 
-qp <- function(x) {
-  outer(x, x)
-}
-
-## This is one way of doing samples from a multivariate normal, but
-## it's not great as sweep is slow.
-##
-## rmvnorm <- function(x, vcv) {
-##   drop(mvtnorm::rmvnorm(1, x, vcv))
-## }
-
-
-rmvnorm <- function(x, vcv) {
-  r <- chol(vcv, pivot = TRUE)
-  r <- r[, order(attr(r, "pivot", exact = TRUE))]
-  x + drop(rnorm(ncol(vcv)) %*% r)
-}
 
 
 hmc_transform <- function(domain) {
