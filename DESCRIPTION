@@ -8,13 +8,14 @@ Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
 Description: Experimental sources for the next generation of mcstate,
     which will support much of the old mcstate functionality but new
     things like better parameter interfaces, Hamiltonian Monte Carlo,
-    etc.
+    and other features.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.1
 URL: https://github.com/mrc-ide/mcstate2
 BugReports: https://github.com/mrc-ide/mcstate2/issues
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Language: en-GB
