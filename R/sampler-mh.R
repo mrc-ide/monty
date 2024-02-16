@@ -33,9 +33,8 @@ mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
       n_pars <- length(state$pars)
       n_vcv <- nrow(vcv)
       if (n_pars != n_vcv) {
-        cli::cli_abort(c("Invalid length parameters or vcv",
-                         i = "Given {n_pars} parameter{?s}",
-                         i = "Given {n_vcv} x {n_vcv} vcv"))
+        cli::cli_abort(
+          "Incompatible length parameters ({n_pars}) and vcv ({n_vcv})")
       }
     }
   }

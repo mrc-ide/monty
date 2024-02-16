@@ -26,6 +26,15 @@
 ##'
 ##' @export
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
+  if (!inherits(model, "mcstate_model")) {
+    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
+                   arg = "model")
+  }
+  if (!inherits(sampler, "mcstate_sampler")) {
+    cli::cli_abort("Expected 'sampler' to be an 'mcstate_sampler'",
+                   arg = "sampler")
+  }
+
   if (is.null(initial)) {
     ## Really this would just be from the prior; we can't directly
     ## sample from the posterior!
@@ -34,18 +43,10 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
     pars <- initial
     if (length(pars) != length(model$parameters)) {
       cli::cli_abort(
-        c("Unexpected initial parameter length"),
+        paste("Unexpected initial parameter length {length(pars)};",
+              "expected {length(model$parameters)}"),
         arg = "initial")
     }
-  }
-
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be a 'mcstate_model'",
-                   arg = "model")
-  }
-  if (!inherits(sampler, "mcstate_sampler")) {
-    cli::cli_abort("Expected 'sampler' to be a 'mcstate_sampler'",
-                   arg = "sampler")
   }
 
   density <- model$density(pars)
