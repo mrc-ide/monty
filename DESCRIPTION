@@ -18,6 +18,8 @@ BugReports: https://github.com/mrc-ide/mcstate2/issues
 Imports:
     cli
 Suggests:
+    mvtnorm,
+    numDeriv,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-GB
