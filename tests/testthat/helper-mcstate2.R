@@ -75,3 +75,14 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
          set_rng_state = set_rng_state),
     mcstate_model_properties(is_stochastic = !deterministic))
 }
+
+
+ex_simple_gaussian <- function(vcv) {
+  n <- nrow(vcv)
+  mcstate_model(
+    parameters = letters[seq_len(n)],
+    direct_sample = make_rmvnorm(vcv, centred = TRUE),
+    density = make_ldmvnorm(vcv),
+    gradient = make_deriv_ldmvnorm(vcv),
+    domain = cbind(rep(-Inf, n), rep(Inf, n)))
+}

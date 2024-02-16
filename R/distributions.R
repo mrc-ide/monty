@@ -4,12 +4,18 @@ rmvnorm <- function(x, vcv, rng) {
 }
 
 
-make_rmvnorm <- function(vcv) {
+make_rmvnorm <- function(vcv, centred = FALSE) {
   n <- ncol(vcv)
   r <- chol(vcv, pivot = TRUE)
   r <- r[, order(attr(r, "pivot", exact = TRUE))]
-  function(x, rng) {
-    x + drop(rng$random_normal(n) %*% r)
+  if (centred) {
+    function(rng) {
+      drop(rng$random_normal(n) %*% r)
+    }
+  } else {
+    function(x, rng) {
+      x + drop(rng$random_normal(n) %*% r)
+    }
   }
 }
 
