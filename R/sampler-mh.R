@@ -15,6 +15,7 @@
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
 ##'
+##' @importFrom stats runif
 ##' @export
 mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
   if (is.null(proposal) && is.null(vcv)) {
@@ -24,7 +25,7 @@ mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
     cli::cli_abort("Only one of 'proposal' or 'vcv' may be given")
   }
   if (!is.null(vcv)) { # proposal is null
-    check_vcv(vcv, call = rlang::current_env())
+    check_vcv(vcv, call = environment())
     proposal <- make_rmvnorm(vcv)
   }
 
