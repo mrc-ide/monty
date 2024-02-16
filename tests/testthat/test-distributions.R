@@ -29,3 +29,27 @@ test_that("rvnorm produces correct expectation", {
   expect_equal(colMeans(r), c(1, 2), tolerance = 0.01)
   expect_equal(var(r), vcv, tolerance = 0.01)
 })
+
+
+test_that("can compute the log density of a multivariate normal", {
+  vcv <- matrix(c(4, 2, 2, 3), ncol = 2)
+  set.seed(1)
+  x <- matrix(rnorm(20, sd = 10), ncol = 2)
+  expect_equal(apply(x, 1, make_ldmvnorm(vcv)),
+               mvtnorm::dmvnorm(x, sigma = vcv, log = TRUE))
+  expect_identical(apply(x, 1, make_ldmvnorm(vcv)),
+                   apply(x, 1, ldmvnorm, vcv))
+})
+
+
+test_that("can compute derivatives of multivariate normal log density", {
+  vcv <- matrix(c(4, 2, 2, 3), ncol = 2)
+  set.seed(1)
+  x <- matrix(rnorm(20, sd = 10), ncol = 2)
+  f <- make_ldmvnorm(vcv)
+  g <- make_dldmvnormdx(vcv)
+  expect_equal(apply(x, 1, g),
+               apply(x, 1, function(xi) numDeriv::grad(f, xi)))
+  expect_identical(apply(x, 1, g),
+                   apply(x, 1, dldmvnormdx, vcv))
+})

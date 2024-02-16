@@ -67,13 +67,20 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
   ## Pop the parameter names on last
   colnames(history_pars) <- model$parameters
 
+  ## I'm not sure about the best name for this
+  details <- sampler$finalise(state, model)
+
   list(pars = history_pars,
-       density = history_density)
+       density = history_density,
+       details = details)
 }
 
 
-mcstate_sampler <- function(name, initialise, step) {
-  ret <- list(name = name, initialise = initialise, step = step)
+mcstate_sampler <- function(name, initialise, step, finalise) {
+  ret <- list(name = name,
+              initialise = initialise,
+              step = step,
+              finalise = finalise)
   class(ret) <- "mcstate_sampler"
   ret
 }

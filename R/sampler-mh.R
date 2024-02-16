@@ -57,7 +57,12 @@ mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
     state
   }
 
+  finalise <- function(state, model) {
+    NULL
+  }
+
   mcstate_sampler("Metropolis-Hastings",
                   initialise,
-                  step)
+                  step,
+                  finalise)
 }

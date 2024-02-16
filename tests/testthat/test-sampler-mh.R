@@ -11,7 +11,7 @@ test_that("can draw samples from a trivial model", {
   })
   sampler <- mcstate_sampler_metropolis_hastings(vcv = matrix(0.01, 1, 1))
   res <- mcstate_sample(m, sampler, 100)
-  expect_equal(names(res), c("pars", "density"))
+  expect_equal(names(res), c("pars", "density", "details"))
 })
 
 

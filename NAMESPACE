@@ -2,6 +2,7 @@
 
 export(mcstate_model)
 export(mcstate_sample)
+export(mcstate_sampler_adaptive)
 export(mcstate_sampler_metropolis_hastings)
 importFrom(stats,rnorm)
 importFrom(stats,runif)
