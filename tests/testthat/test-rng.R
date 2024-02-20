@@ -1033,11 +1033,11 @@ test_that("We can compile the standalone program", {
 
   args <- c(dirname(mcstate_file("include")), "--no-openmp")
 
-  code <- withr::with_dir(
+  code <- with_dir(
     tmp,
     system2("./configure", args, stdout = FALSE, stderr = FALSE))
   expect_equal(code, 0)
-  code <- withr::with_dir(
+  code <- with_dir(
     tmp,
     system2("make", stdout = FALSE, stderr = FALSE))
   expect_equal(code, 0)
