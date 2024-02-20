@@ -79,7 +79,7 @@ only on the number of streams.
 }
 
 \examples{
-rng <- mcstate::mcstate_rng$new(42)
+rng <- mcstate2::mcstate_rng$new(42)
 
 # Shorthand for Uniform(0, 1)
 rng$random_real(5)
