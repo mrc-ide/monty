@@ -302,7 +302,7 @@ cpp11::sexp mcstate_rng_binomial(SEXP ptr, int n,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }
@@ -343,7 +343,7 @@ cpp11::sexp mcstate_rng_nbinomial(SEXP ptr, int n,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }
@@ -379,7 +379,7 @@ cpp11::sexp mcstate_rng_poisson(SEXP ptr, int n, cpp11::doubles r_lambda,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }
@@ -428,7 +428,7 @@ cpp11::sexp mcstate_rng_multinomial(SEXP ptr, int n,
       errors.capture(e, i);
     }
   }
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   if (n_streams == 1) {
     ret.attr("dim") = cpp11::writable::integers{len, n};
@@ -477,7 +477,7 @@ cpp11::sexp mcstate_rng_hypergeometric(SEXP ptr, int n,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }
@@ -517,7 +517,7 @@ cpp11::sexp mcstate_rng_gamma(SEXP ptr, int n,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }
@@ -562,7 +562,7 @@ cpp11::sexp mcstate_rng_cauchy(SEXP ptr, int n,
     }
   }
 
-  errors.report("generators");
+  errors.report("generators", 4, true);
 
   return sexp_matrix(ret, n, n_streams);
 }

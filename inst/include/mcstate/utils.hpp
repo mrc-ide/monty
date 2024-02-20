@@ -62,8 +62,7 @@ public:
     seen[i] = true;
   }
 
-  void report(bool clear = false, const char *title = "particles",
-              size_t n_max = 4) {
+  void report(const char *title, size_t n_max, bool clear) {
     count = std::accumulate(std::begin(seen), std::end(seen), 0);
     if (count == 0) {
       return;

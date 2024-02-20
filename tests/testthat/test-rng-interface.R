@@ -88,3 +88,12 @@ test_that("Create pointer with a long jump", {
   expect_equal(s1, cmp$long_jump()$state())
   expect_equal(s2, cmp$long_jump()$state())
 })
+
+
+test_that("can summarise errors", {
+  r <- mcstate_rng$new(n_streams = 10)
+  err <- expect_error(
+    r$binomial(1, 1, -1),
+    "10 generators reported errors")
+  expect_match(err$message, "and 6 more")
+})
