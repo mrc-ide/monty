@@ -24,11 +24,11 @@
 ##'   initial conditions for MCMC where those are not given, and
 ##'   possibly other uses.
 ##'
-##' @param density Compute the model density; this is the posterior
-##'   probability in the case of Bayesian inference, but it could be
-##'   anything really.  Models can return `-Inf` if things are
-##'   impossible, and we'll try and cope gracefully with that wherever
-##'   possible.
+##' @param density Compute the model density for a vector of parameter
+##'   values; this is the posterior probability in the case of
+##'   Bayesian inference, but it could be anything really.  Models can
+##'   return `-Inf` if things are impossible, and we'll try and cope
+##'   gracefully with that wherever possible.
 ##'
 ##' @param gradient Compute the gradient of `density` with respect to
 ##'   the parameter vector; takes a parameter vector and returns a
