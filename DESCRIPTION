@@ -17,6 +17,8 @@ URL: https://github.com/mrc-ide/mcstate2
 BugReports: https://github.com/mrc-ide/mcstate2/issues
 Imports:
     cli
+LinkingTo:
+    cpp11
 Suggests:
     mvtnorm,
     numDeriv,
