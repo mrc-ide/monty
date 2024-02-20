@@ -63,3 +63,19 @@ mcstate_rng_multinomial <- function(ptr, n, r_size, r_prob, n_threads, is_float)
 mcstate_rng_state <- function(ptr, is_float) {
   .Call(`_mcstate2_mcstate_rng_state`, ptr, is_float)
 }
+
+mcstate_rng_pointer_init <- function(n_streams, seed, long_jump, algorithm) {
+  .Call(`_mcstate2_mcstate_rng_pointer_init`, n_streams, seed, long_jump, algorithm)
+}
+
+mcstate_rng_pointer_sync <- function(obj, algorithm) {
+  invisible(.Call(`_mcstate2_mcstate_rng_pointer_sync`, obj, algorithm))
+}
+
+test_rng_pointer_get <- function(obj, n_streams) {
+  .Call(`_mcstate2_test_rng_pointer_get`, obj, n_streams)
+}
+
+test_xoshiro_run <- function(obj) {
+  .Call(`_mcstate2_test_xoshiro_run`, obj)
+}

@@ -23,3 +23,8 @@ is_positive_definite <- function(x, tol = sqrt(.Machine$double.eps)) {
   ev <- eigen(x, symmetric = TRUE)
   all(ev$values >= -tol * abs(ev$values[1]))
 }
+
+
+mcstate_file <- function(path) {
+  system.file(path, package = "mcstate2", mustWork = TRUE)
+}
