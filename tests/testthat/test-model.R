@@ -1,0 +1,13 @@
+test_that("can create a basic model", {
+  m <- local({
+    shape <- 1
+    rate <- 1
+    mcstate_model(
+      parameters = "gamma",
+      direct_sample = function() rgamma(1, shape = shape, rate = rate),
+      density = function(x) dgamma(x, shape = shape, rate = rate, log = TRUE),
+      gradient = function(x) (shape - 1) / x - shape,
+      domain = rbind(c(0, Inf)))
+  })
+  expect_s3_class(m, "mcstate_model")
+})
