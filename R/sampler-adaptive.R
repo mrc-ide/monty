@@ -1,6 +1,6 @@
 ##' Create an adaptive Metropolis-Hastings sampler, which will tune
-##' its variance covariance matrix (vs the simple Metropolis-Hastings
-##' sampler [mcstate_sampler_metropolis_hastings]).
+##' its variance covariance matrix (vs the simple random walk
+##' sampler [mcstate_sampler_random_walk]).
 ##'
 ##' Efficient exploration of the parameter space during an MCMC might
 ##' be difficult when the target distribution is of high

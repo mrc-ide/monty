@@ -48,8 +48,8 @@ A \code{mcstate_sampler} object, which can be used with
 }
 \description{
 Create an adaptive Metropolis-Hastings sampler, which will tune
-its variance covariance matrix (vs the simple Metropolis-Hastings
-sampler \link{mcstate_sampler_metropolis_hastings}).
+its variance covariance matrix (vs the simple random walk
+sampler \link{mcstate_sampler_random_walk}).
 }
 \details{
 Efficient exploration of the parameter space during an MCMC might
