@@ -41,16 +41,9 @@ mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
   }
 
   step <- function(state, model) {
-    density_accept <- state$density + log(runif(1))
     pars_next <- proposal(state$pars)
-
-    ## We might want to do a few things here to pass in density_accept,
-    ## and to indicate that we want to use the model (if provided) and
-    ## not the prior here.  We might also want to report all of the
-    ## three probabilities here, as at the moment we don't allow that
-    ## decomposition.
     density_next <- model$density(pars_next)
-    if (density_next > density_accept) {
+    if (density_next - state$density > log(runif(1))) {
       state$pars <- pars_next
       state$density <- density_next
     }
