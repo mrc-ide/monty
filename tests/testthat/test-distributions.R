@@ -47,9 +47,9 @@ test_that("can compute derivatives of multivariate normal log density", {
   set.seed(1)
   x <- matrix(rnorm(20, sd = 10), ncol = 2)
   f <- make_ldmvnorm(vcv)
-  g <- make_dldmvnormdx(vcv)
+  g <- make_deriv_ldmvnorm(vcv)
   expect_equal(apply(x, 1, g),
                apply(x, 1, function(xi) numDeriv::grad(f, xi)))
   expect_identical(apply(x, 1, g),
-                   apply(x, 1, dldmvnormdx, vcv))
+                   apply(x, 1, deriv_ldmvnorm, vcv))
 })
