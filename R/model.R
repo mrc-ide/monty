@@ -18,11 +18,12 @@
 ##'   naturally in the R^n, and here n is defined as the length of
 ##'   this vector of names.
 ##'
-##' @param sample A function to sample from the parameter space.  In
-##'   the case where a model returns a posterior, this is assumed to
-##'   be sampling from the prior.  We'll use this for generating
-##'   initial conditions for MCMC where those are not given, and
-##'   possibly other uses.
+##' @param direct_sample A function to sample directly from the
+##'   parameter space.  In the case where a model returns a posterior
+##'   (e.g., in Bayesian inference), this is assumed to be sampling
+##'   from the prior.  We'll use this for generating initial
+##'   conditions for MCMC where those are not given, and possibly
+##'   other uses.
 ##'
 ##' @param density Compute the model density for a vector of parameter
 ##'   values; this is the posterior probability in the case of
@@ -50,9 +51,10 @@
 ##'   a sampler.
 ##'
 ##' @export
-mcstate_model <- function(parameters, sample, density, gradient, domain) {
+mcstate_model <- function(parameters, direct_sample, density, gradient,
+                          domain) {
   ret <- list(parameters = parameters,
-              sample = sample,
+              direct_sample = direct_sample,
               density = density,
               gradient = gradient,
               domain = domain)

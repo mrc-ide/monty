@@ -1,8 +1,7 @@
-##' Create a simple Metropolis-Hastings sampler (really just a plain
-##' Metropolis sampler since we assume symmetric proposals and don't
-##' yet support the correction for asymmetric proposal).
+##' Create a simple random walk sampler, which uses a symmetric
+##' proposal to move around parameter space.
 ##'
-##' @title Metropolis-Hastings Sampler
+##' @title Random Walk Sampler
 ##'
 ##' @param proposal A proposal function; must take a vector of
 ##'   parameters and produce a new vector of proposed parameters.
@@ -17,7 +16,7 @@
 ##'
 ##' @importFrom stats runif
 ##' @export
-mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
+mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
   if (is.null(proposal) && is.null(vcv)) {
     cli::cli_abort("One of 'proposal' or 'vcv' must be given")
   }
@@ -54,7 +53,7 @@ mcstate_sampler_metropolis_hastings <- function(proposal = NULL, vcv = NULL) {
     NULL
   }
 
-  mcstate_sampler("Metropolis-Hastings",
+  mcstate_sampler("Random walk",
                   initialise,
                   step,
                   finalise)

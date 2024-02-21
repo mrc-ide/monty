@@ -15,7 +15,7 @@ particular class attribute.}
 \item{sampler}{A sampler to use.  These will be described later,
 but we hope to make these reasonably easy to implement so that
 we can try out different sampling ideas.  For now, the only
-sampler implemented is \code{\link[=mcstate_sampler_metropolis_hastings]{mcstate_sampler_metropolis_hastings()}}.}
+sampler implemented is \code{\link[=mcstate_sampler_random_walk]{mcstate_sampler_random_walk()}}.}
 
 \item{n_steps}{The number of steps to run the sampler for.}
 

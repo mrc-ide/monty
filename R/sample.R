@@ -15,7 +15,7 @@
 ##' @param sampler A sampler to use.  These will be described later,
 ##'   but we hope to make these reasonably easy to implement so that
 ##'   we can try out different sampling ideas.  For now, the only
-##'   sampler implemented is [mcstate_sampler_metropolis_hastings()].
+##'   sampler implemented is [mcstate_sampler_random_walk()].
 ##'
 ##' @param n_steps The number of steps to run the sampler for.
 ##'
@@ -38,7 +38,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
   if (is.null(initial)) {
     ## Really this would just be from the prior; we can't directly
     ## sample from the posterior!
-    pars <- model$sample()
+    pars <- model$direct_sample()
   } else {
     pars <- initial
     if (length(pars) != length(model$parameters)) {

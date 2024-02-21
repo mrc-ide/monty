@@ -4,7 +4,7 @@
 \alias{mcstate_model}
 \title{Create basic model}
 \usage{
-mcstate_model(parameters, sample, density, gradient, domain)
+mcstate_model(parameters, direct_sample, density, gradient, domain)
 }
 \arguments{
 \item{parameters}{Names of the parameters.  Every parameter is
@@ -15,11 +15,12 @@ names perhaps?  In any case, once we start doing inference it's
 naturally in the R^n, and here n is defined as the length of
 this vector of names.}
 
-\item{sample}{A function to sample from the parameter space.  In
-the case where a model returns a posterior, this is assumed to
-be sampling from the prior.  We'll use this for generating
-initial conditions for MCMC where those are not given, and
-possibly other uses.}
+\item{direct_sample}{A function to sample directly from the
+parameter space.  In the case where a model returns a posterior
+(e.g., in Bayesian inference), this is assumed to be sampling
+from the prior.  We'll use this for generating initial
+conditions for MCMC where those are not given, and possibly
+other uses.}
 
 \item{density}{Compute the model density for a vector of parameter
 values; this is the posterior probability in the case of

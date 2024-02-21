@@ -2,6 +2,6 @@
 
 export(mcstate_model)
 export(mcstate_sample)
-export(mcstate_sampler_metropolis_hastings)
+export(mcstate_sampler_random_walk)
 importFrom(stats,rnorm)
 importFrom(stats,runif)
