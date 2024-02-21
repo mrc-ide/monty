@@ -35,10 +35,13 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
                    arg = "sampler")
   }
 
+  ## We might change this later.
+  rng <- mcstate_rng$new()
+
   if (is.null(initial)) {
     ## Really this would just be from the prior; we can't directly
     ## sample from the posterior!
-    pars <- model$direct_sample()
+    pars <- model$direct_sample(rng)
   } else {
     pars <- initial
     if (length(pars) != length(model$parameters)) {
@@ -51,7 +54,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
 
   density <- model$density(pars)
   state <- list(pars = pars, density = density)
-  sampler$initialise(state, model)
+  sampler$initialise(state, model, rng)
 
   history_pars <- matrix(NA_real_, n_steps + 1, length(pars))
   history_pars[1, ] <- pars
@@ -59,7 +62,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
   history_density[[1]] <- density
 
   for (i in seq_len(n_steps)) {
-    state <- sampler$step(state, model)
+    state <- sampler$step(state, model, rng)
     history_pars[i + 1, ] <- state$pars
     history_density[[i + 1]] <- state$density
   }
@@ -68,7 +71,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
   colnames(history_pars) <- model$parameters
 
   ## I'm not sure about the best name for this
-  details <- sampler$finalise(state, model)
+  details <- sampler$finalise(state, model, rng)
 
   list(pars = history_pars,
        density = history_density,

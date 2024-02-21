@@ -4,7 +4,9 @@
 ##' @title Random Walk Sampler
 ##'
 ##' @param proposal A proposal function; must take a vector of
-##'   parameters and produce a new vector of proposed parameters.
+##'   parameters and a random number generator object
+##'   ([`mcstate_rng`]) and produce a new vector of proposed
+##'   parameters.
 ##'
 ##' @param vcv A variance covariance matrix to generate a `proposal`
 ##'   function from.  If you want multivariate Gaussian proposal, this
@@ -14,7 +16,6 @@
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
 ##'
-##' @importFrom stats runif
 ##' @export
 mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
   if (is.null(proposal) && is.null(vcv)) {
@@ -28,7 +29,7 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     proposal <- make_rmvnorm(vcv)
   }
 
-  initialise <- function(state, model) {
+  initialise <- function(state, model, rng) {
     if (!is.null(vcv)) {
       n_pars <- length(state$pars)
       n_vcv <- nrow(vcv)
@@ -39,17 +40,18 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     }
   }
 
-  step <- function(state, model) {
-    pars_next <- proposal(state$pars)
+  step <- function(state, model, rng) {
+    pars_next <- proposal(state$pars, rng)
     density_next <- model$density(pars_next)
-    if (density_next - state$density > log(runif(1))) {
+
+    if (density_next - state$density > log(rng$random_real(1))) {
       state$pars <- pars_next
       state$density <- density_next
     }
     state
   }
 
-  finalise <- function(state, model) {
+  finalise <- function(state, model, rng) {
     NULL
   }
 
