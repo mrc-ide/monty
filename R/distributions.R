@@ -14,7 +14,7 @@ make_rmvnorm <- function(vcv) {
   }
 }
 
-
+# log density multivariate normal
 ldmvnorm <- function(x, vcv) {
   make_ldmvnorm(vcv)(x)
 }
@@ -30,12 +30,12 @@ make_ldmvnorm <- function(vcv) {
 
 
 ## Not the world's most beautiful name.
-dldmvnormdx <- function(x, vcv) {
+deriv_ldmvnorm <- function(x, vcv) {
   make_dldmvnormdx(vcv)(x)
 }
 
 
-make_dldmvnormdx <- function(vcv) {
+make_deriv_ldmvnorm <- function(vcv) {
   vcv_inv <- solve(vcv)
   function(x) {
     -vcv_inv %*% x
