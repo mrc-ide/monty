@@ -19,11 +19,11 @@
 ##'   this vector of names.
 ##'
 ##' @param direct_sample A function to sample directly from the
-##'   parameter space.  In the case where a model returns a posterior
-##'   (e.g., in Bayesian inference), this is assumed to be sampling
-##'   from the prior.  We'll use this for generating initial
-##'   conditions for MCMC where those are not given, and possibly
-##'   other uses.
+##'   parameter space, given an [mcstate_rng] object to sample from.
+##'   In the case where a model returns a posterior (e.g., in Bayesian
+##'   inference), this is assumed to be sampling from the prior.
+##'   We'll use this for generating initial conditions for MCMC where
+##'   those are not given, and possibly other uses.
 ##'
 ##' @param density Compute the model density for a vector of parameter
 ##'   values; this is the posterior probability in the case of

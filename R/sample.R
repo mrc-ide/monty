@@ -37,6 +37,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
 
   ## We might change this later.
   rng <- mcstate_rng$new()
+  r_rng_state <- get_r_rng_state()
 
   if (is.null(initial)) {
     ## Really this would just be from the prior; we can't directly
@@ -72,6 +73,15 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL) {
 
   ## I'm not sure about the best name for this
   details <- sampler$finalise(state, model, rng)
+
+  if (!identical(get_r_rng_state(), r_rng_state)) {
+    cli::cli_warn(c(
+      "Detected use of R's random number generators",
+      i = paste("Your model has used R's random number generators (e.g.,",
+                "via rnorm, runif, sample, etc).  This means that your",
+                "results will not be reproducible as you change the sample",
+                "runner")))
+  }
 
   list(pars = history_pars,
        density = history_density,

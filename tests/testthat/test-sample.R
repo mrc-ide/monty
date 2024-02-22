@@ -23,3 +23,20 @@ test_that("sampler return value contains history", {
   expect_equal(unname(res$pars[1, ]), 1)
   expect_null(res$details)
 })
+
+
+test_that("warn if model uses R's rng", {
+  ## This example is a little contrived because actually sampling
+  ## initial conditions is ok; we'll guarantee that happens in series
+  ## anyway.  Bigger concerns would be if the sampler uses random
+  ## numbers or if in a stochastic model we use random numbers while
+  ## computing the density.
+  model <- ex_simple_gamma1()
+  model$direct_sample <- function(rng) rgamma(1, 1, 1)
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  expect_warning(
+    mcstate_sample(model, sampler, 100),
+    "Detected use of R's random number generators")
+  expect_no_warning(
+    mcstate_sample(model, sampler, 100, 1))
+})
