@@ -75,7 +75,7 @@ mcstate_sampler_adaptive <- function(vcv,
     outer(x, x)
   }
 
-  initialise <- function(state, model) {
+  initialise <- function(state, model, rng) {
     internal$mean <- state$pars
     internal$vcv <- vcv
 
@@ -85,8 +85,8 @@ mcstate_sampler_adaptive <- function(vcv,
       internal$weight / (internal$weight - 1) * qp(internal$mean)
   }
 
-  step <- function(state, model) {
-    is_adaptive <- runif(1) < adaptive_contribution
+  step <- function(state, model, rng) {
+    is_adaptive <- rng$random_real(1) < adaptive_contribution
     if (is_adaptive) {
       internal$vcv <- internal$scaling *
         (internal$autocorrelation - internal$weight /
@@ -96,7 +96,7 @@ mcstate_sampler_adaptive <- function(vcv,
       pars_next <- rmvnorm(state$pars, vcv) # this is the initial vcv
     }
 
-    u <- runif(1)
+    u <- rng$random_real(1)
     density_accept <- state$density + log(u)
     density_next <- model$density(pars_next)
 
@@ -130,7 +130,7 @@ mcstate_sampler_adaptive <- function(vcv,
 
   ## Marc; do we want all of these saved out?  Did we ever decide how
   ## to merge these over multiple chains?
-  finalise <- function(state, model) {
+  finalise <- function(state, model, rng) {
     as.list(internal)
   }
 
