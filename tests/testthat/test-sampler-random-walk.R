@@ -23,9 +23,9 @@ test_that("validate sampler against model on initialisation", {
   sampler1 <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   sampler2 <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
 
-  expect_no_error(sampler1$initialise(state, model))
+  expect_no_error(sampler1$initialise(state, m))
   expect_error(
-    sampler2$initialise(state, model),
+    sampler2$initialise(state, m),
     "Incompatible length parameters (1) and vcv (2)",
     fixed = TRUE)
 })
