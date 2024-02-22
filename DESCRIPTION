@@ -16,10 +16,16 @@ RoxygenNote: 7.3.1
 URL: https://github.com/mrc-ide/mcstate2
 BugReports: https://github.com/mrc-ide/mcstate2/issues
 Imports:
+    R6,
     cli
+LinkingTo:
+    cpp11
 Suggests:
+    cpp11,
+    decor,    
     mvtnorm,
     numDeriv,
+    pkgload,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-GB
