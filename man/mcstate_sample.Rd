@@ -4,7 +4,14 @@
 \alias{mcstate_sample}
 \title{Sample from a model}
 \usage{
-mcstate_sample(model, sampler, n_steps, initial = NULL)
+mcstate_sample(
+  model,
+  sampler,
+  n_steps,
+  initial = NULL,
+  n_chains = 1L,
+  runner = NULL
+)
 }
 \arguments{
 \item{model}{The model to sample from; this should be a
@@ -21,6 +28,15 @@ sampler implemented is \code{\link[=mcstate_sampler_random_walk]{mcstate_sampler
 
 \item{initial}{Optionally, initial parameter values for the
 sampling.  If not given, we sample from the model (or its prior).}
+
+\item{n_chains}{Number of chains to run.  The default is to run a
+single chain, but you will likely want to run more.}
+
+\item{runner}{A runner for your chains.  The default option is to
+run chains in series (via \link{mcstate_runner_serial}).  The only
+other current option is \link{mcstate_runner_parallel} which uses the
+\code{parallel} package to run chains in parallel.  If you only run
+one chain then this argument is best left alone.}
 }
 \value{
 A list of parameters and densities.

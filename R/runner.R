@@ -34,7 +34,7 @@ mcstate_runner_serial <- function() {
 ##' ([mcstate_runner_serial]) due to the overhead cost of starting the
 ##' cluster.
 ##'
-##' @title Run MCMC chain in parllel
+##' @title Run MCMC chain in parallel
 ##'
 ##' @param n_workers Number of workers to create a cluster from.  In a
 ##'   multi-user setting be careful not to set this to more cores than
