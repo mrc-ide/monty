@@ -91,9 +91,9 @@ mcstate_sampler_adaptive <- function(vcv,
       internal$vcv <- internal$scaling *
         (internal$autocorrelation - internal$weight /
          (internal$weight - 1) * qp(internal$mean))
-      pars_next <- rmvnorm(state$pars, internal$vcv)
+      pars_next <- rmvnorm(state$pars, internal$vcv, rng)
     } else {
-      pars_next <- rmvnorm(state$pars, vcv) # this is the initial vcv
+      pars_next <- rmvnorm(state$pars, vcv, rng) # this is the initial vcv
     }
 
     u <- rng$random_real(1)
