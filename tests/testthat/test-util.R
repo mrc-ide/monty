@@ -18,3 +18,14 @@ test_that("reject inappropriate vcv matrices", {
   diag(m) <- 0
   expect_error(check_vcv(m), "Expected 'm' to be positive definite")
 })
+
+
+test_that("can bind lists of matrices", {
+  m1 <- matrix(1:6, 3, 2)
+  m2 <- matrix(7:12, 3, 2)
+  m3 <- matrix(13:16, 2, 2)
+
+  expect_equal(rbind_list(list(m1)), m1)
+  expect_equal(rbind_list(list(m1, m2)), rbind(m1, m2))
+  expect_equal(rbind_list(list(m1, m2, m3)), rbind(m1, m2, m3))
+})

@@ -39,3 +39,25 @@ get_r_rng_state <- function() {
     NULL
   }
 }
+
+
+vlapply <- function(...) {
+  vapply(..., FUN.VALUE = TRUE)
+}
+
+
+vnapply <- function(...) {
+  vapply(..., FUN.VALUE = 1)
+}
+
+
+rbind_list <- function(x) {
+  stopifnot(all(vlapply(x, is.matrix)))
+  if (length(x) == 1) {
+    return(x[[1]])
+  }
+  nc <- unique(vnapply(x, ncol))
+  nr <- vnapply(x, nrow)
+  stopifnot(length(nc) == 1)
+  do.call("rbind", x)
+}
