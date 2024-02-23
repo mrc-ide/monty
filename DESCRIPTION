@@ -23,7 +23,8 @@ LinkingTo:
     cpp11
 Suggests:
     cpp11,
-    decor,    
+    decor,
+    dust,
     mvtnorm,
     numDeriv,
     pkgload,

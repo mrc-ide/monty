@@ -23,5 +23,7 @@ A \code{mcstate_sampler} object, which can be used with
 }
 \description{
 Create a simple random walk sampler, which uses a symmetric
-proposal to move around parameter space.
+proposal to move around parameter space.  This sampler supports
+sampling from models where the likelihood is only computable
+randomly (e.g., for pmcmc).
 }
