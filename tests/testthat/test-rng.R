@@ -1415,3 +1415,11 @@ test_that("Very big poisson with single precision now work", {
   expect_equal(mean(ans), lambda, tolerance = 1e-2)
   expect_equal(var(ans), lambda, tolerance = 1e-2)
 })
+
+
+test_that("can fetch rng state", {
+  set.seed(1)
+  expect_false(is.null(get_r_rng_state()))
+  rm(list = ".Random.seed", envir = .GlobalEnv)
+  expect_true(is.null(get_r_rng_state()))
+})

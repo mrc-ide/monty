@@ -16,11 +16,11 @@ naturally in the R^n, and here n is defined as the length of
 this vector of names.}
 
 \item{direct_sample}{A function to sample directly from the
-parameter space.  In the case where a model returns a posterior
-(e.g., in Bayesian inference), this is assumed to be sampling
-from the prior.  We'll use this for generating initial
-conditions for MCMC where those are not given, and possibly
-other uses.}
+parameter space, given an \link{mcstate_rng} object to sample from.
+In the case where a model returns a posterior (e.g., in Bayesian
+inference), this is assumed to be sampling from the prior.
+We'll use this for generating initial conditions for MCMC where
+those are not given, and possibly other uses.}
 
 \item{density}{Compute the model density for a vector of parameter
 values; this is the posterior probability in the case of
