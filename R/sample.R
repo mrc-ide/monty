@@ -59,42 +59,6 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
 }
 
 
-mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
-  r_rng_state <- get_r_rng_state()
-  density <- model$density(pars)
-  state <- list(pars = pars, density = density)
-  sampler$initialise(state, model, rng)
-
-  history_pars <- matrix(NA_real_, n_steps + 1, length(pars))
-  history_pars[1, ] <- pars
-  history_density <- rep(NA_real_, n_steps + 1)
-  history_density[[1]] <- density
-
-  for (i in seq_len(n_steps)) {
-    state <- sampler$step(state, model, rng)
-    history_pars[i + 1, ] <- state$pars
-    history_density[[i + 1]] <- state$density
-  }
-
-  ## Pop the parameter names on last
-  colnames(history_pars) <- model$parameters
-
-  ## I'm not sure about the best name for this
-  details <- sampler$finalise(state, model, rng)
-
-  ## This list will hold things that we'll use internally but not
-  ## surface to the user in the final object (or summarise them in
-  ## some particular way with no guarantees about the format).  We
-  ## might hold things like start and stop times here in future.
-  internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state))
-
-  list(pars = history_pars,
-       density = history_density,
-       details = details,
-       internal = internal)
-}
-
-
 mcstate_sampler <- function(name, initialise, step, finalise) {
   ret <- list(name = name,
               initialise = initialise,
@@ -125,12 +89,14 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
     }
     err <- lengths(initial) != n_pars
     if (any(err)) {
-      ## We might want to highlight the entries that are bad, and also
-      ## indicate if it was direct_sample() that produced the invalid
-      ## entry.
+      ## The format here is not beautiful but it's fairly informative
+      ## at least.
+      len <- as.character(lengths(initial)[err])
+      len[[1]] <- paste(len[[1]], ngettext(len[[1]], "value", "values"))
+      detail <- sprintf("%d (%s)", which(err), len)
       cli::cli_abort(
         c(paste("Unexpected initial parameter length; expected {n_pars}"),
-          i = "Incorrect length for element{?s} {as.character(which(err))}",
+          i = "Incorrect length for element{?s} {detail}",
           i = paste("Your model has {n_pars} parameter{?s}, so each",
                     "element of your list must have this many elements")),
         arg = "initial", call = call)

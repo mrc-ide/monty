@@ -24,7 +24,7 @@ mcstate_runner_serial <- function() {
 ##' the `parallel` package to distribute your chains over a number of
 ##' worker processes on the same machine.  Compared with the "worker"
 ##' support in mcstate version 1 this is very simple and we'll improve
-##' it over time.  In particular we do not report back and information
+##' it over time.  In particular we do not report back any information
 ##' about progress while a chain is running on a worker or even across
 ##' chains.  There's also no support to warn you if your number of
 ##' chains do not neatly divide through by the number of workers.
@@ -91,4 +91,40 @@ mcstate_runner_parallel <- function(n_workers) {
 mcstate_run_chain_parallel <- function(pars, model, sampler, n_steps, rng) {
   rng <- mcstate_rng$new(rng)
   mcstate_run_chain(pars, model, sampler, n_steps, rng)
+}
+
+
+mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
+  r_rng_state <- get_r_rng_state()
+  density <- model$density(pars)
+  state <- list(pars = pars, density = density)
+  sampler$initialise(state, model, rng)
+
+  history_pars <- matrix(NA_real_, n_steps + 1, length(pars))
+  history_pars[1, ] <- pars
+  history_density <- rep(NA_real_, n_steps + 1)
+  history_density[[1]] <- density
+
+  for (i in seq_len(n_steps)) {
+    state <- sampler$step(state, model, rng)
+    history_pars[i + 1, ] <- state$pars
+    history_density[[i + 1]] <- state$density
+  }
+
+  ## Pop the parameter names on last
+  colnames(history_pars) <- model$parameters
+
+  ## I'm not sure about the best name for this
+  details <- sampler$finalise(state, model, rng)
+
+  ## This list will hold things that we'll use internally but not
+  ## surface to the user in the final object (or summarise them in
+  ## some particular way with no guarantees about the format).  We
+  ## might hold things like start and stop times here in future.
+  internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state))
+
+  list(pars = history_pars,
+       density = history_density,
+       details = details,
+       internal = internal)
 }

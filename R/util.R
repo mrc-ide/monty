@@ -57,7 +57,6 @@ rbind_list <- function(x) {
     return(x[[1]])
   }
   nc <- unique(vnapply(x, ncol))
-  nr <- vnapply(x, nrow)
   stopifnot(length(nc) == 1)
   do.call("rbind", x)
 }

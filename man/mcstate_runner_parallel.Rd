@@ -25,7 +25,7 @@ Run MCMC chains in parallel (at the same time).  This runner uses
 the \code{parallel} package to distribute your chains over a number of
 worker processes on the same machine.  Compared with the "worker"
 support in mcstate version 1 this is very simple and we'll improve
-it over time.  In particular we do not report back and information
+it over time.  In particular we do not report back any information
 about progress while a chain is running on a worker or even across
 chains.  There's also no support to warn you if your number of
 chains do not neatly divide through by the number of workers.
