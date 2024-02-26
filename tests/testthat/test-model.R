@@ -1,13 +1,110 @@
-test_that("can create a basic model", {
-  m <- local({
-    shape <- 1
-    rate <- 1
-    mcstate_model(
-      parameters = "gamma",
-      direct_sample = function() rgamma(1, shape = shape, rate = rate),
-      density = function(x) dgamma(x, shape = shape, rate = rate, log = TRUE),
-      gradient = function(x) (shape - 1) / x - shape,
-      domain = rbind(c(0, Inf)))
-  })
+test_that("can create a minimal model", {
+  m <- mcstate_model(list(density = function(x) dnorm(x, log = TRUE),
+                          parameters = "a"))
   expect_s3_class(m, "mcstate_model")
+  expect_mapequal(m$properties,
+                  list(has_gradient = FALSE, has_direct_sample = FALSE))
+  expect_equal(m$domain, cbind(-Inf, Inf))
+  expect_equal(m$parameters, "a")
+  expect_equal(m$model$density(0), dnorm(0, log = TRUE))
+})
+
+
+test_that("can create a more interesting model", {
+  m <- ex_simple_gamma1()
+  expect_mapequal(m$properties,
+                  list(has_gradient = TRUE, has_direct_sample = TRUE))
+  expect_equal(m$domain, cbind(0, Inf))
+  expect_equal(m$parameters, "gamma")
+  expect_equal(m$model$density(1), dgamma(1, 1, 1, log = TRUE))
+})
+
+
+test_that("Require parameters to be given if model does not provide them", {
+  expect_error(
+    mcstate_model(list(density = function(x) dnorm(x, log = TRUE))),
+    "Expected 'model$parameters' to be a character vector, as 'parameters'",
+    fixed = TRUE)
+})
+
+
+test_that("Require parameters to be given if model does not provide them", {
+  expect_error(
+    mcstate_model(list(density = function(x) dnorm(x, log = TRUE))),
+    "Expected 'model$parameters' to be a character vector, as 'parameters'",
+    fixed = TRUE)
+})
+
+
+test_that("Require parameters to be suitable if given as argument", {
+  expect_error(
+    mcstate_model(list(density = function(x) dnorm(x, log = TRUE)),
+                  parameters = TRUE),
+    "Expected 'parameters' to be a character vector")
+})
+
+
+test_that("supplied parameters override those in model", {
+  expect_equal(
+    mcstate_model(list(density = identity, parameters = "a"))$parameters,
+    "a")
+  expect_equal(
+    mcstate_model(list(density = identity, parameters = "a"),
+                  parameters = "x")$parameters,
+    "x")
+  expect_equal(
+    mcstate_model(list(density = identity),
+                  parameters = "x")$parameters,
+    "x")
+})
+
+
+test_that("require density is a function", {
+  expect_error(mcstate_model(list(parameters = "a")),
+               "Expected 'model$density' to be a function",
+               fixed = TRUE)
+})
+
+
+test_that("require gradient is a function if given", {
+  expect_error(
+    mcstate_model(list(density = identity, gradient = TRUE),
+                  parameters = "a"),
+    "Expected 'model$gradient' to be a function if non-NULL",
+    fixed = TRUE)
+})
+
+
+test_that("require direct sample is a function if given", {
+  expect_error(
+    mcstate_model(list(density = identity, direct_sample = TRUE),
+                  parameters = "a"),
+    "Expected 'model$direct_sample' to be a function if non-NULL",
+    fixed = TRUE)
+})
+
+
+test_that("validate domain", {
+  expect_error(
+    mcstate_model(list(density = identity, parameters = "a"),
+                  domain = list()),
+    "Expected 'domain' to be a matrix if non-NULL")
+  expect_error(
+    mcstate_model(list(density = identity,
+                       parameters = "a",
+                       domain = list())),
+    "Expected 'model$domain' to be a matrix if non-NULL",
+    fixed = TRUE)
+  expect_error(
+    mcstate_model(list(density = identity, parameters = "a"),
+                  domain = matrix(1:4, 2, 2)),
+    "Expected 'domain' to have 1 row, but it had 2")
+  expect_error(
+    mcstate_model(list(density = identity, parameters = c("a", "b", "c")),
+                  domain = matrix(1:4, 2, 2)),
+    "Expected 'domain' to have 3 rows, but it had 2")
+  expect_error(
+    mcstate_model(list(density = identity, parameters = "a"),
+                  domain = matrix(1:4, 1, 4)),
+    "Expected 'domain' to have 2 columns, but it had 4")
 })

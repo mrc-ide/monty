@@ -22,7 +22,7 @@ test_that("sampler return value contains history", {
   expect_equal(dim(res$pars), c(101, 1))
   expect_equal(dimnames(res$pars), list(NULL, "gamma"))
   expect_length(res$density, 101)
-  expect_equal(res$density, apply(res$pars, 1, model$density))
+  expect_equal(res$density, apply(res$pars, 1, model$model$density))
   expect_equal(unname(res$pars[1, ]), 1)
   expect_null(res$details)
 })
@@ -34,9 +34,9 @@ test_that("warn if model uses R's rng", {
   ## A bit silly; more likely this will be a bug on our end writing
   ## the sampler, but this is possible when running particle filter
   ## models.
-  model2$density <- function(...) {
+  model2$model$density <- function(...) {
     runif(1)
-    model1$density(...)
+    model1$model$density(...)
   }
   sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   expect_no_warning(

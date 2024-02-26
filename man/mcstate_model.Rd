@@ -4,36 +4,17 @@
 \alias{mcstate_model}
 \title{Create basic model}
 \usage{
-mcstate_model(parameters, direct_sample, density, gradient, domain)
+mcstate_model(model, parameters = NULL, domain = NULL)
 }
 \arguments{
-\item{parameters}{Names of the parameters.  Every parameter is
-named, and for now every parameter is a scalar.  We might relax
-this later to support an \code{odin}-style structured parameter list,
-but that might just generate a suitable vector of parameter
-names perhaps?  In any case, once we start doing inference it's
-naturally in the R^n, and here n is defined as the length of
-this vector of names.}
+\item{model}{A list or environment with elements as described in
+.}
 
-\item{direct_sample}{A function to sample directly from the
-parameter space, given an \link{mcstate_rng} object to sample from.
-In the case where a model returns a posterior (e.g., in Bayesian
-inference), this is assumed to be sampling from the prior.
-We'll use this for generating initial conditions for MCMC where
-those are not given, and possibly other uses.}
-
-\item{density}{Compute the model density for a vector of parameter
-values; this is the posterior probability in the case of
-Bayesian inference, but it could be anything really.  Models can
-return \code{-Inf} if things are impossible, and we'll try and cope
-gracefully with that wherever possible.}
-
-\item{gradient}{Compute the gradient of \code{density} with respect to
-the parameter vector; takes a parameter vector and returns a
-vector the same length.  For efficiency, the model may want to
-be stateful so that gradients can be efficiently calculated
-after a density calculation, or density after gradient, where
-these are called with the same parameters.}
+\item{parameters}{A character vector of parameter names, for cases
+where \code{model} does not provide this or where you want to
+override parameter names. This is required if \code{model$parameters}
+is \code{NULL}.  If \code{parameters} is given and \code{model$parameters} is
+not NULL we enforce that they are the same length.}
 
 \item{domain}{Information on the parameter domain.  This is a two
 column matrix with \code{length(parameters)} rows representing each
@@ -42,20 +23,76 @@ as the first and second column.  Infinite values (\code{-Inf} or
 \code{Inf}) should be used where the parameter has infinite domain up
 or down.  Currently used to translate from a bounded to
 unbounded space for HMC, but we might also use this for
-reflecting proposals in MCMC too.}
+reflecting proposals in MCMC too.  This must be given if not
+provided by the model (i.e., if \code{model$domain} is \code{NULL}) and if
+given overrides any value present in the model.}
+
+\item{direct_sample}{A function to sample directly from the
+parameter space, given an \link{mcstate_rng} object to sample from.
+In the case where a model returns a posterior (e.g., in Bayesian
+inference), this is assumed to be sampling from the prior.
+We'll use this for generating initial conditions for MCMC where
+those are not given, and possibly other uses.  If not given then
+when using \code{\link[=mcmc_sample]{mcmc_sample()}} the user will have to provide a
+vector of initial states.}
+
+\item{gradient}{A function to compute the gradient of \code{density}
+with respect to the parameter vector; takes a parameter vector
+and returns a vector the same length.  For efficiency, the model
+may want to be stateful so that gradients can be efficiently
+calculated after a density calculation, or density after
+gradient, where these are called with the same parameters.  This
+function is optional (and may not be well defined or possible to
+define).}
 }
 \value{
-An object of class \code{mcstate_model}, which can be used with
-a sampler.
+An object of class \code{mcstate_model}.  This will have elements:
+\itemize{
+\item \code{model}: The model as provided
+\item \code{parameters}: The parameter name vector
+\item \code{domain}: The parameter domain matrix
+\item \code{properties}: A list of properties of the model; we'll grow this
+over time but this currently contains:
+\itemize{
+\item \code{has_gradient}: the model can compute its gradient
+\item \code{has_direct_sample}: the model can sample from parameters space
+}
+}
 }
 \description{
-Create a basic \code{mcstate} model.  Currently nothing here is
-validated, and it's likely that users will never actually use this
-directly.  Contains data and methods that define a basic model
-object, so that we can implement samplers against.  Not all models
-will support everything here, and we'll add additional
-fields/traits over time to advertise what a model can do.  For
-example, models will need to advertise that they are capable of
-being differentiated, or that they are stochastic in order to be
-used with different methods.
+Create a basic \code{mcstate} model.  This takes a user-supplied object
+that minimally can compute a probability density (via a \code{density}
+function) and information about parameters; with this we can
+sample from the model using \code{MCMC} using \link{mcstate_sample}.  We
+don't imagine that many users will call this function directly,
+but that this will be glue used by packages.
+}
+\details{
+The \code{model} argument can be a list or environment (something
+indexable by \code{$}) and have elements:
+\itemize{
+\item \code{density}: A function that will compute some probability
+density.  It must take an argument representing a parameter
+vector (a numeric vector) and return a single value.  This is
+the posterior probability density in Bayesian inference, but it
+could be anything really.  Models can return \code{-Inf} if things
+are impossible, and we'll try and cope gracefully with that
+wherever possible.
+\item \code{parameters}: A character vector of parameter names.  This can
+be overridden by the \code{parameters} argument to this function.
+This vector is the source of truth for the length of the
+parameter vector.
+\item \code{domain}: Information on the parameter domain.  This can be
+overridden by the \code{domain} argument to this function.  This is a
+two column matrix with \code{length(parameters)} rows representing
+each parameter.  The parameter minimum and maximum bounds are
+given as the first and second column.  Infinite values (\code{-Inf}
+or \code{Inf}) should be used where the parameter has infinite domain
+up or down.  Currently used to translate from a bounded to
+unbounded space for HMC, but we might also use this for
+reflecting proposals in MCMC too.  If not present (and if not
+overridden by \code{domain}) we assume that the model is valid
+everywhere (i.e., that all parameters are valid from \code{-Inf} to
+\code{Inf}.
+}
 }
