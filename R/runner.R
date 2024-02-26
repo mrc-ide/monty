@@ -72,7 +72,7 @@ mcstate_runner_parallel <- function(n_workers) {
     ## something closer to the rng pointer object rather than the big
     ## heavy R6 object as that already has the logic in for doing
     ## state sync, but this can all be done transparently later.
-    pars_list <- lapply(seq_len(nrow(pars)), function(i) pars[i, ])
+    pars_list <- asplit(pars, MARGIN = 1)
     rng_state <- lapply(rng, function(r) r$state())
 
     res <- parallel::clusterMap(
