@@ -53,7 +53,7 @@ test_that("sample initial state if not provided, with a single chain", {
   g2 <- mcstate_rng$new(seed = 42)
 
   res <- initial_parameters(NULL, m, list(g1))
-  expect_equal(res, matrix(m$direct_sample(g2), 1, 1))
+  expect_equal(res, matrix(m$model$direct_sample(g2), 1, 1))
 })
 
 
@@ -66,9 +66,9 @@ test_that("sample initial state if not provided, with multiple chains", {
 
   res <- initial_parameters(NULL, m, g1)
   expect_equal(dim(res), c(3, 1))
-  expect_equal(res[1, 1], m$direct_sample(g21))
-  expect_equal(res[2, 1], m$direct_sample(g22))
-  expect_equal(res[3, 1], m$direct_sample(g23))
+  expect_equal(res[1, 1], m$model$direct_sample(g21))
+  expect_equal(res[2, 1], m$model$direct_sample(g22))
+  expect_equal(res[3, 1], m$model$direct_sample(g23))
 })
 
 
