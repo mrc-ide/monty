@@ -34,19 +34,19 @@
 ##'   everywhere (i.e., that all parameters are valid from `-Inf` to
 ##'   `Inf`.
 ##'
-##' @param direct_sample A function to sample directly from the
+##' * `direct_sample`: A function to sample directly from the
 ##'   parameter space, given an [mcstate_rng] object to sample from.
 ##'   In the case where a model returns a posterior (e.g., in Bayesian
 ##'   inference), this is assumed to be sampling from the prior.
 ##'   We'll use this for generating initial conditions for MCMC where
 ##'   those are not given, and possibly other uses.  If not given then
-##'   when using [mcmc_sample()] the user will have to provide a
+##'   when using [mcstate_sample()] the user will have to provide a
 ##'   vector of initial states.
 ##'
-##' @param gradient A function to compute the gradient of `density`
-##'   with respect to the parameter vector; takes a parameter vector
-##'   and returns a vector the same length.  For efficiency, the model
-##'   may want to be stateful so that gradients can be efficiently
+##' * `gradient`: A function to compute the gradient of `density` with
+##'   respect to the parameter vector; takes a parameter vector and
+##'   returns a vector the same length.  For efficiency, the model may
+##'   want to be stateful so that gradients can be efficiently
 ##'   calculated after a density calculation, or density after
 ##'   gradient, where these are called with the same parameters.  This
 ##'   function is optional (and may not be well defined or possible to
@@ -55,7 +55,7 @@
 ##' @title Create basic model
 ##'
 ##' @param model A list or environment with elements as described in
-##'   .
+##'   Details.
 ##'
 ##' @param parameters A character vector of parameter names, for cases
 ##'   where `model` does not provide this or where you want to

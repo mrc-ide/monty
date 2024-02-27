@@ -8,7 +8,7 @@ mcstate_model(model, parameters = NULL, domain = NULL)
 }
 \arguments{
 \item{model}{A list or environment with elements as described in
-.}
+Details.}
 
 \item{parameters}{A character vector of parameter names, for cases
 where \code{model} does not provide this or where you want to
@@ -26,24 +26,6 @@ unbounded space for HMC, but we might also use this for
 reflecting proposals in MCMC too.  This must be given if not
 provided by the model (i.e., if \code{model$domain} is \code{NULL}) and if
 given overrides any value present in the model.}
-
-\item{direct_sample}{A function to sample directly from the
-parameter space, given an \link{mcstate_rng} object to sample from.
-In the case where a model returns a posterior (e.g., in Bayesian
-inference), this is assumed to be sampling from the prior.
-We'll use this for generating initial conditions for MCMC where
-those are not given, and possibly other uses.  If not given then
-when using \code{\link[=mcmc_sample]{mcmc_sample()}} the user will have to provide a
-vector of initial states.}
-
-\item{gradient}{A function to compute the gradient of \code{density}
-with respect to the parameter vector; takes a parameter vector
-and returns a vector the same length.  For efficiency, the model
-may want to be stateful so that gradients can be efficiently
-calculated after a density calculation, or density after
-gradient, where these are called with the same parameters.  This
-function is optional (and may not be well defined or possible to
-define).}
 }
 \value{
 An object of class \code{mcstate_model}.  This will have elements:
@@ -94,5 +76,21 @@ reflecting proposals in MCMC too.  If not present (and if not
 overridden by \code{domain}) we assume that the model is valid
 everywhere (i.e., that all parameters are valid from \code{-Inf} to
 \code{Inf}.
+\item \code{direct_sample}: A function to sample directly from the
+parameter space, given an \link{mcstate_rng} object to sample from.
+In the case where a model returns a posterior (e.g., in Bayesian
+inference), this is assumed to be sampling from the prior.
+We'll use this for generating initial conditions for MCMC where
+those are not given, and possibly other uses.  If not given then
+when using \code{\link[=mcstate_sample]{mcstate_sample()}} the user will have to provide a
+vector of initial states.
+\item \code{gradient}: A function to compute the gradient of \code{density} with
+respect to the parameter vector; takes a parameter vector and
+returns a vector the same length.  For efficiency, the model may
+want to be stateful so that gradients can be efficiently
+calculated after a density calculation, or density after
+gradient, where these are called with the same parameters.  This
+function is optional (and may not be well defined or possible to
+define).
 }
 }
