@@ -81,11 +81,9 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     ## Make a half step for momentum at the end.
     v_next <- v_next + epsilon * compute_gradient(pars_next) / 2
 
-    ## Negate momentum at end of trajectory to make the proposal symmetric
-    ##
-    ## TODO: Marc - this seems to have no actual effect, since the
-    ## only use of v_next below is after squaring.
-    v_next <- -v_next
+    ## Some treatments would negate momentum at end of trajectory to
+    ## make the proposal symmetric by setting v_next <- -v_next but
+    ## this is not actually needed in practice.
 
     ## Potential energy at the end of the trajectory
     density_next <- model$density(pars_next)
