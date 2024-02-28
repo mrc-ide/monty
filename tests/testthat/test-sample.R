@@ -22,7 +22,7 @@ test_that("sampler return value contains history", {
   expect_equal(dim(res$pars), c(101, 1))
   expect_equal(dimnames(res$pars), list(NULL, "gamma"))
   expect_length(res$density, 101)
-  expect_equal(res$density, apply(res$pars, 1, model$model$density))
+  expect_equal(res$density, apply(res$pars, 1, model$density))
   expect_equal(unname(res$pars[1, ]), 1)
   expect_null(res$details)
 })
@@ -34,9 +34,9 @@ test_that("warn if model uses R's rng", {
   ## A bit silly; more likely this will be a bug on our end writing
   ## the sampler, but this is possible when running particle filter
   ## models.
-  model2$model$density <- function(...) {
+  model2$density <- function(...) {
     runif(1)
-    model1$model$density(...)
+    model1$density(...)
   }
   sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   expect_no_warning(
@@ -53,7 +53,7 @@ test_that("sample initial state if not provided, with a single chain", {
   g2 <- mcstate_rng$new(seed = 42)
 
   res <- initial_parameters(NULL, m, list(g1))
-  expect_equal(res, matrix(m$model$direct_sample(g2), 1, 1))
+  expect_equal(res, matrix(m$direct_sample(g2), 1, 1))
 })
 
 
@@ -66,9 +66,9 @@ test_that("sample initial state if not provided, with multiple chains", {
 
   res <- initial_parameters(NULL, m, g1)
   expect_equal(dim(res), c(3, 1))
-  expect_equal(res[1, 1], m$model$direct_sample(g21))
-  expect_equal(res[2, 1], m$model$direct_sample(g22))
-  expect_equal(res[3, 1], m$model$direct_sample(g23))
+  expect_equal(res[1, 1], m$direct_sample(g21))
+  expect_equal(res[2, 1], m$direct_sample(g22))
+  expect_equal(res[3, 1], m$direct_sample(g23))
 })
 
 
@@ -136,9 +136,9 @@ test_that("can run more than one chain, in parallel", {
 
 test_that("need a direct sample function in order to start sampling", {
   model1 <- ex_simple_gamma1()
-  model2 <- mcstate_model(list(density = model1$model$density),
-                          parameters = model1$parameters,
-                          domain = model1$domain)
+  model2 <- mcstate_model(list(density = model1$density,
+                               parameters = model1$parameters,
+                               domain = model1$domain))
   sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   expect_no_error(
     mcstate_sample(model1, sampler, 10))

@@ -78,7 +78,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
                           arg = "initial", call = environment())
     ## Really this would just be from the prior; we can't directly
     ## sample from the posterior!
-    initial <- lapply(rng, function(r) model$model$direct_sample(r))
+    initial <- lapply(rng, function(r) model$direct_sample(r))
   }
   if (is.list(initial)) {
     if (length(initial) != n_chains) {

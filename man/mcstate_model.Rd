@@ -4,28 +4,14 @@
 \alias{mcstate_model}
 \title{Create basic model}
 \usage{
-mcstate_model(model, parameters = NULL, domain = NULL)
+mcstate_model(model, properties = NULL)
 }
 \arguments{
 \item{model}{A list or environment with elements as described in
 Details.}
 
-\item{parameters}{A character vector of parameter names, for cases
-where \code{model} does not provide this or where you want to
-override parameter names. This is required if \code{model$parameters}
-is \code{NULL}.  If \code{parameters} is given and \code{model$parameters} is
-not NULL we enforce that they are the same length.}
-
-\item{domain}{Information on the parameter domain.  This is a two
-column matrix with \code{length(parameters)} rows representing each
-parameter.  The parameter minimum and maximum bounds are given
-as the first and second column.  Infinite values (\code{-Inf} or
-\code{Inf}) should be used where the parameter has infinite domain up
-or down.  Currently used to translate from a bounded to
-unbounded space for HMC, but we might also use this for
-reflecting proposals in MCMC too.  This must be given if not
-provided by the model (i.e., if \code{model$domain} is \code{NULL}) and if
-given overrides any value present in the model.}
+\item{properties}{Optionally, a \link{mcstate_properties} object, used
+to enforce or clarify properties of the model.}
 }
 \value{
 An object of class \code{mcstate_model}.  This will have elements:
@@ -33,8 +19,10 @@ An object of class \code{mcstate_model}.  This will have elements:
 \item \code{model}: The model as provided
 \item \code{parameters}: The parameter name vector
 \item \code{domain}: The parameter domain matrix
-\item \code{properties}: A list of properties of the model; we'll grow this
-over time but this currently contains:
+\item \code{direct_sample}: The \code{direct_sample} function, if provided by the model
+\item \code{gradient}: The \code{gradient} function, if provided by the model
+\item \code{properties}: A list of properties of the model;
+see \code{\link[=mcstate_model_properties]{mcstate_model_properties()}}.  Currently this contains:
 \itemize{
 \item \code{has_gradient}: the model can compute its gradient
 \item \code{has_direct_sample}: the model can sample from parameters space

@@ -96,7 +96,7 @@ mcstate_run_chain_parallel <- function(pars, model, sampler, n_steps, rng) {
 
 mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   r_rng_state <- get_r_rng_state()
-  density <- model$model$density(pars)
+  density <- model$density(pars)
   state <- list(pars = pars, density = density)
   sampler$initialise(state, model, rng)
 

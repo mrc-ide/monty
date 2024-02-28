@@ -42,7 +42,7 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
 
   step <- function(state, model, rng) {
     pars_next <- proposal(state$pars, rng)
-    density_next <- model$model$density(pars_next)
+    density_next <- model$density(pars_next)
 
     if (density_next - state$density > log(rng$random_real(1))) {
       state$pars <- pars_next
