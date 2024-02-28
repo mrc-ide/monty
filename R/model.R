@@ -84,8 +84,8 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##' @param model A list or environment with elements as described in
 ##'   Details.
 ##'
-##' @param properties Optionally, a [mcstate_properties] object, used
-##'   to enforce or clarify properties of the model.
+##' @param properties Optionally, a [mcstate_model_properties] object,
+##'   used to enforce or clarify properties of the model.
 ##'
 ##' @return An object of class `mcstate_model`.  This will have elements:
 ##'

@@ -10,8 +10,8 @@ mcstate_model(model, properties = NULL)
 \item{model}{A list or environment with elements as described in
 Details.}
 
-\item{properties}{Optionally, a \link{mcstate_properties} object, used
-to enforce or clarify properties of the model.}
+\item{properties}{Optionally, a \link{mcstate_model_properties} object,
+used to enforce or clarify properties of the model.}
 }
 \value{
 An object of class \code{mcstate_model}.  This will have elements:
