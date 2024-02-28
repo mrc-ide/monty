@@ -21,12 +21,13 @@ test_that("can output debug traces", {
   res2 <- mcstate_sample(m, sampler2, 30)
 
   expect_null(res1$details)
-  expect_equal(names(res2$details), "debug")
+  expect_length(res2$details, 1)
+  expect_equal(names(res2$details[[1]]), "debug")
   ## Marc: is this expected given things _should_ be fairly well
   ## behaved on this surface?
-  expect_equal(res2$details$debug$accept, rep(TRUE, 30))
+  expect_equal(res2$details[[1]]$debug$accept, rep(TRUE, 30))
 
-  pars <- res2$details$debug$pars
+  pars <- res2$details[[1]]$debug$pars
   expect_equal(dim(pars), c(11, 2, 30))
   expect_equal(dimnames(pars), list(NULL, c("a", "b"), NULL))
   expect_equal(t(pars[1, , ]), res2$pars[-31, ])
