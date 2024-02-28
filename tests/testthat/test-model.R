@@ -79,3 +79,41 @@ test_that("validate domain", {
     "Expected 'model$domain' to have 2 columns, but it had 4",
     fixed = TRUE)
 })
+
+
+test_that("can use properties to guarantee that a property exists", {
+  m <- list(density = function(x) dnorm(x, log = TRUE), parameters = "a")
+  expect_error(
+    mcstate_model(m, mcstate_model_properties(has_gradient = TRUE)),
+    "Did not find a function 'gradient' within your model")
+  expect_error(
+    mcstate_model(m, mcstate_model_properties(has_direct_sample = TRUE)),
+    "Did not find a function 'direct_sample' within your model")
+  expect_no_error(
+    mcstate_model(m, mcstate_model_properties(has_gradient = FALSE,
+                                              has_direct_sample = FALSE)))
+})
+
+
+test_that("can use properties to ignore properties in a model", {
+  m <- mcstate_model(
+    list(density = identity, parameters = "a", gradient = TRUE),
+    mcstate_model_properties(has_gradient = FALSE))
+  expect_false(m$properties$has_gradient)
+  expect_null(m$gradient)
+
+  m <- mcstate_model(
+    list(density = identity, parameters = "a", direct_sample = TRUE),
+    mcstate_model_properties(has_direct_sample = FALSE))
+  expect_false(m$properties$has_direct_sample)
+  expect_null(m$direct_sample)
+})
+
+
+test_that("require properties are correct type", {
+  expect_error(
+    mcstate_model(
+      list(density = identity, parameters = "a", gradient = TRUE),
+      list(has_gradient = FALSE)),
+    "Expected 'properties' to be a 'mcstate_model_properties' object")
+})

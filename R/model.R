@@ -186,7 +186,7 @@ validate_model_density <- function(model, call = NULL) {
 
 validate_model_gradient <- function(model, properties, call) {
   if (isFALSE(properties$has_gradient)) {
-    return(FALSE)
+    return(NULL)
   }
   gradient <- model$gradient
   if (isTRUE(properties$has_gradient) && !is.function(gradient)) {
@@ -206,7 +206,7 @@ validate_model_gradient <- function(model, properties, call) {
 
 validate_model_direct_sample <- function(model, properties, call) {
   if (isFALSE(properties$has_direct_sample)) {
-    return(FALSE)
+    return(NULL)
   }
   direct_sample <- model$direct_sample
   if (isTRUE(properties$has_direct_sample) && !is.function(direct_sample)) {
