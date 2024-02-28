@@ -2,10 +2,10 @@ test_that("can draw samples from a trivial model", {
   m <- ex_simple_gamma1()
   sampler <- mcstate_sampler_adaptive(vcv = matrix(0.01, 1, 1))
   res <- mcstate_sample(m, sampler, 5000)
-  expect_equal(names(res), c("pars", "density", "details"))
+  expect_equal(names(res), c("pars", "density", "details", "chain"))
 
   ## Initial vcv estimate was far too small; we've increased it.
-  expect_gt(res$details$vcv, 0.01)
+  expect_gt(res$details[[1]]$vcv, 0.01)
 })
 
 
