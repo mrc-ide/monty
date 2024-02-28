@@ -25,7 +25,8 @@ mcstate_model_properties <- function(has_gradient = NULL,
                                      has_direct_sample = NULL,
                                      is_stochastic = NULL) {
   ret <- list(has_gradient = has_gradient,
-              has_direct_sample = has_direct_sample)
+              has_direct_sample = has_direct_sample,
+              is_stochastic = is_stochastic)
   class(ret) <- "mcstate_model_properties"
   ret
 }
@@ -247,12 +248,23 @@ validate_model_rng_state <- function(model, properties, call) {
   if (isFALSE(properties$is_stochastic)) {
     return(NULL)
   }
+  if (is.null(properties$is_stochastic) && is.null(model$set_rng_state)) {
+    return(NULL)
+  }
   if (!is.function(model$set_rng_state)) {
+    if (isTRUE(model$is_stochastic)) {
+      hint <- paste("You have specified 'is_stochastic = TRUE', so in order",
+                    "to use your stochastic model we need a way of setting",
+                    "its state")
+    } else {
+      hint <- paste("I found a non-function element 'set_rng_state' within",
+                    "your model and you have not set the 'is_stochastic'",
+                    "property")
+    }
     cli::cli_abort(
       c("Expected 'model$set_rng_state' to be a function",
-        i = paste("You have specified 'is_stochastic = TRUE', so in order",
-                  "to use your stochastic model we need a way of setting",
-                  "its state")))
+        i = hint),
+      arg = "model", call = call)
   }
   list(set = model$set_rng_state)
 }

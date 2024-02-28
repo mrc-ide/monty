@@ -73,5 +73,5 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
          parameters = c("beta", "gamma"),
          domain = cbind(c(0, 0), c(Inf, Inf)),
          set_rng_state = set_rng_state),
-    is_stochastic = !deterministic)
+    mcstate_model_properties(is_stochastic = !deterministic))
 }
