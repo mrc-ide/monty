@@ -13,12 +13,17 @@
 ##'   `direct_sample` method.  Use `NULL` (the default) to detect this
 ##'   from the model.
 ##'
+##' @param is_stochastic Logical, indicating if the model is
+##'   stochastic.  Stochastic models must supply a `set_rng_state`
+##'   method and we might support a `get_rng_state` method later.
+##'
 ##' @return A list of class `mcstate_model_properties` which should
 ##'   not be modified.
 ##'
 ##' @export
 mcstate_model_properties <- function(has_gradient = NULL,
-                                     has_direct_sample = NULL) {
+                                     has_direct_sample = NULL,
+                                     is_stochastic = NULL) {
   ret <- list(has_gradient = has_gradient,
               has_direct_sample = has_direct_sample)
   class(ret) <- "mcstate_model_properties"
@@ -81,23 +86,21 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   as that is the _sampler's_ rng stream, but we assume models will
 ##'   look after their own stream, and that they may need many
 ##'   streams).  Models that provide this method are assumed to be
-##'   stochastic; however, you can use the `is_stochastic` argument to
-##'   override this (e.g., to run a stochastic model with its
-##'   deterministic expectation).  This function takes an
-##'   [mcstate_rng] object and uses it to seed the random number state
-##'   for your model.  You have two options here (1) hold a copy of
-##'   the provided object and draw samples from it as needed (in
-##'   effect sharing the random number stream with the sampler) or
-##'   create a new rng stream from a jump with this stream (we'll
-##'   provide a utility for doing this but at present doing
-##'   `mcstate_rng$new(rng$state(), n_streams)$jump()$state()` will
-##'   do).  The main reason you'd do that is if you need multiple
-##'   (perhaps parallel) streams of random numbers in your model.  The
-##'   `$jump()` is very important, otherwise you'll end up correlated
-##'   with the draws from the sampler.
-##'
-##' * `get_rng_state`: A function to fetch the rng state from the
-##'   model.  This wil be used to make restartable chains.
+##'   stochastic; however, you can use the `is_stochastic` property
+##'   (via [mcstate_model_properties()]) to override this (e.g., to
+##'   run a stochastic model with its deterministic expectation).
+##'   This function takes an [mcstate_rng] object and uses it to seed
+##'   the random number state for your model.  You have two options
+##'   here (1) hold a copy of the provided object and draw samples
+##'   from it as needed (in effect sharing the random number stream
+##'   with the sampler) or create a new rng stream from a jump with
+##'   this stream (we'll provide a utility for doing this but at
+##'   present doing `mcstate_rng$new(rng$state(),
+##'   n_streams)$jump()$state()` will do).  The main reason you'd do
+##'   that is if you need multiple (perhaps parallel) streams of
+##'   random numbers in your model.  The `$jump()` is very important,
+##'   otherwise you'll end up correlated with the draws from the
+##'   sampler.
 ##'
 ##' @title Create basic model
 ##'
@@ -135,6 +138,7 @@ mcstate_model <- function(model, properties = NULL) {
   ## Update properties based on what we found:
   properties$has_gradient <- !is.null(gradient)
   properties$has_direct_sample <- !is.null(direct_sample)
+  properties$is_stochastic <- !is.null(rng_state$set)
 
   ret <- list(model = model,
               parameters = parameters,
@@ -146,7 +150,6 @@ mcstate_model <- function(model, properties = NULL) {
   class(ret) <- "mcstate_model"
   ret
 }
-
 
 
 validate_model_properties <- function(properties, call = NULL) {

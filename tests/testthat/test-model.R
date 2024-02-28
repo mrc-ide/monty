@@ -123,9 +123,9 @@ test_that("require properties are correct type", {
 
 test_that("stochastic models need an rng setting function", {
   expect_error(
-    mcstate_model(list(density = identity),
-                  parameters = "a",
-                  is_stochastic = TRUE),
+    mcstate_model(
+      list(density = identity, parameters = "a"),
+      mcstate_model_properties(is_stochastic = TRUE)),
     "Expected 'model$set_rng_state' to be a function",
     fixed = TRUE)
 })

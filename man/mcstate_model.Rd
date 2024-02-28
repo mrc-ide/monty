@@ -83,21 +83,19 @@ contrast to the \code{rng} that is passed through to \code{direct_sample}
 as that is the \emph{sampler's} rng stream, but we assume models will
 look after their own stream, and that they may need many
 streams).  Models that provide this method are assumed to be
-stochastic; however, you can use the \code{is_stochastic} argument to
-override this (e.g., to run a stochastic model with its
-deterministic expectation).  This function takes an
-\link{mcstate_rng} object and uses it to seed the random number state
-for your model.  You have two options here (1) hold a copy of
-the provided object and draw samples from it as needed (in
-effect sharing the random number stream with the sampler) or
-create a new rng stream from a jump with this stream (we'll
-provide a utility for doing this but at present doing
-\code{mcstate_rng$new(rng$state(), n_streams)$jump()$state()} will
-do).  The main reason you'd do that is if you need multiple
-(perhaps parallel) streams of random numbers in your model.  The
-\verb{$jump()} is very important, otherwise you'll end up correlated
-with the draws from the sampler.
-\item \code{get_rng_state}: A function to fetch the rng state from the
-model.  This wil be used to make restartable chains.
+stochastic; however, you can use the \code{is_stochastic} property
+(via \code{\link[=mcstate_model_properties]{mcstate_model_properties()}}) to override this (e.g., to
+run a stochastic model with its deterministic expectation).
+This function takes an \link{mcstate_rng} object and uses it to seed
+the random number state for your model.  You have two options
+here (1) hold a copy of the provided object and draw samples
+from it as needed (in effect sharing the random number stream
+with the sampler) or create a new rng stream from a jump with
+this stream (we'll provide a utility for doing this but at
+present doing \code{mcstate_rng$new(rng$state(), n_streams)$jump()$state()} will do).  The main reason you'd do
+that is if you need multiple (perhaps parallel) streams of
+random numbers in your model.  The \verb{$jump()} is very important,
+otherwise you'll end up correlated with the draws from the
+sampler.
 }
 }

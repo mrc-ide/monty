@@ -4,7 +4,11 @@
 \alias{mcstate_model_properties}
 \title{Describe model properties}
 \usage{
-mcstate_model_properties(has_gradient = NULL, has_direct_sample = NULL)
+mcstate_model_properties(
+  has_gradient = NULL,
+  has_direct_sample = NULL,
+  is_stochastic = NULL
+)
 }
 \arguments{
 \item{has_gradient}{Logical, indicating if the model has a
@@ -14,6 +18,10 @@ the model.}
 \item{has_direct_sample}{Logical, indicating if the model has a
 \code{direct_sample} method.  Use \code{NULL} (the default) to detect this
 from the model.}
+
+\item{is_stochastic}{Logical, indicating if the model is
+stochastic.  Stochastic models must supply a \code{set_rng_state}
+method and we might support a \code{get_rng_state} method later.}
 }
 \value{
 A list of class \code{mcstate_model_properties} which should
