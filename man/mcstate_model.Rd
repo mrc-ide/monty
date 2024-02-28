@@ -48,22 +48,19 @@ the posterior probability density in Bayesian inference, but it
 could be anything really.  Models can return \code{-Inf} if things
 are impossible, and we'll try and cope gracefully with that
 wherever possible.
-\item \code{parameters}: A character vector of parameter names.  This can
-be overridden by the \code{parameters} argument to this function.
-This vector is the source of truth for the length of the
-parameter vector.
-\item \code{domain}: Information on the parameter domain.  This can be
-overridden by the \code{domain} argument to this function.  This is a
-two column matrix with \code{length(parameters)} rows representing
-each parameter.  The parameter minimum and maximum bounds are
-given as the first and second column.  Infinite values (\code{-Inf}
-or \code{Inf}) should be used where the parameter has infinite domain
-up or down.  Currently used to translate from a bounded to
+\item \code{parameters}: A character vector of parameter names.  This
+vector is the source of truth for the length of the parameter
+vector.
+\item \code{domain}: Information on the parameter domain.  This is a two
+column matrix with \code{length(parameters)} rows representing each
+parameter.  The parameter minimum and maximum bounds are given
+as the first and second column.  Infinite values (\code{-Inf} or
+\code{Inf}) should be used where the parameter has infinite domain up
+or down.  Currently used to translate from a bounded to
 unbounded space for HMC, but we might also use this for
-reflecting proposals in MCMC too.  If not present (and if not
-overridden by \code{domain}) we assume that the model is valid
-everywhere (i.e., that all parameters are valid from \code{-Inf} to
-\code{Inf}.
+reflecting proposals in MCMC too.  If not present we assume that
+the model is valid everywhere (i.e., that all parameters are
+valid from \code{-Inf} to \code{Inf}.
 \item \code{direct_sample}: A function to sample directly from the
 parameter space, given an \link{mcstate_rng} object to sample from.
 In the case where a model returns a posterior (e.g., in Bayesian
