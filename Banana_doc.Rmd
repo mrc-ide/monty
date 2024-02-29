@@ -1,0 +1,142 @@
+---
+title: "Banana vignette"
+author: "Marc Baguelin"
+date: "2024-02-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Creating the banana shaped model
+
+The model takes two parameters `theta1` and `theta2`, and is based on two successive simple draws, with the second conditional on the first one:
+
+\[
+\Theta_2 \sim Normal(1,0) \\
+\Theta_1 \sim Normal(\theta_2^2, \sigma)
+\]
+
+with $\sigma$ the standard deviation of the conditional draw.
+
+The density can be derived as
+
+```{r, eval=FALSE}
+density = function(x) {
+      dnorm(x[2], log = T) + dnorm((x[1]-x[2]^2)/sd, log = T)
+}
+```
+
+Using the formula of the normal probability density function, the gradient can be calculated as
+
+```{r, eval=FALSE}
+gradient = function(x){
+      c((x[2]^2-x[1])/sd^2,
+        -x[2]+2*x[2]*(x[1]-x[2]^2)/sd^2)
+    }
+```
+
+All of this can be bundled to create our mcstate model generator
+
+```{r}
+library(mcstate2)
+banana_model <- function(sd = 0.5) {
+  mcstate_model(list(
+    parameters = c("theta1","theta2"),
+    direct_sample = function(rng) {
+      theta1 <- rng$random_normal(1)
+      cbind(rng$normal(1, theta1^2, sd), theta1)
+    },
+    density = function(x) {
+      dnorm(x[2], log = T) + dnorm((x[1]-x[2]^2)/sd, log = T)
+    },
+    gradient = function(x){
+      c((x[2]^2-x[1])/sd^2,
+        -x[2]+2*x[2]*(x[1]-x[2]^2)/sd^2)
+    },
+    domain = cbind(rep(-Inf, 2), rep(Inf, 2))))
+}
+```
+
+Let's create a model with $\sigma = 0.5$
+
+```{r create_banana_model}
+sd <- 0.5
+m <- banana_model(sd)
+```
+
+We can plot a greyscale visualisation of its density
+```{r}
+#calculate random points with greyscale base on density
+x <- cbind(runif(100000, min = -5, max = 20),runif(10000, min = -4, max = 4))
+density_vector <- exp(apply(x, MARGIN = 1, function(x){m$density(x)} ))
+grey_scale <- 1-density_vector/max(density_vector)
+plot(x[,1], x[,2], col= grey(grey_scale), pch=19)
+```
+
+In this particular case we can also easily directly sampled from it
+```{r}
+rng <- mcstate_rng$new()
+z <- t(sapply(seq(200), FUN = function(x) m$direct_sample(rng)))
+plot(x[,1], x[,2], col= grey(grey_scale), pch=19)
+points(z[,1], z[,2], pch=19, col="#ff222277")
+```
+
+ 
+
+It is also possible to compute the 95% confidence interval of the distribution using the relationship between the standard bivariate normal distribution and the banana shaped distribution as defined above. We can check than roughly 10 samples (out of 200) are out of this 95% CI contour.
+
+
+```{r}
+#draw theoretical 95% contour using chisquare 95% quantile
+theta <- seq(0, 2*pi, length.out = 10000)
+z_contour <- sapply(theta,
+                   FUN = function(theta){
+                     r <- sqrt(qchisq(.95, df = 2))
+                     x <- r*cos(theta)
+                     y <- r*sin(theta)
+                     c(x^2+y*sd,x)
+})
+plot(x[,1], x[,2], col= grey(grey_scale), pch=19)
+lines(z_contour[1,],z_contour[2,], col="red")
+
+#add samples to graph
+points(z[,1], z[,2], pch=19, col="#ff222277")
+```
+
+To check for the match between the density of the model and the 95% contour, we can check than the density is constant on the contour
+```{r}
+#Checking that density is equal on the contour
+density_vector <- exp(apply(z_contour, MARGIN = 2, function(x){m$density(x)} ))
+variation <- (max(density_vector) - min(density_vector))/mean(density_vector)
+```
+
+We have a variation of `r format(variation * 100, digits = 3)`% over the contour. That's pretty small.
+
+## Sampling with other samplers
+
+The direct sampling is not necessarily providing a sample following the density of the model, in that case we need to use a sampler based on the density and if available possibly the gradient of the density. 
+
+We can start with a basic random-walk sampler
+
+```{r RW_sampling}
+sampler1 <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
+set.seed(1)
+res1 <- mcstate_sample(m, sampler1, 2000)
+plot(res1$pars[,1],res1$pars[,2],pch=19, col="#ff222277")
+lines(z_contour[1,],z_contour[2,], col="red")
+```
+
+As we can see this is not great.
+
+Let's try an HMC sampler based on Hamiltonian Monte Carlo, using the gradient as part of the way to move in the parameter space
+```{r HMC_sampling}
+sampler2 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+set.seed(1)
+res2 <- mcstate_sample(m, sampler2, 2000)
+plot(res2$pars[,1],res2$pars[,2],pch=19, col="#ff222277")
+lines(z_contour[1,],z_contour[2,], col="red")
+```
+
+Clearly better!
