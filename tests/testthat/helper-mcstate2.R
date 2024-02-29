@@ -86,3 +86,21 @@ ex_simple_gaussian <- function(vcv) {
     gradient = make_deriv_ldmvnorm(vcv),
     domain = cbind(rep(-Inf, n), rep(Inf, n))))
 }
+
+
+ex_banana <- function(sd = 0.5) {
+  mcstate_model(list(
+    parameters = c("theta1", "theta2"),
+    direct_sample = function(rng) {
+      theta <- rng$random_normal(1)
+      cbind(rng$normal(1, theta^2, sd), theta)
+    },
+    density = function(x) {
+      dnorm(x[2], log = TRUE) + dnorm((x[1] - x[2]^2) / sd, log = TRUE)
+    },
+    gradient = function(x){
+      c((x[2]^2 - x[1])/sd^2,
+        -x[2] + 2 * x[2] * (x[1] - x[2]^2) / sd^2)
+    },
+    domain = cbind(rep(-Inf, 2), rep(Inf, 2))))
+}
