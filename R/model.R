@@ -181,43 +181,37 @@ validate_model_density <- function(model, call = NULL) {
 }
 
 
-validate_model_gradient <- function(model, properties, call) {
-  if (isFALSE(properties$has_gradient)) {
+validate_model_optional_method <- function(model, properties,
+                                           method_name, property_name,
+                                           call) {
+  if (isFALSE(properties[[property_name]])) {
     return(NULL)
   }
-  gradient <- model$gradient
-  if (isTRUE(properties$has_gradient) && !is.function(gradient)) {
+  value <- model[[method_name]]
+  if (isTRUE(properties[[property_name]]) && !is.function(value)) {
     cli::cli_abort(
-      paste("Did not find a function 'gradient' within your model, but",
+      paste("Did not find a function '{method_name}' within your model, but",
             "your properties say that it should do"),
       arg = "model", call = call)
   }
-  if (!is.null(gradient) && !is.function(gradient)) {
+  if (!is.null(value) && !is.function(value)) {
     cli::cli_abort(
-      "Expected 'model$gradient' to be a function if non-NULL",
+      "Expected 'model${method_name}' to be a function if non-NULL",
       arg = "model", call = call)
   }
-  gradient
+  value
+}
+
+
+validate_model_gradient <- function(model, properties, call) {
+  validate_model_optional_method(
+    model, properties, "gradient", "has_gradient", call)
 }
 
 
 validate_model_direct_sample <- function(model, properties, call) {
-  if (isFALSE(properties$has_direct_sample)) {
-    return(NULL)
-  }
-  direct_sample <- model$direct_sample
-  if (isTRUE(properties$has_direct_sample) && !is.function(direct_sample)) {
-    cli::cli_abort(
-      paste("Did not find a function 'direct_sample' within your model, but",
-            "your properties say that it should do"),
-      arg = "model", call = call)
-  }
-  if (!is.null(direct_sample) && !is.function(direct_sample)) {
-    cli::cli_abort(
-      "Expected 'model$direct_sample' to be a function if non-NULL",
-      arg = "model", call = call)
-  }
-  direct_sample
+  validate_model_optional_method(
+    model, properties, "direct_sample", "has_direct_sample", call)
 }
 
 
