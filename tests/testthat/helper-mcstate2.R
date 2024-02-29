@@ -17,10 +17,10 @@ ex_simple_gamma1 <- function(shape = 1, rate = 1) {
 
 ex_simple_gaussian <- function(vcv) {
   n <- nrow(vcv)
-  mcstate_model(
+  mcstate_model(list(
     parameters = letters[seq_len(n)],
     direct_sample = make_rmvnorm(vcv, centred = TRUE),
     density = make_ldmvnorm(vcv),
     gradient = make_deriv_ldmvnorm(vcv),
-    domain = cbind(rep(-Inf, n), rep(Inf, n)))
+    domain = cbind(rep(-Inf, n), rep(Inf, n))))
 }
