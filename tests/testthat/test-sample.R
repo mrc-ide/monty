@@ -146,3 +146,46 @@ test_that("need a direct sample function in order to start sampling", {
     mcstate_sample(model2, sampler, 10),
     "'initial' must be provided with this model")
 })
+
+
+test_that("can continue chains", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- mcstate_sample(model, sampler, 100, 1, n_chains = 3)
+
+  set.seed(1)
+  res2a <- mcstate_sample(model, sampler, 50, 1, n_chains = 3,
+                          restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 50)
+
+  expect_equal(res2b, res1)
+})
+
+
+test_that("can continue continuable chains", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- mcstate_sample(model, sampler, 30, 1, n_chains = 3,
+                         restartable = TRUE)
+
+  set.seed(1)
+  res2a <- mcstate_sample(model, sampler, 10, 1, n_chains = 3,
+                          restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 10, restartable = TRUE)
+  res2c <- mcstate_sample_continue(res2b, 10, restartable = TRUE)
+
+  expect_equal(res2c, res1)
+})
+
+
+test_that("can't restart chains that don't have restart information", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  res <- mcstate_sample(model, sampler, 5, 1, n_chains = 3)
+  expect_error(mcstate_sample_continue(res, 50),
+               "Your chains are not restartable")
+})
