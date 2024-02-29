@@ -1,6 +1,6 @@
 ##' Describe properties of a model.  Use of this function is optional,
 ##' but you can pass the return value of this as the `properties`
-##' argument to enforce that your model does actually have these
+##' argument of mcstate_model to enforce that your model does actually have these
 ##' properties.
 ##'
 ##' @title Describe model properties
