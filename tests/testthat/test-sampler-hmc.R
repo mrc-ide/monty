@@ -8,6 +8,18 @@ test_that("can run hmc", {
 })
 
 
+test_that("can run hmc on banana shaped model", {
+  m <- ex_banana()
+  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  set.seed(1)
+  res <- mcstate_sample(m, sampler, 2000)
+  ## We'll need some long tests here at some point!
+  expect_equal(abs(mean(res$pars[,2])) < 0.2, TRUE)
+  expect_equal(abs(mean(res$pars[,1]) - 1) < 0.4, TRUE)
+  expect_equal(abs(cor(res$pars[,1],res$pars[,2])) < 0.3, TRUE)
+})
+
+
 test_that("can output debug traces", {
   m <- ex_simple_gaussian(diag(2))
 
