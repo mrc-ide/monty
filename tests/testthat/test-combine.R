@@ -151,7 +151,9 @@ test_that("can combine models with gradients", {
 
 
 test_that("both models require gradients to create gradient function", {
-  a <- ex_simple_gamma1(1)
+  a <- mcstate_model(list(parameters = "x",
+                          density = identity,
+                          gradient = identity))
   b <- mcstate_model(list(parameters = "x",
                           density = function(x) dnorm(x, log = TRUE)))
   expect_false(
