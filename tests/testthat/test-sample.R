@@ -132,3 +132,17 @@ test_that("can run more than one chain, in parallel", {
 
   expect_identical(res1, res2)
 })
+
+
+test_that("need a direct sample function in order to start sampling", {
+  model1 <- ex_simple_gamma1()
+  model2 <- mcstate_model(list(density = model1$density,
+                               parameters = model1$parameters,
+                               domain = model1$domain))
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  expect_no_error(
+    mcstate_sample(model1, sampler, 10))
+  expect_error(
+    mcstate_sample(model2, sampler, 10),
+    "'initial' must be provided with this model")
+})
