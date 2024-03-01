@@ -174,11 +174,10 @@ test_that("can combine gradients where parameters do not agree", {
   b <- mcstate_model(list(
     parameters = c("x", "y"),
     density = identity,
-    gradient = sqrt))
+    gradient = log))
   ab <- a + b
   expect_true(ab$properties$has_gradient)
-  skip("wip")
   expect_equal(
     ab$gradient(c(2, 3, 4)),
-    c(sqrt(2), sqrt(3) + log(3), log(3)))
+    c(sqrt(2) + log(2), sqrt(3), log(4)))
 })

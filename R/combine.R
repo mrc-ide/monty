@@ -135,10 +135,15 @@ model_combine_gradient <- function(a, b, parameters, properties, call = NULL) {
                   "to create a gradient from the combination")),
       call = call)
   }
+
+  n_pars <- length(parameters)
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
   function(x, ...) {
-    a$gradient(x[i_a], ...) + b$gradient(x[i_b], ...)
+    ret <- numeric(n_pars)
+    ret[i_a] <- ret[i_a] + a$gradient(x[i_a], ...)
+    ret[i_b] <- ret[i_b] + b$gradient(x[i_b], ...)
+    ret
   }
 }
 
