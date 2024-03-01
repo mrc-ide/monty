@@ -59,6 +59,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
                                      initial_scaling = 1,
                                      min_scaling = 0,
                                      scaling_increment = NULL,
+                                     log_scaling_update = TRUE,
                                      acceptance_target = 0.234,
                                      initial_vcv_weight = 1000,
                                      forget_rate = 0.2,
@@ -90,6 +91,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     
     internal$history_pars <- c()
     internal$included <- c()
+    internal$scaling_history <- internal$scaling
   }
 
   step <- function(state, model, rng) {
@@ -127,7 +129,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$scaling <- 
       update_scaling(internal$scaling, internal$iteration, accept_prob,
                      internal$scaling_increment, min_scaling, acceptance_target, 
-                     pre_diminish, internal$n_start)
+                     pre_diminish, internal$n_start, log_scaling_update)
+    internal$scaling_history <- c(internal$scaling_history, internal$scaling)
     internal$autocorrelation <- update_autocorrelation(
       state$pars, internal$weight, internal$autocorrelation, pars_remove)
     internal$mean <- update_mean(state$pars, internal$weight, internal$mean,
@@ -198,11 +201,16 @@ check_replacement <- function(iteration, forget_rate, forget_end) {
 
 update_scaling <- function(scaling, iteration, accept_prob, scaling_increment,
                            min_scaling, acceptance_target, pre_diminish, 
-                           n_start) {
-  log_scaling_change <- scaling_increment * (accept_prob - acceptance_target) /
+                           n_start, log_scaling_update) {
+  scaling_change <- scaling_increment * (accept_prob - acceptance_target) /
     sqrt(n_start + max(0, iteration - pre_diminish))
   
-  pmax(min_scaling, scaling * exp(log_scaling_change))
+  if (log_scaling_update) {
+    scaling <- pmax(min_scaling, scaling * exp(scaling_change))
+  } else {
+    scaling <- pmax(min_scaling, scaling + scaling_change)
+  }
+  
 }
 
 
