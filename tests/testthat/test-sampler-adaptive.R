@@ -1,6 +1,6 @@
 test_that("can draw samples from a trivial model", {
-  m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_adaptive(vcv = matrix(0.01, 1, 1))
+  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  sampler <- mcstate_sampler_adaptive(vcv = diag(c(0.01, 0.01)))
   res <- mcstate_sample(m, sampler, 5000)
   expect_equal(names(res), c("pars", "density", "details", "chain"))
 
