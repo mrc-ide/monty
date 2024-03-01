@@ -144,7 +144,7 @@ test_that("can combine models with gradients", {
   a <- ex_simple_gamma1(1)
   b <- ex_simple_gamma1(2)
   ab <- a + b
-  expect_true(ab$has_gradient)
+  expect_true(ab$properties$has_gradient)
   expect_equal(ab$gradient(3),
                a$gradient(3) + b$gradient(3))
 })
