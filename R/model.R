@@ -252,7 +252,7 @@ validate_model_rng_state <- function(model, properties, call) {
     return(NULL)
   }
   if (!is.function(model$set_rng_state)) {
-    if (isTRUE(model$is_stochastic)) {
+    if (isTRUE(properties$is_stochastic)) {
       hint <- paste("You have specified 'is_stochastic = TRUE', so in order",
                     "to use your stochastic model we need a way of setting",
                     "its state")

@@ -133,4 +133,15 @@ test_that("stochastic models need an rng setting function", {
       list(density = identity, parameters = "a", set_rng_state = TRUE)),
     "Expected 'model$set_rng_state' to be a function",
     fixed = TRUE)
+  expect_error(
+    mcstate_model(
+      list(density = identity, parameters = "a", set_rng_state = TRUE),
+      mcstate_model_properties(is_stochastic = TRUE)),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
+  expect_no_error(
+    res <- mcstate_model(
+      list(density = identity, parameters = "a", set_rng_state = TRUE),
+      mcstate_model_properties(is_stochastic = FALSE)))
+  expect_null(res$set_rng_state)
 })
