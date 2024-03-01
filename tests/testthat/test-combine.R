@@ -49,17 +49,6 @@ test_that("can't create direct_sample if neither model has method", {
 })
 
 
-test_that("direct sampling must be for a superset of parameters", {
-  a <- mcstate_model(list(parameters = "y",
-                          density = function(x) dnorm(x, log = TRUE)))
-  b <- mcstate_model(list(
-    parameters = c("x", "y"),
-    density = function(x) sum(dnorm(x, sd = c(1, 10), log = TRUE)),
-    direct_sample = function(rng) rng$normal(2, 0, c(1, 10))))
-  ab <- a + b
-})
-
-
 test_that("can combine domains", {
   a <- mcstate_model(list(parameters = "y",
                           density = identity,
@@ -71,4 +60,78 @@ test_that("can combine domains", {
   ab <- a + b
   expect_equal(ab$domain,
                rbind(y = c(-3, 5), x = c(-10, 10)))
+})
+
+
+test_that("direct sampling may reorder parameters", {
+  a <- mcstate_model(list(parameters = "y",
+                          density = function(x) dnorm(x, log = TRUE)))
+  b <- mcstate_model(list(
+    parameters = c("x", "y"),
+    density = function(x) sum(dnorm(x, sd = c(1, 10), log = TRUE)),
+    direct_sample = function(rng) rng$normal(2, 0, c(1, 10))))
+  ab <- a + b
+  expect_true(ab$properties$has_direct_sample)
+  r1 <- mcstate_rng$new(seed = 1)
+  r2 <- mcstate_rng$new(seed = 1)
+  expect_equal(ab$direct_sample(r1),
+               b$direct_sample(r2)[2:1]) # reversed, to align parameters
+})
+
+
+test_that("direct sampling requires that only one model is sampleable", {
+  a <- ex_simple_gamma1(1)
+  b <- ex_simple_gamma1(2)
+  err <- expect_error(
+    mcstate_model_combine(a, b,
+                          mcstate_model_properties(has_direct_sample = TRUE)),
+    "Can't create a direct_sample from these models")
+  expect_match(err$body, "Both models have a 'direct_sample'")
+})
+
+
+test_that("direct sampling requires that a model is sampleable", {
+  a <- mcstate_model(list(parameters = "a", density = identity))
+  err <- expect_error(
+    mcstate_model_combine(a, a,
+                          mcstate_model_properties(has_direct_sample = TRUE)),
+    "Can't create a direct_sample from these models")
+  expect_match(err$body, "Neither of your models have 'direct_sample' methods")
+})
+
+
+test_that("require that all parameters can be sampled", {
+  x <- mcstate_model(list(
+    parameters = c("a", "b"),
+    density = identity))
+  y <- mcstate_model(list(
+    parameters = c("a", "b", "c"),
+    density = identity,
+    direct_sample = identity))
+  z <- mcstate_model(list(
+    parameters = c("a", "b", "c", "d"),
+    density = identity))
+  expect_true((x + y)$properties$has_direct_sample)
+  expect_false((x + z)$properties$has_direct_sample)
+  expect_error(
+    y + z,
+    "Can't create a direct_sample from these models as 'a' does not")
+})
+
+
+test_that("validate input args", {
+  x <- ex_simple_gamma1()
+  expect_error(
+    mcstate_model_combine(x, NULL),
+    "Expected 'b' to be a 'mcstate_model' object")
+  expect_error(
+    mcstate_model_combine(NULL, x),
+    "Expected 'a' to be a 'mcstate_model' object")
+  expect_error(
+    mcstate_model_combine(x, x, TRUE),
+    "Expected 'properties' to be a 'mcstate_model_properties' object")
+  expect_error(
+    x + NULL,
+    "Addition via '+' is only defined for 'mcstate_model",
+    fixed = TRUE)
 })

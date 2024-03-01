@@ -157,13 +157,7 @@ validate_model_properties <- function(properties, call = NULL) {
   if (is.null(properties)) {
     return(mcstate_model_properties())
   }
-
-  if (!inherits(properties, "mcstate_model_properties")) {
-    cli::cli_abort(
-      "Expected 'properties' to be a 'mcstate_model_properties' object",
-      arg = "properties", call = call)
-  }
-
+  assert_is(properties, "mcstate_model_properties", call = call)
   properties
 }
 

@@ -55,18 +55,19 @@
 ##'
 ##' @export
 mcstate_model_combine <- function(a, b, properties = NULL) {
-  if (is.null(properties)) {
-    properties <- mcstate_model_properties()
-  }
+  call <- environment()
+  assert_is(a, "mcstate_model", call = call)
+  assert_is(b, "mcstate_model", call = call)
+  properties <- validate_model_properties(properties, call)
 
   parameters <- union(a$parameters, b$parameters)
   domain <- model_combine_domain(a, b, parameters)
   density <- model_combine_density(a, b, parameters)
 
   gradient <- model_combine_gradient(
-    a, b, parameters, properties, environment())
+    a, b, parameters, properties, call)
   direct_sample <- model_combine_direct_sample(
-    a, b, parameters, properties, environment())
+    a, b, parameters, properties, call)
 
   mcstate_model(
     list(model = list(a, b),
