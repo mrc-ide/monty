@@ -189,3 +189,20 @@ test_that("can't restart chains that don't have restart information", {
   expect_error(mcstate_sample_continue(res, 50),
                "Your chains are not restartable")
 })
+
+
+test_that("continuing requires that we have a samples object", {
+  model <- ex_simple_gamma1()
+  expect_error(mcstate_sample_continue(model, 50),
+               "Expected 'samples' to be an 'mcstate_samples' object")
+})
+
+
+test_that("can't append chains that have details", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  res <- mcstate_sample(model, sampler, 5, 1, restartable = TRUE)
+  res$details <- list()
+  expect_error(mcstate_sample_continue(res, 5),
+               "Can't yet merge chains with details")
+})

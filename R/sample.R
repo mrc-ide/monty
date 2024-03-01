@@ -234,7 +234,9 @@ append_chains <- function(prev, curr) {
   pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
   density <- c(prev$density, curr$density)[k]
   if (!is.null(prev$details) || !is.null(curr$details)) {
-    browser()
+    ## This needs to wait until hmc or adaptive sampling are merged to
+    ## work with.
+    cli::cli_abort("Can't yet merge chains with details")
   } else {
     details <- NULL
   }
