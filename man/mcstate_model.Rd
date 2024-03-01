@@ -18,7 +18,7 @@ An object of class \code{mcstate_model}.  This will have elements:
 \itemize{
 \item \code{model}: The model as provided
 \item \code{parameters}: The parameter name vector
-\item \code{domain}: The parameter domain matrix
+\item \code{domain}: The parameter domain matrix, named with your parameters
 \item \code{direct_sample}: The \code{direct_sample} function, if provided by the model
 \item \code{gradient}: The \code{gradient} function, if provided by the model
 \item \code{properties}: A list of properties of the model;
