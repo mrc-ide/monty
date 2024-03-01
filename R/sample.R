@@ -63,7 +63,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
 
   samples <- combine_chains(res)
   if (restartable) {
-    samples$restart <- restart_data(res, sampler, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
 }
@@ -100,6 +100,7 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
 
   rng <- lapply(samples$restart$rng_state,
                 function(s) mcstate_rng$new(seed = s))
+  model <- samples$restart$model
   pars <- samples$restart$pars
   sampler <- samples$restart$sampler
   runner <- samples$restart$runner
@@ -108,7 +109,7 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
   samples <- append_chains(samples, combine_chains(res))
 
   if (restartable) {
-    samples$restart <- restart_data(res, sampler, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
 }
@@ -254,7 +255,7 @@ initial_rng <- function(n_chains, seed = NULL) {
 }
 
 
-restart_data <- function(res, sampler, runner) {
+restart_data <- function(res, model, sampler, runner) {
   ## TODO: thisis not actually enough; we also need the state from any
   ## stateful sampler (so that's the case for the adaptive sampler and
   ## for hmc with debug enabled)
@@ -265,6 +266,7 @@ restart_data <- function(res, sampler, runner) {
   }
   list(rng_state = lapply(res, function(x) x$internal$rng_state),
        pars = pars,
+       model = model,
        sampler = sampler,
        runner = runner)
 }
