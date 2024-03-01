@@ -10,6 +10,9 @@ mcstate_model_combine(a, b, properties = NULL)
 \item{a}{The first model}
 
 \item{b}{The second model}
+
+\item{properties}{A \link{mcstate_model_properties} object, used to
+control (or enforce) properties of the combined model.}
 }
 \value{
 A \link{mcstate_model} object

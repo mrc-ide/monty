@@ -48,6 +48,9 @@
 ##'
 ##' @param b The second model
 ##'
+##' @param properties A [mcstate_model_properties] object, used to
+##'   control (or enforce) properties of the combined model.
+##'
 ##' @return A [mcstate_model] object
 ##'
 ##' @export
