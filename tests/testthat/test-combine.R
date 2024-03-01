@@ -87,6 +87,9 @@ test_that("direct sampling requires that only one model is sampleable", {
                           mcstate_model_properties(has_direct_sample = TRUE)),
     "Can't create a direct_sample from these models")
   expect_match(err$body, "Both models have a 'direct_sample'")
+  ab <- mcstate_model_combine(
+    a, b, mcstate_model_properties(has_direct_sample = FALSE))
+  expect_false(ab$properties$has_direct_sample)
 })
 
 
@@ -134,4 +137,48 @@ test_that("validate input args", {
     x + NULL,
     "Addition via '+' is only defined for 'mcstate_model",
     fixed = TRUE)
+})
+
+
+test_that("can combine models with gradients", {
+  a <- ex_simple_gamma1(1)
+  b <- ex_simple_gamma1(2)
+  ab <- a + b
+  expect_true(ab$has_gradient)
+  expect_equal(ab$gradient(3),
+               a$gradient(3) + b$gradient(3))
+})
+
+
+test_that("both models require gradients to create gradient function", {
+  a <- ex_simple_gamma1(1)
+  b <- mcstate_model(list(parameters = "x",
+                          density = function(x) dnorm(x, log = TRUE)))
+  expect_false(
+    mcstate_model_combine(a, b)$properties$has_gradient)
+  p <- mcstate_model_properties(has_gradient = FALSE)
+  expect_false(
+    mcstate_model_combine(a, b, p)$properties$has_gradient)
+  p <- mcstate_model_properties(has_gradient = TRUE)
+  expect_error(
+    mcstate_model_combine(a, b, p),
+    "Can't create a gradient from these models")
+})
+
+
+test_that("can combine gradients where parameters do not agree", {
+  a <- mcstate_model(list(
+    parameters = c("y", "z"),
+    density = identity,
+    gradient = sqrt))
+  b <- mcstate_model(list(
+    parameters = c("x", "y"),
+    density = identity,
+    gradient = sqrt))
+  ab <- a + b
+  expect_true(ab$properties$has_gradient)
+  skip("wip")
+  expect_equal(
+    ab$gradient(c(2, 3, 4)),
+    c(sqrt(2), sqrt(3) + log(3), log(3)))
 })
