@@ -5,20 +5,20 @@
 \title{Adaptive Metropolis-Hastings Sampler}
 \usage{
 mcstate_sampler_adaptive(
-  vcv,
-  initial_scaling = 0.2,
-  scaling_increment = 0.01,
+  initial_vcv,
+  initial_scaling = 1,
+  min_scaling = 0,
+  scaling_increment = NULL,
+  log_scaling_update = TRUE,
   acceptance_target = 0.234,
-  initial_weight = 1000,
-  adaptive_contribution = 0.95
+  initial_vcv_weight = 1000,
+  forget_rate = 0.2,
+  forget_end = Inf,
+  adapt_end = Inf,
+  pre_diminish = 0
 )
 }
 \arguments{
-\item{vcv}{An initial variance covariance matrix; we'll start from
-this point and adapt the matrix over steps towards something
-that more closely resembles the covariance matrix of your
-distribution.}
-
 \item{initial_scaling}{The initial scaling of the variance
 covariance matrix to be used to generate the multivariate normal
 proposal for the random-walk Metropolis-Hasting algorithm.}
@@ -30,6 +30,11 @@ after each adaptive step.}
 \item{acceptance_target}{The target for the fraction of proposals
 that should be accepted (optimally) for the adaptive part of the
 mixture model.}
+
+\item{vcv}{An initial variance covariance matrix; we'll start from
+this point and adapt the matrix over steps towards something
+that more closely resembles the covariance matrix of your
+distribution.}
 
 \item{initial_weight}{Initial weight of the variance-covariance
 matrix used to build the proposal of the random-walk. Higher
