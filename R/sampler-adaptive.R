@@ -118,6 +118,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$mean <- state$pars
     d <- length(internal$mean)
     internal$autocorrelation <- matrix(0, d, d)
+    internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
+                               internal$weight)
     
     internal$scaling <- initial_scaling
     internal$scaling_increment <- scaling_increment %||%
@@ -131,11 +133,11 @@ mcstate_sampler_adaptive <- function(initial_vcv,
   }
 
   step <- function(state, model, rng) {
-    vcv <- adaptive_vcv(internal$scaling, internal$autocorrelation,
-                        internal$weight, internal$mean, initial_vcv,
-                        initial_vcv_weight)
+    proposal_vcv <- 
+      calc_proposal_vcv(internal$scaling, internal$vcv, internal$weight,
+                        initial_vcv, initial_vcv_weight)
     
-    pars_next <- rmvnorm(state$pars, vcv, rng)
+    pars_next <- rmvnorm(state$pars, proposal_vcv, rng)
 
     u <- rng$random_real(1)
     density_next <- model$density(pars_next)
@@ -171,6 +173,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
       state$pars, internal$weight, internal$autocorrelation, pars_remove)
     internal$mean <- update_mean(state$pars, internal$weight, internal$mean,
                                  pars_remove)
+    internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
+                               internal$weight)
     internal$included <- 
       update_included(internal$included, internal$iteration, is_replacement)
 
@@ -215,15 +219,9 @@ qp <- function(x) {
 }
 
 
-adaptive_vcv <- function(scaling, autocorrelation, weight, mean, initial_vcv,
-                         initial_vcv_weight) {
-  if (weight > 1) {
-    vcv <- autocorrelation - weight / (weight - 1) * qp(mean)
-  } else {
-    vcv <- 0 * autocorrelation
-  }
-  
-  d <- length(mean)
+calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
+                              initial_vcv_weight) {
+  d <- dim(vcv)[1]
   
   weighted_vcv <-
     ((weight - 1) * vcv + (initial_vcv_weight + d + 1) * initial_vcv) /
@@ -286,6 +284,17 @@ update_mean <- function(pars, weight, mean, pars_remove) {
   }
   
   mean
+}
+
+
+update_vcv <- function(mean, autocorrelation, weight) {
+  if (weight > 1) {
+    vcv <- autocorrelation - weight / (weight - 1) * qp(mean)
+  } else {
+    vcv <- 0 * autocorrelation
+  }
+  
+  vcv
 }
 
 
