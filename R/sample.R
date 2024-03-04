@@ -201,7 +201,6 @@ combine_chains <- function(res) {
   density <- unlist(lapply(res, "[[", "density"))
   details <- lapply(res, "[[", "details")
   details <- if (all(vlapply(details, is.null))) NULL else details
-  rng_state <- lapply(res, function(x) x$internal$rng_state)
 
   used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
   if (any(used_r_rng)) {
