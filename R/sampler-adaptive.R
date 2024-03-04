@@ -153,7 +153,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$iteration <- internal$iteration + 1
     internal$history_pars <- rbind(internal$history_pars, state$pars) 
     if (internal$iteration > adapt_end) {
-      return(invisible())
+      internal$scaling_history <- c(internal$scaling_history, internal$scaling)
+      return(state)
     }
     is_replacement <- 
       check_replacement(internal$iteration, forget_rate, forget_end)

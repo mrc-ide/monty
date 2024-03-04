@@ -3,7 +3,8 @@ test_that("Empirical VCV calculated correctly", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
   
   sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
-                                      forget_rate = 0)
+                                      forget_rate = 0,
+                                      log_scaling_update = FALSE)
   res <- mcstate_sample(m, sampler, 5000)
   expect_equal(names(res), c("pars", "density", "details", "chain"))
   ## forget_rate = 0 so full chain should be included in VCV
@@ -31,6 +32,19 @@ test_that("Empirical VCV calculated correctly", {
   expect_equal(res$details[[1]]$weight, 4750)
   expect_equal(res$details[[1]]$included, seq(251, 5000, by = 1))
   expect_equal(res$details[[1]]$vcv, cov(res$pars[252:5001,]),
+               ignore_attr = TRUE)
+  
+  
+  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
+                                      forget_rate = 0.25,
+                                      forget_end = 500,
+                                      adapt_end = 1000)
+  res <- mcstate_sample(m, sampler, 5000)
+  ## forget_rate = 0.25, forget_end = 500 and adapt_end = 100 so VCV should
+  ## only include parameter sets 126 to 1000
+  expect_equal(res$details[[1]]$weight, 875)
+  expect_equal(res$details[[1]]$included, seq(126, 1000, by = 1))
+  expect_equal(res$details[[1]]$vcv, cov(res$pars[127:1001,]),
                ignore_attr = TRUE)
   
 })
