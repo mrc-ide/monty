@@ -225,11 +225,10 @@ combine_chains <- function(res) {
 ## This is absolutely terrible, but it will get there.
 append_chains <- function(prev, curr) {
   n_chains <- length(prev$restart$rng_state)
-  i <- split(seq_along(prev$chain), factor(prev$chain, seq_len(n_chains)))
-  j <- lapply(
-    split(seq_along(curr$chain), factor(curr$chain, seq_len(n_chains))),
-    function(x) x[-1] + length(prev$chain))
-  k <- unlist(matrix(c(i, j), 2, byrow = TRUE))
+  i <- split(seq_along(prev$chain), prev$chain)
+  j <- split(seq_along(curr$chain) + length(prev$chain), curr$chain)
+  j <- lapply(j, function(x) x[-1])
+  k <- unlist(rbind(i, j))
 
   pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
   density <- c(prev$density, curr$density)[k]
