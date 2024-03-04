@@ -14,7 +14,30 @@ mixture_gaussians <- function(symetric_means = 5) {
     domain = cbind(rep(-Inf, 1), rep(Inf, 1))))
 }
 
-m <- mixture_gaussians(10)
+#tempered mixture model
+#beta = 0, density is dnorm(0,1) - our prior density
+#beta = 1, density is dnorm(0,1)*pdf(mixture) - can be seen as our posterior
+tempered_mixture <- function(symetric_means = 5, beta) {
+  mcstate_model(list(
+    parameters = c("x"),
+    direct_sample = function(rng) { #still direct sample from Normal(0,1)
+      rng$random_normal(1)
+    },
+    density = function(x) {
+      #Note that here we assume some sort of Bayesian case with beta = 0 is prior and beta = 1, prior*mixture_gaussian
+      #Note also that the density is unormalised!
+      beta*log(.5 * dnorm(x+symetric_means) +  .5* dnorm(x-symetric_means))+dnorm(x, log=TRUE)
+    },
+    gradient = function(x){
+      beta*(-((x+symetric_means)*dnorm(x+symetric_means)+(x-symetric_means)*dnorm(x-symetric_means))/(dnorm(x+symetric_means) +  dnorm(x-symetric_means)))-x 
+    },
+    domain = cbind(rep(-Inf, 1), rep(Inf, 1))))
+}
+
+#plot(the posterior density)
+m_T <- tempered_mixture(10, 1)
+x <- seq(-15,15,length.out=1000)
+plot(x, exp(m_T$density(x)), type="l")
 
 #Create an HMC sampler
 sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
@@ -22,49 +45,79 @@ sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
 
 #Sample m using HMC sampler
 set.seed(1)
-res <- mcstate_sample(m, sampler, 200000)
+res <- mcstate_sample(m_T, sampler, 20) #200000)
 hist(res$pars, breaks=100)
-
-# 
-# ls(sampler)
-# ls(environment(sampler$initialise))
-# 
-# sampler$initialise(m$direct_sample(rng),m,rng)
-
-
-#Create a RNG
-rng <- mcstate_rng$new()
-
-#Create an initial state for a PT sampler using m
-x_0 <- list()
-x_0$pars <- m$direct_sample(rng)
-x_0$density <- m$density(x_0$pars)
-
-#Create internal$transform and internal$sample_momentum
-sampler$initialise(m$direct_sample(rng),m,rng)
-
-#Do one HMC step
-sampler$step(x_0,m,rng)
-
-x<-x_0
-pars_res <- x$pars
-for(i in 1:10000)
-{
-  x <- sampler$step(x,m,rng)
-  pars_res <- rbind(pars_res, x$pars)
-}
-plot(pars_res[,1], pars_res[,2])
-
-m1 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-m2 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-
-bb <- list(m1,m2)
-bb
 
 N_temp <- 15
 beta <- seq(0,N_temp)/N_temp
-PT_samplers <- lapply(beta,FUN = function(x) {
-  samp <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  samp$beta <- x
-  samp
+beta_index <- seq(N_temp+1)
+#Create N_temp+1 "machines" to ease the leap to parallel implementation
+#In a serial version we could just use the same sampler
+PT_machine <- lapply(beta,FUN = function(x) {list(
+  sampler = mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10),
+  beta = x,
+  model = tempered_mixture(10, x),
+  rng = mcstate_rng$new())
   })
+
+#initialisation of the "machines"
+for(i in seq(N_temp+1)){
+  PT_machine[[i]]$state$pars <- PT_machine[[i]]$model$direct_sample(PT_machine[[i]]$rng)
+  PT_machine[[i]]$state$density <- PT_machine[[i]]$model$density(PT_machine[[i]]$state$pars)
+  PT_machine[[i]]$sampler$initialise(PT_machine[[i]]$model$direct_sample(PT_machine[[i]]$rng),PT_machine[[i]]$model,PT_machine[[i]]$rng)
+}
+
+m <- mixture_gaussians(10) #the "likelihood model" when we have beta=0, prior, and beta=1, posterior
+even_step <- FALSE
+n_iterations <- 10000
+x_res <- NULL
+for(k in seq(n_iterations)){
+  
+  #all the machine do 1 HMC step => exploration step
+  for(i in seq(N_temp+1)){
+    if(PT_machine[[i]]$beta==0)
+    {
+      PT_machine[[i]]$state$pars <- PT_machine[[i]]$model$direct_sample(PT_machine[[i]]$rng)
+      PT_machine[[i]]$state$density <- PT_machine[[i]]$model$density(PT_machine[[i]]$state$pars)
+    } else {
+      PT_machine[[i]]$state <- PT_machine[[i]]$sampler$step(PT_machine[[i]]$state,
+                                                            PT_machine[[i]]$model,
+                                                            PT_machine[[i]]$rng)
+    }}
+  
+  #browser()
+  #communication step
+  if(even_step){
+    index <- which(seq(N_temp)%%2==0)
+    } else {
+      index <- which(seq(N_temp)%%2==1) 
+    }
+  
+  for(j in index){
+    #first machine
+    i1 <- beta_index[j]
+    i2 <- beta_index[j+1]
+    
+    #acceptance probability for the exhange
+    #m$density is used - the log density of the "likelihood" or target function over prior
+    alpha <- min(0,(beta[j+1]-beta_index[j])*(m$density(PT_machine[[i2]]$state$pars)-m$density(PT_machine[[i1]]$state$pars)))
+    if(log(runif(1))<alpha) { #swap
+      beta_index[j] <- i2
+      beta_index[j+1] <- i1
+      #this bit is a bit of a hack, but avoid exchanging the states accross "machines"
+      PT_machine[[i2]]$beta <- beta[j]
+      environment(PT_machine[[i2]]$model$density)$beta <- beta[j]
+      PT_machine[[i1]]$beta <- beta[j+1]
+      environment(PT_machine[[i1]]$model$density)$beta <- beta[j+1]
+    }
+  }
+  even_step <- !even_step
+  i_target <- beta_index[N_temp+1]
+  x_res <- rbind(x_res, unlist(PT_machine[[i_target]]$state))
+}
+
+    
+    
+  
+
+
