@@ -10,7 +10,8 @@ mcstate_sample(
   n_steps,
   initial = NULL,
   n_chains = 1L,
-  runner = NULL
+  runner = NULL,
+  restartable = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,10 @@ run chains in series (via \link{mcstate_runner_serial}).  The only
 other current option is \link{mcstate_runner_parallel} which uses the
 \code{parallel} package to run chains in parallel.  If you only run
 one chain then this argument is best left alone.}
+
+\item{restartable}{Logical, indicating if the chains should be
+restartable.  This will add additional data to the chains
+object.}
 }
 \value{
 A list of parameters and densities.

@@ -121,7 +121,8 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   ## surface to the user in the final object (or summarise them in
   ## some particular way with no guarantees about the format).  We
   ## might hold things like start and stop times here in future.
-  internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state))
+  internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state),
+                   rng_state = rng$state())
 
   list(pars = history_pars,
        density = history_density,
