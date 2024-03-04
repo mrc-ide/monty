@@ -39,9 +39,4 @@ test_that("can draw samples from a random model", {
   sampler <- mcstate_sampler_random_walk(vcv = vcv)
   res <- mcstate_sample(m, sampler, 20)
   expect_setequal(names(res), c("pars", "density", "details", "chain"))
-  ## OK, this is ready then to start thinking about how we inject
-  ## observer support in here; we'll need access to the actual model
-  ## in order to get trajectories out etc, but that's not super
-  ## obvious really; that means we're going to need some sort of
-  ## special sauce for the observer function really.
 })
