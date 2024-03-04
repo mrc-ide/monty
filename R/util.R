@@ -60,3 +60,8 @@ rbind_list <- function(x) {
   stopifnot(length(nc) == 1)
   do.call("rbind", x)
 }
+
+
+as_function <- function(args, body, env) {
+  as.function(c(args, body), env)
+}
