@@ -125,7 +125,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$scaling_increment <- scaling_increment %||%
       calc_scaling_increment(n_pars, acceptance_target,
                              log_scaling_update)
-    internal$n_start <- calc_n_start(acceptance_target)
+    internal$n_start <- 5 / (acceptance_target * (1 - acceptance_target))
     
     internal$history_pars <- c()
     internal$included <- c()
@@ -211,11 +211,6 @@ calc_scaling_increment <- function(n_pars, acceptance_target,
 }
 
 
-calc_n_start <- function(acceptance_target) {
-  5 / (acceptance_target * (1 - acceptance_target))
-}
-
-
 qp <- function(x) {
   outer(x, x)
 }
@@ -223,7 +218,7 @@ qp <- function(x) {
 
 calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
                               initial_vcv_weight) {
-  n_pars <- dim(vcv)[1]
+  n_pars <- nrow(vcv)
   
   weighted_vcv <-
     ((weight - 1) * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
