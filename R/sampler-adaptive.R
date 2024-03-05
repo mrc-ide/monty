@@ -40,7 +40,13 @@
 ##'   multiplied by the scaling parameter squared times 2.38^2 / n_pars (where 
 ##'   n_pars is the number of fitted parameters). Thus, in a Gaussian target
 ##'   parameter space, the optimal scaling will be around 1.
-##'   
+##'
+##' @param initial_scaling_weight The initial weight used in the scaling update.
+##'   The scaling weight will increase after the first `pre_diminish`
+##'   iterations, and as the scaling weight increases the adaptation of the
+##'   scaling diminishes. If `NULL` (the default) the value is 
+##'   5 / (acceptance_target * (1 - acceptance_target)).
+##'
 ##' @param min_scaling The minimum scaling of the variance covariance
 ##'   matrix to be used to generate the multivariate normal proposal
 ##'   for the random-walk Metropolis-Hastings algorithm.
@@ -93,6 +99,7 @@
 mcstate_sampler_adaptive <- function(initial_vcv,
                                      initial_vcv_weight = 1000,
                                      initial_scaling = 1,
+                                     initial_scaling_weight = NULL,
                                      min_scaling = 0,
                                      scaling_increment = NULL,
                                      log_scaling_update = TRUE,
@@ -125,7 +132,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$scaling_increment <- scaling_increment %||%
       calc_scaling_increment(n_pars, acceptance_target,
                              log_scaling_update)
-    internal$n_start <- 5 / (acceptance_target * (1 - acceptance_target))
+    internal$scaling_weight <- initial_scaling_weight %||%
+      5 / (acceptance_target * (1 - acceptance_target))
     
     internal$history_pars <- c()
     internal$included <- c()
@@ -157,6 +165,10 @@ mcstate_sampler_adaptive <- function(initial_vcv,
       return(state)
     }
     
+    if (internal$iteration > pre_diminish) {
+      internal$scaling_weight <- internal$scaling_weight + 1
+    }
+    
     is_replacement <- 
       check_replacement(internal$iteration, forget_rate, forget_end)
     if (is_replacement) {
@@ -169,9 +181,9 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     }
     
     internal$scaling <- 
-      update_scaling(internal$scaling, internal$iteration, accept_prob,
+      update_scaling(internal$scaling, internal$scaling_weight, accept_prob,
                      internal$scaling_increment, min_scaling, acceptance_target, 
-                     pre_diminish, internal$n_start, log_scaling_update)
+                     log_scaling_update)
     internal$scaling_history <- c(internal$scaling_history, internal$scaling)
     internal$autocorrelation <- update_autocorrelation(
       state$pars, internal$weight, internal$autocorrelation, pars_remove)
@@ -238,11 +250,11 @@ check_replacement <- function(iteration, forget_rate, forget_end) {
 }
 
 
-update_scaling <- function(scaling, iteration, accept_prob, scaling_increment,
-                           min_scaling, acceptance_target, pre_diminish, 
-                           n_start, log_scaling_update) {
+update_scaling <- function(scaling, scaling_weight, accept_prob,
+                           scaling_increment, min_scaling,
+                           acceptance_target, log_scaling_update) {
   scaling_change <- scaling_increment * (accept_prob - acceptance_target) /
-    sqrt(n_start + max(0, iteration - pre_diminish))
+    sqrt(scaling_weight)
   
   if (log_scaling_update) {
     max(min_scaling, scaling * exp(scaling_change))

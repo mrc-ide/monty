@@ -8,6 +8,7 @@ mcstate_sampler_adaptive(
   initial_vcv,
   initial_vcv_weight = 1000,
   initial_scaling = 1,
+  initial_scaling_weight = NULL,
   min_scaling = 0,
   scaling_increment = NULL,
   log_scaling_update = TRUE,
@@ -36,6 +37,12 @@ the proposal matrix, the weighted variance covariance matrix is
 multiplied by the scaling parameter squared times 2.38^2 / n_pars (where
 n_pars is the number of fitted parameters). Thus, in a Gaussian target
 parameter space, the optimal scaling will be around 1.}
+
+\item{initial_scaling_weight}{The initial weight used in the scaling update.
+The scaling weight will increase after the first \code{pre_diminish}
+iterations, and as the scaling weight increases the adaptation of the
+scaling diminishes. If \code{NULL} (the default) the value is
+5 / (acceptance_target * (1 - acceptance_target)).}
 
 \item{min_scaling}{The minimum scaling of the variance covariance
 matrix to be used to generate the multivariate normal proposal
