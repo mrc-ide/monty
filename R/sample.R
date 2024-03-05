@@ -152,7 +152,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
                           arg = "initial", call = environment())
     ## Really this would just be from the prior; we can't directly
     ## sample from the posterior!
-    initial <- lapply(rng, function(r) model$direct_sample(r))
+    initial <- lapply(rng, function(r) direct_sample_within_domain(model, r))
   }
   if (is.list(initial)) {
     if (length(initial) != n_chains) {
@@ -206,6 +206,26 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
         arg = "initial", call = call)
     }
     initial <- matrix(initial, n_chains, n_pars, byrow = TRUE)
+  }
+
+  err <- initial < model$domain[, 1] | initial > model$domain[, 2]
+  if (any(err)) {
+    ## Reporting on this is hard because we want to know what chain
+    ## starting point is the issue, and which parameters.
+    err_parameters <- model$parameters[colSums(err) > 0]
+    hint_parameters <- "Issues with parameter{?s}: {squote(err_parameters)}"
+    err_chain <- rowSums(err) > 0
+    if (all(err_chain) && n_chains > 1) {
+      hint_chain <- "Issues with every chain"
+    } else {
+      hint_chain <-
+        "Issues with {cli::qty(sum(err_chain))}chain{?s} {which(err_chain)}"
+    }
+    cli::cli_abort(
+      c("Initial conditions do not fall within parameter domain",
+        x = hint_parameters,
+        x = hint_chain),
+      arg = "initial", call = call)
   }
   initial
 }
@@ -297,4 +317,19 @@ restart_data <- function(res, model, sampler, runner) {
        model = model,
        sampler = sampler,
        runner = runner)
+}
+
+
+direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
+  for (i in seq_len(max_attempts)) {
+    x <- model$direct_sample(rng)
+    if (all(x >= model$domain[, 1] & x <= model$domain[, 2])) {
+      return(x)
+    }
+  }
+  cli::cli_abort(
+    c("Failed to sample initial conditions within {max_attempts} attempt{?s}",
+      i = paste("Your model's 'direct_sample()' method is generating",
+                "samples that fall outside your model's domain.  Probably",
+                "you should fix one or both of these!")))
 }
