@@ -196,9 +196,6 @@ model_combine_direct_sample <- function(a, b, parameters, properties,
             "not contain all parameters in both models"),
       call = call)
   }
-  if (identical(model$parameters, parameters)) {
-    return(model$direct_sample)
-  }
   i <- match(parameters, model$parameters)
   function(...) {
     model$direct_sample(...)[i]
