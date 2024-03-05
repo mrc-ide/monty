@@ -166,15 +166,16 @@ hmc_transform <- function(domain) {
     ## Derivative of rn2model, as a multiplier to f'(x); we pass in
     ## model parameters here, not R^n space.
     deriv = function(x) {
+      ret <- numeric(length(x))
       ## d/dtheta theta -> 1
-      x[is_infinite] <- 1
+      ret[is_infinite] <- 1
       ## Here we want
       ## d/dtheta f(exp(theta)) -> exp(theta) f'(exp(theta))
       ##                        -> x f'(x)
-      x[is_semi_infinite] <- x[is_semi_infinite]
+      ret[is_semi_infinite] <- x[is_semi_infinite]
       ## See below, this one is a bit harder
-      x[is_bounded] <- dilogit_bounded(x[is_bounded], a, b)
-      x
+      ret[is_bounded] <- dilogit_bounded(x[is_bounded], a, b)
+      ret
     })
 }
 
