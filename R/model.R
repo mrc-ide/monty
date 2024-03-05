@@ -115,7 +115,7 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'
 ##' * `model`: The model as provided
 ##' * `parameters`: The parameter name vector
-##' * `domain`: The parameter domain matrix
+##' * `domain`: The parameter domain matrix, named with your parameters
 ##' * `direct_sample`: The `direct_sample` function, if provided by the model
 ##' * `gradient`: The `gradient` function, if provided by the model
 ##' * `properties`: A list of properties of the model;
@@ -157,13 +157,7 @@ validate_model_properties <- function(properties, call = NULL) {
   if (is.null(properties)) {
     return(mcstate_model_properties())
   }
-
-  if (!inherits(properties, "mcstate_model_properties")) {
-    cli::cli_abort(
-      "Expected 'properties' to be a 'mcstate_model_properties' object",
-      arg = "properties", call = call)
-  }
-
+  assert_is(properties, "mcstate_model_properties", call = call)
   properties
 }
 
@@ -196,7 +190,13 @@ validate_model_domain <- function(model, call = NULL) {
         "Expected 'model$domain' to have 2 columns,",
         "but it had {ncol(domain)}"))
     }
+    if (!is.null(rownames(domain))) {
+      if (!identical(rownames(domain), model$parameters)) {
+        cli::cli_abort("Unexpected rownames on domain")
+      }
+    }
   }
+  rownames(domain) <- model$parameters
   domain
 }
 

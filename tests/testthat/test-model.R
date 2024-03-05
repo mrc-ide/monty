@@ -6,7 +6,7 @@ test_that("can create a minimal model", {
                mcstate_model_properties(has_gradient = FALSE,
                                         has_direct_sample = FALSE,
                                         is_stochastic = FALSE))
-  expect_equal(m$domain, cbind(-Inf, Inf))
+  expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
   expect_equal(m$parameters, "a")
   expect_equal(m$density(0), dnorm(0, log = TRUE))
 })
@@ -18,7 +18,7 @@ test_that("can create a more interesting model", {
                mcstate_model_properties(has_gradient = TRUE,
                                         has_direct_sample = TRUE,
                                         is_stochastic = FALSE))
-  expect_equal(m$domain, cbind(0, Inf))
+  expect_equal(m$domain, rbind(gamma = c(0, Inf)))
   expect_equal(m$parameters, "gamma")
   expect_equal(m$density(1), dgamma(1, 1, 1, log = TRUE))
 })
@@ -79,6 +79,12 @@ test_that("validate domain", {
                        parameters = "a",
                        domain = matrix(1:4, 1, 4))),
     "Expected 'model$domain' to have 2 columns, but it had 4",
+    fixed = TRUE)
+  expect_error(
+    mcstate_model(list(density = identity,
+                       parameters = "a",
+                       domain = rbind(A = c(0, 1)))),
+    "Unexpected rownames on domain",
     fixed = TRUE)
 })
 
