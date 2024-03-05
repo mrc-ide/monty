@@ -1,5 +1,7 @@
 ##' Create a simple random walk sampler, which uses a symmetric
-##' proposal to move around parameter space.
+##' proposal to move around parameter space.  This sampler supports
+##' sampling from models where the likelihood is only computable
+##' randomly (e.g., for pmcmc).
 ##'
 ##' @title Random Walk Sampler
 ##'
@@ -37,6 +39,9 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
         cli::cli_abort(
           "Incompatible length parameters ({n_pars}) and vcv ({n_vcv})")
       }
+    }
+    if (isTRUE(model$properties$is_stochastic)) {
+      model$model$set_rng_state(rng)
     }
   }
 

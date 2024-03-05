@@ -31,11 +31,16 @@
 ##'   `parallel` package to run chains in parallel.  If you only run
 ##'   one chain then this argument is best left alone.
 ##'
+##' @param restartable Logical, indicating if the chains should be
+##'   restartable.  This will add additional data to the chains
+##'   object.
+##'
 ##' @return A list of parameters and densities.
 ##'
 ##' @export
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
-                           n_chains = 1L, runner = NULL) {
+                           n_chains = 1L, runner = NULL,
+                           restartable = FALSE) {
   if (!inherits(model, "mcstate_model")) {
     cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
                    arg = "model")
@@ -55,7 +60,58 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
   res <- runner$run(pars, model, sampler, n_steps, rng)
-  combine_chains(res)
+
+  samples <- combine_chains(res)
+  if (restartable) {
+    samples$restart <- restart_data(res, model, sampler, runner)
+  }
+  samples
+}
+
+
+##' Continue (restart) chains started by [mcstate_sample].  Requires
+##' that the original chains were run with `restartable = TRUE`.
+##' Running chains this way will result in the final state being
+##' exactly the same as running for the total (original + continued)
+##' number of steps in a single push.
+##'
+##' @title Continue sampling
+##'
+##' @param samples A `mcstate_samples` object created by
+##'   [mcstate_sample()]
+##'
+##' @param n_steps The number of new steps to run
+##'
+##' @inheritParams mcstate_sample
+##'
+##' @return A list of parameters and densities
+##' @export
+mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
+  if (!inherits(samples, "mcstate_samples")) {
+    cli::cli_abort("Expected 'samples' to be an 'mcstate_samples' object")
+  }
+  if (is.null(samples$restart)) {
+    cli::cli_abort(
+      c("Your chains are not restartable",
+        i = paste("To work with 'mcstate_sample_continue', you must",
+                  "use the argument 'restartable = TRUE' when calling",
+                  "mcstate_sample()")))
+  }
+
+  rng <- lapply(samples$restart$rng_state,
+                function(s) mcstate_rng$new(seed = s))
+  model <- samples$restart$model
+  pars <- samples$restart$pars
+  sampler <- samples$restart$sampler
+  runner <- samples$restart$runner
+
+  res <- runner$run(pars, model, sampler, n_steps, rng)
+  samples <- append_chains(samples, combine_chains(res))
+
+  if (restartable) {
+    samples$restart <- restart_data(res, model, sampler, runner)
+  }
+  samples
 }
 
 
@@ -156,16 +212,61 @@ combine_chains <- function(res) {
                 "runner")))
   }
 
-  ret <- list(pars = pars,
-              density = density,
-              details = details,
-              chain = chain)
-  class(ret) <- "mcstate_samples"
-  ret
+  samples <- list(pars = pars,
+                  density = density,
+                  details = details,
+                  chain = chain)
+  class(samples) <- "mcstate_samples"
+  samples
+}
+
+
+## This is absolutely terrible, but it will get there.
+append_chains <- function(prev, curr) {
+  n_chains <- length(prev$restart$rng_state)
+  i <- split(seq_along(prev$chain), prev$chain)
+  j <- split(seq_along(curr$chain) + length(prev$chain), curr$chain)
+  j <- lapply(j, function(x) x[-1])
+  k <- unlist(rbind(i, j))
+
+  pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
+  density <- c(prev$density, curr$density)[k]
+  if (!is.null(prev$details) || !is.null(curr$details)) {
+    ## This needs to wait until hmc or adaptive sampling are merged to
+    ## work with.
+    cli::cli_abort("Can't yet merge chains with details")
+  } else {
+    details <- NULL
+  }
+  chain <- c(prev$chain, curr$chain)[k]
+
+  samples <- list(pars = pars,
+                  density = density,
+                  details = details,
+                  chain = chain)
+  class(samples) <- "mcstate_samples"
+  samples
 }
 
 
 initial_rng <- function(n_chains, seed = NULL) {
   lapply(mcstate_rng_distributed_state(n_nodes = n_chains, seed = seed),
          function(s) mcstate_rng$new(seed = s))
+}
+
+
+restart_data <- function(res, model, sampler, runner) {
+  ## TODO: thisis not actually enough; we also need the state from any
+  ## stateful sampler (so that's the case for the adaptive sampler and
+  ## for hmc with debug enabled)
+  n_pars <- ncol(res[[1]]$pars)
+  pars <- vapply(res, function(x) x$pars[nrow(x$pars), ], numeric(n_pars))
+  if (n_pars == 1) {
+    pars <- matrix(pars, ncol = 1)
+  }
+  list(rng_state = lapply(res, function(x) x$internal$rng_state),
+       pars = pars,
+       model = model,
+       sampler = sampler,
+       runner = runner)
 }
