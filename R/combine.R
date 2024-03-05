@@ -25,12 +25,12 @@
 ##'   are assumed (reasonably) to have a zero gradient.
 ##'
 ##' * `direct_sample`: this one is hard to do the right thing for.  If
-##'   neither models can be directly sampled from that's fine, we
+##'   neither model can be directly sampled from that's fine, we
 ##'   don't directly sample.  If only one model can be sampled from
 ##'   *and* if it can sample from the union of all parameters then we
 ##'   take that function (this is the case for a prior model when
 ##'   combined with a likelihood).  Other cases will be errors, which
-##'   can be avoided by setting `has_direct_gradient = FALSE`in
+##'   can be avoided by setting `has_direct_gradient = FALSE` in
 ##'   `properties`.
 ##'
 ##' The properties of the model will be combined as above, reflecting
@@ -48,7 +48,7 @@
 ##'
 ##' @param b The second model
 ##'
-##' @param properties A [mcstate_model_properties] object, used to
+##' @param properties An [mcstate_model_properties] object, used to
 ##'   control (or enforce) properties of the combined model.
 ##'
 ##' @param name_a Name of the first model (defaulting to 'a'); you can
@@ -59,7 +59,7 @@
 ##'   use this to make error messages nicer to read, but it has no
 ##'   other practical effect.
 ##'
-##' @return A [mcstate_model] object
+##' @return An [mcstate_model] object
 ##'
 ##' @export
 mcstate_model_combine <- function(a, b, properties = NULL,
