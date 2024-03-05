@@ -210,11 +210,11 @@ ilogit_bounded <- function(theta, a, b) {
 ## Substituting the theta -> x transformation log((x - a) / (b - x)) into this
 ##
 ## > (b - a) exp(log((x - a) / (b - x))) / (exp(log((x - a) / (b - x))) + 1)^2
-## > (a - x) * (b - x) (a - b)
+## > (a - x) * (b - x) / (a - b)
 ##
-## In the case a = 0, b = 1 we get x (1 - x) which we expect
+## In the case a = 0, b = 1 we get x * (1 - x) which we expect
 ##
 ## https://en.wikipedia.org/wiki/Logistic_function#Derivative
 dilogit_bounded <- function(x, a, b) {
-  (a - x) * (b - x) * (a - b)
+  (a - x) * (b - x) / (a - b)
 }
