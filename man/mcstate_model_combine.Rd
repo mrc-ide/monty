@@ -11,7 +11,7 @@ mcstate_model_combine(a, b, properties = NULL, name_a = "a", name_b = "b")
 
 \item{b}{The second model}
 
-\item{properties}{A \link{mcstate_model_properties} object, used to
+\item{properties}{An \link{mcstate_model_properties} object, used to
 control (or enforce) properties of the combined model.}
 
 \item{name_a}{Name of the first model (defaulting to 'a'); you can
@@ -23,7 +23,7 @@ use this to make error messages nicer to read, but it has no
 other practical effect.}
 }
 \value{
-A \link{mcstate_model} object
+An \link{mcstate_model} object
 }
 \description{
 Combine two models by multiplication.  We'll need a better name
@@ -50,12 +50,12 @@ that the combination is differentiable.  If the models disagree
 in their parameters, parameters that are missing from a model
 are assumed (reasonably) to have a zero gradient.
 \item \code{direct_sample}: this one is hard to do the right thing for.  If
-neither models can be directly sampled from that's fine, we
+neither model can be directly sampled from that's fine, we
 don't directly sample.  If only one model can be sampled from
 \emph{and} if it can sample from the union of all parameters then we
 take that function (this is the case for a prior model when
 combined with a likelihood).  Other cases will be errors, which
-can be avoided by setting \code{has_direct_gradient = FALSE}in
+can be avoided by setting \code{has_direct_gradient = FALSE} in
 \code{properties}.
 }
 
