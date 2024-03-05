@@ -248,9 +248,9 @@ update_scaling <- function(scaling, iteration, accept_prob, scaling_increment,
     sqrt(n_start + max(0, iteration - pre_diminish))
   
   if (log_scaling_update) {
-    scaling <- pmax(min_scaling, scaling * exp(scaling_change))
+    max(min_scaling, scaling * exp(scaling_change))
   } else {
-    scaling <- pmax(min_scaling, scaling + scaling_change)
+    max(min_scaling, scaling + scaling_change)
   }
   
 }
