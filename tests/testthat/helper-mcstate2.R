@@ -19,13 +19,13 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
                         deterministic = FALSE) {
   testthat::skip_if_not_installed("dust")
   sir <- dust::dust_example("sir")
-  
+
   np <- 10
   end <- 150 * 4
   times <- seq(0, end, by = 4)
   ans <- sir$new(list(), 0, np, seed = 1L)$simulate(times)
   dat <- data.frame(time = times[-1], incidence = ans[5, 1, -1])
-  
+
   ## TODO: an upshot here is that our dust models are always going to
   ## need to be initialisable; we might need to sample from the
   ## statistical parameters, or set things up to allow two-phases of
@@ -34,12 +34,12 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
   model <- sir$new(list(), 0, n_particles, seed = 1L, n_threads = n_threads,
                    deterministic = deterministic)
   model$set_data(dust::dust_data(dat))
-  
+
   prior_beta_shape <- 1
   prior_beta_rate <- 1 / 0.5
   prior_gamma_shape <- 1
   prior_gamma_rate <- 1 / 0.5
-  
+
   density <- function(x) {
     beta <- x[[1]]
     gamma <- x[[2]]
@@ -56,17 +56,17 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
     }
     ll + prior
   }
-  
+
   direct_sample <- function(rng) {
     c(rng$gamma(1, prior_beta_shape, 1 / prior_beta_rate),
       rng$gamma(1, prior_gamma_shape, 1 / prior_gamma_rate))
   }
-  
+
   set_rng_state <- function(rng) {
     state <- mcstate_rng$new(rng$state(), n_particles + 1)$jump()$state()
     model$set_rng_state(state)
   }
-  
+
   mcstate_model(
     list(density = density,
          direct_sample = direct_sample,
