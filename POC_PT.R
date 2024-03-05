@@ -69,8 +69,10 @@ for(i in seq(N_temp+1)){
 
 m <- mixture_gaussians(10) #the "likelihood model" when we have beta=0, prior, and beta=1, posterior
 even_step <- FALSE
-n_iterations <- 10000
+n_iterations <- 5000
 x_res <- NULL
+beta_res <- PT_machine[[N_temp+1]]$beta
+index_res <- beta_index
 for(k in seq(n_iterations)){
   
   #all the machine do 1 HMC step => exploration step
@@ -93,30 +95,33 @@ for(k in seq(n_iterations)){
       index <- which(seq(N_temp)%%2==1) 
     }
   
-  for(j in index){
+  for(i in index){
     #first machine
-    i1 <- beta_index[j]
-    i2 <- beta_index[j+1]
-    
+    i1 <- beta_index[i]
+    #second machine
+    i2 <- beta_index[i+1]
+
     #acceptance probability for the exhange
     #m$density is used - the log density of the "likelihood" or target function over prior
-    alpha <- min(0,(beta[j+1]-beta_index[j])*(m$density(PT_machine[[i2]]$state$pars)-m$density(PT_machine[[i1]]$state$pars)))
+    alpha <- min(0,(beta[i+1]-beta_index[i])*(m$density(PT_machine[[i2]]$state$pars)-m$density(PT_machine[[i1]]$state$pars)))
     if(log(runif(1))<alpha) { #swap
-      beta_index[j] <- i2
-      beta_index[j+1] <- i1
+      beta_index[i] <- i2
+      beta_index[i+1] <- i1
       #this bit is a bit of a hack, but avoid exchanging the states accross "machines"
-      PT_machine[[i2]]$beta <- beta[j]
-      environment(PT_machine[[i2]]$model$density)$beta <- beta[j]
-      PT_machine[[i1]]$beta <- beta[j+1]
-      environment(PT_machine[[i1]]$model$density)$beta <- beta[j+1]
+      PT_machine[[i2]]$beta <- beta[i]
+      environment(PT_machine[[i2]]$model$density)$beta <- beta[i]
+      PT_machine[[i1]]$beta <- beta[i+1]
+      environment(PT_machine[[i1]]$model$density)$beta <- beta[i+1]
     }
   }
   even_step <- !even_step
   i_target <- beta_index[N_temp+1]
   x_res <- rbind(x_res, unlist(PT_machine[[i_target]]$state))
+  index_res <- rbind(index_res, beta_index)
+  beta_res <- c(beta_res, environment(PT_machine[[i_target]]$model$density)$beta)
 }
 
-    
+plot(x_res[,1])   
     
   
 
