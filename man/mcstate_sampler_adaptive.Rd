@@ -33,8 +33,8 @@ samples will be slower.}
 covariance matrix to be used to generate the multivariate normal
 proposal for the random-walk Metropolis-Hastings algorithm. To generate
 the proposal matrix, the weighted variance covariance matrix is
-multiplied by the scaling parameter squared times 2.38^2/d (where d is
-the dimension of the parameter space). Thus, in a Gaussian target
+multiplied by the scaling parameter squared times 2.38^2 / n_pars (where
+n_pars is the number of fitted parameters). Thus, in a Gaussian target
 parameter space, the optimal scaling will be around 1.}
 
 \item{min_scaling}{The minimum scaling of the variance covariance
