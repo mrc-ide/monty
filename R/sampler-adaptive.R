@@ -197,10 +197,10 @@ mcstate_sampler_adaptive <- function(initial_vcv,
 
 calc_scaling_increment <- function(d, acceptance_target, log_scaling_update) {
   if (log_scaling_update) {
-    A <- - qnorm(acceptance_target / 2)
+    A <- -qnorm(acceptance_target / 2)
     
     scaling_increment <- 
-      (1 - 1 / d) * (sqrt(2 * pi) * exp(A ^ 2 / 2)) / (2 * A) + 
+      (1 - 1 / d) * (sqrt(2 * pi) * exp(A^2 / 2)) / (2 * A) + 
       1 / (d * acceptance_target * (1 - acceptance_target))
   } else {
     scaling_increment <- 1 / 100
@@ -228,7 +228,7 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
     ((weight - 1) * vcv + (initial_vcv_weight + d + 1) * initial_vcv) /
     (weight + initial_vcv_weight + d + 1)
   
-  2.38 ^ 2 / d * scaling ^ 2 * weighted_vcv
+  2.38^2 / d * scaling^2 * weighted_vcv
 }
 
 
