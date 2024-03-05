@@ -160,12 +160,12 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     is_replacement <- 
       check_replacement(internal$iteration, forget_rate, forget_end)
     if (is_replacement) {
-      internal$included <- c(internal$included[-1L], internal$iteration)
       pars_remove <- internal$history_pars[internal$included[1L], ]
+      internal$included <- c(internal$included[-1L], internal$iteration)
     } else {
-      internal$weight <- internal$weight + 1 
-      internal$included <- c(internal$included, internal$iteration)
       pars_remove <- NULL
+      internal$included <- c(internal$included, internal$iteration)
+      internal$weight <- internal$weight + 1
     }
     
     internal$scaling <- 
@@ -179,8 +179,6 @@ mcstate_sampler_adaptive <- function(initial_vcv,
                                  pars_remove)
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
                                internal$weight)
-    internal$included <- 
-      update_included(internal$included, internal$iteration, is_replacement)
 
     state
   }
