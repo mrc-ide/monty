@@ -4,7 +4,8 @@ test_that("can create a minimal model", {
   expect_s3_class(m, "mcstate_model")
   expect_equal(m$properties,
                mcstate_model_properties(has_gradient = FALSE,
-                                        has_direct_sample = FALSE))
+                                        has_direct_sample = FALSE,
+                                        is_stochastic = FALSE))
   expect_equal(m$domain, cbind(-Inf, Inf))
   expect_equal(m$parameters, "a")
   expect_equal(m$density(0), dnorm(0, log = TRUE))
@@ -15,7 +16,8 @@ test_that("can create a more interesting model", {
   m <- ex_simple_gamma1()
   expect_equal(m$properties,
                mcstate_model_properties(has_gradient = TRUE,
-                                        has_direct_sample = TRUE))
+                                        has_direct_sample = TRUE,
+                                        is_stochastic = FALSE))
   expect_equal(m$domain, cbind(0, Inf))
   expect_equal(m$parameters, "gamma")
   expect_equal(m$density(1), dgamma(1, 1, 1, log = TRUE))
@@ -116,4 +118,30 @@ test_that("require properties are correct type", {
       list(density = identity, parameters = "a", gradient = TRUE),
       list(has_gradient = FALSE)),
     "Expected 'properties' to be a 'mcstate_model_properties' object")
+})
+
+
+test_that("stochastic models need an rng setting function", {
+  expect_error(
+    mcstate_model(
+      list(density = identity, parameters = "a"),
+      mcstate_model_properties(is_stochastic = TRUE)),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
+  expect_error(
+    mcstate_model(
+      list(density = identity, parameters = "a", set_rng_state = TRUE)),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
+  expect_error(
+    mcstate_model(
+      list(density = identity, parameters = "a", set_rng_state = TRUE),
+      mcstate_model_properties(is_stochastic = TRUE)),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
+  expect_no_error(
+    res <- mcstate_model(
+      list(density = identity, parameters = "a", set_rng_state = TRUE),
+      mcstate_model_properties(is_stochastic = FALSE)))
+  expect_null(res$set_rng_state)
 })

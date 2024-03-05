@@ -30,3 +30,13 @@ test_that("validate sampler against model on initialisation", {
     "Incompatible length parameters (1) and vcv (2)",
     fixed = TRUE)
 })
+
+
+test_that("can draw samples from a random model", {
+  set.seed(1)
+  m <- ex_dust_sir()
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- mcstate_sampler_random_walk(vcv = vcv)
+  res <- mcstate_sample(m, sampler, 20)
+  expect_setequal(names(res), c("pars", "density", "details", "chain"))
+})
