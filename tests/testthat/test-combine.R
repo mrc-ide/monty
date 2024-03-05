@@ -118,7 +118,7 @@ test_that("require that all parameters can be sampled", {
   expect_false((x + z)$properties$has_direct_sample)
   expect_error(
     y + z,
-    "Can't create a direct_sample from these models as 'a' does not")
+    "Can't create a direct_sample from these models as 'lhs' does not")
 })
 
 

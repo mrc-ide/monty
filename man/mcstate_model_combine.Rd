@@ -4,7 +4,7 @@
 \alias{mcstate_model_combine}
 \title{Combine two models}
 \usage{
-mcstate_model_combine(a, b, properties = NULL)
+mcstate_model_combine(a, b, properties = NULL, name_a = "a", name_b = "b")
 }
 \arguments{
 \item{a}{The first model}
@@ -13,6 +13,14 @@ mcstate_model_combine(a, b, properties = NULL)
 
 \item{properties}{A \link{mcstate_model_properties} object, used to
 control (or enforce) properties of the combined model.}
+
+\item{name_a}{Name of the first model (defaulting to 'a'); you can
+use this to make error messages nicer to read, but it has no
+other practical effect.}
+
+\item{name_b}{Name of the first model (defaulting to 'b'); you can
+use this to make error messages nicer to read, but it has no
+other practical effect.}
 }
 \value{
 A \link{mcstate_model} object

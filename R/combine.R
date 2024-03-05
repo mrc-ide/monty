@@ -51,13 +51,22 @@
 ##' @param properties A [mcstate_model_properties] object, used to
 ##'   control (or enforce) properties of the combined model.
 ##'
+##' @param name_a Name of the first model (defaulting to 'a'); you can
+##'   use this to make error messages nicer to read, but it has no
+##'   other practical effect.
+##'
+##' @param name_b Name of the first model (defaulting to 'b'); you can
+##'   use this to make error messages nicer to read, but it has no
+##'   other practical effect.
+##'
 ##' @return A [mcstate_model] object
 ##'
 ##' @export
-mcstate_model_combine <- function(a, b, properties = NULL) {
+mcstate_model_combine <- function(a, b, properties = NULL,
+                                  name_a = "a", name_b = "b") {
   call <- environment()
-  assert_is(a, "mcstate_model", call = call)
-  assert_is(b, "mcstate_model", call = call)
+  assert_is(a, "mcstate_model", name = name_a, call = call)
+  assert_is(b, "mcstate_model", name = name_b, call = call)
   properties <- validate_model_properties(properties, call)
 
   parameters <- union(a$parameters, b$parameters)
@@ -67,7 +76,7 @@ mcstate_model_combine <- function(a, b, properties = NULL) {
   gradient <- model_combine_gradient(
     a, b, parameters, properties, call)
   direct_sample <- model_combine_direct_sample(
-    a, b, parameters, properties, call)
+    a, b, parameters, properties, name_a, name_b, call)
 
   mcstate_model(
     list(model = list(a, b),
@@ -87,7 +96,7 @@ mcstate_model_combine <- function(a, b, properties = NULL) {
       paste("Addition via '+' is only defined for 'mcstate_model'",
             "with other 'mcstate_model' objects"))
   }
-  mcstate_model_combine(x, y, properties = NULL)
+  mcstate_model_combine(x, y, properties = NULL, name_a = "lhs", name_b = "rhs")
 }
 
 
@@ -149,7 +158,7 @@ model_combine_gradient <- function(a, b, parameters, properties, call = NULL) {
 
 
 model_combine_direct_sample <- function(a, b, parameters, properties,
-                                        call = NULL) {
+                                        name_a, name_b, call = NULL) {
   if (isFALSE(properties$has_direct_sample)) {
     return(NULL)
   }
@@ -172,12 +181,13 @@ model_combine_direct_sample <- function(a, b, parameters, properties,
       call = call)
   }
 
-  ## Next we need to check that the model with a sample has the full set of
+  ## Next we need to check that the model with a sample has the full
+  ## set of parameters
   if (a$properties$has_direct_sample) {
-    name <- "a"
+    name <- name_a
     model <- a
   } else {
-    name <- "b"
+    name <- name_b
     model <- b
   }
   if (!all(parameters %in% model$parameters)) {
