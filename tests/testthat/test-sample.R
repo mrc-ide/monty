@@ -263,3 +263,15 @@ test_that("error if provided initial conditions fall outside of domain", {
     c(x = "Issues with parameters: 'x' and 'y'",
       x = "Issues with chains 1 and 2"))
 })
+
+
+test_that("error if initial conditions do not have finite density", {
+  m <- mcstate_model(list(
+    parameters = "x",
+    direct_sample = function(rng) 1,
+    density = function(x) -Inf,
+    domain = rbind(c(-Inf, Inf))))
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  expect_error(mcstate_sample(m, sampler, 100),
+               "Chain does not have finite starting density")
+})
