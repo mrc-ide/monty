@@ -116,14 +116,14 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$iteration <- 0
     
     internal$mean <- state$pars
-    d <- length(internal$mean)
-    internal$autocorrelation <- matrix(0, d, d)
+    n_pars <- length(model$parameters)
+    internal$autocorrelation <- matrix(0, n_pars, n_pars)
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
                                internal$weight)
     
     internal$scaling <- initial_scaling
     internal$scaling_increment <- scaling_increment %||%
-      calc_scaling_increment(length(internal$mean), acceptance_target,
+      calc_scaling_increment(n_pars, acceptance_target,
                              log_scaling_update)
     internal$n_start <- calc_n_start(acceptance_target)
     
