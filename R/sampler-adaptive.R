@@ -135,8 +135,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$scaling_weight <- initial_scaling_weight %||%
       5 / (acceptance_target * (1 - acceptance_target))
     
-    internal$history_pars <- c()
-    internal$included <- c()
+    internal$history_pars <- numeric()
+    internal$included <- integer()
     internal$scaling_history <- internal$scaling
   }
 
@@ -195,10 +195,10 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     state
   }
 
-  ## Marc; do we want all of these saved out?  Did we ever decide how
-  ## to merge these over multiple chains?
   finalise <- function(state, model, rng) {
-    as.list(internal)
+    out <- as.list(internal)
+    out[c("autocorrelation", "mean", "vcv", "weight", "included",
+          "scaling_history", "scaling_weight", "scaling_increment")]
   }
 
   mcstate_sampler("Adaptive Metropolis-Hastings",
