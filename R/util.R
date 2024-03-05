@@ -3,6 +3,11 @@
 }
 
 
+vlapply <- function(...) {
+  vapply(..., FUN.VALUE = logical(1))
+}
+
+
 check_vcv <- function(vcv, name = deparse(substitute(vcv)), call = NULL) {
   if (!is.matrix(vcv)) {
     cli::cli_abort("Expected '{name}' to be a matrix",
