@@ -151,14 +151,15 @@ hmc_transform <- function(domain) {
   list(
     ## Transform from R^n into the model space
     rn2model = function(theta) {
-      theta[is_semi_infinite] <- exp(theta[is_semi_infinite])
+      theta[is_semi_infinite] <-
+        lower[is_semi_infinite] + exp(theta[is_semi_infinite])
       theta[is_bounded] <- ilogit_bounded(theta[is_bounded], a, b)
       theta
     },
 
     ## Transform from model space to R^n
     model2rn = function(x) {
-      x[is_semi_infinite] <- log(x[is_semi_infinite])
+      x[is_semi_infinite] <- log(x[is_semi_infinite] - lower[is_semi_infinite])
       x[is_bounded] <- logit_bounded(x[is_bounded], a, b)
       x
     },
