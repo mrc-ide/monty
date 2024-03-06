@@ -145,7 +145,7 @@ hmc_transform <- function(domain) {
   }
 
   ## Save finite bounds for later:
-  a <- lower[is_bounded | is_semi_infinite]
+  a <- lower[is_bounded]
   b <- upper[is_bounded]
 
   list(

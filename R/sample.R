@@ -35,7 +35,25 @@
 ##'   restartable.  This will add additional data to the chains
 ##'   object.
 ##'
-##' @return A list of parameters and densities.
+##' @return A list of parameters and densities; we'll write tools for
+##'   dealing with this later.  Elements include:
+##'
+##' * `pars`: A matrix with as many columns as you have parameters, and
+##'   as many rows as the total number of samples taken across all
+##'   chains (`n_steps * n_chains`)
+##'
+##' * `density`: A vector of model log densities, one per step (length
+##'   `n_steps * n_chains`)
+##'
+##' * `initial`: A record of the initial conditions, a matrix with as
+##'   many columns as you have parameters and `n_chains` rows
+##'
+##' * `details`: Additional details reported by the sampler; this will
+##'   be a list of length `n_chains` (or `NULL`) and the details
+##'   depend on the sampler.  This one is subject to change.
+##'
+##' * `chain`: An integer vector indicating the chain that the samples
+##'   came from (1, 2, ..., `n_chains`)
 ##'
 ##' @export
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
@@ -202,6 +220,15 @@ combine_chains <- function(res) {
   details <- lapply(res, "[[", "details")
   details <- if (all(vlapply(details, is.null))) NULL else details
 
+  n_pars <- ncol(pars)
+  initial <- vapply(res, "[[", numeric(n_pars), "initial")
+  if (n_pars == 1) {
+    initial <- cbind(initial)
+  } else {
+    initial <- t(initial)
+  }
+  colnames(initial) <- colnames(pars)
+
   used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
   if (any(used_r_rng)) {
     cli::cli_warn(c(
@@ -214,6 +241,7 @@ combine_chains <- function(res) {
 
   samples <- list(pars = pars,
                   density = density,
+                  initial = initial,
                   details = details,
                   chain = chain)
   class(samples) <- "mcstate_samples"
@@ -226,7 +254,6 @@ append_chains <- function(prev, curr) {
   n_chains <- length(prev$restart$rng_state)
   i <- split(seq_along(prev$chain), prev$chain)
   j <- split(seq_along(curr$chain) + length(prev$chain), curr$chain)
-  j <- lapply(j, function(x) x[-1])
   k <- unlist(rbind(i, j))
 
   pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
@@ -242,6 +269,7 @@ append_chains <- function(prev, curr) {
 
   samples <- list(pars = pars,
                   density = density,
+                  initial = prev$initial,
                   details = details,
                   chain = chain)
   class(samples) <- "mcstate_samples"
