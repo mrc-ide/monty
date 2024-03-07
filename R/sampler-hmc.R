@@ -28,7 +28,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     check_vcv(vcv, call = environment())
   }
 
-  initialise <- function(state, model, rng) {
+  initialise <- function(pars, model, rng) {
     internal$transform <- hmc_transform(model$domain)
     n_pars <- length(model$parameters)
     if (is.null(vcv)) {
@@ -43,6 +43,8 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     if (debug) {
       internal$history <- list()
     }
+    density <- model$density(pars)
+    list(pars = pars, density = density)
   }
 
   step <- function(state, model, rng) {
