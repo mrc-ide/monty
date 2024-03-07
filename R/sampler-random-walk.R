@@ -59,12 +59,22 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     state
   }
 
+  ## These are all effectively the defaults:
   finalise <- function(state, model, rng) {
     NULL
+  }
+
+  get_internal_state <- function() {
+    NULL
+  }
+
+  set_internal_state <- function(state) {
   }
 
   mcstate_sampler("Random walk",
                   initialise,
                   step,
-                  finalise)
+                  finalise,
+                  get_internal_state,
+                  set_internal_state)
 }
