@@ -106,7 +106,7 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
     ## but that has its own issues (e.g., in the heirarchical sampler
     ## we can't extract out the submodel densities, and we might have
     ## issues with rng behaviour of stochastic models).  So this way
-    ## around we'll fail the chain, which is sad if its a chain that
+    ## around we'll fail the chain, which is sad if it's a chain that
     ## only starts running after several hours, and particularly in
     ## parallel we won't find out that anything (and therefore
     ## everything) has failed until everything has completed.
