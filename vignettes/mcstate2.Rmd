@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 This vignette is an introduction to some of the ideas in `mcstate2`.  As the package is not ready for users to use it, this is more a place for us to jot down ideas about what it will do.
 
-We're going to change the package name in future (dropping the `2` at least, but possibly also changing it entirely).  It's not yet clear to us if this will be a package that users will use or something that the rest of our stack will target.
+We're going to change the package name in the future (dropping the `2` at least, but possibly also changing it entirely).  It's not yet clear to us if this will be a package that users will use or something that the rest of our stack will target.
 
 ```{r setup}
 library(mcstate2)
@@ -26,8 +26,8 @@ library(mcstate2)
 
 Draw samples from a model using Markov Chain Monte Carlo methods.  To do this you will need:
 
-* A **model**: this is an `mcstate_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient with of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
-* A **sampler**: this is some method of drawing samples from the models distribution in a sequence.  We define several different sampler types, with the simplest one being `mcstate_sampler_random_walk()`, which implements a simple Metropolis algorithm random walk.
+* A **model**: this is an `mcstate_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
+* A **sampler**: this is some method of drawing samples from the model's distribution in a sequence.  We define several different sampler types, with the simplest one being `mcstate_sampler_random_walk()`, which implements a simple Metropolis algorithm random walk.
 * A **runner**: this controls how the chains will be run (e.g., one after another or in parallel).
 
 The system is designed to be composable; you can work in a Bayesian way by defining a model representing a likelihood and another model representing a prior and then pick a sampler based on the capabilities of the model, and pick a runner based on the capabilities your computer.
@@ -69,7 +69,7 @@ likelihood <- mcstate_model(
     }))
 ```
 
-The prior we'll make much nicer to work with in future, but here we construct the density by hand as a sum of normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.  We provide a `direct_sample` function here so that we can draw samples from the prior distribution directly.
+The prior we'll make much nicer to work with in the future, but here we construct the density by hand as a sum of normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.  We provide a `direct_sample` function here so that we can draw samples from the prior distribution directly.
 
 ```{r}
 prior <- local({
