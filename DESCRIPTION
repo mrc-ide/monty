@@ -24,12 +24,15 @@ LinkingTo:
 Suggests:
     cpp11,
     decor,
+    knitr,
     dust,
     mvtnorm,
     numDeriv,
     pkgload,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-GB
+VignetteBuilder: knitr
 Remotes:
     mrc-ide/dust

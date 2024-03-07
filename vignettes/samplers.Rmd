@@ -1,0 +1,10 @@
+---
+title: "Samplers"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Samplers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette will describe the samplers available in mcstate2.
