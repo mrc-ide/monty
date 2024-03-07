@@ -100,6 +100,26 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   state <- list(pars = pars, density = density)
   sampler$initialise(state, model, rng)
 
+  if (!is.finite(state$density)) {
+    ## Ideally, we'd do slightly better than this; it might be worth
+    ## validing this even earlier (in the parameter validation step)
+    ## but that has its own issues (e.g., in the heirarchical sampler
+    ## we can't extract out the submodel densities, and we might have
+    ## issues with rng behaviour of stochastic models).  So this way
+    ## around we'll fail the chain, which is sad if it's a chain that
+    ## only starts running after several hours, and particularly in
+    ## parallel we won't find out that anything (and therefore
+    ## everything) has failed until everything has completed.
+    ##
+    ## Once we formalise the idea of restartable model runners though,
+    ## this will come out in the wash I think as we can initialise all
+    ## our chains, then "restart" them from the first point; that is
+    ## hard to do with the random walk sampler as it's stateless so
+    ## there's no real effect, but we'll readdress this once we get
+    ## the HMC or adaptive samplers set up.
+    cli::cli_abort("Chain does not have finite starting density")
+  }
+
   history_pars <- matrix(NA_real_, n_steps, length(pars))
   history_density <- rep(NA_real_, n_steps)
 

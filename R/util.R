@@ -65,3 +65,8 @@ rbind_list <- function(x) {
   stopifnot(length(nc) == 1)
   do.call("rbind", x)
 }
+
+
+squote <- function(x) {
+  sprintf("'%s'", x)
+}

@@ -207,3 +207,71 @@ test_that("can't append chains that have details", {
   expect_error(mcstate_sample_continue(res, 5),
                "Can't yet merge chains with details")
 })
+
+
+test_that("generate initial conditions that fall within the domain", {
+  x <- mcstate_rng$new(seed = 1)$normal(20, -2, 1)
+  n <- which(x > 0)[1] # 5
+
+  m <- mcstate_model(list(
+    parameters = "x",
+    direct_sample = function(rng) rng$normal(1, -2, 1),
+    density = function(x) dexp(x, log = TRUE),
+    domain = rbind(c(0, Inf))))
+
+  r <- mcstate_rng$new(seed = 1)
+  expect_equal(direct_sample_within_domain(m, r), x[n])
+
+  r <- mcstate_rng$new(seed = 1)
+  expect_error(
+    direct_sample_within_domain(m, r, n - 1),
+    "Failed to sample initial conditions within \\d+ attempts")
+})
+
+
+test_that("error if provided initial conditions fall outside of domain", {
+  m <- mcstate_model(list(
+    parameters = c("x", "y", "z"),
+    density = identity,
+    domain = rbind(c(0, Inf),
+                   c(0, 1),
+                   c(-Inf, Inf))))
+  sampler <- mcstate_sampler_random_walk(vcv = diag(3) * 0.01)
+
+  err <- expect_error(
+    mcstate_sample(m, sampler, 100, c(-1, 0, 0)),
+    "Initial conditions do not fall within parameter domain")
+  expect_equal(
+    err$body,
+    c(x = "Issues with parameter: 'x'",
+      x = "Issues with chain 1"))
+
+  err <- expect_error(
+    mcstate_sample(m, sampler, 100, c(-1, 0, 0), n_chains = 2),
+    "Initial conditions do not fall within parameter domain")
+  expect_equal(
+    err$body,
+    c(x = "Issues with parameter: 'x'",
+      x = "Issues with every chain"))
+
+  err <- expect_error(
+    mcstate_sample(m, sampler, 100,
+                   rbind(c(-1, 0, 0), c(-1, -1, 0), c(0, 0, 0)), n_chains = 3),
+    "Initial conditions do not fall within parameter domain")
+  expect_equal(
+    err$body,
+    c(x = "Issues with parameters: 'x' and 'y'",
+      x = "Issues with chains 1 and 2"))
+})
+
+
+test_that("error if initial conditions do not have finite density", {
+  m <- mcstate_model(list(
+    parameters = "x",
+    direct_sample = function(rng) 1,
+    density = function(x) -Inf,
+    domain = rbind(c(-Inf, Inf))))
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+  expect_error(mcstate_sample(m, sampler, 100),
+               "Chain does not have finite starting density")
+})
