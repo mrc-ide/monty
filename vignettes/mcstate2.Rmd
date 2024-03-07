@@ -118,7 +118,7 @@ sampler <- mcstate_sampler_random_walk(vcv = vcv)
 Now run the sampler.  We've started from a good starting point to make this simple sampler converge quickly:
 
 ```{r}
-samples <- mcstate_sample(posterior, sampler, 10000, initial = c(114, 0.9, 3),
+samples <- mcstate_sample(posterior, sampler, 5000, initial = c(114, 0.9, 3),
                           n_chains = 4)
 ```
 

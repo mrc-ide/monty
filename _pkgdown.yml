@@ -1,0 +1,37 @@
+url: https://mrc-ide.github.io/orderly2
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Models
+    contents:
+    - mcstate_model
+    - mcstate_model_combine
+    - mcstate_model_properties
+
+  - title: Draw samples from a model
+    contents:
+    - mcstate_sample
+    - mcstate_sample_continue
+
+  - subtitle: Samplers
+    contents:
+    - mcstate_sampler_hmc
+    - mcstate_sampler_random_walk
+
+  - subtitle: Chain runners
+    contents:
+    - mcstate_runner_parallel
+    - mcstate_runner_serial
+
+  - title: Random numbers
+    desc: >-
+      Utilities for working with random numbers. This code is all
+      imported from dust, and we'll change it to better suit the needs
+      in this package.
+    contents:
+    - mcstate_rng
+    - mcstate_rng_distributed_pointer
+    - mcstate_rng_distributed_state
+    - mcstate_rng_pointer
