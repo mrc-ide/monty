@@ -44,7 +44,22 @@ restartable.  This will add additional data to the chains
 object.}
 }
 \value{
-A list of parameters and densities.
+A list of parameters and densities; we'll write tools for
+dealing with this later.  Elements include:
+\itemize{
+\item \code{pars}: A matrix with as many columns as you have parameters, and
+as many rows as the total number of samples taken across all
+chains (\code{n_steps * n_chains})
+\item \code{density}: A vector of model log densities, one per step (length
+\code{n_steps * n_chains})
+\item \code{initial}: A record of the initial conditions, a matrix with as
+many columns as you have parameters and \code{n_chains} rows
+\item \code{details}: Additional details reported by the sampler; this will
+be a list of length \code{n_chains} (or \code{NULL}) and the details
+depend on the sampler.  This one is subject to change.
+\item \code{chain}: An integer vector indicating the chain that the samples
+came from (1, 2, ..., \code{n_chains})
+}
 }
 \description{
 Sample from a model.  Uses a Monte Carlo method (or possibly

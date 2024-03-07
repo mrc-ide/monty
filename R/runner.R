@@ -100,15 +100,13 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   state <- list(pars = pars, density = density)
   sampler$initialise(state, model, rng)
 
-  history_pars <- matrix(NA_real_, n_steps + 1, length(pars))
-  history_pars[1, ] <- pars
-  history_density <- rep(NA_real_, n_steps + 1)
-  history_density[[1]] <- density
+  history_pars <- matrix(NA_real_, n_steps, length(pars))
+  history_density <- rep(NA_real_, n_steps)
 
   for (i in seq_len(n_steps)) {
     state <- sampler$step(state, model, rng)
-    history_pars[i + 1, ] <- state$pars
-    history_density[[i + 1]] <- state$density
+    history_pars[i, ] <- state$pars
+    history_density[[i]] <- state$density
   }
 
   ## Pop the parameter names on last
@@ -124,7 +122,8 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state),
                    rng_state = rng$state())
 
-  list(pars = history_pars,
+  list(initial = pars,
+       pars = history_pars,
        density = history_density,
        details = details,
        internal = internal)

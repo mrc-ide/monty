@@ -17,13 +17,14 @@ test_that("sampler return value contains history", {
   model <- ex_simple_gamma1()
   sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   res <- mcstate_sample(model, sampler, 100, 1)
-  expect_setequal(names(res), c("pars", "density", "details", "chain"))
+  expect_setequal(names(res),
+                  c("pars", "density", "initial", "details", "chain"))
   expect_true(is.matrix(res$pars))
-  expect_equal(dim(res$pars), c(101, 1))
+  expect_equal(dim(res$pars), c(100, 1))
   expect_equal(dimnames(res$pars), list(NULL, "gamma"))
-  expect_length(res$density, 101)
+  expect_length(res$density, 100)
   expect_equal(res$density, apply(res$pars, 1, model$density))
-  expect_equal(unname(res$pars[1, ]), 1)
+  expect_equal(res$initial, cbind(gamma = 1))
   expect_null(res$details)
 })
 
