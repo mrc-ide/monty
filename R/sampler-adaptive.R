@@ -199,7 +199,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
           "scaling_history", "scaling_weight", "scaling_increment")]
   }
 
-  get_internal_state <- function(state, model, rng) {
+  get_internal_state <- function() {
     as.list(internal)
   }
 
