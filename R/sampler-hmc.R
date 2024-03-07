@@ -131,7 +131,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
   }
 
   set_internal_state <- function(state) {
-    list2env(state, internal)
+    internal$history <- state$history
   }
 
   mcstate_sampler("Hamiltonian Monte Carlo",

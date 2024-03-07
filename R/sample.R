@@ -126,7 +126,7 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
   runner <- samples$restart$runner
 
   res <- runner$run(pars, model, sampler, n_steps, rng, sampler_state)
-  samples <- append_chains(samples, combine_chains(res), sampler)
+  samples <- append_chains(samples, combine_chains(res))
 
   if (restartable) {
     samples$restart <- restart_data(res, model, sampler, runner)
@@ -275,7 +275,7 @@ combine_chains <- function(res) {
 
 
 ## This is absolutely terrible, but it will get there.
-append_chains <- function(prev, curr, sampler) {
+append_chains <- function(prev, curr) {
   n_chains <- length(prev$restart$rng_state)
   i <- split(seq_along(prev$chain), prev$chain)
   j <- split(seq_along(curr$chain) + length(prev$chain), curr$chain)
