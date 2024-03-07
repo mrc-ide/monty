@@ -120,7 +120,7 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
   rng <- lapply(samples$restart$rng_state,
                 function(s) mcstate_rng$new(seed = s))
   model <- samples$restart$model
-  pars <- samples$restart$pars
+  pars <- unname(samples$restart$pars)
   sampler <- samples$restart$sampler
   sampler_state <- samples$restart$sampler_state
   runner <- samples$restart$runner

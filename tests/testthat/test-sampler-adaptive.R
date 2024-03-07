@@ -65,3 +65,18 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   expect_equal(res$details[[1]]$vcv, cov(res$pars[26:300,]),
                ignore_attr = TRUE)
 })
+
+
+test_that("can continue adaptive sampler", {
+  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
+
+  set.seed(1)
+  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+
+  set.seed(1)
+  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+
+  expect_equal(res2b, res1)
+})

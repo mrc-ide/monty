@@ -117,7 +117,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$weight <- 0
     internal$iteration <- 0
 
-    internal$mean <- pars
+    internal$mean <- unname(pars)
     n_pars <- length(model$parameters)
     internal$autocorrelation <- matrix(0, n_pars, n_pars)
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
