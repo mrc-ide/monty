@@ -76,8 +76,9 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
   }
 
   rng <- initial_rng(n_chains)
+  sampler_state <- vector("list", n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, n_steps, rng)
+  res <- runner$run(pars, model, sampler, n_steps, rng, sampler_state)
 
   samples <- combine_chains(res)
   if (restartable) {
@@ -119,11 +120,12 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
   rng <- lapply(samples$restart$rng_state,
                 function(s) mcstate_rng$new(seed = s))
   model <- samples$restart$model
-  pars <- samples$restart$pars
+  pars <- unname(samples$restart$pars)
   sampler <- samples$restart$sampler
+  sampler_state <- samples$restart$sampler_state
   runner <- samples$restart$runner
 
-  res <- runner$run(pars, model, sampler, n_steps, rng)
+  res <- runner$run(pars, model, sampler, n_steps, rng, sampler_state)
   samples <- append_chains(samples, combine_chains(res))
 
   if (restartable) {
@@ -133,11 +135,14 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
 }
 
 
-mcstate_sampler <- function(name, initialise, step, finalise) {
+mcstate_sampler <- function(name, initialise, step, finalise,
+                            get_internal_state, set_internal_state) {
   ret <- list(name = name,
               initialise = initialise,
               step = step,
-              finalise = finalise)
+              finalise = finalise,
+              get_internal_state = get_internal_state,
+              set_internal_state = set_internal_state)
   class(ret) <- "mcstate_sampler"
   ret
 }
@@ -278,13 +283,7 @@ append_chains <- function(prev, curr) {
 
   pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
   density <- c(prev$density, curr$density)[k]
-  if (!is.null(prev$details) || !is.null(curr$details)) {
-    ## This needs to wait until hmc or adaptive sampling are merged to
-    ## work with.
-    cli::cli_abort("Can't yet merge chains with details")
-  } else {
-    details <- NULL
-  }
+  details <- curr$details
   chain <- c(prev$chain, curr$chain)[k]
 
   samples <- list(pars = pars,
@@ -311,11 +310,14 @@ restart_data <- function(res, model, sampler, runner) {
   pars <- vapply(res, function(x) x$pars[nrow(x$pars), ], numeric(n_pars))
   if (n_pars == 1) {
     pars <- matrix(pars, ncol = 1)
+  } else {
+    pars <- t(pars)
   }
   list(rng_state = lapply(res, function(x) x$internal$rng_state),
        pars = pars,
        model = model,
        sampler = sampler,
+       sampler_state = lapply(res, function(x) x$internal$sampler_state),
        runner = runner)
 }
 

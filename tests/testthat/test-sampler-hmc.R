@@ -115,3 +115,34 @@ test_that("prevent weird distributions", {
     hmc_transform(cbind(rep(0, 3), c(1, Inf, -Inf))),
     "Unhandled domain type for parameter 3")
 })
+
+
+test_that("can continue hmc without debug", {
+  m <- ex_simple_gaussian(diag(2))
+
+  set.seed(1)
+  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+
+  set.seed(1)
+  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+
+  expect_equal(res2b, res1)
+})
+
+
+test_that("can continue hmc with debug", {
+  m <- ex_simple_gaussian(diag(2))
+
+  set.seed(1)
+  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+                                 debug = TRUE)
+  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+
+  set.seed(1)
+  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+
+  expect_equal(res2b, res1)
+})

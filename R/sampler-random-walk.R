@@ -31,9 +31,9 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     proposal <- make_rmvnorm(vcv)
   }
 
-  initialise <- function(state, model, rng) {
+  initialise <- function(pars, model, rng) {
     if (!is.null(vcv)) {
-      n_pars <- length(state$pars)
+      n_pars <- length(model$parameters)
       n_vcv <- nrow(vcv)
       if (n_pars != n_vcv) {
         cli::cli_abort(
@@ -43,6 +43,9 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     if (isTRUE(model$properties$is_stochastic)) {
       model$model$set_rng_state(rng)
     }
+
+    density <- model$density(pars)
+    list(pars = pars, density = density)
   }
 
   step <- function(state, model, rng) {
@@ -56,12 +59,22 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
     state
   }
 
+  ## These are all effectively the defaults:
   finalise <- function(state, model, rng) {
     NULL
+  }
+
+  get_internal_state <- function() {
+    NULL
+  }
+
+  set_internal_state <- function(state) {
   }
 
   mcstate_sampler("Random walk",
                   initialise,
                   step,
-                  finalise)
+                  finalise,
+                  get_internal_state,
+                  set_internal_state)
 }

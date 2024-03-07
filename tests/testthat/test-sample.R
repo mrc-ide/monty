@@ -199,16 +199,6 @@ test_that("continuing requires that we have a samples object", {
 })
 
 
-test_that("can't append chains that have details", {
-  model <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
-  res <- mcstate_sample(model, sampler, 5, 1, restartable = TRUE)
-  res$details <- list()
-  expect_error(mcstate_sample_continue(res, 5),
-               "Can't yet merge chains with details")
-})
-
-
 test_that("generate initial conditions that fall within the domain", {
   x <- mcstate_rng$new(seed = 1)$normal(20, -2, 1)
   n <- which(x > 0)[1] # 5

@@ -28,7 +28,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     check_vcv(vcv, call = environment())
   }
 
-  initialise <- function(state, model, rng) {
+  initialise <- function(pars, model, rng) {
     internal$transform <- hmc_transform(model$domain)
     n_pars <- length(model$parameters)
     if (is.null(vcv)) {
@@ -43,6 +43,8 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     if (debug) {
       internal$history <- list()
     }
+    density <- model$density(pars)
+    list(pars = pars, density = density)
   }
 
   step <- function(state, model, rng) {
@@ -124,10 +126,20 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     }
   }
 
+  get_internal_state <- function() {
+    list(history = internal$history)
+  }
+
+  set_internal_state <- function(state) {
+    internal$history <- state$history
+  }
+
   mcstate_sampler("Hamiltonian Monte Carlo",
                   initialise,
                   step,
-                  finalise)
+                  finalise,
+                  get_internal_state,
+                  set_internal_state)
 }
 
 
