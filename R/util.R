@@ -3,11 +3,6 @@
 }
 
 
-vlapply <- function(...) {
-  vapply(..., FUN.VALUE = logical(1))
-}
-
-
 check_vcv <- function(vcv, name = deparse(substitute(vcv)), call = NULL) {
   if (!is.matrix(vcv)) {
     cli::cli_abort("Expected '{name}' to be a matrix",
@@ -56,6 +51,11 @@ vnapply <- function(...) {
 }
 
 
+vcapply <- function(...) {
+  vapply(..., FUN.VALUE = "")
+}
+
+
 rbind_list <- function(x) {
   stopifnot(all(vlapply(x, is.matrix)))
   if (length(x) == 1) {
@@ -69,4 +69,18 @@ rbind_list <- function(x) {
 
 squote <- function(x) {
   sprintf("'%s'", x)
+}
+
+
+dim2 <- function(x) {
+  dim(x) %||% length(x)
+}
+
+
+set_names <- function(x, nms) {
+  if (length(nms) == 1 && length(x) != 1) {
+    nms <- rep_len(nms, length(x))
+  }
+  names(x) <- nms
+  x
 }
