@@ -239,8 +239,8 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 
 
 combine_chains <- function(res) {
-  pars <- array_bind(arrays = lapply(res, "[[", "pars"), before = 2)
-  density <- array_bind(arrays = lapply(res, "[[", "density"), before = 1)
+  pars <- array_bind(arrays = lapply(res, "[[", "pars"), after = 2)
+  density <- array_bind(arrays = lapply(res, "[[", "density"), after = 1)
   details <- lapply(res, "[[", "details")
   details <- if (all(vlapply(details, is.null))) NULL else details
 
@@ -271,8 +271,8 @@ combine_chains <- function(res) {
 
 
 append_chains <- function(prev, curr) {
-  samples <- list(pars = array_bind(prev$pars, curr$pars),
-                  density = array_bind(prev$density, curr$density),
+  samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
+                  density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
                   details = curr$details)
   class(samples) <- "mcstate_samples"

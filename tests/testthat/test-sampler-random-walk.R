@@ -3,7 +3,7 @@ test_that("can draw samples from a trivial model", {
   sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   res <- mcstate_sample(m, sampler, 100)
   expect_equal(names(res), c("pars", "density", "initial", "details"))
-  expect_equal(dim(res$pars), c(1, 1, 100))
+  expect_equal(dim(res$pars), c(1, 100, 1))
 })
 
 

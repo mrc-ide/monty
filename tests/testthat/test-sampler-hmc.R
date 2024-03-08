@@ -4,7 +4,7 @@ test_that("can run hmc", {
   set.seed(1)
   res <- mcstate_sample(m, sampler, 2000)
   ## We'll need some long tests here at some point!
-  pars <- t(array_drop(res$pars, 2))
+  pars <- t(array_drop(res$pars, 3))
   expect_equal(cov(unname(pars)), diag(2), tolerance = 0.2)
 })
 
@@ -15,7 +15,7 @@ test_that("can run hmc on banana shaped model", {
   set.seed(1)
   res <- mcstate_sample(m, sampler, 2000)
   ## We'll need some long tests here at some point!
-  pars <- t(array_drop(res$pars, 2))
+  pars <- t(array_drop(res$pars, 3))
   expect_equal(abs(mean(pars[, 2])) < 0.2, TRUE)
   expect_equal(abs(mean(pars[, 1]) - 1) < 0.4, TRUE)
   expect_equal(abs(cor(pars[, 1], pars[, 2])) < 0.3, TRUE)
@@ -39,7 +39,7 @@ test_that("can output debug traces", {
   expect_equal(names(res2$details[[1]]), "debug")
   expect_equal(res2$details[[1]]$debug$accept, rep(TRUE, 30))
 
-  pars <- array_drop(res2$pars, 2)
+  pars <- array_drop(res2$pars, 3)
   debug_pars <- res2$details[[1]]$debug$pars
   expect_equal(dim(debug_pars), c(2, 11, 30))
   expect_equal(dimnames(debug_pars), list(c("a", "b"), NULL, NULL))

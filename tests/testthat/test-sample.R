@@ -19,9 +19,9 @@ test_that("sampler return value contains history", {
   res <- mcstate_sample(model, sampler, 100, 1)
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details"))
-  expect_equal(dim(res$pars), c(1, 1, 100))
+  expect_equal(dim(res$pars), c(1, 100, 1))
   expect_equal(dimnames(res$pars), list("gamma", NULL, NULL))
-  expect_equal(dim(res$density), c(1, 100))
+  expect_equal(dim(res$density), c(100, 1))
   expect_equal(drop(res$density), drop(apply(res$pars, 1:2, model$density)))
   expect_equal(res$initial, rbind(gamma = 1))
   expect_null(res$details)
