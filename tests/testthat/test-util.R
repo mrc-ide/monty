@@ -29,3 +29,22 @@ test_that("can bind lists of matrices", {
   expect_equal(rbind_list(list(m1, m2)), rbind(m1, m2))
   expect_equal(rbind_list(list(m1, m2, m3)), rbind(m1, m2, m3))
 })
+
+
+test_that("can get generalised array dimensions", {
+  expect_equal(dim2(1:6), 6)
+  expect_equal(dim2(matrix(1:6, 2, 3)), c(2, 3))
+})
+
+
+test_that("can get generalised array names", {
+  v <- 1:6
+  m <- matrix(v, 2, 3)
+  expect_null(dimnames(v))
+  expect_null(dimnames(m))
+
+  names(v) <- letters[1:6]
+  dimnames(m) <- list(letters[1:2], letters[3:5])
+  expect_equal(dimnames2(v), list(letters[1:6]))
+  expect_equal(dimnames2(m), list(letters[1:2], letters[3:5]))
+})

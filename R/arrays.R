@@ -13,7 +13,7 @@ array_bind <- function(..., arrays = list(...), on = NULL,
   ## these inputs (this is a bunch of work).
   if ((!is.null(before)) + (!is.null(after)) + (!is.null(on)) > 1) {
     cli::cli_abort(
-      "Only one of 'on', before' or 'after' may be given")
+      "Only one of 'on', 'before' or 'after' may be given")
   }
   if (!is.null(after)) {
     if (after < 1 || after > r) {

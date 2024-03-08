@@ -130,3 +130,79 @@ test_that("trivial case", {
   expect_identical(array_bind(m4), m4)
   expect_error(array_bind(), "Must provide at least one array")
 })
+
+
+test_that("prevent conflicting arguments", {
+  m1 <- random_array(c(3, 5))
+  m2 <- random_array(c(3, 5))
+  expect_error(
+    array_bind(arrays = list(m1, m2), after = 1, before = 2),
+    "Only one of 'on', 'before' or 'after' may be given")
+  expect_error(
+    array_bind(arrays = list(m1, m2), after = 1, on = 2),
+    "Only one of 'on', 'before' or 'after' may be given")
+})
+
+
+test_that("binding after requires that the provided values are reasonable", {
+  m1 <- random_array(c(3, 5))
+  m2 <- random_array(c(3, 5))
+
+  expect_error(
+    array_bind(arrays = list(m1, m2), before = 3),
+    "Invalid value for 'before' (3), must be in [1, 2]",
+    fixed = TRUE)
+  expect_error(
+    array_bind(arrays = list(m1, m2), before = 0),
+    "Invalid value for 'before' (0), must be in [1, 2]",
+    fixed = TRUE)
+  expect_error(
+    array_bind(arrays = list(m1, m2), after = 3),
+    "Invalid value for 'after' (3), must be in [1, 2]",
+    fixed = TRUE)
+  expect_error(
+    array_bind(arrays = list(m1, m2), after = 0),
+    "Invalid value for 'after' (0), must be in [1, 2]",
+    fixed = TRUE)
+})
+
+
+test_that("Can get an arbitrary dimension of an array", {
+  m1 <- random_array(4)
+  expect_equal(array_nth_dimension(m1, 1, 2), m1[2])
+  expect_equal(array_nth_dimension(m1, 1, 2:3), m1[2:3])
+
+  m2 <- random_array(c(3, 5))
+  expect_equal(array_nth_dimension(m2, 2, 2), m2[, 2, drop = FALSE])
+  expect_equal(array_nth_dimension(m2, 2, 2:3), m2[, 2:3, drop = FALSE])
+
+  m3 <- random_array(c(3, 5, 7))
+  expect_equal(array_nth_dimension(m3, 2, 2), m3[, 2, , drop = FALSE])
+  expect_equal(array_nth_dimension(m3, 2, 2:3), m3[, 2:3, , drop = FALSE])
+
+  m4 <- random_array(c(3, 5, 7, 11))
+  expect_equal(array_nth_dimension(m4, 2, 2), m4[, 2, , , drop = FALSE])
+  expect_equal(array_nth_dimension(m4, 2, 2:3), m4[, 2:3, , , drop = FALSE])
+
+  m5 <- random_array(c(3, 5, 7, 5, 3))
+  expect_equal(array_nth_dimension(m5, 2, 2), m5[, 2, , , , drop = FALSE])
+  expect_equal(array_nth_dimension(m5, 2, 2:3), m5[, 2:3, , , , drop = FALSE])
+
+  m6 <- random_array(c(3, 5, 7, 5, 3, 5))
+  expect_equal(array_nth_dimension(m6, 2, 2), m6[, 2, , , , , drop = FALSE])
+  expect_equal(array_nth_dimension(m6, 2, 2:3), m6[, 2:3, , , , , drop = FALSE])
+
+  m7 <- random_array(c(3, 5, 7, 5, 3, 5, 7))
+  expect_equal(array_nth_dimension(m7, 2, 2),
+               m7[, 2, , , , , , drop = FALSE])
+  expect_equal(array_nth_dimension(m7, 2, 2:3),
+               m7[, 2:3, , , , , , drop = FALSE])
+
+  expect_error(
+    array_nth_dimension(array(0, rep(1, 8)), 2, 2),
+    "Unexpected rank")
+  expect_error(
+    array_nth_dimension(m2, 3, 2),
+    "'k' must be in [1, 2]",
+    fixed = TRUE)
+})
