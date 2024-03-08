@@ -242,8 +242,8 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
   n_pars <- nrow(vcv)
 
   weighted_vcv <-
-    ((weight - 1) * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
-    (weight + initial_vcv_weight + n_pars + 1)
+    (weight * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
+    (weight + initial_vcv_weight + n_pars + 2)
 
   2.38^2 / n_pars * scaling^2 * weighted_vcv
 }
