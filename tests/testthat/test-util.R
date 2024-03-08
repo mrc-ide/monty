@@ -40,8 +40,8 @@ test_that("can get generalised array dimensions", {
 test_that("can get generalised array names", {
   v <- 1:6
   m <- matrix(v, 2, 3)
-  expect_null(dimnames(v))
-  expect_null(dimnames(m))
+  expect_null(dimnames2(v))
+  expect_null(dimnames2(m))
 
   names(v) <- letters[1:6]
   dimnames(m) <- list(letters[1:2], letters[3:5])
