@@ -4,6 +4,7 @@ HPC
 OpenMP
 Poisson
 R's
+VCV
 codecov
 composable
 hyperthreading
@@ -15,6 +16,11 @@ pmcmc
 restartable
 rhyper
 rng
+sim
+Hasting
+SEF
+nd
 splitmix
+st
 stan
 th
