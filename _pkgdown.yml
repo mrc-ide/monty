@@ -17,8 +17,9 @@ reference:
 
   - subtitle: Samplers
     contents:
-    - mcstate_sampler_hmc
     - mcstate_sampler_random_walk
+    - mcstate_sampler_adaptive
+    - mcstate_sampler_hmc
 
   - subtitle: Chain runners
     contents:
