@@ -244,3 +244,9 @@ test_that("Prevent impossible drops", {
     "Can't drop dimensions 1 and 3 as they are length 5 and 10, not 1",
     fixed = TRUE)
 })
+
+
+test_that("preserve names dropping to vector", {
+  m2 <- random_array(c(5, 1))
+  dimnames(m2) <- list("x", letters[1:5])
+})
