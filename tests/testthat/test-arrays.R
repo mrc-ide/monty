@@ -247,6 +247,7 @@ test_that("Prevent impossible drops", {
 
 
 test_that("preserve names dropping to vector", {
-  m2 <- random_array(c(5, 1))
+  m2 <- random_array(c(1, 5))
   dimnames(m2) <- list("x", letters[1:5])
+  expect_equal(array_drop(m2, 1), set_names(c(m2), letters[1:5]))
 })
