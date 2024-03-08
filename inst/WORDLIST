@@ -5,11 +5,16 @@ OpenMP
 Poisson
 R's
 codecov
+composable
 hyperthreading
 io
 mcstate
 mcstate's
+odin
+pmcmc
+restartable
 rhyper
 rng
 splitmix
+stan
 th
