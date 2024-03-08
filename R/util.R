@@ -77,6 +77,16 @@ dim2 <- function(x) {
 }
 
 
+dimnames2 <- function(x) {
+  if (!is.null(dim(x))) {
+    dimnames(x)
+  } else {
+    nms <- names(x)
+    if (is.null(nms)) NULL else list(nms)
+  }
+}
+
+
 set_names <- function(x, nms) {
   if (length(nms) == 1 && length(x) != 1) {
     nms <- rep_len(nms, length(x))

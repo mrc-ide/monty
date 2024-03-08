@@ -101,7 +101,7 @@ array_reshape <- function(x, i, d, call = NULL) {
       call = call)
   }
 
-  dn <- dimnames(x)
+  dn <- dimnames2(x)
 
   ## The actual reshape is easy:
   dim(x) <- append(dx[-i], d, i - 1L)
@@ -114,21 +114,20 @@ array_reshape <- function(x, i, d, call = NULL) {
 }
 
 
-array_nth_dimension <- function(x, k, i, drop = FALSE) {
-  rank <- length(dim(x))
-  if (rank == 2) {
-    expr <- quote(x[, , drop = FALSE])
-  } else if (rank == 3) {
-    expr <- quote(x[, , , drop = FALSE])
-  } else if (rank == 4) {
-    expr <- quote(x[, , , , drop = FALSE])
-  } else {
-    stop("Unexpected rank")
-  }
+array_nth_dimension <- function(x, k, i) {
+  rank <- length(dim2(x))
   if (k < 1 || k > rank) {
-    stop(sprintf("'k' must be in [1, %d]", rank))
+    cli::cli_abort("'k' must be in [1, {rank}]")
   }
-
+  expr <- switch(rank,
+                 quote(x[]),                           # 1
+                 quote(x[, , drop = FALSE]),           # 2
+                 quote(x[, , , drop = FALSE]),         # 3
+                 quote(x[, , , , drop = FALSE]),       # 4
+                 quote(x[, , , , , drop = FALSE]),     # 5
+                 quote(x[, , , , , , drop = FALSE]),   # 6
+                 quote(x[, , , , , , , drop = FALSE]), # 7
+                 cli::cli_abort("Unexpected rank")) # crazy stuff.
   expr[[k + 2]] <- quote(i)
   eval(expr)
 }
