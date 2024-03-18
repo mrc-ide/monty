@@ -115,7 +115,7 @@ lines(z95[, 1], z95[, 2])
 
 As we can see this is not great.  We can probably improve the samples here by finding a better variance covariance matrix (VCV), but a single VCV will not hold well over the whole surface because it is not very similar to a multivariate normal (that is, the appropriate VCV will change depending on the position in parameter space)
 
-Let's try the Hamilton Monte Carlo (HMC) sampler, which uses the gradient to move efficiently in parameter space:
+Let's try the Hamiltonian Monte Carlo (HMC) sampler, which uses the gradient to move efficiently in parameter space:
 
 ```{r HMC_sampling}
 sampler_hmc <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
