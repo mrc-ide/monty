@@ -104,3 +104,15 @@ ex_banana <- function(sd = 0.5) {
     },
     domain = cbind(rep(-Inf, 2), rep(Inf, 2))))
 }
+
+
+random_array <- function(dim, named = FALSE) {
+  if (named) {
+    dn <- lapply(seq_along(dim), function(i)
+      paste0(LETTERS[[i]], letters[seq_len(dim[i])]))
+    names(dn) <- paste0("d", LETTERS[seq_along(dim)])
+  } else {
+    dn <- NULL
+  }
+  array(runif(prod(dim)), dim, dimnames = dn)
+}
