@@ -264,3 +264,22 @@ test_that("error if initial conditions do not have finite density", {
   expect_error(mcstate_sample(m, sampler, 100),
                "Chain does not have finite starting density")
 })
+
+
+test_that("can continue a stochastic model identically", {
+  set.seed(1)
+  model <- ex_dust_sir()
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- mcstate_sampler_random_walk(vcv = vcv)
+  initial <- c(0.2, 0.1)
+
+  set.seed(1)
+  res1 <- mcstate_sample(model, sampler, 10, initial, n_chains = 2)
+
+  set.seed(1)
+  res2a <- mcstate_sample(model, sampler, 2, initial, n_chains = 2,
+                          restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 8)
+
+  expect_equal(res2b, res1)
+})
