@@ -109,8 +109,8 @@ the MCMC.
 
 Our implementation of an adaptive MCMC algorithm is based on an
 adaptation of the "accelerated shaping" algorithm in Spencer (2021).
-The algorithm is based on a random-walk Metropolis-Hasting algorithm where
-the proposal is a multi-variate Normal distribution centered on the current
+The algorithm is based on a random-walk Metropolis-Hastings algorithm where
+the proposal is a multi-variate Normal distribution centred on the current
 point.
 
 Spencer SEF (2021) Accelerating adaptation in the adaptive
