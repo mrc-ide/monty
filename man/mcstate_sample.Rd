@@ -53,7 +53,9 @@ chains (\code{n_steps * n_chains})
 \item \code{density}: A vector of model log densities, one per step (length
 \code{n_steps * n_chains})
 \item \code{initial}: A record of the initial conditions, a matrix with as
-many columns as you have parameters and \code{n_chains} rows
+many rows as you have parameters and \code{n_chains} columns (this is
+the same format as the matrix form of the \code{initial} input
+parameter)
 \item \code{details}: Additional details reported by the sampler; this will
 be a list of length \code{n_chains} (or \code{NULL}) and the details
 depend on the sampler.  This one is subject to change.

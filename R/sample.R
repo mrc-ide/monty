@@ -46,7 +46,9 @@
 ##'   `n_steps * n_chains`)
 ##'
 ##' * `initial`: A record of the initial conditions, a matrix with as
-##'   many columns as you have parameters and `n_chains` rows
+##'   many rows as you have parameters and `n_chains` columns (this is
+##'   the same format as the matrix form of the `initial` input
+##'   parameter)
 ##'
 ##' * `details`: Additional details reported by the sampler; this will
 ##'   be a list of length `n_chains` (or `NULL`) and the details
@@ -183,22 +185,22 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
                     "element of your list must have this many elements")),
         arg = "initial", call = call)
     }
-    initial <- matrix(unlist(unname(initial)), n_chains, n_pars, byrow = TRUE)
+    initial <- matrix(unlist(unname(initial)), n_pars, n_chains)
   } else if (is.matrix(initial)) {
     hint_matrix <- paste(
-      "Expected a matrix with {n_chains} row{?s} (1 per chain) and",
-      "{n_pars} column{?s} (1 per parameter)")
-    if (nrow(initial) != n_chains) {
+      "Expected a matrix with {n_pars} row{?s} (1 per parameter) and",
+      "{n_chains} column{?s} (1 per chain)")
+    if (nrow(initial) != n_pars) {
       cli::cli_abort(
         c(paste("Unexpected number of rows in 'initial'",
-                "(given {nrow(initial)}, expected {n_chains})"),
+                "(given {nrow(initial)}, expected {n_pars})"),
           i = hint_matrix),
         arg = "initial", call = call)
     }
-    if (ncol(initial) != n_pars) {
+    if (ncol(initial) != n_chains) {
       cli::cli_abort(
         c(paste("Unexpected number of columns in 'initial'",
-                "(given {ncol(initial)}, expected {n_pars})"),
+                "(given {ncol(initial)}, expected {n_chains})"),
           i = hint_matrix),
         arg = "initial", call = call)
     }
@@ -210,16 +212,16 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
           i = "I expected a vector with {n_pars} element{?s}, 1 per parameter"),
         arg = "initial", call = call)
     }
-    initial <- matrix(initial, n_chains, n_pars, byrow = TRUE)
+    initial <- matrix(initial, n_pars, n_chains)
   }
 
   err <- initial < model$domain[, 1] | initial > model$domain[, 2]
   if (any(err)) {
     ## Reporting on this is hard because we want to know what chain
     ## starting point is the issue, and which parameters.
-    err_parameters <- model$parameters[colSums(err) > 0]
+    err_parameters <- model$parameters[rowSums(err) > 0]
     hint_parameters <- "Issues with parameter{?s}: {squote(err_parameters)}"
-    err_chain <- rowSums(err) > 0
+    err_chain <- colSums(err) > 0
     if (all(err_chain) && n_chains > 1) {
       hint_chain <- "Issues with every chain"
     } else {
@@ -237,22 +239,17 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 
 
 combine_chains <- function(res) {
-  stopifnot(is.null(res$chain))
-  chain <- rep(seq_along(res), lengths(lapply(res, "[[", "density")))
-
-  pars <- rbind_list(lapply(res, "[[", "pars"))
-  density <- unlist(lapply(res, "[[", "density"))
+  pars <- array_bind(arrays = lapply(res, "[[", "pars"), after = 2)
+  density <- array_bind(arrays = lapply(res, "[[", "density"), after = 1)
   details <- lapply(res, "[[", "details")
   details <- if (all(vlapply(details, is.null))) NULL else details
 
-  n_pars <- ncol(pars)
+  n_pars <- nrow(pars)
   initial <- vapply(res, "[[", numeric(n_pars), "initial")
   if (n_pars == 1) {
-    initial <- cbind(initial)
-  } else {
-    initial <- t(initial)
+    initial <- rbind(initial, deparse.level = 0)
   }
-  colnames(initial) <- colnames(pars)
+  rownames(initial) <- rownames(pars)
 
   used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
   if (any(used_r_rng)) {
@@ -267,30 +264,17 @@ combine_chains <- function(res) {
   samples <- list(pars = pars,
                   density = density,
                   initial = initial,
-                  details = details,
-                  chain = chain)
+                  details = details)
   class(samples) <- "mcstate_samples"
   samples
 }
 
 
-## This is absolutely terrible, but it will get there.
 append_chains <- function(prev, curr) {
-  n_chains <- length(prev$restart$rng_state)
-  i <- split(seq_along(prev$chain), prev$chain)
-  j <- split(seq_along(curr$chain) + length(prev$chain), curr$chain)
-  k <- unlist(rbind(i, j))
-
-  pars <- rbind(prev$pars, curr$pars)[k, , drop = FALSE]
-  density <- c(prev$density, curr$density)[k]
-  details <- curr$details
-  chain <- c(prev$chain, curr$chain)[k]
-
-  samples <- list(pars = pars,
-                  density = density,
+  samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
+                  density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
-                  details = details,
-                  chain = chain)
+                  details = curr$details)
   class(samples) <- "mcstate_samples"
   samples
 }
@@ -303,15 +287,10 @@ initial_rng <- function(n_chains, seed = NULL) {
 
 
 restart_data <- function(res, model, sampler, runner) {
-  ## TODO: thisis not actually enough; we also need the state from any
-  ## stateful sampler (so that's the case for the adaptive sampler and
-  ## for hmc with debug enabled)
-  n_pars <- ncol(res[[1]]$pars)
-  pars <- vapply(res, function(x) x$pars[nrow(x$pars), ], numeric(n_pars))
+  n_pars <- nrow(res[[1]]$pars)
+  pars <- vapply(res, function(x) x$pars[, ncol(x$pars)], numeric(n_pars))
   if (n_pars == 1) {
-    pars <- matrix(pars, ncol = 1)
-  } else {
-    pars <- t(pars)
+    pars <- rbind(pars, deparse.level = 0)
   }
   list(rng_state = lapply(res, function(x) x$internal$rng_state),
        pars = pars,

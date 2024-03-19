@@ -18,13 +18,12 @@ test_that("sampler return value contains history", {
   sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
   res <- mcstate_sample(model, sampler, 100, 1)
   expect_setequal(names(res),
-                  c("pars", "density", "initial", "details", "chain"))
-  expect_true(is.matrix(res$pars))
-  expect_equal(dim(res$pars), c(100, 1))
-  expect_equal(dimnames(res$pars), list(NULL, "gamma"))
-  expect_length(res$density, 100)
-  expect_equal(res$density, apply(res$pars, 1, model$density))
-  expect_equal(res$initial, cbind(gamma = 1))
+                  c("pars", "density", "initial", "details"))
+  expect_equal(dim(res$pars), c(1, 100, 1))
+  expect_equal(dimnames(res$pars), list("gamma", NULL, NULL))
+  expect_equal(dim(res$density), c(100, 1))
+  expect_equal(drop(res$density), drop(apply(res$pars, 1:2, model$density)))
+  expect_equal(res$initial, rbind(gamma = 1))
   expect_null(res$details)
 })
 
@@ -66,10 +65,10 @@ test_that("sample initial state if not provided, with multiple chains", {
   g23 <- mcstate_rng$new(seed = 42)$long_jump()$long_jump()
 
   res <- initial_parameters(NULL, m, g1)
-  expect_equal(dim(res), c(3, 1))
+  expect_equal(dim(res), c(1, 3))
   expect_equal(res[1, 1], m$direct_sample(g21))
-  expect_equal(res[2, 1], m$direct_sample(g22))
-  expect_equal(res[3, 1], m$direct_sample(g23))
+  expect_equal(res[1, 2], m$direct_sample(g22))
+  expect_equal(res[1, 3], m$direct_sample(g23))
 })
 
 
@@ -78,7 +77,7 @@ test_that("validate that initial have correct size for list inputs", {
   r <- initial_rng(2)
   expect_equal(
     initial_parameters(list(1, 2), m, r),
-    cbind(c(1, 2)))
+    rbind(c(1, 2)))
   expect_error(
     initial_parameters(list(), m, r),
     "Unexpected length for list 'initial' (given 0, expected 2)",
@@ -94,15 +93,15 @@ test_that("validate that initial have correct size for matrix inputs", {
   m <- ex_simple_gamma1()
   r <- initial_rng(2)
   expect_equal(
-    initial_parameters(matrix(c(1, 2), 2, 1), m, r),
-    cbind(c(1, 2)))
+    initial_parameters(matrix(c(1, 2), 1, 2), m, r),
+    rbind(c(1, 2)))
   expect_error(
     initial_parameters(matrix(1, 2, 2), m, r),
-    "Unexpected number of columns in 'initial' (given 2, expected 1)",
+    "Unexpected number of rows in 'initial' (given 2, expected 1)",
     fixed = TRUE)
   expect_error(
-    initial_parameters(matrix(1, 3, 1), m, r),
-    "Unexpected number of rows in 'initial' (given 3, expected 2)",
+    initial_parameters(matrix(1, 1, 3), m, r),
+    "Unexpected number of columns in 'initial' (given 3, expected 2)",
     fixed = TRUE)
 })
 
@@ -112,7 +111,7 @@ test_that("validate that initial have correct size for vector inputs", {
   r <- initial_rng(2)
   expect_equal(
     initial_parameters(1, m, r),
-    cbind(c(1, 1)))
+    rbind(c(1, 1)))
   expect_error(
     initial_parameters(c(1, 2), m, r),
     "Unexpected length for vector 'initial' (given 2, expected 1)",
@@ -246,7 +245,7 @@ test_that("error if provided initial conditions fall outside of domain", {
 
   err <- expect_error(
     mcstate_sample(m, sampler, 100,
-                   rbind(c(-1, 0, 0), c(-1, -1, 0), c(0, 0, 0)), n_chains = 3),
+                   cbind(c(-1, 0, 0), c(-1, -1, 0), c(0, 0, 0)), n_chains = 3),
     "Initial conditions do not fall within parameter domain")
   expect_equal(
     err$body,

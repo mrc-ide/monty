@@ -2,8 +2,8 @@ test_that("can draw samples from a trivial model", {
   m <- ex_simple_gamma1()
   sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   res <- mcstate_sample(m, sampler, 100)
-  expect_equal(names(res), c("pars", "density", "initial", "details", "chain"))
-  expect_equal(res$chain, rep(1, 100))
+  expect_equal(names(res), c("pars", "density", "initial", "details"))
+  expect_equal(dim(res$pars), c(1, 100, 1))
 })
 
 
@@ -39,5 +39,5 @@ test_that("can draw samples from a random model", {
   sampler <- mcstate_sampler_random_walk(vcv = vcv)
   res <- mcstate_sample(m, sampler, 20)
   expect_setequal(names(res),
-                  c("pars", "density", "initial", "details", "chain"))
+                  c("pars", "density", "initial", "details"))
 })

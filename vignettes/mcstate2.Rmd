@@ -125,7 +125,7 @@ samples <- mcstate_sample(posterior, sampler, 5000, initial = c(114, 0.9, 3),
 We don't yet have tools for working with the samples objects, but we can see the density over time easily enough:
 
 ```{r}
-matplot(matrix(samples$density, ncol = 4), type = "l", lty = 1,
+matplot(t(samples$density), type = "l", lty = 1,
         xlab = "log posterior density", ylab = "sample", col = "#00000055")
 ```
 
@@ -133,10 +133,10 @@ And plots of our estimated parameters:
 
 ```{r}
 par(mfrow = c(1, 3))
-plot(density(samples$pars[, "a"]), main = "a")
+plot(density(samples$pars["a", , ]), main = "a")
 abline(v = 114, col = "red")
-plot(density(samples$pars[, "b"]), main = "b")
+plot(density(samples$pars["b", , ]), main = "b")
 abline(v = 0.9, col = "red")
-plot(density(samples$pars[, "sigma"]), main = "sigma")
+plot(density(samples$pars["sigma", , ]), main = "sigma")
 abline(v = 3, col = "red")
 ```

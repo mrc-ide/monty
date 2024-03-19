@@ -58,8 +58,8 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     theta_next <- theta
 
     if (debug) {
-      history <- matrix(NA_real_, n_integration_steps + 1, length(theta))
-      history[1, ] <- pars_next
+      history <- matrix(NA_real_, length(theta), n_integration_steps + 1)
+      history[, 1] <- pars_next
     }
 
     v <- internal$sample_momentum(rng)
@@ -76,7 +76,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
         v_next <- v_next + epsilon * compute_gradient(pars_next)
       }
       if (debug) {
-        history[i + 1, ] <- pars_next
+        history[, i + 1] <- pars_next
       }
     }
 
@@ -116,9 +116,10 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
   finalise <- function(state, model, rng) {
     if (debug) {
       pars <- lapply(internal$history, "[[", "pars")
-      pars <- array(unlist(pars),
-                    c(dim(pars[[1]]), length(pars)),
-                    list(NULL, model$parameters, NULL))
+      pars <- array_bind(
+        arrays = lapply(internal$history, "[[", "pars"),
+        after = 2)
+      rownames(pars) <- model$parameters
       accept <- vlapply(internal$history, "[[", "accept")
       list(debug = list(pars = pars, accept = accept))
     } else {

@@ -13,7 +13,7 @@ mcstate_runner_serial <- function() {
     lapply(
       seq_along(rng),
       function(i) {
-        mcstate_run_chain(pars[i, ], model, sampler, n_steps, rng[[i]],
+        mcstate_run_chain(pars[, i], model, sampler, n_steps, rng[[i]],
                           sampler_state[[i]])
       })
   }
@@ -73,10 +73,10 @@ mcstate_runner_parallel <- function(n_workers) {
     ## something closer to the rng pointer object rather than the big
     ## heavy R6 object as that already has the logic in for doing
     ## state sync, but this can all be done transparently later.
-    pars_list <- asplit(pars, MARGIN = 1)
+    pars_list <- asplit(pars, MARGIN = 2)
     rng_state <- lapply(rng, function(r) r$state())
 
-    res <- parallel::clusterMap(
+    parallel::clusterMap(
       cl,
       mcstate_run_chain_parallel,
       pars = pars_list,
@@ -126,17 +126,17 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  history_pars <- matrix(NA_real_, n_steps, length(pars))
+  history_pars <- matrix(NA_real_, length(pars), n_steps)
   history_density <- rep(NA_real_, n_steps)
 
   for (i in seq_len(n_steps)) {
     state <- sampler$step(state, model, rng)
-    history_pars[i, ] <- state$pars
+    history_pars[, i] <- state$pars
     history_density[[i]] <- state$density
   }
 
   ## Pop the parameter names on last
-  colnames(history_pars) <- model$parameters
+  rownames(history_pars) <- model$parameters
 
   ## I'm not sure about the best name for this
   details <- sampler$finalise(state, model, rng)
