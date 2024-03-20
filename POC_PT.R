@@ -67,9 +67,9 @@ for(i in seq(N_temp+1)){
   PT_machine[[i]]$sampler$initialise(PT_machine[[i]]$model$direct_sample(PT_machine[[i]]$rng),PT_machine[[i]]$model,PT_machine[[i]]$rng)
 }
 
-m <- mixture_gaussians(10) #the "likelihood model" when we have beta=0, prior, and beta=1, posterior
+m <- mixture_gaussians(10) #the likelihood model (target over prior)
 even_step <- FALSE
-n_iterations <- 5000
+n_iterations <- 10000
 x_res <- NULL
 beta_res <- PT_machine[[N_temp+1]]$beta
 index_res <- beta_index
@@ -87,7 +87,6 @@ for(k in seq(n_iterations)){
                                                             PT_machine[[i]]$rng)
     }}
   
-  #browser()
   #communication step
   if(even_step){
     index <- which(seq(N_temp)%%2==0)
@@ -96,33 +95,44 @@ for(k in seq(n_iterations)){
     }
   
   for(i in index){
-    #first machine
+    #first machine at beta_{i}
     i1 <- beta_index[i]
-    #second machine
+    #second machine at beta_{i+1}
     i2 <- beta_index[i+1]
-
     #acceptance probability for the exhange
     #m$density is used - the log density of the "likelihood" or target function over prior
     alpha <- min(0,(beta[i+1]-beta_index[i])*(m$density(PT_machine[[i2]]$state$pars)-m$density(PT_machine[[i1]]$state$pars)))
+    
     if(log(runif(1))<alpha) { #swap
       beta_index[i] <- i2
       beta_index[i+1] <- i1
       #this bit is a bit of a hack, but avoid exchanging the states accross "machines"
+      #note that we still need to recalculate/update the density value
+      #corresponding with the new "temperature"/beta
       PT_machine[[i2]]$beta <- beta[i]
       environment(PT_machine[[i2]]$model$density)$beta <- beta[i]
+      PT_machine[[i2]]$state$density <- PT_machine[[i2]]$model$density(PT_machine[[i2]]$state$pars)
       PT_machine[[i1]]$beta <- beta[i+1]
       environment(PT_machine[[i1]]$model$density)$beta <- beta[i+1]
+      PT_machine[[i1]]$state$density <- PT_machine[[i1]]$model$density(PT_machine[[i1]]$state$pars)
     }
   }
   even_step <- !even_step
   i_target <- beta_index[N_temp+1]
-  x_res <- rbind(x_res, unlist(PT_machine[[i_target]]$state))
+  all_state <- rep(0,N_temp+1)
+  for(i in seq(N_temp+1)){
+    all_state[i] <- PT_machine[[beta_index[i]]]$state$pars
+  }
+  x_res <- rbind(x_res, all_state)
+  #x_res <- rbind(x_res, unlist(PT_machine[[i_target]]$state))
   index_res <- rbind(index_res, beta_index)
   beta_res <- c(beta_res, environment(PT_machine[[i_target]]$model$density)$beta)
 }
 
-plot(x_res[,1])   
-    
-  
+par(mfrow=c(1,2))
+target_d <- 16
+plot(x_res[,target_d], type="l", col=grey(.8))
+points(x_res[,target_d])
+hist(x_res[,target_d], breaks = 150)
 
 
