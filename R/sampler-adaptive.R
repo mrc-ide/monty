@@ -114,6 +114,8 @@ mcstate_sampler_adaptive <- function(initial_vcv,
   internal <- new.env()
 
   initialise <- function(pars, model, rng) {
+    require_deterministic(model,
+                          "Can't use adaptive sampler with stochastic models")
     internal$weight <- 0
     internal$iteration <- 0
 

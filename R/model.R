@@ -294,3 +294,27 @@ require_direct_sample <- function(model, message, ...) {
       ...)
   }
 }
+
+
+require_deterministic <- function(model, message, ...) {
+  if (model$properties$is_stochastic) {
+    cli::cli_abort(
+      c(message,
+        i = paste("This model is stochastic (its 'is_stochastic' property",
+                  "is TRUE) so cannot be used in contexts that require",
+                  "a deterministic density")),
+      ...)
+  }
+}
+
+
+require_gradient <- function(model, message, ...) {
+  if (!model$properties$has_gradient) {
+    cli::cli_abort(
+      c(message,
+        i = paste("This model does not provide a gradient (its 'has_gradient'",
+                  "property is FALSE) so cannot be used in contexts that",
+                  "require one")),
+      ...)
+  }
+}

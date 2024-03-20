@@ -29,6 +29,9 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
   }
 
   initialise <- function(pars, model, rng) {
+    require_deterministic(model, "Can't use HMC with stochastic models")
+    require_gradient(model, "Can't use HMC without a gradient")
+
     internal$transform <- hmc_transform(model$domain)
     n_pars <- length(model$parameters)
     if (is.null(vcv)) {
