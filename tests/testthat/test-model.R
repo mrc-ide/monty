@@ -132,22 +132,34 @@ test_that("stochastic models need an rng setting function", {
     mcstate_model(
       list(density = identity, parameters = "a"),
       mcstate_model_properties(is_stochastic = TRUE)),
-    "Expected 'model$set_rng_state' to be a function",
+    "Expected 'model$set_rng_state' and 'model$get_rng_state' to be functions",
     fixed = TRUE)
   expect_error(
     mcstate_model(
-      list(density = identity, parameters = "a", set_rng_state = TRUE)),
-    "Expected 'model$set_rng_state' to be a function",
+      list(density = identity, parameters = "a", set_rng_state = identity),
+      mcstate_model_properties(is_stochastic = TRUE)),
+    "Expected 'model$get_rng_state' to be a function",
     fixed = TRUE)
   expect_error(
     mcstate_model(
-      list(density = identity, parameters = "a", set_rng_state = TRUE),
+      list(density = identity, parameters = "a", get_rng_state = identity),
       mcstate_model_properties(is_stochastic = TRUE)),
     "Expected 'model$set_rng_state' to be a function",
     fixed = TRUE)
+
+  m <- list(density = identity, parameters = "a", set_rng_state = TRUE,
+            get_rng_state = identity)
+  expect_error(
+    mcstate_model(m),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
+  expect_error(
+    mcstate_model(m,
+                  mcstate_model_properties(is_stochastic = TRUE)),
+    "Expected 'model$set_rng_state' to be a function",
+    fixed = TRUE)
   expect_no_error(
-    res <- mcstate_model(
-      list(density = identity, parameters = "a", set_rng_state = TRUE),
-      mcstate_model_properties(is_stochastic = FALSE)))
+    res <- mcstate_model(m,
+                         mcstate_model_properties(is_stochastic = FALSE)))
   expect_null(res$set_rng_state)
 })

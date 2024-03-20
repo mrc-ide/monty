@@ -90,21 +90,14 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   stochastic; however, you can use the `is_stochastic` property
 ##'   (via [mcstate_model_properties()]) to override this (e.g., to
 ##'   run a stochastic model with its deterministic expectation).
-##'   This function takes an [mcstate_rng] object and uses it to seed
-##'   the random number state for your model.  You have two options
-##'   here (1) hold a copy of the provided object and draw samples
-##'   from it as needed (in effect sharing the random number stream
-##'   with the sampler) or create a new rng stream from a jump with
-##'   this stream (we'll provide a utility for doing this but at
-##'   present doing `mcstate_rng$new(rng$state(),
-##'   n_streams)$jump()$state()` will do).  The main reason you'd do
-##'   that is if you need multiple (perhaps parallel) streams of
-##'   random numbers in your model.  The `$jump()` is very important,
-##'   otherwise you'll end up correlated with the draws from the
-##'   sampler.
+##'   This function takes a raw vector of random number state from
+##'   [mcstate_rng] and uses it to set the random number state for
+##'   your model; this is derived from the random number stream for a
+##'   particular chain, jumped ahead.
 ##'
 ##' * `get_rng_state`: A function to get the RNG state; must be
-##'   provided if `set_rng_state` is present.
+##'   provided if `set_rng_state` is present.  Must return the random
+##'   number state, which is a raw vector (potentially quite long).
 ##'
 ##' @title Create basic model
 ##'
@@ -249,30 +242,46 @@ validate_model_direct_sample <- function(model, properties, call) {
 
 
 validate_model_rng_state <- function(model, properties, call) {
-  if (isFALSE(properties$is_stochastic)) {
+  not_stochastic <- isFALSE(properties$is_stochastic) || (
+    is.null(properties$is_stochastic) &&
+    is.null(model$set_rng_state) &&
+    is.null(model$get_rng_state))
+  if (not_stochastic) {
     return(NULL)
   }
-  if (is.null(properties$is_stochastic) && is.null(model$set_rng_state)) {
-    return(NULL)
+
+  has_set <- is.function(model$set_rng_state)
+  has_get <- is.function(model$get_rng_state)
+
+  if (has_set && has_get) {
+    return(list(set = model$set_rng_state,
+                get = model$get_rng_state))
   }
-  ## TODO: this now needs more complex logic, really.
-  if (!is.function(model$set_rng_state)) {
-    if (isTRUE(properties$is_stochastic)) {
-      hint <- paste("You have specified 'is_stochastic = TRUE', so in order",
-                    "to use your stochastic model we need a way of setting",
-                    "its state")
-    } else {
-      hint <- paste("I found a non-function element 'set_rng_state' within",
-                    "your model and you have not set the 'is_stochastic'",
-                    "property")
-    }
-    cli::cli_abort(
-      c("Expected 'model$set_rng_state' to be a function",
-        i = hint),
-      arg = "model", call = call)
+
+  ## Everything below here is an error, we just want to make a nice
+  ## one.
+  if (!has_set && !has_get) {
+    msg <- paste("Expected 'model$set_rng_state' and 'model$get_rng_state'",
+                 "to be functions")
+  } else if (!has_set) {
+    msg <- "Expected 'model$set_rng_state' to be a function"
+  } else {
+    msg <- "Expected 'model$get_rng_state' to be a function"
   }
-  list(set = model$set_rng_state,
-       get = model$get_rng_state)
+
+  if (isTRUE(properties$is_stochastic)) {
+    hint <- paste("You have specified 'is_stochastic = TRUE', so in order",
+                  "to use your stochastic model we need a way of setting",
+                  "its state at the start of sampling and getting it back",
+                  "at the end")
+  } else {
+    hint <- paste("Check the set_rng_state and get_rng_state properties",
+                  "of your model, or set the 'is_stochastic' property to",
+                  "FALSE to ignore them")
+  }
+  cli::cli_abort(
+    c(msg, i = hint),
+    arg = "model", call = call)
 }
 
 

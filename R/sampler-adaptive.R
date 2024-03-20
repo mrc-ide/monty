@@ -134,8 +134,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$included <- integer()
     internal$scaling_history <- internal$scaling
 
-    density <- model$density(pars)
-    list(pars = pars, density = density)
+    initialise_state(pars, model, rng)
   }
 
   step <- function(state, model, rng) {

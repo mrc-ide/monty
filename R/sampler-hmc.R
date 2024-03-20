@@ -43,8 +43,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     if (debug) {
       internal$history <- list()
     }
-    density <- model$density(pars)
-    list(pars = pars, density = density)
+    initialise_state(pars, model, rng)
   }
 
   step <- function(state, model, rng) {
