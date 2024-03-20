@@ -14,8 +14,8 @@
 ##'   from the model.
 ##'
 ##' @param is_stochastic Logical, indicating if the model is
-##'   stochastic.  Stochastic models must supply a `set_rng_state`
-##'   method and we might support a `get_rng_state` method later.
+##'   stochastic.  Stochastic models must supply `set_rng_state` and
+##'   `get_rng_state` methods.
 ##'
 ##' @return A list of class `mcstate_model_properties` which should
 ##'   not be modified.
@@ -103,6 +103,9 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   otherwise you'll end up correlated with the draws from the
 ##'   sampler.
 ##'
+##' * `get_rng_state`: A function to get the RNG state; must be
+##'   provided if `set_rng_state` is present.
+##'
 ##' @title Create basic model
 ##'
 ##' @param model A list or environment with elements as described in
@@ -147,6 +150,7 @@ mcstate_model <- function(model, properties = NULL) {
               density = density,
               gradient = gradient,
               direct_sample = direct_sample,
+              rng_state = rng_state,
               properties = properties)
   class(ret) <- "mcstate_model"
   ret
@@ -251,6 +255,7 @@ validate_model_rng_state <- function(model, properties, call) {
   if (is.null(properties$is_stochastic) && is.null(model$set_rng_state)) {
     return(NULL)
   }
+  ## TODO: this now needs more complex logic, really.
   if (!is.function(model$set_rng_state)) {
     if (isTRUE(properties$is_stochastic)) {
       hint <- paste("You have specified 'is_stochastic = TRUE', so in order",
@@ -266,7 +271,8 @@ validate_model_rng_state <- function(model, properties, call) {
         i = hint),
       arg = "model", call = call)
   }
-  list(set = model$set_rng_state)
+  list(set = model$set_rng_state,
+       get = model$get_rng_state)
 }
 
 

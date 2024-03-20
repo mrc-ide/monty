@@ -9,15 +9,20 @@
 ##'
 ##' @export
 mcstate_runner_serial <- function() {
-  run <- function(pars, model, sampler, n_steps, rng, sampler_state) {
+  run <- function(pars, model, sampler, n_steps, rng) {
     lapply(
       seq_along(rng),
       function(i) {
-        mcstate_run_chain(pars[, i], model, sampler, n_steps, rng[[i]],
-                          sampler_state[[i]])
+        mcstate_run_chain(pars[, i], model, sampler, n_steps, rng[[i]])
       })
   }
-  structure(list(run = run), class = "mcstate_runner")
+
+  continue <- function(state, model, sampler, n_steps) {
+    lapply(state, mcstate_continue_chain, model, sampler, n_steps)
+  }
+
+  structure(list(run = run, continue = continue),
+            class = "mcstate_runner")
 }
 
 
@@ -59,7 +64,7 @@ mcstate_runner_parallel <- function(n_workers) {
   ## get the advantage that the cluster startup happens asyncronously
   ## and may be ready by the time we actually pass any work onto it.
 
-  run <- function(pars, model, sampler, n_steps, rng, sampler_state) {
+  run <- function(pars, model, sampler, n_steps, rng) {
     n_chains <- length(rng)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
@@ -81,7 +86,6 @@ mcstate_runner_parallel <- function(n_workers) {
       mcstate_run_chain_parallel,
       pars = pars_list,
       rng = rng_state,
-      sampler_state = sampler_state,
       MoreArgs = list(model = model, sampler = sampler, n_steps = n_steps))
   }
   structure(list(run = run), class = "mcstate_runner")
@@ -90,21 +94,15 @@ mcstate_runner_parallel <- function(n_workers) {
 
 ## Later we could return the mutated rng state and set it back into
 ## the sampler, if we needed to continue for any reason.
-mcstate_run_chain_parallel <- function(pars, model, sampler, n_steps, rng,
-                                       sampler_state) {
+mcstate_run_chain_parallel <- function(pars, model, sampler, n_steps, rng) {
   rng <- mcstate_rng$new(rng)
-  mcstate_run_chain(pars, model, sampler, n_steps, rng, sampler_state)
+  mcstate_run_chain(pars, model, sampler, n_steps, rng)
 }
 
 
-mcstate_run_chain <- function(pars, model, sampler, n_steps, rng,
-                              sampler_state) {
+mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   r_rng_state <- get_r_rng_state()
-  density <- model$density(pars)
   state <- sampler$initialise(pars, model, rng)
-  if (!is.null(sampler_state)) {
-    sampler$set_internal_state(sampler_state)
-  }
 
   if (!is.finite(state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -126,7 +124,27 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  history_pars <- matrix(NA_real_, length(pars), n_steps)
+  mcstate_run_chain2(state, model, sampler, n_steps, rng, r_rng_state)
+}
+
+
+mcstate_continue_chain <- function(state, model, sampler, n_steps) {
+  r_rng_state <- get_r_rng_state()
+  rng <- mcstate_rng$new(seed = state$rng)
+  sampler$set_internal_state(state$sampler)
+  if (model$properties$is_stochastic) {
+    model$rng_state$set(state$model_rng)
+  }
+  mcstate_run_chain2(state$chain, model, sampler, n_steps, rng, r_rng_state)
+}
+
+
+mcstate_run_chain2 <- function(state, model, sampler, n_steps, rng,
+                               r_rng_state) {
+  initial <- state$pars
+  n_pars <- length(model$parameters)
+
+  history_pars <- matrix(NA_real_, n_pars, n_steps)
   history_density <- rep(NA_real_, n_steps)
 
   for (i in seq_len(n_steps)) {
@@ -145,11 +163,15 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng,
   ## surface to the user in the final object (or summarise them in
   ## some particular way with no guarantees about the format).  We
   ## might hold things like start and stop times here in future.
-  internal <- list(used_r_rng = !identical(get_r_rng_state(), r_rng_state),
-                   rng_state = rng$state(),
-                   sampler_state = sampler$get_internal_state())
+  internal <- list(
+    used_r_rng = !identical(get_r_rng_state(), r_rng_state),
+    state = list(
+      chain = state,
+      rng = rng$state(),
+      sampler = sampler$get_internal_state(),
+      model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 
-  list(initial = pars,
+  list(initial = initial,
        pars = history_pars,
        density = history_density,
        details = details,

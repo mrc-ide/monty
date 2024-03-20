@@ -41,7 +41,7 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
       }
     }
     if (isTRUE(model$properties$is_stochastic)) {
-      model$model$set_rng_state(rng)
+      model$rng_state$set(rng)
     }
 
     density <- model$density(pars)

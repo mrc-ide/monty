@@ -97,5 +97,7 @@ that is if you need multiple (perhaps parallel) streams of
 random numbers in your model.  The \verb{$jump()} is very important,
 otherwise you'll end up correlated with the draws from the
 sampler.
+\item \code{get_rng_state}: A function to get the RNG state; must be
+provided if \code{set_rng_state} is present.
 }
 }

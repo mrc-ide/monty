@@ -78,9 +78,8 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
   }
 
   rng <- initial_rng(n_chains)
-  sampler_state <- vector("list", n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, n_steps, rng, sampler_state)
+  res <- runner$run(pars, model, sampler, n_steps, rng)
 
   samples <- combine_chains(res)
   if (restartable) {
@@ -118,16 +117,13 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
                   "use the argument 'restartable = TRUE' when calling",
                   "mcstate_sample()")))
   }
-
-  rng <- lapply(samples$restart$rng_state,
-                function(s) mcstate_rng$new(seed = s))
-  model <- samples$restart$model
-  pars <- unname(samples$restart$pars)
-  sampler <- samples$restart$sampler
-  sampler_state <- samples$restart$sampler_state
   runner <- samples$restart$runner
+  state <- samples$restart$state
+  model <- samples$restart$model
+  sampler <- samples$restart$sampler
 
-  res <- runner$run(pars, model, sampler, n_steps, rng, sampler_state)
+  res <- runner$continue(state, model, sampler, n_steps)
+
   samples <- append_chains(samples, combine_chains(res))
 
   if (restartable) {
@@ -287,16 +283,9 @@ initial_rng <- function(n_chains, seed = NULL) {
 
 
 restart_data <- function(res, model, sampler, runner) {
-  n_pars <- nrow(res[[1]]$pars)
-  pars <- vapply(res, function(x) x$pars[, ncol(x$pars)], numeric(n_pars))
-  if (n_pars == 1) {
-    pars <- rbind(pars, deparse.level = 0)
-  }
-  list(rng_state = lapply(res, function(x) x$internal$rng_state),
-       pars = pars,
+  list(state = lapply(res, function(x) x$internal$state),
        model = model,
        sampler = sampler,
-       sampler_state = lapply(res, function(x) x$internal$sampler_state),
        runner = runner)
 }
 

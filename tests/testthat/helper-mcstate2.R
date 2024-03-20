@@ -63,8 +63,16 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
   }
 
   set_rng_state <- function(rng) {
-    state <- mcstate_rng$new(rng$state(), n_particles + 1)$jump()$state()
+    if (inherits(rng, "mcstate_rng")) {
+      state <- mcstate_rng$new(rng$state(), n_particles + 1)$jump()$state()
+    } else {
+      state <- rng
+    }
     model$set_rng_state(state)
+  }
+
+  get_rng_state <- function() {
+    model$rng_state()
   }
 
   mcstate_model(
@@ -72,7 +80,8 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
          direct_sample = direct_sample,
          parameters = c("beta", "gamma"),
          domain = cbind(c(0, 0), c(Inf, Inf)),
-         set_rng_state = set_rng_state),
+         set_rng_state = set_rng_state,
+         get_rng_state = get_rng_state),
     mcstate_model_properties(is_stochastic = !deterministic))
 }
 
