@@ -102,9 +102,9 @@ mcstate_run_chain_parallel <- function(pars, model, sampler, n_steps, rng) {
 
 mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
   r_rng_state <- get_r_rng_state()
-  state <- sampler$initialise(pars, model, rng)
+  chain_state <- sampler$initialise(pars, model, rng)
 
-  if (!is.finite(state$density)) {
+  if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
     ## validing this even earlier (in the parameter validation step)
     ## but that has its own issues (e.g., in the heirarchical sampler
@@ -124,7 +124,7 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, rng) {
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  mcstate_run_chain2(state, model, sampler, n_steps, rng, r_rng_state)
+  mcstate_run_chain2(chain_state, model, sampler, n_steps, rng, r_rng_state)
 }
 
 
@@ -139,25 +139,25 @@ mcstate_continue_chain <- function(state, model, sampler, n_steps) {
 }
 
 
-mcstate_run_chain2 <- function(state, model, sampler, n_steps, rng,
+mcstate_run_chain2 <- function(chain_state, model, sampler, n_steps, rng,
                                r_rng_state) {
-  initial <- state$pars
+  initial <- chain_state$pars
   n_pars <- length(model$parameters)
 
   history_pars <- matrix(NA_real_, n_pars, n_steps)
   history_density <- rep(NA_real_, n_steps)
 
   for (i in seq_len(n_steps)) {
-    state <- sampler$step(state, model, rng)
-    history_pars[, i] <- state$pars
-    history_density[[i]] <- state$density
+    chain_state <- sampler$step(chain_state, model, rng)
+    history_pars[, i] <- chain_state$pars
+    history_density[[i]] <- chain_state$density
   }
 
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
   ## I'm not sure about the best name for this
-  details <- sampler$finalise(state, model, rng)
+  details <- sampler$finalise(chain_state, model, rng)
 
   ## This list will hold things that we'll use internally but not
   ## surface to the user in the final object (or summarise them in
@@ -166,7 +166,7 @@ mcstate_run_chain2 <- function(state, model, sampler, n_steps, rng,
   internal <- list(
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
-      chain = state,
+      chain = chain_state,
       rng = rng$state(),
       sampler = sampler$get_internal_state(),
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
