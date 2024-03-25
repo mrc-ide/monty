@@ -149,3 +149,23 @@ test_that("can continue hmc with debug", {
 
   expect_equal(res2b, res1)
 })
+
+
+test_that("can't use hmc with models that lack gradients", {
+  m <- mcstate_model(list(density = function(x) dnorm(x, log = TRUE),
+                          parameters = "a"))
+  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  expect_error(
+    mcstate_sample(m, sampler, 30, 1, n_chains = 3),
+    "Can't use HMC without a gradient")
+})
+
+
+test_that("can't use hmc with stochastic models", {
+  set.seed(1)
+  m <- ex_dust_sir()
+  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  expect_error(
+    mcstate_sample(m, sampler, 30, n_chains = 3),
+    "Can't use HMC with stochastic models")
+})

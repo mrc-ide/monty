@@ -40,12 +40,7 @@ mcstate_sampler_random_walk <- function(proposal = NULL, vcv = NULL) {
           "Incompatible length parameters ({n_pars}) and vcv ({n_vcv})")
       }
     }
-    if (isTRUE(model$properties$is_stochastic)) {
-      model$model$set_rng_state(rng)
-    }
-
-    density <- model$density(pars)
-    list(pars = pars, density = density)
+    initialise_state(pars, model, rng)
   }
 
   step <- function(state, model, rng) {

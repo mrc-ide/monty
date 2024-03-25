@@ -20,8 +20,8 @@ the model.}
 from the model.}
 
 \item{is_stochastic}{Logical, indicating if the model is
-stochastic.  Stochastic models must supply a \code{set_rng_state}
-method and we might support a \code{get_rng_state} method later.}
+stochastic.  Stochastic models must supply \code{set_rng_state} and
+\code{get_rng_state} methods.}
 }
 \value{
 A list of class \code{mcstate_model_properties} which should

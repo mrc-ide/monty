@@ -84,3 +84,13 @@ test_that("can continue adaptive sampler", {
 
   expect_equal(res2b, res1)
 })
+
+
+test_that("can't use adaptive sampler with stochastic models", {
+  set.seed(1)
+  m <- ex_dust_sir()
+  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
+  expect_error(
+    mcstate_sample(m, sampler, 30, n_chains = 3),
+    "Can't use adaptive sampler with stochastic models")
+})

@@ -62,9 +62,18 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
       rng$gamma(1, prior_gamma_shape, 1 / prior_gamma_rate))
   }
 
-  set_rng_state <- function(rng) {
-    state <- mcstate_rng$new(rng$state(), n_particles + 1)$jump()$state()
-    model$set_rng_state(state)
+  set_rng_state <- function(rng_state) {
+    n_streams <- n_particles + 1
+    if (length(rng_state) != 32 * n_streams) {
+      ## Expand the state by short jumps; we'll make this nicer once
+      ## we refactor the RNG interface and dust.
+      rng_state <- mcstate_rng$new(rng_state, n_streams)$state()
+    }
+    model$set_rng_state(rng_state)
+  }
+
+  get_rng_state <- function() {
+    model$rng_state()
   }
 
   mcstate_model(
@@ -72,7 +81,8 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
          direct_sample = direct_sample,
          parameters = c("beta", "gamma"),
          domain = cbind(c(0, 0), c(Inf, Inf)),
-         set_rng_state = set_rng_state),
+         set_rng_state = set_rng_state,
+         get_rng_state = get_rng_state),
     mcstate_model_properties(is_stochastic = !deterministic))
 }
 
