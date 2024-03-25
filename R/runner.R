@@ -160,8 +160,8 @@ mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
     chain_state <- sampler$step(chain_state, model, observer, rng)
     history_pars[, i] <- chain_state$pars
     history_density[[i]] <- chain_state$density
-    if (!is.null(state$observation)) {
-      history_observation[[i]] <- state$observation
+    if (!is.null(chain_state$observation)) {
+      history_observation[[i]] <- chain_state$observation
     }
   }
 
