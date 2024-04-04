@@ -19,6 +19,15 @@ assert_scalar <- function(x, name = deparse(substitute(x)), arg = name,
 }
 
 
+assert_logical <- function(x, name = deparse(substitute(x)),
+                          arg = name, call = NULL) {
+  if (!is.logical(x)) {
+    cli::cli_abort("Exected '{name}' to be logical", arg = arg, call = call)
+  }
+  invisible(x)
+}
+
+
 assert_character <- function(x, name = deparse(substitute(x)),
                              arg = name, call = NULL) {
   if (!is.character(x)) {
@@ -28,10 +37,28 @@ assert_character <- function(x, name = deparse(substitute(x)),
 }
 
 
+assert_nonmissing <- function(x, name = deparse(substitute(x)),
+                          arg = name, call = NULL) {
+  if (!anyNA(x)) {
+    cli::cli_abort("Exected '{name}' to be non-NA", arg = arg, call = call)
+  }
+  invisible(x)
+}
+
+
+assert_scalar_logical <- function(x, name = deparse(substitute(x)),
+                                  arg = name, call = NULL) {
+  assert_scalar(x, name, arg = arg, call = call)
+  assert_logical(x, name, arg = arg, call = call)
+  assert_nonmissing(x, name, arg = arg, call = call)
+}
+
+
 assert_scalar_character <- function(x, name = deparse(substitute(x)),
                                     arg = name, call = NULL) {
   assert_scalar(x, name, arg = arg, call = call)
   assert_character(x, name, arg = arg, call = call)
+  assert_nonmissing(x, name, arg = arg, call = call)
 }
 
 
