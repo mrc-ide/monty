@@ -20,14 +20,12 @@ dsl_preprocess <- function(x, type = NULL) {
     } else {
       exprs <- parse(text = x, keep.source = TRUE)
     }
-    expr_start <- utils::getSrcLocation(exprs, "line", first = TRUE)
-    expr_end <- utils::getSrcLocation(exprs, "line", first = FALSE)
-    expr_str <- vcapply(utils::getSrcref(exprs), paste0, collapse = "\n")
+    expr_line <- utils::getSrcLocation(exprs, "line", first = TRUE)
+    expr_str <- lapply(utils::getSrcref(exprs), as.character)
 
-    ## Convert each expression to hold its line start/end and string
+    ## Convert each expression to hold its starting line and string
     ## representation
-    ret <- Map(structure, exprs,
-               start = expr_start, end = expr_end, str = expr_str)
+    ret <- Map(structure, exprs, line = expr_line, str = expr_str)
   }
   ret
 }

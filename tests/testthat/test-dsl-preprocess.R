@@ -20,25 +20,32 @@ test_that("can accept dsl input from text, preserving source", {
   expect_equal(
     dsl_preprocess("a ~ Normal(0, 1)"),
     list(structure(quote(a ~ Normal(0, 1)),
-                   start = 1, end = 1, str = "a ~ Normal(0, 1)")))
+                   line = 1, str = "a ~ Normal(0, 1)")))
   expect_equal(
     dsl_preprocess("a ~ Normal(0, 1)\nb~Normal(a,1)"),
     list(structure(quote(a ~ Normal(0, 1)),
-                   start = 1, end = 1, str = "a ~ Normal(0, 1)"),
+                   line = 1, str = "a ~ Normal(0, 1)"),
          structure(quote(b ~ Normal(a, 1)),
-                   start = 2, end = 2, str = "b~Normal(a,1)")))
+                   line = 2, str = "b~Normal(a,1)")))
   expect_equal(
     dsl_preprocess("a ~ Normal(0, 1)\n# comment\nb~Normal(a,1)"),
     list(structure(quote(a ~ Normal(0, 1)),
-                   start = 1, end = 1, str = "a ~ Normal(0, 1)"),
+                   line = 1, str = "a ~ Normal(0, 1)"),
          structure(quote(b ~ Normal(a, 1)),
-                   start = 3, end = 3, str = "b~Normal(a,1)")))
+                   line = 3, str = "b~Normal(a,1)")))
   expect_equal(
     dsl_preprocess("a ~ Normal(0, 1)\n# comment\nb~Normal(\na,\n1)"),
     list(structure(quote(a ~ Normal(0, 1)),
-                   start = 1, end = 1, str = "a ~ Normal(0, 1)"),
+                   line = 1, str = "a ~ Normal(0, 1)"),
          structure(quote(b ~ Normal(a, 1)),
-                   start = 3, end = 5, str = "b~Normal(\na,\n1)")))
+                   line = 3, str = c("b~Normal(", "a,", "1)"))))
+
+  expect_equal(
+    dsl_preprocess("a ~ Normal(0, 1)\n# comment\nb~Normal(\n# x\na,\n1)"),
+    list(structure(quote(a ~ Normal(0, 1)),
+                   line = 1, str = "a ~ Normal(0, 1)"),
+         structure(quote(b ~ Normal(a, 1)),
+                   line = 3, str = c("b~Normal(", "# x", "a,", "1)"))))
 })
 
 
@@ -48,9 +55,9 @@ test_that("can accept dsl input from file, preserving source", {
   expect_equal(
     dsl_preprocess(tmp),
     list(structure(quote(a ~ Normal(0, 1)),
-                   start = 1, end = 1, str = "a ~ Normal(0, 1)"),
+                   line = 1, str = "a ~ Normal(0, 1)"),
          structure(quote(b ~ Normal(a, 1)),
-                   start = 3, end = 5, str = "b~Normal(\na,\n1)")))
+                   line = 3, str = c("b~Normal(", "a,", "1)"))))
 })
 
 
