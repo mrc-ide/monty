@@ -4,22 +4,35 @@
 ##'
 ##' @title Run MCMC chain in series
 ##'
+##' @param progress Optional logical, indicating if we should print a
+##'   progress bar while running.  If `NULL`, we use the value of the
+##'   option `mcstate2.progress` if set, otherwise we display a
+##'   progress bar if the terminal is dynamic (using
+##'   `cli::is_dynamic_tty`).  The progress bar itself responds to
+##'   cli's options; in particular `cli.progress_show_after` and
+##'   `cli.progress_clear` will affect your experience.
+##'
 ##' @return A runner of class `mcstate_runner` that can be passed to
 ##'   [mcstate_sample()]
 ##'
 ##' @export
-mcstate_runner_serial <- function() {
+mcstate_runner_serial <- function(progress = NULL) {
   run <- function(pars, model, sampler, observer, n_steps, rng) {
+    n_chains <- length(rng)
+    pb <- progress_bar(n_chains, n_steps, progress, environment())
     lapply(
       seq_along(rng),
       function(i) {
         mcstate_run_chain(pars[, i], model, sampler, observer, n_steps,
-                          rng[[i]])
+                          pb(i), rng[[i]])
       })
   }
 
-  continue <- function(state, model, sampler, observer, n_steps) {
-    lapply(state, mcstate_continue_chain, model, sampler, observer, n_steps)
+  continue <- function(state, model, sampler, n_steps) {
+    n_chains <- length(state)
+    pb <- progress_bar(n_chains, n_steps, progress, environment())
+    lapply(state, mcstate_continue_chain, model, sampler, observer, n_steps,
+           pb(i))
   }
 
   structure(list(run = run, continue = continue),
@@ -57,6 +70,9 @@ mcstate_runner_serial <- function() {
 ##'
 ##' @export
 mcstate_runner_parallel <- function(n_workers) {
+  ## TODO: accept a cluster as an optional argument here, I think.
+  ## There is an interface we can use easily.
+
   ## An alternative way of doing this would be to start the cluster
   ## immediately on creation of the runner object, which means that
   ## subsequent uses would reuse a cluster; that would probably be
@@ -118,11 +134,12 @@ mcstate_runner_parallel <- function(n_workers) {
 mcstate_run_chain_parallel <- function(pars, model, sampler, observer,
                                        n_steps, rng) {
   rng <- mcstate_rng$new(rng)
-  mcstate_run_chain(pars, model, sampler, observer, n_steps, rng)
+  progress <- function(i) NULL
+  mcstate_run_chain(pars, model, sampler, observer, n_steps, progress, rng)
 }
 
 
-mcstate_run_chain <- function(pars, model, sampler, observer, n_steps, rng) {
+mcstate_run_chain <- function(pars, model, sampler, n_steps, progress, rng) {
   r_rng_state <- get_r_rng_state()
   chain_state <- sampler$initialise(pars, model, observer, rng)
 
@@ -146,25 +163,21 @@ mcstate_run_chain <- function(pars, model, sampler, observer, n_steps, rng) {
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  mcstate_run_chain2(chain_state, model, sampler, observer, n_steps,
+  mcstate_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
                      rng, r_rng_state)
 }
 
 
-mcstate_continue_chain <- function(state, model, sampler, observer, n_steps) {
-  r_rng_state <- get_r_rng_state()
-  rng <- mcstate_rng$new(seed = state$rng)
-  sampler$set_internal_state(state$sampler)
-  if (model$properties$is_stochastic) {
-    model$rng_state$set(state$model_rng)
-  }
-  mcstate_run_chain2(state$chain, model, sampler, observer, n_steps, rng,
-                     r_rng_state)
+mcstate_continue_chain <- function(state, model, sampler, observer, n_steps,
+                                   progress) {
+  mcstate_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
+                     rng, r_rng_state)
 }
 
 
+
 mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
-                               rng, r_rng_state) {
+                               progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   has_observer <- !is.null(observer)
@@ -180,6 +193,7 @@ mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
     if (!is.null(chain_state$observation)) {
       history_observation[[i]] <- chain_state$observation
     }
+    progress(i)
   }
 
   ## Pop the parameter names on last
