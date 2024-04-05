@@ -63,7 +63,16 @@ preprocess_detect <- function(x, type, call = NULL) {
         }
       }
       as <- type
-    } else if (length(x) != 1L || grepl("([\n;=]|<-)", x)) {
+    } else if (length(x) != 1L || grepl("([\n;=]|<-| ~ )", x)) {
+      ## Our heuristic above is a little fragile; it will think that
+      ##
+      ## a~f(1)
+      ##
+      ## is a filename, but we need the spaces there to avoid windows
+      ## short paths getting considered to be code.  Parentheses would
+      ## be another good heuristic to use - everything will have those
+      ## - but you sometimes get these with downloaded files that have
+      ## been redownloaded.
       as <- "text"
     } else if (file.exists(x)) {
       as <- "file"
