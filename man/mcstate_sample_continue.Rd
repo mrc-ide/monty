@@ -4,7 +4,7 @@
 \alias{mcstate_sample_continue}
 \title{Continue sampling}
 \usage{
-mcstate_sample_continue(samples, n_steps, restartable = FALSE)
+mcstate_sample_continue(samples, n_steps, restartable = FALSE, runner = NULL)
 }
 \arguments{
 \item{samples}{A \code{mcstate_samples} object created by
@@ -15,6 +15,18 @@ mcstate_sample_continue(samples, n_steps, restartable = FALSE)
 \item{restartable}{Logical, indicating if the chains should be
 restartable.  This will add additional data to the chains
 object.}
+
+\item{runner}{Optionally, a runner for your chains.  The default
+is to continue with the backend that you used to start the
+chains via \link{mcstate_sample} (or on the previous restart with
+this function).  You can use this argument to change the runner,
+which might be useful if transferring a pilot run from a
+high-resource environment to a lower-resource environment.  If
+given, must be an \code{mcstate_runner} object such as
+\link{mcstate_runner_serial} or \link{mcstate_runner_parallel}.  You can
+use this argument to change the configuration of a runner, as
+well as the type of runner (e.g., changing the number of
+allocated cores).}
 }
 \value{
 A list of parameters and densities

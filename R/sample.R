@@ -111,11 +111,24 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
 ##'
 ##' @param n_steps The number of new steps to run
 ##'
+##' @param runner Optionally, a runner for your chains.  The default
+##'   is to continue with the backend that you used to start the
+##'   chains via [mcstate_sample] (or on the previous restart with
+##'   this function).  You can use this argument to change the runner,
+##'   which might be useful if transferring a pilot run from a
+##'   high-resource environment to a lower-resource environment.  If
+##'   given, must be an `mcstate_runner` object such as
+##'   [mcstate_runner_serial] or [mcstate_runner_parallel].  You can
+##'   use this argument to change the configuration of a runner, as
+##'   well as the type of runner (e.g., changing the number of
+##'   allocated cores).
+##'
 ##' @inheritParams mcstate_sample
 ##'
 ##' @return A list of parameters and densities
 ##' @export
-mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
+mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE,
+                                    runner = NULL) {
   if (!inherits(samples, "mcstate_samples")) {
     cli::cli_abort("Expected 'samples' to be an 'mcstate_samples' object")
   }
@@ -126,7 +139,12 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE) {
                   "use the argument 'restartable = TRUE' when calling",
                   "mcstate_sample()")))
   }
-  runner <- samples$restart$runner
+
+  if (is.null(runner)) {
+    runner <- samples$restart$runner
+  } else {
+    assert_is(runner, "mcstate_runner")
+  }
   state <- samples$restart$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler

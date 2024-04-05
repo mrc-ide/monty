@@ -304,3 +304,29 @@ test_that("can continue parallel runs", {
 
   expect_equal(res2b, res1)
 })
+
+
+test_that("can change runner on restart", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- mcstate_sample(model, sampler, 100, 1, n_chains = 3)
+
+  runner_parallel <- mcstate_runner_parallel(2)
+  runner_serial <- mcstate_runner_serial()
+
+  set.seed(1)
+  res2a <- mcstate_sample(model, sampler, 20, 1, n_chains = 3,
+                         restartable = TRUE)
+  res2b <- mcstate_sample_continue(res2a, 30, restartable = TRUE,
+                                   runner = runner_parallel)
+  res2c <- mcstate_sample_continue(res2b, 40, restartable = TRUE,
+                                   runner = runner_serial)
+  res2d <- mcstate_sample_continue(res2c, 10)
+
+  expect_identical(res2b$restart$runner, runner_parallel)
+  expect_identical(res2c$restart$runner, runner_serial)
+
+  expect_equal(res2d, res1)
+})
