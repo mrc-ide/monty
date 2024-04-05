@@ -7,12 +7,20 @@
 ## arguments etc) but that's quite hard so for now we will just hold a
 ## deparsed expression as an attribute of each expression.
 dsl_preprocess <- function(x, type = NULL) {
+  if (rlang::is_call(x, "quote")) {
+    given <- rlang::expr_deparse(x)
+    alt <- rlang::expr_deparse(x[[2]])
+    cli::cli_abort(
+      c("You have an extra layer of quote() around 'x'",
+        i = "You passed '{given}' but probably meant to pass '{alt}'"))
+  }
+
   type <- preprocess_detect(x, type)
   if (type == "expression") {
     if (inherits(x, "{")) {
-      ret <- as.list(x[-1L])
+      exprs <- as.list(x[-1L])
     } else {
-      ret <- list(x)
+      exprs <- list(x)
     }
   } else {
     if (type == "file") {
@@ -25,9 +33,10 @@ dsl_preprocess <- function(x, type = NULL) {
 
     ## Convert each expression to hold its starting line and string
     ## representation
-    ret <- Map(structure, exprs, line = expr_line, str = expr_str)
+    exprs <- Map(structure, exprs, line = expr_line, str = expr_str)
   }
-  ret
+
+  exprs
 }
 
 
