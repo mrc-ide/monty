@@ -31,8 +31,12 @@ mcstate_runner_serial <- function(progress = NULL) {
   continue <- function(state, model, sampler, n_steps) {
     n_chains <- length(state)
     pb <- progress_bar(n_chains, n_steps, progress, environment())
-    lapply(state, mcstate_continue_chain, model, sampler, observer, n_steps,
-           pb(i))
+    lapply(
+      seq_along(state),
+      function(i) {
+        mcstate_continue_chain(state[[i]], model, sampler, observer, n_steps,
+                               pb(i))
+      })
   }
 
   structure(list(run = run, continue = continue),
@@ -170,7 +174,13 @@ mcstate_run_chain <- function(pars, model, sampler, n_steps, progress, rng) {
 
 mcstate_continue_chain <- function(state, model, sampler, observer, n_steps,
                                    progress) {
-  mcstate_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
+  r_rng_state <- get_r_rng_state()
+  rng <- mcstate_rng$new(seed = state$rng)
+  sampler$set_internal_state(state$sampler)
+  if (model$properties$is_stochastic) {
+    model$rng_state$set(state$model_rng)
+  }
+  mcstate_run_chain2(state$chain, model, sampler, observer, n_steps, progress,
                      rng, r_rng_state)
 }
 
