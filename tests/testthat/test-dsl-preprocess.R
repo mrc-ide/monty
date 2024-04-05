@@ -114,3 +114,10 @@ test_that("error for inputs we can't use", {
   expect_error(preprocess_detect(1, NULL),
                "Invalid input for 'x'")
 })
+
+
+test_that("avoid extra quoting", {
+  expect_error(
+    dsl_preprocess(quote(quote(a ~ Normal(0, 1)))),
+    "You have an extra layer of quote() around 'x'")
+})
