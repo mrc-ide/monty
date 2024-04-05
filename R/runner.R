@@ -6,11 +6,11 @@
 ##'
 ##' @param progress Optional logical, indicating if we should print a
 ##'   progress bar while running.  If `NULL`, we use the value of the
-##'   option `mcstate2.progress` if set, otherwise we display a
-##'   progress bar if the terminal is dynamic (using
-##'   `cli::is_dynamic_tty`).  The progress bar itself responds to
-##'   cli's options; in particular `cli.progress_show_after` and
-##'   `cli.progress_clear` will affect your experience.
+##'   option `mcstate2.progress` if set, otherwise we show the
+##'   progress bar (as it is typically wanted).  The progress bar
+##'   itself responds to cli's options; in particular
+##'   `cli.progress_show_after` and `cli.progress_clear` will affect
+##'   your experience.
 ##'
 ##' @return A runner of class `mcstate_runner` that can be passed to
 ##'   [mcstate_sample()]

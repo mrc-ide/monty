@@ -10,7 +10,7 @@ progress_bar <- function(n_chains, n_steps, progress, call = NULL) {
 
 show_progress_bar <- function(progress, call = NULL) {
   if (is.null(progress)) {
-    progress <- getOption("mcstate2.progress", cli::is_dynamic_tty())
+    progress <- getOption("mcstate2.progress", TRUE)
   }
   ## Error here is not great if we get this from an option; but need
   ## to disable quoting there in some cases.

@@ -39,7 +39,7 @@ assert_character <- function(x, name = deparse(substitute(x)),
 
 assert_nonmissing <- function(x, name = deparse(substitute(x)),
                           arg = name, call = NULL) {
-  if (!anyNA(x)) {
+  if (anyNA(x)) {
     cli::cli_abort("Exected '{name}' to be non-NA", arg = arg, call = call)
   }
   invisible(x)
