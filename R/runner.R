@@ -94,7 +94,20 @@ mcstate_runner_parallel <- function(n_workers) {
       rng = rng_state,
       MoreArgs = args)
   }
-  structure(list(run = run), class = "mcstate_runner")
+
+  continue <- function(state, model, sampler, n_steps) {
+    n_chains <- length(state)
+    cl <- parallel::makeCluster(min(n_chains, n_workers))
+    on.exit(parallel::stopCluster(cl))
+    parallel::clusterMap(
+      cl,
+      mcstate_continue_chain,
+      state,
+      MoreArgs = list(model = model, sampler = sampler, n_steps = n_steps))
+  }
+
+  structure(list(run = run, continue = continue),
+            class = "mcstate_runner")
 }
 
 

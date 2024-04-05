@@ -286,3 +286,21 @@ test_that("can continue a stochastic model identically", {
 
   expect_equal(res2b, res1)
 })
+
+
+test_that("can continue parallel runs", {
+  model <- ex_simple_gamma1()
+  sampler <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- mcstate_sample(model, sampler, 100, 1, n_chains = 3)
+
+  set.seed(1)
+  runner <- mcstate_runner_parallel(2)
+  res2a <- mcstate_sample(model, sampler, 50, 1, n_chains = 3,
+                          runner = runner, restartable = TRUE)
+  expect_identical(res2a$restart$runner, runner)
+  res2b <- mcstate_sample_continue(res2a, 50)
+
+  expect_equal(res2b, res1)
+})
