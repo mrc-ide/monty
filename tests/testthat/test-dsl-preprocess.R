@@ -119,5 +119,6 @@ test_that("error for inputs we can't use", {
 test_that("avoid extra quoting", {
   expect_error(
     dsl_preprocess(quote(quote(a ~ Normal(0, 1)))),
-    "You have an extra layer of quote() around 'x'")
+    "You have an extra layer of quote() around 'x'",
+    fixed = TRUE)
 })
