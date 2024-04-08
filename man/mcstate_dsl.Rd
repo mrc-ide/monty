@@ -15,7 +15,9 @@ particular interpretation.  The argument uses rlang's quosures
 to allow you to work with expressions directly; see examples for
 details.}
 
-\item{type}{Force interpretation of the type of}
+\item{type}{Force interpretation of the type of expression given
+as \code{x}.  If given, valid options are \code{expression}, \code{text} or
+\code{file}.}
 }
 \value{
 A \link{mcstate_model} object derived from the expressions you
