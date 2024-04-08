@@ -28,7 +28,7 @@ mcstate_runner_serial <- function(progress = NULL) {
       })
   }
 
-  continue <- function(state, model, sampler, n_steps) {
+  continue <- function(state, model, sampler, observer, n_steps) {
     n_chains <- length(state)
     pb <- progress_bar(n_chains, n_steps, progress, environment())
     lapply(
@@ -143,7 +143,8 @@ mcstate_run_chain_parallel <- function(pars, model, sampler, observer,
 }
 
 
-mcstate_run_chain <- function(pars, model, sampler, n_steps, progress, rng) {
+mcstate_run_chain <- function(pars, model, sampler, observer, n_steps,
+                              progress, rng) {
   r_rng_state <- get_r_rng_state()
   chain_state <- sampler$initialise(pars, model, observer, rng)
 
