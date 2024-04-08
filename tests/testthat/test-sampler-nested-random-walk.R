@@ -178,3 +178,22 @@ test_that("can run a sampler with shared parameters", {
   ## does test that the sampler runs, and that it mixes.
   expect_true(length(unique(res$pars[1, , ])) > 1)
 })
+
+
+test_that("can run an observer during a nested fit", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  s <- mcstate_sampler_nested_random_walk(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)))
+  counter <- 0
+  observer <- mcstate_observer(function(...) {
+    counter <<- counter + 1
+    list(n = counter)
+  })
+  res <- mcstate_sample(m, s, 100, observer = observer)
+  expect_equal(
+    dim(res$observations$n),
+    c(1, 100, 1))
+  expect_gt(max(res$observations$n), 120) # called way more than once per step
+})
