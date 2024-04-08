@@ -47,14 +47,14 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
   ## that this is pretty painful atm because we wrap via the particle
   ## filter method in mcstate1.  This version replicates most of what
   ## we need though, which is some subset of the model
-  details <- function(i, j) {
+  details <- function(idx_particle) {
     if (save_trajectories) {
       traj <- trajectories[, i, , drop = FALSE]
       dim(traj) <- dim(traj)[-2]
     } else {
       traj <- NULL
     }
-    list(trajectories = traj, state = model$state()[, i])
+    list(trajectories = traj, state = model$state()[, idx_particle])
   }
 
   density <- function(x) {
