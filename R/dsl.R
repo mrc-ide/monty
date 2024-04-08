@@ -41,3 +41,15 @@ mcstate_dsl <- function(x, type = NULL) {
   exprs <- dsl_preprocess(x, type)
   NULL
 }
+
+
+mcstate_dsl_parse <- function(x, type = NULL) {
+  quo <- rlang::enquo(x)
+  if (rlang::quo_is_symbol(quo)) {
+    x <- rlang::eval_tidy(quo)
+  } else {
+    x <- rlang::quo_get_expr(quo)
+  }
+  exprs <- dsl_preprocess(x, type)
+  dsl_parse(exprs)
+}
