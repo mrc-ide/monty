@@ -74,7 +74,7 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
 
   internal <- new.env(parent = emptyenv())
 
-  initialise <- function(pars, model, rng) {
+  initialise <- function(pars, model, observer, rng) {
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
@@ -101,7 +101,11 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
     }
 
     internal$density_by_group <- density_by_group
-    list(pars = pars, density = c(density))
+    state <- list(pars = pars, density = c(density))
+    if (!is.null(observer)) {
+      state$observation <- observer$observe(model$model, rng)
+    }
+    state
   }
 
   ## There are probably different modes that this could run in, they'd
@@ -113,7 +117,7 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
   ## handle this by additional arguments to the constructor, then
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
-  step <- function(state, model, rng) {
+  step <- function(state, model, observer, rng) {
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
@@ -123,6 +127,9 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
         state$pars <- pars_next
         state$density <- density_next
         internal$density_by_group <- density_by_group_next
+        if (!is.null(observer)) {
+          state$observation <- observer$observe(model$model, rng)
+        }
       }
     }
 
@@ -143,6 +150,9 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
       state$pars <- pars_next
       state$density <- c(density_next)
       internal$density_by_group <- density_by_group_next
+      if (!is.null(observer)) {
+        state$observation <- observer$observe(model$model, rng)
+      }
     }
     state
   }
