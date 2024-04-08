@@ -49,7 +49,7 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
   ## we need though, which is some subset of the model
   details <- function(idx_particle) {
     if (save_trajectories) {
-      traj <- trajectories[, i, , drop = FALSE]
+      traj <- trajectories[, idx_particle, , drop = FALSE]
       dim(traj) <- dim(traj)[-2]
     } else {
       traj <- NULL
