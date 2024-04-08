@@ -11,7 +11,7 @@
 ##'   to allow you to work with expressions directly; see examples for
 ##'   details.
 ##'
-##' @param type Force interpretation of the type of
+##' @param type Force interpretation of the type of expression.
 ##'
 ##' @return A [mcstate_model] object derived from the expressions you
 ##'   provide.
