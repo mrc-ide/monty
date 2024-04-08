@@ -18,7 +18,8 @@ BugReports: https://github.com/mrc-ide/mcstate2/issues
 Imports:
     R6,
     cli,
-    parallel
+    parallel,
+    rlang
 LinkingTo:
     cpp11
 Suggests:
@@ -30,7 +31,8 @@ Suggests:
     numDeriv,
     pkgload,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Config/testthat/edition: 3
 Language: en-GB
 VignetteBuilder: knitr
