@@ -53,7 +53,7 @@ test_that("can parse model with expressions", {
 
 test_that("prevent models that imply duplicated parameters", {
   res <- expect_error(
-    mcstate_dsl("a~Normal(0,1)\na  ~  Uniform( 0,  1 )"),
+    mcstate_dsl_parse("a~Normal(0,1)\na  ~  Uniform( 0,  1 )"),
     "Duplicated relationship 'a'")
   expect_equal(res$expr,
                structure(quote(a ~ Uniform(0, 1)),
@@ -65,9 +65,26 @@ test_that("prevent models that imply duplicated parameters", {
 })
 
 
+test_that("prevent multiple assignment", {
+  expect_error(
+    dsl_parse(list(quote(a <- 1), quote(a <- 2))),
+    "Duplicated assignment 'a'")
+})
+
+
+test_that("assignments and relationships must be distinct", {
+  expect_error(
+    dsl_parse(list(quote(a ~ Normal(0, 1)), quote(a <- 1))),
+    "Assignment 'a' shadows previous relationship")
+  expect_error(
+    dsl_parse(list(quote(a <- 1), quote(a ~ Normal(0, 1)))),
+    "Relationship 'a' shadows previous assignment")
+})
+
+
 test_that("variables are not used out of order", {
   res <- expect_error(
-    mcstate_dsl({
+    mcstate_dsl_parse({
       b <- Normal(a, 1)
       a <- Normal(0, 1)
     }),
@@ -80,7 +97,7 @@ test_that("variables are not used out of order", {
 
 test_that("variables must be defined somewhere", {
   res <- expect_error(
-    mcstate_dsl({
+    mcstate_dsl_parse({
       a <- Normal(0, 1)
       b <- Normal(a, sd)
     }),
@@ -136,4 +153,12 @@ test_that("every expression is classifiable", {
     dsl_parse_expr(quote(a == 1)),
     "Unhandled expression; expected something involving '~' or '<-'",
     fixed = TRUE)
+})
+
+
+test_that("Can run high level dsl parse function", {
+  res <- mcstate_dsl_parse("a ~ Normal(0, 1)")
+  expect_equal(res$parameters, "a")
+  x <- "a ~ Normal(0, 1)"
+  expect_equal(mcstate_dsl_parse(x), res)
 })
