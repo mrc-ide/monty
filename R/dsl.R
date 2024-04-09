@@ -39,6 +39,7 @@ mcstate_dsl <- function(x, type = NULL) {
     x <- rlang::quo_get_expr(quo)
   }
   exprs <- dsl_preprocess(x, type)
+  dat <- dsl_parse(exprs)
   NULL
 }
 
