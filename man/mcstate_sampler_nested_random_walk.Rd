@@ -54,6 +54,6 @@ calculation completely dominates the sampling process.
 we suspect that HMC will outperform this approach by some margin
 because it already includes this independence via the gradients.
 \item You can compute your independent calculations in parallel, which
-help this method reduce your wall time.
+help this method reduce your walk time.
 }
 }
