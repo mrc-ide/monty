@@ -122,7 +122,8 @@ mcstate_runner_parallel <- function(n_workers) {
     args <- list(model = model,
                  sampler = sampler,
                  observer = observer,
-                 n_steps = n_steps)
+                 n_steps = n_steps,
+                 progress = function(i) NULL)
     parallel::clusterMap(
       cl,
       mcstate_continue_chain,
