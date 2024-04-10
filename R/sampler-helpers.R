@@ -1,7 +1,5 @@
 initialise_state <- function(pars, model, observer, rng) {
-  if (isTRUE(model$properties$is_stochastic)) {
-    model$rng_state$set(mcstate_rng$new(rng$state())$jump()$state())
-  }
+  initialise_rng_state(model, rng)
   density <- model$density(pars)
   if (is.null(observer)) {
     observation <- NULL
@@ -19,4 +17,11 @@ update_state <- function(state, pars, density, model, observer, rng) {
     state$observation <- observer$observe(model$model, rng)
   }
   state
+}
+
+
+initialise_rng_state <- function(model, rng) {
+  if (isTRUE(model$properties$is_stochastic)) {
+    model$rng_state$set(mcstate_rng$new(rng$state())$jump()$state())
+  }
 }
