@@ -48,7 +48,7 @@ dsl_parse_expr_stochastic <- function(expr) {
 
   ## This probably requires a little more care in order to know that
   ## we're not picking up too much or too little.  I'm not sure that
-  ## we can cope with every experssion here too as I think we also
+  ## we can cope with every expression here too as I think we also
   ## need to be able to invert the expressions?
   depends <- all.vars(rhs)
 
@@ -169,7 +169,7 @@ dsl_parse_check_usage <- function(exprs) {
         context <- NULL
       }
       ## TODO: It would be nice to indicate that we want to highlight
-      ## the varibles 'err' here within the expression; that is
+      ## the variables 'err' here within the expression; that is
       ## probably something rlang can do for us as it does that with
       ## the 'arg' argument to rlang::abort already?
       dsl_parse_error("Invalid use of variable{?s} {squote(err)}",
