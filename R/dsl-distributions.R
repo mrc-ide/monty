@@ -1,38 +1,46 @@
-## We will expand this shortly to include sampling, then again once
-## differentiation is supported.
-distribution <- function(name, density) {
+## We will expand this later to support differentiation; that might
+## impact the density calculation depending on how we handle the
+## symbolic differentiation vs the automatic differentiation.
+##
+## We also need the domain from the distributions, but the uniform
+## makes this surprisingly hard because it is either domain [a, b]
+## with constant parameters or it is (-Inf, Inf) otherwise!
+distribution <- function(name, density, sample = NULL) {
   args <- names(formals(density))[-1]
   list(name = name,
        args = args,
-       density = density)
+       density = density,
+       sample = sample)
 }
 
 
 distr_exponential_rate <- distribution(
-  "Exponential",
-  density = function(x, rate) dexp(x, rate, log = TRUE))
+  name = "Exponential",
+  density = function(x, rate) dexp(x, rate, log = TRUE),
+  sample = function(rng, rate) rng$exponential(1, rate))
 
 distr_exponential_mean <- distribution(
-  "Exponential",
-  density = function(x, mean) dexp(x, 1 / mean, log = TRUE))
+  name = "Exponential",
+  density = function(x, mean) dexp(x, 1 / mean, log = TRUE),
+  sample = function(rng, mean) rng$exponential(1, 1 / mean))
 
 distr_normal <- distribution(
-  "Normal",
+  name = "Normal",
   density = function(x, mean, sd) dnorm(x, mean, sd, log = TRUE),
-  sample = function(rng, mean, sd) rng$normal(mean, sd))
+  sample = function(rng, mean, sd) rng$normal(1, mean, sd))
 
-distr_uniform <- list(
-  "Uniform",
-  densitry = function(x, min, max) dunif(x, min, max, log = TRUE),
-  sample = function(rng, min, max) rng$uniform(min, max))
+distr_uniform <- distribution(
+  name = "Uniform",
+  density = function(x, min, max) dunif(x, min, max, log = TRUE),
+  sample = function(rng, min, max) rng$uniform(1, min, max))
 
 dsl_distributions <- local({
   d <- list(
-    distr_exponential_rate, # preferred
-    distr_exponential_mean
+    distr_exponential_rate, # preferred form, listed first
+    distr_exponential_mean,
     distr_normal,
     distr_uniform)
-  split(d, vcapply(d, "[[", "name"))
+  split(d, vapply(d, "[[", "", "name"))
 })
 
 
