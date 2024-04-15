@@ -63,7 +63,7 @@ match_call <- function(args, candidates) {
   } else {
     given <- paste(ifelse(nzchar(args), args, "."), collapse = ", ")
   }
-  detail <- c("x" = "Failed to match given argumnents: {given}")
+  detail <- c("x" = sprintf("Failed to match given arguments: %s", given))
 
   expected <- vcapply(candidates, function(x) paste(names(x), collapse = ", "))
   if (length(candidates) == 1) {
