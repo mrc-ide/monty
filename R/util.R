@@ -113,9 +113,6 @@ as_function <- function(args, body, envir) {
 
 
 near_match <- function(x, possibilities, threshold = 2, max_matches = 5) {
-  if (length(possibilities) == 0) {
-    return(character())
-  }
   i <- tolower(x) == tolower(possibilities)
   if (any(i)) {
     possibilities[i]

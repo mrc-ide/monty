@@ -65,13 +65,13 @@ match_call <- function(args, candidates) {
   }
   detail <- c("x" = sprintf("Failed to match given arguments: %s", given))
 
-  expected <- vcapply(candidates, function(x) paste(names(x), collapse = ", "))
+  expected <- vcapply(candidates, paste, collapse = ", ")
   if (length(candidates) == 1) {
     hint <- c("i" = "Call should match:")
   } else {
     hint <- c("i" = "Call should match one of:")
   }
-  list(success = FALSE, error = c(detail, hint, set_names(expected, ">")))
+  list(success = FALSE, error = c(detail, hint, set_names(expected, "*")))
 }
 
 
@@ -87,7 +87,7 @@ match_call_candidate <- function(args, candidate) {
   if (anyDuplicated(nms[i])) {
     return(NULL)
   }
-  j <- match(nms[i], names(candidate))
+  j <- match(nms[i], candidate)
   if (anyNA(j)) {
     return(NULL)
   }

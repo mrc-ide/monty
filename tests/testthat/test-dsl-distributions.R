@@ -1,5 +1,5 @@
 test_that("check argument matching", {
-  candidate <- alist(mean = , sd = )
+  candidate <- c("mean", "sd")
   expect_equal(match_call_candidate(list("a", "b"), candidate), 1:2)
   expect_null(match_call_candidate(list("a", "b", "c"), candidate))
   expect_equal(match_call_candidate(list("a", sd = "b"), candidate), 1:2)
@@ -11,8 +11,7 @@ test_that("check argument matching", {
 
 
 test_that("match against set of candidates", {
-  candidates <- list(alist(a = , b = ),
-                     alist(shape = , scale = ))
+  candidates <- list(c("a", "b"), c("shape", "scale"))
   expect_equal(match_call(list(0, 0), candidates),
                list(success = TRUE, index = 1, args = 1:2))
   expect_equal(match_call(list(0, b = 0), candidates),
@@ -28,15 +27,15 @@ test_that("match against set of candidates", {
 
   error <- c(x = "Failed to match given arguments: .",
              i = "Call should match one of:",
-             ">" = "a, b",
-             ">" = "shape, scale")
+             "*" = "a, b",
+             "*" = "shape, scale")
   expect_equal(
     match_call(list(0), candidates),
     list(success = FALSE, error = error))
 
   error <- c(x = "Failed to match given arguments: 1, 2, 3",
              i = "Call should match:",
-             ">" = "a, b")
+             "*" = "a, b")
   expect_equal(
     match_call(list(a = 1, b = 2, c = 3), candidates[1]),
     list(success = FALSE, error = error))
@@ -91,4 +90,16 @@ test_that("can sample from uniform distribution", {
   r2 <- mcstate_rng$new(1)
   expect_equal(distr_uniform$sample(r1, 2, 3),
                r2$uniform(1, 2, 3))
+})
+
+
+## Needs special testing because the primary use is currently during
+## package build
+test_that("can create a distribution object", {
+  density <- function(x, a, b) NULL
+  sample <- function(rng, a, b) NULL
+  d <- distribution("Foo", density, sample)
+  expect_equal(
+    d,
+    list(name = "Foo", args = c("a", "b"), density = density, sample = sample))
 })

@@ -39,7 +39,9 @@ dsl_generate_density_expr <- function(expr) {
   switch(expr$type,
          assignment = dsl_generate_density_assignment(expr),
          stochastic = dsl_generate_density_stochastic(expr),
-         stop("Bug"))
+         cli::cli_abort(paste(
+           "Unimplemented expression type '{expr$type}';",
+           "this is an mcstate2 bug")))
 }
 
 
