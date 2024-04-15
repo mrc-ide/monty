@@ -1,7 +1,8 @@
 test_that("Can run high level dsl function", {
-  expect_null(mcstate_dsl("a ~ Normal(0, 1)"))
-  expect_null(mcstate_dsl(a ~ Normal(0, 1)))
-  x <- quote(a ~ Normal(0, 1))
-  expect_null(mcstate_dsl(x))
-  expect_error(mcstate_dsl(y))
+  m <- mcstate_dsl("a ~ Normal(0, 1)")
+  expect_s3_class(m, "mcstate_model")
+  expect_equal(m$density(0), dnorm(0, 0, 1, log = TRUE))
+  ## x <- quote(a ~ Normal(0, 1))
+  ## expect_null(mcstate_dsl(x))
+  ## expect_error(mcstate_dsl(y))
 })

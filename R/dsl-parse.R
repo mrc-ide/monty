@@ -59,12 +59,13 @@ dsl_parse_expr_stochastic <- function(expr) {
   }
 
   ## Next, match the arguments to the call, in order to
+  distr_name <- as.character(rhs[[1]])
   args <- as.list(rhs[-1])
   candidates <- dsl_distributions[[distr_name]]
   match <- match_call(args, lapply(candidates, "[[", "args"))
   if (!match$success) {
     dsl_parse_error(
-      c("Invalid call to '{name()}'", match$error),
+      c("Invalid call to '{distr_name}()'", match$error),
       expr)
   }
 
@@ -77,7 +78,7 @@ dsl_parse_expr_stochastic <- function(expr) {
   ## Here we might check the arguments to the distribution functions,
   ## too, but that's also easy enough to do elsewhere.
   list(type = "stochastic",
-       name = lhs,
+       name = as.character(lhs),
        distribution = candidates[[match$index]],
        args = args[match$args],
        depends = depends,

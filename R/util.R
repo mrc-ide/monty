@@ -108,7 +108,7 @@ as_function <- function(args, body, envir) {
   if (!rlang::is_call(body, "{")) {
     body <- rlang::call2("{", !!!body)
   }
-  as.function(c(args, alist(body)), envir = envir)
+  as.function(c(args, body), envir = envir)
 }
 
 

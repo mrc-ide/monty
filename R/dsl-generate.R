@@ -21,9 +21,9 @@ dsl_generate_density <- function(dat) {
   ## we'll need to do lookups anyway.
   np <- length(dat$parameters)
   body <- c(dsl_generate_density_unpack(dat$parameters),
-            call("<-", quote(.density), bquote(numeric(.(np)))),
+            quote(.density <- numeric()),
             lapply(dat$exprs, dsl_generate_density_expr),
-            if (np == 1) quote(.density) else quote(sum(.density)))
+            quote(sum(.density)))
   as_function(alist(.x = ), body, topenv())
 }
 
@@ -37,8 +37,8 @@ dsl_generate_density_unpack <- function(parameters) {
 
 dsl_generate_density_expr <- function(expr) {
   switch(expr$type,
-         assignment = dsl_generate_density_expr_assignment,
-         stochastic = dsl_generate_density_expr_stochastic,
+         assignment = dsl_generate_density_assignment(expr),
+         stochastic = dsl_generate_density_stochastic(expr),
          stop("Bug"))
 }
 
@@ -49,11 +49,8 @@ dsl_generate_density_assignment <- function(expr) {
 
 
 dsl_generate_density_stochastic <- function(expr) {
-  fn <- switch(expr$distribution,
-               Normal = quote(dnorm),
-               Exponential = quote(dexp),
-               Uniform = quote(dunif))
   lhs <- bquote(.density[[.(expr$name)]])
-  rhs <- as.call(c(list(fn, as.name(expr$name)), expr$args, list(log = TRUE)))
-  call("<-", lhs, rhs)
+  rhs <- rlang::call2(expr$distribution$density,
+                      as.name(expr$name), !!!expr$args)
+  rlang::call2("<-", lhs, rhs)
 }
