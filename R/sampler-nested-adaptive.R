@@ -39,51 +39,132 @@
 ##'
 ##' @title Nested Random Walk Sampler
 ##'
-##' @param vcv A list of variance covariance matrices.  We expect this
-##'   to be a list with elements `base` and `groups` corresponding to
-##'   the covariance matrix for base parameters (if any) and groups.
+##' @param initial_vcv An initial variance covariance matrix; we'll start
+##'   using this in the proposal, which will gradually become more weighted
+##'   towards the empirical covariance matrix calculated from the chain.
+##'
+##' @param initial_vcv_weight Weight of the initial variance-covariance
+##'   matrix used to build the proposal of the random-walk. Higher
+##'   values translate into higher confidence of the initial
+##'   variance-covariance matrix and means that update from additional
+##'   samples will be slower.
+##'
+##' @param initial_scaling The initial scaling of the variance
+##'   covariance matrix to be used to generate the multivariate normal
+##'   proposal for the random-walk Metropolis-Hastings algorithm. To generate
+##'   the proposal matrix, the weighted variance covariance matrix is
+##'   multiplied by the scaling parameter squared times 2.38^2 / n_pars (where
+##'   n_pars is the number of fitted parameters). Thus, in a Gaussian target
+##'   parameter space, the optimal scaling will be around 1.
+##'
+##' @param initial_scaling_weight The initial weight used in the scaling update.
+##'   The scaling weight will increase after the first `pre_diminish`
+##'   iterations, and as the scaling weight increases the adaptation of the
+##'   scaling diminishes. If `NULL` (the default) the value is
+##'   5 / (acceptance_target * (1 - acceptance_target)).
+##'
+##' @param min_scaling The minimum scaling of the variance covariance
+##'   matrix to be used to generate the multivariate normal proposal
+##'   for the random-walk Metropolis-Hastings algorithm.
+##'
+##' @param scaling_increment The scaling increment which is added or
+##'   subtracted to the scaling factor of the variance-covariance
+##'   after each adaptive step. If `NULL` (the default) then an optimal
+##'   value will be calculated.
+##'
+##' @param log_scaling_update Logical, whether or not changes to the
+##'   scaling parameter are made on the log-scale.
+##'
+##' @param acceptance_target The target for the fraction of proposals
+##'   that should be accepted (optimally) for the adaptive part of the
+##'   mixture model.
+##'
+##' @param forget_rate The rate of forgetting early parameter sets from the
+##'   empirical variance-covariance matrix in the MCMC chains. For example,
+##'   `forget_rate = 0.2` (the default) means that once in every 5th iterations
+##'   we remove the earliest parameter set included, so would remove the 1st
+##'   parameter set on the 5th update, the 2nd on the 10th update, and so
+##'   on. Setting `forget_rate = 0` means early parameter sets are never
+##'   forgotten.
+##'
+##' @param forget_end The final iteration at which early parameter sets can
+##'   be forgotten. Setting `forget_rate = Inf` (the default) means that the
+##'   forgetting mechanism continues throughout the chains. Forgetting early
+##'   parameter sets becomes less useful once the chains have settled into the
+##'   posterior mode, so this parameter might be set as an estimate of how long
+##'   that would take.
+##'
+##' @param adapt_end The final iteration at which we can adapt the multivariate
+##'   normal proposal. Thereafter the empirical variance-covariance matrix, its
+##'   scaling and its weight remain fixed. This allows the adaptation to be
+##'   switched off at a certain point to help ensure convergence of the chain.
+##'
+##' @param pre_diminish The number of updates before adaptation of the scaling
+##'   parameter starts to diminish. Setting `pre_diminish = 0` means there is
+##'   diminishing adaptation of the scaling parameter from the offset, while
+##'   `pre_diminish = Inf` would mean there is never diminishing adaptation.
+##'   Diminishing adaptation should help the scaling parameter to converge
+##'   better, but while the chains find the location and scale of the posterior
+##'   mode it might be useful to explore with it switched off.
 ##'
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
 ##'
 ##' @export
-mcstate_sampler_nested_adaptive <- function(vcv) {
-  if (!is.list(vcv)) {
+mcstate_sampler_nested_adaptive <- function(initial_vcv,
+                                            initial_vcv_weight = 1000,
+                                            initial_scaling = 1,
+                                            initial_scaling_weight = NULL,
+                                            min_scaling = 0,
+                                            scaling_increment = NULL,
+                                            log_scaling_update = TRUE,
+                                            acceptance_target = 0.234,
+                                            forget_rate = 0.2,
+                                            forget_end = Inf,
+                                            adapt_end = Inf,
+                                            pre_diminish = 0) {
+  if (!is.list(initial_vcv)) {
     cli::cli_abort(
-      "Expected a list for 'vcv'",
-      arg = 'vcv')
+      "Expected a list for 'initial_vcv'",
+      arg = 'initial_vcv')
   }
 
-  if (!setequal(names(vcv), c("base", "groups"))) {
-    cli::cli_abort("Expected 'vcv' to have elements 'base' and 'groups'",
-                   arg = "vcv")
+  if (!setequal(names(initial_vcv), c("base", "groups"))) {
+    cli::cli_abort("Expected 'initial_vcv' to have elements 'base' and 'groups'",
+                   arg = "initial_vcv")
   }
-  if (!is.null(vcv$base)) {
-    check_vcv(vcv$base, call = environment())
+  if (!is.null(initial_vcv$base)) {
+    check_vcv(initial_vcv$base, call = environment())
   }
-  if (!is.list(vcv$groups)) {
-    cli::cli_abort("Expected 'vcv$groups' to be a list")
+  if (!is.list(initial_vcv$groups)) {
+    cli::cli_abort("Expected 'initial_vcv$groups' to be a list")
   }
-  if (length(vcv$groups) < 1) {
-    cli::cli_abort("Expected 'vcv$groups' to have at least one element")
+  if (length(initial_vcv$groups) < 1) {
+    cli::cli_abort("Expected 'initial_vcv$groups' to have at least one element")
   }
-  for (i in seq_along(vcv$groups)) {
-    check_vcv(vcv$groups[[i]], name = sprintf("vcv$groups[%d]", i),
+  for (i in seq_along(initial_vcv$groups)) {
+    check_vcv(initial_vcv$groups[[i]], name = sprintf("initial_vcv$groups[%d]", i),
               call = environment())
   }
 
   internal <- new.env(parent = emptyenv())
 
   initialise <- function(pars, model, observer, rng) {
+    require_deterministic(model,
+                          "Can't use adaptive sampler with stochastic models")
+    
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
-    internal$proposal <- nested_proposal(vcv, model$parameter_groups)
 
     initialise_rng_state(model, rng)
     density <- model$density(pars, by_group = TRUE)
     density_by_group <- attr(density, "by_group")
+    i_base <- model$parameter_groups == 0
+    n_base <- sum(i_base)
     n_groups <- max(model$parameter_groups)
+    i_group <- 
+      lapply(seq_len(n_groups), function(i) which(model$parameter_groups == i))
 
     if (is.null(density_by_group)) {
       cli::cli_abort(
@@ -101,6 +182,49 @@ mcstate_sampler_nested_adaptive <- function(vcv) {
     }
 
     internal$density_by_group <- density_by_group
+    
+    internal$weight <- 0
+    internal$iteration <- 0
+    browser()
+    internal$mean <- 
+      list(base = pars[i_base],
+           groups = lapply(seq_len(n_groups), function(i) pars[i_group[[i]]]))
+    internal$autocorrelation <- 
+      list(base = matrix(0, n_base, n_base),
+           groups = lapply(lengths(i_group), function (x) matrix(0, x, x)))
+    internal$vcv <- 
+      list(base = update_vcv(internal$mean$base, internal$autocorrelation$base,
+                             internal$weight),
+           groups = Map(update_vcv, internal$mean$groups, 
+                        internal$autocorrelation$groups, internal$weight))
+    
+    
+    internal$scaling <- list(base = initial_scaling,
+                             groups = rep(list(initial_scaling), n_groups))
+    internal$scaling_increment <- 
+      list(base = scaling_increment %||% 
+             calc_scaling_increment(n_base, acceptance_target, 
+                                    log_scaling_update),
+           groups = lapply(lengths(i_group), 
+                           function(x) {scaling_increment %||%
+                               calc_scaling_increment(x, acceptance_target,
+                                                      log_scaling_update)}))
+    internal$scaling_weight <- initial_scaling_weight %||%
+      5 / (acceptance_target * (1 - acceptance_target))
+    
+    proposal_vcv <- 
+      list(base = calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
+                                    internal$weight, initial_vcv$base,
+                                    initial_vcv_weight),
+           groups = Map(calc_proposal_vcv, internal$scaling$groups,
+                        internal$vcv$groups, internal$weight, 
+                        initial_vcv$groups, initial_vcv_weight))
+    internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups)
+    
+    internal$history_pars <- numeric()
+    internal$included <- integer()
+    internal$scaling_history <- internal$scaling
+    
     state <- list(pars = pars, density = c(density))
     if (!is.null(observer)) {
       state$observation <- observer$observe(model$model, rng)
@@ -118,6 +242,7 @@ mcstate_sampler_nested_adaptive <- function(vcv) {
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
   step <- function(state, model, observer, rng) {
+    browser()
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
@@ -177,88 +302,3 @@ mcstate_sampler_nested_adaptive <- function(vcv) {
                   set_internal_state)
 }
 
-
-check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
-                                   call = NULL) {
-  if (!rlang::is_integerish(x)) {
-    cli::cli_abort("Expected '{name}' to be integer-like", call = call)
-  }
-  if (length(x) != n_pars) {
-    cli::cli_abort(
-      paste("Expected '{name}' to have length {n_pars}, but it had length",
-            "{length(x)}"),
-      call = call)
-  }
-  if (min(x) < 0) {
-    cli::cli_abort("Invalid negative group in '{name}'", call = call)
-  }
-  n_groups <- max(x)
-  msg <- setdiff(seq_len(n_groups), x)
-  if (length(msg) > 0) {
-    cli::cli_abort(
-      c("Missing groups from '{name}'",
-        i = paste("I expected all integers from 1 to {n_groups} to be present",
-                  "in your parameter groups vector, but you are missing",
-                  "{msg}")),
-      call = call)
-  }
-}
-
-
-nested_proposal <- function(vcv, parameter_groups, call = NULL) {
-  i_base <- parameter_groups == 0
-  n_base <- sum(i_base)
-  n_groups <- max(parameter_groups)
-  i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
-  if (NROW(vcv$base) != n_base) {
-    cli::cli_abort(
-      c("Incompatible number of base parameters in your model and sampler",
-        i = paste("Your model has {n_base} base parameters, but 'vcv$base'",
-                  "implies {NROW(vcv$base)} parameters")),
-      call = call)
-  }
-  if (length(vcv$groups) != n_groups) {
-    cli::cli_abort(
-      c("Incompatible number of parameter groups in your model and sampler",
-        i = paste("Your model has {n_groups} parameter groups, but",
-                  "'vcv$groups' has {length(vcv$groups)} groups")),
-      call = call)
-  }
-  n_pars_by_group <- lengths(i_group)
-  n_pars_by_group_vcv <- vnapply(vcv$groups, nrow)
-  err <- n_pars_by_group_vcv != n_pars_by_group
-  if (any(err)) {
-    detail <- sprintf(
-      "Group %d has %d parameters but 'vcv$groups[[%d]]' has %d",
-      which(err), n_pars_by_group[err],
-      which(err), n_pars_by_group_vcv[err])
-    cli::cli_abort(
-      c("Incompatible number of parameters within parameter group",
-        set_names(detail, "i")),
-      call = call)
-  }
-
-  has_base <- n_base > 0
-  if (has_base) {
-    mvn_base <- make_rmvnorm(vcv$base)
-    proposal_base <- function(x, rng) {
-      ## This approach is likely to be a bit fragile, so we'll
-      ## probably want some naming related verification here soon too.
-      x[i_base] <- mvn_base(x[i_base], rng)
-      x
-    }
-  } else {
-    proposal_base <- NULL
-  }
-
-  mvn_groups <- lapply(vcv$groups, make_rmvnorm)
-  proposal_groups <- function(x, rng) {
-    for (i in seq_len(n_groups)) {
-      x[i_group[[i]]] <- mvn_groups[[i]](x[i_group[[i]]], rng)
-    }
-    x
-  }
-
-  list(base = proposal_base,
-       groups = proposal_groups)
-}
