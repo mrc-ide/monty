@@ -185,7 +185,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     
     internal$weight <- 0
     internal$iteration <- 0
-    browser()
+    
     internal$mean <- 
       list(base = pars[i_base],
            groups = lapply(seq_len(n_groups), function(i) pars[i_group[[i]]]))
@@ -242,7 +242,6 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
   step <- function(state, model, observer, rng) {
-    browser()
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
