@@ -246,7 +246,9 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
       density_by_group_next <- attr(density_next, "by_group")
-      accept <- density_next - state$density > log(rng$random_real(1))
+      u <- rng$random_real(1)
+      accept_prob_base <- min(1, exp(density_next - state$density))
+      accept <- u < accept_prob_base
       if (accept) {
         state$pars <- pars_next
         state$density <- density_next
@@ -260,9 +262,10 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     pars_next <- internal$proposal$groups(state$pars, rng)
     density_next <- model$density(pars_next, by_group = TRUE)
     density_by_group_next <- attr(density_next, "by_group")
-    accept <- density_by_group_next - internal$density_by_group >
-      log(rng$random_real(length(density_by_group_next)))
-
+    u <- rng$random_real(length(density_by_group_next))
+    accept_prob_groups <- 
+      pmin(1, exp(density_by_group_next - internal$density_by_group))
+    accept <- u < accept_prob_groups
     if (any(accept)) {
       if (!all(accept)) {
         ## Retain some older parameters
@@ -278,6 +281,91 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
         state$observation <- observer$observe(model$model, rng)
       }
     }
+    
+    internal$iteration <- internal$iteration + 1
+    internal$history_pars <- rbind(internal$history_pars, state$pars)
+    if (internal$iteration > adapt_end) {
+      internal$scaling_history$base <- 
+        c(internal$scaling_history$base, internal$scaling$base)
+      internal$scaling_history$groups <- 
+        Map(c, internal$scaling_history$groups, internal$scaling$groups)
+      return(state)
+    }
+    
+    if (internal$iteration > pre_diminish) {
+      internal$scaling_weight <- internal$scaling_weight + 1
+    }
+    
+    is_replacement <-
+      check_replacement(internal$iteration, forget_rate, forget_end)
+    if (is_replacement) {
+      pars_remove <- internal$history_pars[internal$included[1L], ]
+      internal$included <- c(internal$included[-1L], internal$iteration)
+    } else {
+      pars_remove <- NULL
+      internal$included <- c(internal$included, internal$iteration)
+      internal$weight <- internal$weight + 1
+    }
+    
+    ## Update scaling
+    internal$scaling$base <-
+      update_scaling(internal$scaling$base, internal$scaling_weight, 
+                     accept_prob_base, internal$scaling_increment$base,
+                     min_scaling, acceptance_target, log_scaling_update)
+    internal$scaling$groups <-
+      Map(update_scaling, internal$scaling$groups, internal$scaling_weight, 
+          accept_prob_groups, internal$scaling_increment$groups, min_scaling,
+          acceptance_target, log_scaling_update)
+    
+    ## Update scaling history
+    internal$scaling_history$base <- 
+      c(internal$scaling_history$base, internal$scaling$base)
+    internal$scaling_history$groups <- 
+      Map(c, internal$scaling_history$groups, internal$scaling$groups)
+    
+    i_base <- model$parameter_groups == 0
+    pars_base <- state$pars[i_base]
+    pars_remove_base <- pars_remove[i_base]
+    
+    n_groups <- max(model$parameter_groups)
+    i_group <- 
+      lapply(seq_len(n_groups), function(i) which(model$parameter_groups == i))
+    pars_groups <- lapply(i_group, function(i) state$pars[i])
+    pars_remove_groups <- lapply(i_group, function(i) pars_remove[i])
+    
+    ## Update autocorrelation
+    internal$autocorrelation$base <- 
+      update_autocorrelation(pars_base, internal$weight, 
+                             internal$autocorrelation$base, pars_remove_base)
+    internal$autocorrelation$groups <- 
+      Map(update_autocorrelation, pars_groups, internal$weight, 
+          internal$autocorrelation$groups, pars_remove_groups)
+    
+    ## Update mean
+    internal$mean$base <- update_mean(pars_base, internal$weight,
+                                      internal$mean$base, pars_remove_base)
+    internal$mean$groups <- 
+      Map(update_mean, pars_groups, internal$weight, internal$mean$groups,
+          pars_remove_groups)
+    
+    ## Update VCV
+    internal$vcv$base <- 
+      update_vcv(internal$mean$base, internal$autocorrelation$base,
+                 internal$weight)
+    internal$vcv$groups <- 
+      Map(update_vcv, internal$mean$groups, internal$autocorrelation$groups, 
+          internal$weight)
+    
+    ## Update proposal
+    proposal_vcv <- 
+      list(base = calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
+                                    internal$weight, initial_vcv$base,
+                                    initial_vcv_weight),
+           groups = Map(calc_proposal_vcv, internal$scaling$groups,
+                        internal$vcv$groups, internal$weight, 
+                        initial_vcv$groups, initial_vcv_weight))
+    internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups)
+    
     state
   }
 
