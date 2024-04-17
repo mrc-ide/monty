@@ -130,8 +130,9 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
   }
 
   if (!setequal(names(initial_vcv), c("base", "groups"))) {
-    cli::cli_abort("Expected 'initial_vcv' to have elements 'base' and 'groups'",
-                   arg = "initial_vcv")
+    cli::cli_abort(
+      "Expected 'initial_vcv' to have elements 'base' and 'groups'",
+      arg = "initial_vcv")
   }
   if (!is.null(initial_vcv$base)) {
     check_vcv(initial_vcv$base, call = environment())
@@ -140,10 +141,12 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     cli::cli_abort("Expected 'initial_vcv$groups' to be a list")
   }
   if (length(initial_vcv$groups) < 1) {
-    cli::cli_abort("Expected 'initial_vcv$groups' to have at least one element")
+    cli::cli_abort(
+      "Expected 'initial_vcv$groups' to have at least one element")
   }
   for (i in seq_along(initial_vcv$groups)) {
-    check_vcv(initial_vcv$groups[[i]], name = sprintf("initial_vcv$groups[%d]", i),
+    check_vcv(initial_vcv$groups[[i]],
+              name = sprintf("initial_vcv$groups[%d]", i),
               call = environment())
   }
 
