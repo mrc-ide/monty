@@ -189,39 +189,51 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     internal$weight <- 0
     internal$iteration <- 0
     
-    internal$mean <- 
-      list(base = pars[i_base],
-           groups = lapply(seq_len(n_groups), function(i) pars[i_group[[i]]]))
+    if (n_base == 0) {
+      mean_base <- NULL
+      autocorrelation_base <- NULL
+      vcv_base <- NULL
+      scaling_base <- NULL
+      scaling_increment_base <- NULL
+      proposal_vcv_base <- NULL
+    } else {
+      mean_base <- pars[i_base]
+      autocorrelation_base <- matrix(0, n_base, n_base)
+      vcv_base <- update_vcv(mean_base, autocorrelation_base, internal$weight)
+      scaling_base <- initial_scaling
+      scaling_increment_base <- scaling_increment %||% 
+        calc_scaling_increment(n_base, acceptance_target, log_scaling_update)
+      proposal_vcv_base <- 
+        calc_proposal_vcv(scaling_base, vcv_base, internal$weight,
+                          initial_vcv$base, initial_vcv_weight)
+    }
+    
+    mean_groups <- lapply(i_group, function(i) pars[i])
+    autocorrelation_groups <-
+      lapply(lengths(i_group), function (x) matrix(0, x, x))
+    vcv_groups <- Map(update_vcv, mean_groups, autocorrelation_groups,
+                      internal$weight)
+    scaling_groups <- rep(list(initial_scaling), n_groups)
+    scaling_increment_groups <- 
+      lapply(lengths(i_group),
+             function(x) {scaling_increment %||%
+                 calc_scaling_increment(x, acceptance_target,
+                                        log_scaling_update)})
+    proposal_vcv_groups <- 
+      Map(calc_proposal_vcv, scaling_groups, vcv_groups, internal$weight, 
+          initial_vcv$groups, initial_vcv_weight)
+    
+    internal$mean <- list(base = mean_base, groups = mean_groups)
     internal$autocorrelation <- 
-      list(base = matrix(0, n_base, n_base),
-           groups = lapply(lengths(i_group), function (x) matrix(0, x, x)))
-    internal$vcv <- 
-      list(base = update_vcv(internal$mean$base, internal$autocorrelation$base,
-                             internal$weight),
-           groups = Map(update_vcv, internal$mean$groups, 
-                        internal$autocorrelation$groups, internal$weight))
-    
-    
-    internal$scaling <- list(base = initial_scaling,
-                             groups = rep(list(initial_scaling), n_groups))
+      list(base = autocorrelation_base, groups = autocorrelation_groups)
+    internal$vcv <- list(base = vcv_base, groups = vcv_groups)
+    internal$scaling <- list(base = scaling_base, groups = scaling_groups)
     internal$scaling_increment <- 
-      list(base = scaling_increment %||% 
-             calc_scaling_increment(n_base, acceptance_target, 
-                                    log_scaling_update),
-           groups = lapply(lengths(i_group), 
-                           function(x) {scaling_increment %||%
-                               calc_scaling_increment(x, acceptance_target,
-                                                      log_scaling_update)}))
+      list(base = scaling_increment_base, groups = scaling_increment_groups)
     internal$scaling_weight <- initial_scaling_weight %||%
       5 / (acceptance_target * (1 - acceptance_target))
     
-    proposal_vcv <- 
-      list(base = calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
-                                    internal$weight, initial_vcv$base,
-                                    initial_vcv_weight),
-           groups = Map(calc_proposal_vcv, internal$scaling$groups,
-                        internal$vcv$groups, internal$weight, 
-                        initial_vcv$groups, initial_vcv_weight))
+    proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
     internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups)
     
     internal$history_pars <- numeric()
@@ -310,25 +322,31 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
       internal$weight <- internal$weight + 1
     }
     
-    ## Update scaling
-    internal$scaling$base <-
-      update_scaling(internal$scaling$base, internal$scaling_weight, 
-                     accept_prob_base, internal$scaling_increment$base,
-                     min_scaling, acceptance_target, log_scaling_update)
-    internal$scaling$groups <-
-      Map(update_scaling, internal$scaling$groups, internal$scaling_weight, 
-          accept_prob_groups, internal$scaling_increment$groups, min_scaling,
-          acceptance_target, log_scaling_update)
-    
-    ## Update scaling history
-    internal$scaling_history$base <- 
-      c(internal$scaling_history$base, internal$scaling$base)
-    internal$scaling_history$groups <- 
-      Map(c, internal$scaling_history$groups, internal$scaling$groups)
-    
-    i_base <- model$parameter_groups == 0
-    pars_base <- state$pars[i_base]
-    pars_remove_base <- pars_remove[i_base]
+    if (!is.null(internal$proposal$base)) {
+      i_base <- model$parameter_groups == 0
+      pars_base <- state$pars[i_base]
+      pars_remove_base <- pars_remove[i_base]
+      
+      internal$scaling$base <-
+        update_scaling(internal$scaling$base, internal$scaling_weight, 
+                       accept_prob_base, internal$scaling_increment$base,
+                       min_scaling, acceptance_target, log_scaling_update)
+      internal$scaling_history$base <- 
+        c(internal$scaling_history$base, internal$scaling$base)
+      internal$autocorrelation$base <- 
+        update_autocorrelation(pars_base, internal$weight, 
+                               internal$autocorrelation$base, pars_remove_base)
+      internal$mean$base <- update_mean(pars_base, internal$weight,
+                                        internal$mean$base, pars_remove_base)
+      internal$vcv$base <- 
+        update_vcv(internal$mean$base, internal$autocorrelation$base,
+                   internal$weight)
+      proposal_vcv_base <- 
+        calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
+                          internal$weight, initial_vcv$base, initial_vcv_weight)
+    } else {
+      proposal_vcv_base <- NULL
+    }
     
     n_groups <- max(model$parameter_groups)
     i_group <- 
@@ -336,37 +354,27 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     pars_groups <- lapply(i_group, function(i) state$pars[i])
     pars_remove_groups <- lapply(i_group, function(i) pars_remove[i])
     
-    ## Update autocorrelation
-    internal$autocorrelation$base <- 
-      update_autocorrelation(pars_base, internal$weight, 
-                             internal$autocorrelation$base, pars_remove_base)
+    internal$scaling$groups <-
+      Map(update_scaling, internal$scaling$groups, internal$scaling_weight, 
+          accept_prob_groups, internal$scaling_increment$groups, min_scaling,
+          acceptance_target, log_scaling_update)
+    internal$scaling_history$groups <- 
+      Map(c, internal$scaling_history$groups, internal$scaling$groups)
     internal$autocorrelation$groups <- 
       Map(update_autocorrelation, pars_groups, internal$weight, 
           internal$autocorrelation$groups, pars_remove_groups)
-    
-    ## Update mean
-    internal$mean$base <- update_mean(pars_base, internal$weight,
-                                      internal$mean$base, pars_remove_base)
     internal$mean$groups <- 
       Map(update_mean, pars_groups, internal$weight, internal$mean$groups,
           pars_remove_groups)
-    
-    ## Update VCV
-    internal$vcv$base <- 
-      update_vcv(internal$mean$base, internal$autocorrelation$base,
-                 internal$weight)
     internal$vcv$groups <- 
       Map(update_vcv, internal$mean$groups, internal$autocorrelation$groups, 
           internal$weight)
+    proposal_vcv_groups <- 
+      Map(calc_proposal_vcv, internal$scaling$groups, internal$vcv$groups,
+          internal$weight, initial_vcv$groups, initial_vcv_weight)
     
     ## Update proposal
-    proposal_vcv <- 
-      list(base = calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
-                                    internal$weight, initial_vcv$base,
-                                    initial_vcv_weight),
-           groups = Map(calc_proposal_vcv, internal$scaling$groups,
-                        internal$vcv$groups, internal$weight, 
-                        initial_vcv$groups, initial_vcv_weight))
+    proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
     internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups)
     
     state
