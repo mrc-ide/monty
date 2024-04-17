@@ -2,7 +2,7 @@
 % Please edit documentation in R/sampler-nested-adaptive.R
 \name{mcstate_sampler_nested_adaptive}
 \alias{mcstate_sampler_nested_adaptive}
-\title{Nested Random Walk Sampler}
+\title{Nested Adaptive Metropolis-Hastings Sampler}
 \usage{
 mcstate_sampler_nested_adaptive(
   initial_vcv,

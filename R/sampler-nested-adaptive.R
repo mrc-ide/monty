@@ -37,7 +37,7 @@
 ##' * You can compute your independent calculations in parallel, which
 ##'   help this method reduce your walk time.
 ##'
-##' @title Nested Random Walk Sampler
+##' @title Nested Adaptive Metropolis-Hastings Sampler
 ##'
 ##' @param initial_vcv An initial variance covariance matrix; we'll start
 ##'   using this in the proposal, which will gradually become more weighted
@@ -394,7 +394,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     list2env(state, internal)
   }
 
-  mcstate_sampler("Nested random walk",
+  mcstate_sampler("Nested adaptive Metropolis-Hastings",
                   initialise,
                   step,
                   finalise,
