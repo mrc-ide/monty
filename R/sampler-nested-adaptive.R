@@ -370,7 +370,9 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
   }
 
   finalise <- function(state, model, rng) {
-    NULL
+    out <- as.list(internal)
+    out[c("autocorrelation", "mean", "vcv", "weight", "included",
+          "scaling_history", "scaling_weight", "scaling_increment")]
   }
 
   get_internal_state <- function() {
