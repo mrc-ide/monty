@@ -19,6 +19,14 @@ test_that("assert_logical", {
 })
 
 
+test_that("assert_nonmissing", {
+  expect_silent(assert_nonmissing(TRUE))
+  expect_error(assert_nonmissing(NA), "Expected 'NA' to be non-NA")
+  x <- c(1, NA)
+  expect_error(assert_nonmissing(x), "Expected 'x' to be non-NA")
+})
+
+
 test_that("match_value", {
   expect_error(match_value("foo", letters), "must be one of")
   expect_silent(match_value("a", letters))
