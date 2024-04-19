@@ -40,7 +40,7 @@ mcstate_dsl <- function(x, type = NULL) {
   }
   exprs <- dsl_preprocess(x, type)
   dat <- dsl_parse(exprs)
-  NULL
+  dsl_generate(dat)
 }
 
 

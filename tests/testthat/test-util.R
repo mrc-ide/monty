@@ -57,3 +57,17 @@ test_that("can test if things are the same", {
   expect_true(all_same(rep(1, 10)))
   expect_false(all_same(c(1, 1, 2, 1)))
 })
+
+
+test_that("can get near matches", {
+  x <- c("apples", "applez", "appell", "applly")
+  expect_equal(
+    near_match("apple", x),
+    c("apples", "applez", "appell", "applly"))
+  expect_equal(
+    near_match("apple", x, 1),
+    c("apples", "applez"))
+  expect_equal(
+    near_match("apple", x, 2, 3),
+    c("apples", "applez", "appell"))
+})
