@@ -33,16 +33,39 @@ dsl_parse_expr_stochastic <- function(expr) {
   }
   rhs <- expr[[3]]
 
-  ## TODO: this will be derived from source of truth soon; we'll need
-  ## to also provide information about what distributions are
-  ## supported too; I'll do that on the next PR as it will be a bit
-  ## complicated most likely and start intersecting with what
-  ## distributions we aim to support. At that point we'll do a better
-  ## error.
-  supported <- c("Normal", "Exponential", "Uniform")
-  if (!rlang::is_call(rhs, supported)) {
+  ## Here, the user has not provided a call to anything, or a call to
+  ## something that is not recognised as a distribution.  We throw the
+  ## same error in both cases, but with different contextual
+  ## information in order to fix the error.
+  if (!rlang::is_call(rhs, names(dsl_distributions))) {
+    if (!rlang::is_call(rhs)) {
+      detail <- c("x" = "rhs is not a function call")
+    } else {
+      detail <- c(i = paste("See ?'dsl-distributions' for details on",
+                            "supported distributions"))
+      distr_name <- as.character(rhs[[1]])
+      dym <- near_match(distr_name, names(dsl_distributions))
+      if (length(dym) > 0) {
+        detail <- c(
+          "i" = paste("Unknown distribution '{distr_name}', did you mean:",
+                      "{squote(dym)}"),
+          detail)
+      }
+    }
     dsl_parse_error(
-      "Expected rhs of '~' relationship to be a call to a distribution",
+      c("Expected rhs of '~' relationship to be a call to a distribution",
+        detail),
+      expr)
+  }
+
+  ## Next, match the arguments to the call, in order to
+  distr_name <- as.character(rhs[[1]])
+  args <- as.list(rhs[-1])
+  candidates <- dsl_distributions[[distr_name]]
+  match <- match_call(args, lapply(candidates, "[[", "args"))
+  if (!match$success) {
+    dsl_parse_error(
+      c("Invalid call to '{distr_name}()'", match$error),
       expr)
   }
 
@@ -56,8 +79,8 @@ dsl_parse_expr_stochastic <- function(expr) {
   ## too, but that's also easy enough to do elsewhere.
   list(type = "stochastic",
        name = as.character(lhs),
-       distribution = as.character(rhs[[1]]),
-       args = as.list(rhs[-1]),
+       distribution = candidates[[match$index]],
+       args = args[match$args],
        depends = depends,
        expr = expr)
 }

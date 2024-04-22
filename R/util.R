@@ -102,3 +102,23 @@ all_same <- function(x) {
   }
   all(vlapply(x[-1], identical, x[[1]]))
 }
+
+
+as_function <- function(args, body, envir) {
+  if (!rlang::is_call(body, "{")) {
+    body <- rlang::call2("{", !!!body)
+  }
+  as.function(c(args, body), envir = envir)
+}
+
+
+near_match <- function(x, possibilities, threshold = 2, max_matches = 5) {
+  i <- tolower(x) == tolower(possibilities)
+  if (any(i)) {
+    possibilities[i]
+  } else {
+    d <- set_names(drop(utils::adist(x, possibilities, ignore.case = TRUE)),
+                   possibilities)
+    utils::head(names(sort(d[d <= threshold])), max_matches)
+  }
+}
