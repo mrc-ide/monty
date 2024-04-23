@@ -165,6 +165,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     density_by_group <- attr(density, "by_group")
     i_base <- model$parameter_groups == 0
     n_base <- sum(i_base)
+    has_base <- n_base != 0
     n_groups <- max(model$parameter_groups)
     i_group <- 
       lapply(seq_len(n_groups), function(i) which(model$parameter_groups == i))
@@ -189,23 +190,34 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     internal$weight <- 0
     internal$iteration <- 0
     
-    if (n_base == 0) {
+    internal$initial_vcv_weight <- 
+      check_nested_adaptive(initial_vcv_weight, n_groups, has_base)
+    internal$scaling <- 
+      check_nested_adaptive(initial_scaling, n_groups, has_base)
+    internal$scaling_weight <- 
+      check_nested_adaptive(initial_scaling_weight, n_groups, has_base, TRUE)
+    internal$scaling_increment <-
+      check_nested_adaptive(scaling_increment, n_groups, has_base, TRUE)
+    internal$min_scaling <-
+      check_nested_adaptive(min_scaling, n_groups, has_base)
+    
+    
+    if (!has_base) {
       mean_base <- NULL
       autocorrelation_base <- NULL
       vcv_base <- NULL
-      scaling_base <- NULL
-      scaling_increment_base <- NULL
       proposal_vcv_base <- NULL
     } else {
       mean_base <- pars[i_base]
       autocorrelation_base <- matrix(0, n_base, n_base)
       vcv_base <- update_vcv(mean_base, autocorrelation_base, internal$weight)
-      scaling_base <- initial_scaling
-      scaling_increment_base <- scaling_increment %||% 
-        calc_scaling_increment(n_base, acceptance_target, log_scaling_update)
       proposal_vcv_base <- 
-        calc_proposal_vcv(scaling_base, vcv_base, internal$weight,
-                          initial_vcv$base, initial_vcv_weight)
+        calc_proposal_vcv(internal$scaling$base, vcv_base, internal$weight,
+                          initial_vcv$base, internal$initial_vcv_weight$base)
+      internal$scaling_increment$base <- internal$scaling_increment$base %||%
+        calc_scaling_increment(n_base, acceptance_target, log_scaling_update)
+      internal$scaling_weight$base <- internal$scaling_weight$base %||%
+        5 / (acceptance_target * (1 - acceptance_target))
     }
     
     mean_groups <- lapply(i_group, function(i) pars[i])
@@ -213,26 +225,24 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
       lapply(lengths(i_group), function (x) matrix(0, x, x))
     vcv_groups <- Map(update_vcv, mean_groups, autocorrelation_groups,
                       internal$weight)
-    scaling_groups <- rep(list(initial_scaling), n_groups)
-    scaling_increment_groups <- 
-      lapply(lengths(i_group),
-             function(x) {scaling_increment %||%
-                 calc_scaling_increment(x, acceptance_target,
-                                        log_scaling_update)})
     proposal_vcv_groups <- 
-      Map(calc_proposal_vcv, scaling_groups, vcv_groups, internal$weight, 
-          initial_vcv$groups, initial_vcv_weight)
+      Map(calc_proposal_vcv, internal$scaling$groups, vcv_groups,
+          internal$weight, initial_vcv$groups,
+          internal$initial_vcv_weight$groups)
+    
+    internal$scaling_increment$groups <- 
+      Map(function(x, n) {x %||% 
+          calc_scaling_increment(n, acceptance_target, log_scaling_update)},
+          internal$scaling_increment$groups, lengths(i_group))
+    internal$scaling_weight$groups <- 
+      lapply(internal$scaling_weight$groups,
+             function(x) {
+               x %||%  5 / (acceptance_target * (1 - acceptance_target))})
     
     internal$mean <- list(base = mean_base, groups = mean_groups)
     internal$autocorrelation <- 
       list(base = autocorrelation_base, groups = autocorrelation_groups)
     internal$vcv <- list(base = vcv_base, groups = vcv_groups)
-    internal$scaling <- list(base = scaling_base, groups = scaling_groups)
-    internal$scaling_increment <- 
-      list(base = scaling_increment_base, groups = scaling_increment_groups)
-    internal$scaling_weight <- initial_scaling_weight %||%
-      5 / (acceptance_target * (1 - acceptance_target))
-    
     proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
     internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups)
     
@@ -307,10 +317,6 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
       return(state)
     }
     
-    if (internal$iteration > pre_diminish) {
-      internal$scaling_weight <- internal$scaling_weight + 1
-    }
-    
     is_replacement <-
       check_replacement(internal$iteration, forget_rate, forget_end)
     if (is_replacement) {
@@ -327,10 +333,15 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
       pars_base <- state$pars[i_base]
       pars_remove_base <- pars_remove[i_base]
       
+      if (internal$iteration > pre_diminish) {
+        internal$scaling_weight$base <- internal$scaling_weight$base + 1
+      }
+      
       internal$scaling$base <-
-        update_scaling(internal$scaling$base, internal$scaling_weight, 
+        update_scaling(internal$scaling$base, internal$scaling_weight$base, 
                        accept_prob_base, internal$scaling_increment$base,
-                       min_scaling, acceptance_target, log_scaling_update)
+                       internal$min_scaling$base, acceptance_target,
+                       log_scaling_update)
       internal$scaling_history$base <- 
         c(internal$scaling_history$base, internal$scaling$base)
       internal$autocorrelation$base <- 
@@ -343,7 +354,8 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
                    internal$weight)
       proposal_vcv_base <- 
         calc_proposal_vcv(internal$scaling$base, internal$vcv$base,
-                          internal$weight, initial_vcv$base, initial_vcv_weight)
+                          internal$weight, initial_vcv$base, 
+                          internal$initial_vcv_weight$base)
     } else {
       proposal_vcv_base <- NULL
     }
@@ -354,9 +366,17 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     pars_groups <- lapply(i_group, function(i) state$pars[i])
     pars_remove_groups <- lapply(i_group, function(i) pars_remove[i])
     
+    if (internal$iteration > pre_diminish) {
+      for (i in seq_len(n_groups)) {
+        internal$scaling_weight$groups[[i]] <- 
+          internal$scaling_weight$groups[[i]] + 1
+      }
+    }
+    
     internal$scaling$groups <-
-      Map(update_scaling, internal$scaling$groups, internal$scaling_weight, 
-          accept_prob_groups, internal$scaling_increment$groups, min_scaling,
+      Map(update_scaling, internal$scaling$groups, 
+          internal$scaling_weight$groups, accept_prob_groups,
+          internal$scaling_increment$groups, internal$min_scaling$groups,
           acceptance_target, log_scaling_update)
     internal$scaling_history$groups <- 
       Map(c, internal$scaling_history$groups, internal$scaling$groups)
@@ -371,7 +391,8 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
           internal$weight)
     proposal_vcv_groups <- 
       Map(calc_proposal_vcv, internal$scaling$groups, internal$vcv$groups,
-          internal$weight, initial_vcv$groups, initial_vcv_weight)
+          internal$weight, initial_vcv$groups, 
+          internal$initial_vcv_weight$groups)
     
     ## Update proposal
     proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
@@ -402,3 +423,92 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
                   set_internal_state)
 }
 
+
+check_nested_adaptive <- function(x, n_groups, has_base, null_allowed = FALSE,
+                                  name = deparse(substitute(x))) {
+  if (null_allowed) {
+    if (!is.list(x) && length(x) != 1 && !is.null(x)) {
+      cli::cli_abort(
+        sprintf("Expected a list, single value or NULL for %s", name))
+    }  
+  } else {
+    if (!is.list(x) && length(x) != 1) {
+      cli::cli_abort(sprintf("Expected a list or single value for %s", name))
+    }
+  }
+  
+  if (!is.list(x)) {
+    if (!null_allowed && is.null(x)) {
+      cli::cli_abort(sprintf("%s cannot be NULL", name))
+    }
+    if (has_base) {
+      base <- x
+    } else {
+      base <- NULL
+    }
+    ret <- list(base = base,
+                groups = rep(list(x), n_groups))
+  } else {
+    if (!setequal(names(x), c("base", "groups"))) {
+      cli::cli_abort(
+        sprintf("Expected %s input as list to have elements 'base' and 
+                'groups'", name))
+    } else {
+      if (!has_base && !is.null(x$base)) {
+        cli::cli_abort(
+          sprintf("Expected %s to be NULL as there are no base parameters",
+                  paste0(name, "$base")))
+      }
+      if (null_allowed) {
+        if (has_base && !is.null(x$base) && length(x$base) != 1) {
+          cli::cli_abort(sprintf("Expected single value or NULL for %s", 
+                                 paste0(name, "$base")))
+        }
+        if (!is.list(x$groups) && length(x$groups) != 1 && !is.null(x$groups)) {
+          cli::cli_abort(
+            sprintf("Expected a list, single value or NULL for %s", 
+                    paste0(name, "$groups")))
+        }
+      } else {
+        if (has_base && length(x$base != 1)) {
+          cli::cli_abort(sprintf("Expected single value for %s",
+                                 paste0(name, "$base")))
+        }
+        if (!is.list(x$groups) && length(x$groups) != 1) {
+          cli::cli_abort(
+            sprintf("Expected a list or single value for %s", 
+                    paste0(name, "$groups")))
+        }
+      }
+      
+      if (!is.list(x$groups)) {
+        x$groups <- rep(list(x$groups), n_groups)
+      } else {
+        if (length(x$groups) != n_groups) {
+          cli::cli_abort(
+            sprintf("Expected %s specified as list to have length %s",
+                    paste0(name, "$groups"), n_groups))  
+        }
+        for (i in seq_len(n_groups)) {
+          if (null_allowed) {
+            if (length(x$groups[[i]]) != 1 && !is.null(x$groups[[i]])) {
+              cli::cli_abort(
+                sprintf("Expected a single value or NULL for %s", 
+                        paste0(name, "$groups[[", i, "]]")))
+            }
+          } else {
+            if (length(x$groups[[i]]) != 1) {
+              cli::cli_abort(
+                sprintf("Expected a single value for %s", 
+                        paste0(name, "$groups[[", i, "]]")))
+            }
+          }
+        }
+        
+      }
+    }
+    ret <- x
+  }
+  
+  ret
+}
