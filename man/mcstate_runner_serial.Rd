@@ -4,7 +4,16 @@
 \alias{mcstate_runner_serial}
 \title{Run MCMC chain in series}
 \usage{
-mcstate_runner_serial()
+mcstate_runner_serial(progress = NULL)
+}
+\arguments{
+\item{progress}{Optional logical, indicating if we should print a
+progress bar while running.  If \code{NULL}, we use the value of the
+option \code{mcstate2.progress} if set, otherwise we show the
+progress bar (as it is typically wanted).  The progress bar
+itself responds to cli's options; in particular
+\code{cli.progress_show_after} and \code{cli.progress_clear} will affect
+your experience.}
 }
 \value{
 A runner of class \code{mcstate_runner} that can be passed to
