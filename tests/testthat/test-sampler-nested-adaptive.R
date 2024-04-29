@@ -143,6 +143,106 @@ test_that("can run an observer during a nested fit", {
   expect_equal(max(res$observations$n), n_update)
 })
 
+
+test_that("Empirical VCV calculated correctly with forget_rate = 0", {
+  set.seed(1)
+  ng <- 3
+  m <- ex_simple_nested_with_base(ng)
+  s <- mcstate_sampler_nested_adaptive(
+    initial_vcv = list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    forget_rate = 0,
+    log_scaling_update = FALSE)
+  res <- mcstate_sample(m, s, 1000)
+  expect_equal(names(res),
+               c("pars", "density", "initial", "details", "observations"))
+  
+  ## forget_rate = 0 so full chain should be included in VCV
+  expect_equal(res$details[[1]]$weight, 1000)
+  expect_equal(res$details[[1]]$included, seq_len(1000))
+  pars <- t(array_drop(res$pars, 3))
+  vcv <- res$details[[1]]$vcv
+  expect_equal(vcv$base, var(pars[, "sigma"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[1]], var(pars[, "mu_1"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[2]], var(pars[, "mu_2"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[3]], var(pars[, "mu_3"]), ignore_attr = TRUE)
+})
+
+
+test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
+  set.seed(1)
+  ng <- 3
+  m <- ex_simple_nested_with_base(ng)
+  s <- mcstate_sampler_nested_adaptive(
+    initial_vcv = list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    forget_rate = 0.1)
+  res <- mcstate_sample(m, s, 1000)
+  expect_equal(names(res),
+               c("pars", "density", "initial", "details", "observations"))
+  
+  ## forget_rate = 0.1 so VCV should exclude first 100 parameter sets
+  expect_equal(res$details[[1]]$weight, 900)
+  expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
+  pars <- t(array_drop(res$pars, 3))
+  vcv <- res$details[[1]]$vcv
+  expect_equal(vcv$base, var(pars[101:1000, "sigma"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[1]], var(pars[101:1000, "mu_1"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[2]], var(pars[101:1000, "mu_2"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[3]], var(pars[101:1000, "mu_3"]), ignore_attr = TRUE)
+})
+
+
+test_that("Empirical VCV correct using both forget_rate and forget_end", {
+  set.seed(1)
+  ng <- 3
+  m <- ex_simple_nested_with_base(ng)
+  s <- mcstate_sampler_nested_adaptive(
+    initial_vcv = list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    forget_rate = 0.5,
+    forget_end = 200,
+    log_scaling_update = FALSE)
+  res <- mcstate_sample(m, s, 1000)
+  expect_equal(names(res),
+               c("pars", "density", "initial", "details", "observations"))
+  
+  ## forget_rate = 0.5 and forget_end = 200 so VCV should exclude first
+  ## 100 parameter sets
+  expect_equal(res$details[[1]]$weight, 900)
+  expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
+  pars <- t(array_drop(res$pars, 3))
+  vcv <- res$details[[1]]$vcv
+  expect_equal(vcv$base, var(pars[101:1000, "sigma"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[1]], var(pars[101:1000, "mu_1"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[2]], var(pars[101:1000, "mu_2"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[3]], var(pars[101:1000, "mu_3"]), ignore_attr = TRUE)
+})
+
+
+test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
+  set.seed(1)
+  ng <- 3
+  m <- ex_simple_nested_with_base(ng)
+  s <- mcstate_sampler_nested_adaptive(
+    initial_vcv = list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    forget_rate = 0.25,
+    forget_end = 100,
+    adapt_end = 300)
+  res <- mcstate_sample(m, s, 1000)
+  expect_equal(names(res),
+               c("pars", "density", "initial", "details", "observations"))
+  
+  ## forget_rate = 0.25, forget_end = 500 and adapt_end = 300 so VCV should
+  ## only include parameter sets 26 to 300
+  expect_equal(res$details[[1]]$weight, 275)
+  expect_equal(res$details[[1]]$included, seq(26, 300, by = 1))
+  pars <- t(array_drop(res$pars, 3))
+  vcv <- res$details[[1]]$vcv
+  expect_equal(vcv$base, var(pars[26:300, "sigma"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[1]], var(pars[26:300, "mu_1"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[2]], var(pars[26:300, "mu_2"]), ignore_attr = TRUE)
+  expect_equal(vcv$groups[[3]], var(pars[26:300, "mu_3"]), ignore_attr = TRUE)
+})
+
+
 test_that("check nested adaptive inputs correctly", {
   input <- list(base = 100, groups = list(25, 50 , 75))
   expect_equal(check_nested_adaptive(input, 3, TRUE), input)
