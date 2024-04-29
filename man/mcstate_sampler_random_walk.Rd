@@ -4,18 +4,10 @@
 \alias{mcstate_sampler_random_walk}
 \title{Random Walk Sampler}
 \usage{
-mcstate_sampler_random_walk(proposal = NULL, vcv = NULL)
+mcstate_sampler_random_walk(vcv = NULL)
 }
 \arguments{
-\item{proposal}{A proposal function; must take a vector of
-parameters and a random number generator object
-(\code{\link{mcstate_rng}}) and produce a new vector of proposed
-parameters.}
-
-\item{vcv}{A variance covariance matrix to generate a \code{proposal}
-function from.  If you want multivariate Gaussian proposal, this
-is likely simpler than supplying your own \code{proposal}, and
-generally more efficient too.}
+\item{vcv}{A variance covariance matrix for the proposal.}
 }
 \value{
 A \code{mcstate_sampler} object, which can be used with

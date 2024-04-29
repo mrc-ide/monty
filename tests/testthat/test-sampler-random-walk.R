@@ -8,16 +8,6 @@ test_that("can draw samples from a trivial model", {
 })
 
 
-test_that("validate construction of rw sampler", {
-  expect_error(
-    mcstate_sampler_random_walk(),
-    "One of 'proposal' or 'vcv' must be given")
-  expect_error(
-    mcstate_sampler_random_walk(identity, matrix(1, 1, 1)),
-    "Only one of 'proposal' or 'vcv' may be given")
-})
-
-
 test_that("validate sampler against model on initialisation", {
   m <- ex_simple_gamma1()
 
