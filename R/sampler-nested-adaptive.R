@@ -438,9 +438,6 @@ check_nested_adaptive <- function(x, n_groups, has_base, null_allowed = FALSE,
   }
   
   if (!is.list(x)) {
-    if (!null_allowed && is.null(x)) {
-      cli::cli_abort(sprintf("%s cannot be NULL", name))
-    }
     if (has_base) {
       base <- x
     } else {

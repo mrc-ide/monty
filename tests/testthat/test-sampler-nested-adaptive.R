@@ -162,18 +162,70 @@ test_that("check nested adaptive inputs correctly", {
   expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), input)
   
   input <- 100
-  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), 
+  expect_equal(check_nested_adaptive(input, 3, TRUE), 
                list(base = 100, groups = rep(list(100), 3)))
   
   input <- 100
-  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), 
+  expect_equal(check_nested_adaptive(input, 3, FALSE), 
                list(base = NULL, groups = rep(list(100), 3)))
   
   input <- NULL
   expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), 
                list(base = NULL, groups = rep(list(NULL), 3)))
   
+  input <- NULL
+  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), 
+               list(base = NULL, groups = rep(list(NULL), 3)))
+  
+  input <- c(25, 50, 75)
+  expect_error(check_nested_adaptive(input, 3, TRUE, TRUE),
+               "Expected a list, single value or NULL for input", fixed = TRUE)
+  
+  input <- c(25, 50, 75)
+  expect_error(check_nested_adaptive(input, 3, TRUE),
+               "Expected a list or single value for input", fixed = TRUE)
+  
+  input <- list(25, 50, 75)
+  expect_error(
+    check_nested_adaptive(input, 3, TRUE),
+    "Expected input input as list to have elements 'base' and 'groups'",
+    fixed = TRUE)
+  
+  input <- list(base = 100, groups = 50)
+  expect_error(
+    check_nested_adaptive(input, 3, FALSE),
+    "Expected input$base to be NULL as there are no base parameters",
+    fixed = TRUE)
+  
   input <- list(base = NULL, groups = list(25, 50 , 75))
   expect_error(check_nested_adaptive(input, 3, TRUE),
                "Expected single value for input$base", fixed = TRUE)
+  
+  input <- list(base = 100, groups = NULL)
+  expect_error(check_nested_adaptive(input, 3, TRUE),
+               "Expected a list or single value for input$groups", fixed = TRUE)
+  
+  input <- list(base = c(50, 100), groups = list(25, 50 , 75))
+  expect_error(check_nested_adaptive(input, 3, TRUE, TRUE),
+               "Expected single value or NULL for input$base", fixed = TRUE)
+  
+  input <- list(base = 100, groups = c(25, 50 , 75))
+  expect_error(
+    check_nested_adaptive(input, 3, TRUE, TRUE),
+    "Expected a list, single value or NULL for input$groups", fixed = TRUE)
+  
+  input <- list(base = 100, groups = list(25, 50))
+  expect_error(
+    check_nested_adaptive(input, 3, TRUE),
+    "Expected input$groups specified as list to have length 3", fixed = TRUE)
+  
+  input <- list(base = 100, groups = list(25, NULL, 75))
+  expect_error(
+    check_nested_adaptive(input, 3, TRUE),
+    "Expected a single value for input$groups[[2]]", fixed = TRUE)
+  
+  input <- list(base = 100, groups = list(25, 50, c(75, 100)))
+  expect_error(
+    check_nested_adaptive(input, 3, TRUE, TRUE),
+    "Expected a single value or NULL for input$groups[[3]]", fixed = TRUE)
 })
