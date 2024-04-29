@@ -142,3 +142,38 @@ test_that("can run an observer during a nested fit", {
     sum(rowSums(pars_update[, paste0("mu_", seq_len(5))]) > 0)
   expect_equal(max(res$observations$n), n_update)
 })
+
+test_that("check nested adaptive inputs correctly", {
+  input <- list(base = 100, groups = list(25, 50 , 75))
+  expect_equal(check_nested_adaptive(input, 3, TRUE), input)
+  
+  input <- list(base = NULL, groups = list(25, 50 , 75))
+  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), input)
+  
+  input <- list(base = 100, groups = 50)
+  expect_equal(check_nested_adaptive(input, 3, TRUE),
+               list(base = 100, groups = rep(list(50), 3)))
+  
+  input <- list(base = 100, groups = NULL)
+  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE),
+               list(base = 100, groups = rep(list(NULL), 3)))
+  
+  input <- list(base = NULL, groups = list(25, 50, 75))
+  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), input)
+  
+  input <- 100
+  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), 
+               list(base = 100, groups = rep(list(100), 3)))
+  
+  input <- 100
+  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), 
+               list(base = NULL, groups = rep(list(100), 3)))
+  
+  input <- NULL
+  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), 
+               list(base = NULL, groups = rep(list(NULL), 3)))
+  
+  input <- list(base = NULL, groups = list(25, 50 , 75))
+  expect_error(check_nested_adaptive(input, 3, TRUE),
+               "Expected single value for input$base", fixed = TRUE)
+})

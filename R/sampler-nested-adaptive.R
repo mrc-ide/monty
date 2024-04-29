@@ -470,7 +470,7 @@ check_nested_adaptive <- function(x, n_groups, has_base, null_allowed = FALSE,
                     paste0(name, "$groups")))
         }
       } else {
-        if (has_base && length(x$base != 1)) {
+        if (has_base && length(x$base) != 1) {
           cli::cli_abort(sprintf("Expected single value for %s",
                                  paste0(name, "$base")))
         }
