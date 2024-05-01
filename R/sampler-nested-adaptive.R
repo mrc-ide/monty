@@ -124,7 +124,6 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
                                             forget_end = Inf,
                                             adapt_end = Inf,
                                             pre_diminish = 0) {
-  browser()
   if (!is.list(initial_vcv)) {
     cli::cli_abort(
       "Expected a list for 'initial_vcv'",
