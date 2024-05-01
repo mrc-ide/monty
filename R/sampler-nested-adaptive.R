@@ -1,83 +1,84 @@
-##' Create a nested random walk sampler, which uses a symmetric
-##' proposal for separable sections of a model to move around in
-##' parameter space.  This sampler supports sampling from models where
-##' the likelihood is only computable randomly (e.g., for pmcmc), and
-##' requires that models support the `has_parameter_groups` property.
+##' Create a nested adaptive Metropolis-Hastings sampler, which extends the 
+##' adaptive sampler [mcstate_sampler_adaptive], tuning the variance covariance
+##' matrices for proposal for the separable sections
+##' of a nested model (vs the simple nested random walk sampler
+##' [mcstate_sampler_random_walk]). This sampler requires
+##' that models support the `has_parameter_groups` property.
 ##'
-##' The intended use case for this sampler is for models where the
-##' density can be decomposed at least partially into chunks that are
-##' independent from each other.  Our motivating example for this is a
-##' model of COVID-19 transmission where some parameters
-##' region-specific (e.g., patterns and rates of contact between
-##' individuals), and some parameters are shared across all regions
-##' (e.g., intrinsic properties of the disease such as incubation
-##' period).
-##'
-##' The strategy is to propose all the shared parameters as a
-##' deviation from the current point in parameter space as a single
-##' move and accept or reject as a block. Then we generate points for
-##' all the region-specific parameters, compute the density and then
+##' Much like the simple nested random walk sampler
+##' [mcstate_sampler_random_walk], the strategy is to propose all the 
+##' shared parameters as a deviation from the current point in parameter space
+##' as a single move and accept or reject as a block. Then we generate points
+##' for all the region-specific parameters, compute the density and then
 ##' accept or reject these updates independently.  This is possible
 ##' because the change in likelihood in region A is independent from
 ##' region B.
 ##'
-##' We expect that this approach will be beneficial in limited
-##' situations, but where it is beneficial it is likely to result in
-##' fairly large speedups:
-##'
-##' * You probably need more than three regions; as the number of
-##'   regions increases the benefit independently accepting or
-##'   rejecting densities increases (with 1000 separate regions your
-##'   chains will mix very slowly for example).
-##' * Your model is fairly comutationally heavy so that the density
-##'   calculation completely dominates the sampling process.
-##' * You do not have access to gradient information for your model;
-##'   we suspect that HMC will outperform this approach by some margin
-##'   because it already includes this independence via the gradients.
-##' * You can compute your independent calculations in parallel, which
-##'   help this method reduce your walk time.
+##' The adaptive proposal algorithm of the non-nested adaptive sampler 
+##' [mcstate_sampler_adaptive] is extended here to adaptively tune the variance
+##' covariance matrix of each of these parameter chunks.
 ##'
 ##' @title Nested Adaptive Metropolis-Hastings Sampler
 ##'
-##' @param initial_vcv An initial variance covariance matrix; we'll start
-##'   using this in the proposal, which will gradually become more weighted
-##'   towards the empirical covariance matrix calculated from the chain.
+##' @param initial_vcv A list of initial variance covariance matrices. We 
+##'   expect this to be a list with elements `base` and `groups` corresponding
+##'   to the initial covariance matrix for base parameters (if any) and groups.
+##'   We'll start using these in the proposal, which will gradually become more
+##'   weighted towards the empirical covariance matrices calculated from the
+##'   chain.
 ##'
 ##' @param initial_vcv_weight Weight of the initial variance-covariance
-##'   matrix used to build the proposal of the random-walk. Higher
+##'   matrices used to build the proposal of the random-walk. Higher
 ##'   values translate into higher confidence of the initial
 ##'   variance-covariance matrix and means that update from additional
-##'   samples will be slower.
+##'   samples will be slower. This can be either (a) a list with elements `base`
+##'   and `groups`, where the `groups` element can in turn be a list of values
+##'   for each group or a single value applying to all groups or (b) a single
+##'   value which applies to the base parameters and all groups.
 ##'
-##' @param initial_scaling The initial scaling of the variance
+##' @param initial_scaling The initial scalings of the variance
 ##'   covariance matrix to be used to generate the multivariate normal
 ##'   proposal for the random-walk Metropolis-Hastings algorithm. To generate
 ##'   the proposal matrix, the weighted variance covariance matrix is
 ##'   multiplied by the scaling parameter squared times 2.38^2 / n_pars (where
-##'   n_pars is the number of fitted parameters). Thus, in a Gaussian target
-##'   parameter space, the optimal scaling will be around 1.
+##'   n_pars is the number of fitted parameters in the parameter chunk). Can be
+##'   either (a) a list with elements `base` and `groups`, where the `groups`
+##'   element can in turn be a list of values for each group or a single value
+##'   applying to all groups or (b) a single value which applies to the base
+##'   parameters and all groups.
 ##'
-##' @param initial_scaling_weight The initial weight used in the scaling update.
-##'   The scaling weight will increase after the first `pre_diminish`
+##' @param initial_scaling_weight The initial weights used in the scaling
+##'   update. The scaling weight will increase after the first `pre_diminish`
 ##'   iterations, and as the scaling weight increases the adaptation of the
-##'   scaling diminishes. If `NULL` (the default) the value is
+##'   scaling diminishes. Can be either (a) a list with elements
+##'   `base` and `groups`, where the `groups` element can in turn be a list of
+##'   values for each group or a single value applying to all groups or (b) a 
+##'   single value which applies to the base parameters and all groups. If
+##'   `NULL` (the default) the value is 
 ##'   5 / (acceptance_target * (1 - acceptance_target)).
 ##'
-##' @param min_scaling The minimum scaling of the variance covariance
+##' @param min_scaling The minimum scalings of the variance covariance
 ##'   matrix to be used to generate the multivariate normal proposal
-##'   for the random-walk Metropolis-Hastings algorithm.
+##'   for the random-walk Metropolis-Hastings algorithm. Can be either (a) a
+##'   list with elements `base` and `groups`, where the `groups` element can in
+##'   turn be a list of values for each group or a single value applying to all
+##'   groups or (b) a single value which applies to the base parameters and all
+##'   groups.
 ##'
-##' @param scaling_increment The scaling increment which is added or
+##' @param scaling_increment The scaling increments which are added or
 ##'   subtracted to the scaling factor of the variance-covariance
-##'   after each adaptive step. If `NULL` (the default) then an optimal
-##'   value will be calculated.
+##'   after each adaptive step. Can be either (a) a list with elements
+##'   `base` and `groups`, where the `groups` element can in turn be a list of
+##'   values for each group or a single value applying to all groups or (b) a 
+##'   single value which applies to the base parameters and all groups. If
+##'   `NULL` (the default) then an optimal value will be calculated.
 ##'
 ##' @param log_scaling_update Logical, whether or not changes to the
-##'   scaling parameter are made on the log-scale.
+##'   scaling parameters are made on the log-scale.
 ##'
 ##' @param acceptance_target The target for the fraction of proposals
 ##'   that should be accepted (optimally) for the adaptive part of the
-##'   mixture model.
+##'   chain.
 ##'
 ##' @param forget_rate The rate of forgetting early parameter sets from the
 ##'   empirical variance-covariance matrix in the MCMC chains. For example,
@@ -123,6 +124,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
                                             forget_end = Inf,
                                             adapt_end = Inf,
                                             pre_diminish = 0) {
+  browser()
   if (!is.list(initial_vcv)) {
     cli::cli_abort(
       "Expected a list for 'initial_vcv'",
