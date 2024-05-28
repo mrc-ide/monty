@@ -49,3 +49,48 @@ test_that("can use integer vectors for array inputs", {
                c("a", sprintf("b[%d]", 1:3), sprintf("c[%d]", 1:4)))
   expect_equal(xf$transform(1:8), list(a = 1, b = 2:4, c = 5:8))
 })
+
+
+test_that("can create transformer with only arrays", {
+  xf <- mcstate_transformer(array = list(a = 2, b = 3))
+  expect_equal(xf$transform(1:5), list(a = 1:2, b = 3:5))
+})
+
+
+test_that("can create transformers with higher-level dimensionsality", {
+  xf <- mcstate_transformer(
+    array = list(a = 1, b = 2, c = 2:3, d = 2:4))
+  expect_equal(
+    xf$parameters,
+    c("a[1]", "b[1]", "b[2]",
+      sprintf("c[%d,%d]", 1:2, rep(1:3, each = 2)),
+      sprintf("d[%d,%d,%d]", 1:2, rep(1:3, each = 2), rep(1:4, each = 6))))
+  expect_equal(
+    xf$transform(1:33),
+    list(a = 1, b = 2:3, c = matrix(4:9, 2, 3), d = array(10:33, 2:4)))
+  expect_equal(
+    xf$untransform(xf$transform(1:33)),
+    1:33)
+})
+
+
+test_that("names for scalar, array and fixed must be reasonable", {
+  expect_error(
+    mcstate_transformer(c("a", "b", "a")),
+    "Elements of 'scalar' must be unique")
+  expect_error(
+    mcstate_transformer("a", list(1)),
+    "'array' must be named")
+  expect_error(
+    mcstate_transformer("a", list(b = 1, c = 2, b = 3)),
+    "'array' must have unique names")
+  expect_error(
+    mcstate_transformer("a", fixed = list(x = 1, y = 2, x = 1)),
+    "'fixed' must have unique names")
+  expect_error(
+    mcstate_transformer(c("a", "b", "c"), list(b = 2, d = 3)),
+    "Names must be distinct between 'scalar', 'array' and 'fixed'")
+  expect_error(
+    mcstate_transformer(c("a", "b", "c"), list(d = 2, e = 3), list(d = 5)),
+    "Names must be distinct between 'scalar', 'array' and 'fixed'")
+})

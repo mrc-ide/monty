@@ -78,19 +78,6 @@ assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
 }
 
 
-assert_unique <- function(x, name = deparse(substitute(x)), arg = name,
-                          call = call) {
-  if (anyDuplicated(x)) {
-    dups <- unique(x[duplicated(x)])
-    cli::cli_abort(
-      c("'{name}' must be unique",
-        i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
-      call = call, arg = arg)
-  }
-  invisible(x)
-}
-
-
 assert_list <- function(x, name = deparse(substitute(x)), arg = name,
                         call = NULL) {
   if (!is.list(x)) {

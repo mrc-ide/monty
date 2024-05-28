@@ -5,10 +5,11 @@
 ##'
 ##' @title Build a parameter transformer
 ##'
-##' @param scalar Names of scalar parameters.  This is shorthand for
+##' @param scalar Names of scalar parameters.  This is similar for
 ##'   listing elements in `array` with values of 1, though elements in
 ##'   `scalar` will be placed ahead of those listed in `array` within
-##'   the final parameter vector.
+##'   the final parameter vector, and elements in `array` will have
+##'   generated names that include square brackets.
 ##'
 ##' @param array A list, where names correspond to the names of array
 ##'   parameters and values correspond to the lengths of parameters.
@@ -56,7 +57,18 @@ mcstate_transformer <- function(scalar = NULL,
   shape <- list()
 
   if (!is.null(scalar)) {
-    assert_unique(scalar, call = call)
+    if (!is.character(scalar)) {
+      cli::cli_abort(
+        "Expected a character vector for 'scalar'",
+        arg = "scalar")
+    }
+    dups <- duplicate_values(scalar)
+    if (length(dups) > 0) {
+      cli::cli_abort(
+        c("Elements of 'scalar' must be unique",
+          i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
+        arg = "scalar")
+    }
     idx[scalar] <- set_names(as.list(seq_along(scalar)), scalar)
     parameters <- c(parameters, scalar)
   }
@@ -80,10 +92,10 @@ mcstate_transformer <- function(scalar = NULL,
 
   err <- duplicate_values(c(scalar, names(array), names(fixed)))
   if (length(err)) {
-    detail <- NULL # later
+    detail <- sprintf("'%s' appears in more than one place", err)
     cli::cli_abort(
       c("Names must be distinct between 'scalar', 'array' and 'fixed'",
-        detail))
+        set_names(detail, "x")))
   }
 
   if (length(idx) == 0) {
@@ -156,11 +168,16 @@ transform_array <- function(name, shape, call = NULL) {
   if (length(shape) == 1) {
     index <- as.character(seq_len(shape))
   } else {
-    indices <- do.call(expand.grid, lapply(shape, seq_len))
-    index <- apply(indices, 1, paste, collapse = ",")
+    index <- apply(array_indices(shape), 1, paste, collapse = ",")
   }
 
   list(names = sprintf("%s[%s]", name, index),
        shape = if (length(shape) > 1) shape else NULL,
        n = length(index))
+}
+
+
+array_indices <- function(shape) {
+  ## unname(as.matrix(rev(do.call(expand.grid, lapply(rev(shape), seq_len)))))
+  unname(as.matrix(do.call(expand.grid, lapply(shape, seq_len))))
 }

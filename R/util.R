@@ -130,3 +130,8 @@ duplicate_values <- function(x) {
   }
   unique(x[duplicated(x)])
 }
+
+
+collapseq <- function(x) {
+  paste(squote(x), collapse = ", ")
+}
