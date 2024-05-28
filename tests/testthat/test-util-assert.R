@@ -31,3 +31,11 @@ test_that("match_value", {
   expect_error(match_value("foo", letters), "must be one of")
   expect_silent(match_value("a", letters))
 })
+
+
+test_that("assert_list", {
+  expect_silent(assert_list(list()))
+  expect_silent(assert_list(list(a = 1)))
+  x <- c(a = 1)
+  expect_error(assert_list(x), "Expected 'x' to be a list")
+})

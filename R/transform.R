@@ -156,14 +156,20 @@ transform_array <- function(name, shape, call = NULL) {
   if (length(shape) == 0) {
     cli::cli_abort(
       paste("Elements of 'array' must have at least one element, but",
-            "'array[[\"{name}\"]]' has none"),
-      arg = "array")
+            "'{name}' has none"),
+      arg = "array", call = call)
   }
   if (!rlang::is_integerish(shape)) {
     cli::cli_abort(
       paste("Elements of 'array' must be integer-like vectors, but",
-            "'array[[\"{name}\"]]' is not"),
-      arg = "array")
+            "'{name}' is not"),
+      arg = "array", call = call)
+  }
+  if (any(shape <= 0)) {
+    cli::cli_abort(
+      paste("All dimensions in 'array' must be at least 1, but",
+            "'{name}' violates this"),
+      arg = "array", call = call)
   }
   if (length(shape) == 1) {
     index <- as.character(seq_len(shape))

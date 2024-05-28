@@ -94,3 +94,23 @@ test_that("names for scalar, array and fixed must be reasonable", {
     mcstate_transformer(c("a", "b", "c"), list(d = 2, e = 3), list(d = 5)),
     "Names must be distinct between 'scalar', 'array' and 'fixed'")
 })
+
+
+test_that("validate array inputs", {
+  expect_error(
+    mcstate_transformer(array = list(a = integer(), b = 2)),
+    "Elements of 'array' must have at least one element, but 'a' has none")
+  expect_error(
+    mcstate_transformer(array = list(a = 1, b = 2.5)),
+    "Elements of 'array' must be integer-like vectors, but 'b' is not")
+  expect_error(
+    mcstate_transformer(array = list(a = 1, b = c(3, 0, 2))),
+    "All dimensions in 'array' must be at least 1, but 'b' violates this")
+})
+
+
+test_that("require that scalar is a character vector", {
+  expect_error(
+    mcstate_transformer(1:2),
+    "Expected a character vector for 'scalar'")
+})
