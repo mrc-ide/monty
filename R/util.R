@@ -122,3 +122,11 @@ near_match <- function(x, possibilities, threshold = 2, max_matches = 5) {
     utils::head(names(sort(d[d <= threshold])), max_matches)
   }
 }
+
+
+duplicate_values <- function(x) {
+  if (!anyDuplicated(x)) {
+    return(x[integer(0)])
+  }
+  unique(x[duplicated(x)])
+}
