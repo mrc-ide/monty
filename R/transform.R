@@ -106,6 +106,14 @@ mcstate_transformer <- function(scalar = NULL,
                   "vector")))
   }
 
+  if (!is.null(process)) {
+    if (!is.function(process)) {
+      cli::cli_abort(
+        "Expected a function for 'process'",
+        arg = "process")
+    }
+  }
+
   transform <- function(x) {
     if (!is.null(names(x))) {
       if (!identical(names(x), parameters)) {

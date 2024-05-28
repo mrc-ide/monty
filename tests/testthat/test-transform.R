@@ -114,3 +114,23 @@ test_that("require that scalar is a character vector", {
     mcstate_transformer(1:2),
     "Expected a character vector for 'scalar'")
 })
+
+
+test_that("can post-process parameters", {
+  p <- function(x) {
+    x$d <- x$a + x$b + x$c
+    x
+  }
+  xf <- mcstate_transformer(c("a", "b", "c"), process = p)
+  expect_equal(xf$parameters, c("a", "b", "c"))
+  expect_equal(xf$transform(1:3), list(a = 1, b = 2, c = 3, d = 6))
+  expect_equal(xf$untransform(xf$transform(1:3)), 1:3)
+  expect_equal(xf$untransform(list(a = 1, b = 2, c = 3)), 1:3)
+})
+
+
+test_that("can post-process parameters", {
+  expect_error(
+    mcstate_transformer(c("a", "b", "c"), process = TRUE),
+    "Expected a function for 'process'")
+})
