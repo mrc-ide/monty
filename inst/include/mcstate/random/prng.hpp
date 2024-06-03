@@ -84,16 +84,19 @@ public:
   /// Convert the random number state of all generators into a single
   /// vector. This can be used to save the state to restore using
   /// `import_state()`
-  std::vector<int_type> export_state() {
-    constexpr size_t n = rng_state::size();
-    std::vector<int_type> state;
-    state.resize(size() * n);
-    for (size_t i = 0, k = 0; i < size(); ++i) {
-      for (size_t j = 0; j < n; ++j, ++k) {
-        state[k] = state_[i][j];
-      }
-    }
+  std::vector<int_type> export_state() const {
+    constexpr auto n = rng_state::size();
+    std::vector<int_type> state(size() * n);
+    export_state(state.begin());
     return state;
+  }
+
+  template <typename Iter>
+  void export_state(Iter iter) const {
+    constexpr auto n = rng_state::size();
+    for (size_t i = 0; i < size(); ++i) {
+      iter = std::copy_n(std::begin(state_[i].state), n, iter);
+    }
   }
 
   /// Import a vector of random number state, previously saved by
@@ -102,13 +105,14 @@ public:
   /// @param state A vector of state
   void import_state(const std::vector<int_type>& state) {
     // TODO: check size
-    auto it = state.begin();
+    import_state(state.begin());
+  }
+
+  template <typename Iter>
+  void import_state(Iter iter) {
     constexpr size_t n = rng_state::size();
-    for (size_t i = 0; i < size(); ++i) {
-      for (size_t j = 0; j < n; ++j) {
-        state_[i][j] = *it;
-        ++it;
-      }
+    for (size_t i = 0; i < size(); ++i, iter += n) {
+      std::copy_n(iter, n, std::begin(state_[i].state));
     }
   }
 
