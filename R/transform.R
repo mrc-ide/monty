@@ -144,7 +144,7 @@ mcstate_transformer <- function(scalar = NULL,
                       "that are not already present in 'scalar', 'array'",
                       "or 'fixed', as this lets us reverse the transformation",
                       "process"),
-            x = "{Entry/Entries} already present: {squote(err)}"))
+            x = "{?Entry/Entries} already present: {squote(err)}"))
       }
       ## TODO: check names?
       res <- c(res, extra)

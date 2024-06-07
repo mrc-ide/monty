@@ -81,6 +81,7 @@ dim2 <- function(x) {
   if (length(value) != 1) {
     dim(x) <- value
   }
+  x
 }
 
 
