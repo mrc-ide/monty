@@ -20,7 +20,7 @@
 ##'
 ##' @param fixed A named list of fixed parameters; these will be added
 ##'   into the final list directly.  These typically represent
-##'   additional pieces of data that your model needs to run, but for
+##'   additional pieces of data that your model needs to run, but
 ##'   which you are not performing inference on.
 ##'
 ##' @param process An arbitrary R function that will be passed the
