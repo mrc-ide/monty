@@ -24,14 +24,13 @@
 ##'   which you are not performing inference on.
 ##'
 ##' @param process An arbitrary R function that will be passed the
-##'   final assembled parameter list and will process it - this
-##'   function should return a named list too, but can do whatever
-##'   processing you need.  The default is not to have any processing
-##'   (equivalent to using [identity]).  If you use this, you should
-##'   take care to only append onto your list, and not to modify any
-##'   values - otherwise you will break the generated `untransform`
-##'   method.  We will likely play around with this process in future
-##'   in order to get automatic differentiation to work.
+##'   final assembled parameter list; it may create any *additional*
+##'   entries, which will be concatenated onto the original list.  If
+##'   you use this you should take care not to return any values with
+##'   the same names as entries listed in `scalar`, `array` or
+##'   `fixed`, as this is an error (this is so that `untransform()` is
+##'   not broken).  We will likely play around with this process in
+##'   future in order to get automatic differentiation to work.
 ##'
 ##' @return An object of class `mcstate_transformer`, which has three
 ##'   elements:
@@ -42,8 +41,8 @@
 ##'   parameters into a structured list of parameters.
 ##' * `untransform`: a function that can untransform from your
 ##'   structured list of parameters back into a numeric vector
-##'   suitable for the statistical model.  This cannot untransform
-##'   through a `preprocess` function.
+##'   suitable for the statistical model.  This ignores values created by
+##'   a `preprocess` function.
 ##'
 ##' @export
 mcstate_transformer <- function(scalar = NULL,
@@ -118,7 +117,7 @@ mcstate_transformer <- function(scalar = NULL,
     if (!is.null(names(x))) {
       if (!identical(names(x), parameters)) {
         ## Here, we could do better I think with this message; we
-        ## might pass thrtough empty names, and produce some summary
+        ## might pass thropuigh empty names, and produce some summary
         ## of different names.  Something for later though.
         cli::cli_abort("Incorrect names in input")
       }
@@ -130,13 +129,25 @@ mcstate_transformer <- function(scalar = NULL,
     }
     res <- lapply(idx, function(i) x[i])
     for (nm in names(shape)) {
-      dim(res[[nm]]) <- shape[[nm]]
+      dim2(res[[nm]]) <- shape[[nm]]
     }
     if (!is.null(fixed)) {
       res <- c(res, fixed)
     }
     if (!is.null(process)) {
-      res <- process(res)
+      extra <- process(res)
+      err <- intersect(names(extra), names(res))
+      if (length(err) > 0) {
+        cli::cli_abort(
+          c("'process()' is trying to overwrite entries in parameters",
+            i = paste("The 'process()' function should only create elemements",
+                      "that are not already present in 'scalar', 'array'",
+                      "or 'fixed', as this lets us reverse the transformation",
+                      "process"),
+            x = "{Entry/Entries} already present: {squote(err)}"))
+      }
+      ## TODO: check names?
+      res <- c(res, extra)
     }
     res
   }
@@ -185,13 +196,18 @@ transform_array <- function(name, shape, call = NULL) {
     index <- apply(array_indices(shape), 1, paste, collapse = ",")
   }
 
+  ## Whole bunch of bookkeeping used above;
+
+  ## * names contains generated parameter names with index accessors -
+  ##   these will render nicely though they're gross in their own way.
+  ## * shape contains generated dimensions of a resulting array
+  ## * n is the total number of parameters after this expansion
   list(names = sprintf("%s[%s]", name, index),
-       shape = if (length(shape) > 1) shape else NULL,
+       shape = shape,
        n = length(index))
 }
 
 
 array_indices <- function(shape) {
-  ## unname(as.matrix(rev(do.call(expand.grid, lapply(rev(shape), seq_len)))))
   unname(as.matrix(do.call(expand.grid, lapply(shape, seq_len))))
 }

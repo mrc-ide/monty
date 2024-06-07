@@ -77,6 +77,13 @@ dim2 <- function(x) {
 }
 
 
+"dim2<-" <- function(x, value) {
+  if (length(value) != 1) {
+    dim(x) <- value
+  }
+}
+
+
 dimnames2 <- function(x) {
   if (!is.null(dim(x))) {
     dimnames(x)

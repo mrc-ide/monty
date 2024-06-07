@@ -118,8 +118,7 @@ test_that("require that scalar is a character vector", {
 
 test_that("can post-process parameters", {
   p <- function(x) {
-    x$d <- x$a + x$b + x$c
-    x
+    list(d = x$a + x$b + x$c)
   }
   xf <- mcstate_transformer(c("a", "b", "c"), process = p)
   expect_equal(xf$parameters, c("a", "b", "c"))
@@ -129,8 +128,19 @@ test_that("can post-process parameters", {
 })
 
 
-test_that("can post-process parameters", {
+test_that("reject non-function process arguments", {
   expect_error(
     mcstate_transformer(c("a", "b", "c"), process = TRUE),
     "Expected a function for 'process'")
+})
+
+
+test_that("require that process is well-behaved", {
+  p <- function(x) {
+    c(x, list(d = x$a + x$b + x$c))
+  }
+  xf <- mcstate_transformer(c("a", "b", "c"), process = p)
+  expect_error(xf$transform(1:3),
+               "'process()' is trying to overwrite entries in parameters",
+               fixed = TRUE)
 })
