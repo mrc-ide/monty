@@ -34,7 +34,7 @@ reference:
   - subtitle: Tools
     contents:
     - mcstate_observer
-    - mcstate_transformer
+    - mcstate_packer
 
   - title: Random numbers
     desc: >-
