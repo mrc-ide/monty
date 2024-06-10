@@ -238,7 +238,7 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
       ## Not quite enough, because we should check the dimensions too.
       ## That ends up being quite hard with integer checks possibly
       ## because we really want to use identical() - this will do for now.
-      cli::cli_abort("Invalid structure to pack()")
+      cli::cli_abort("Invalid structure to 'pack()'")
     }
     unlist(lapply(names(idx), function(el) p[el]), TRUE, FALSE)
   }

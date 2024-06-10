@@ -15,7 +15,8 @@ test_that("trivial packer", {
                "Incorrect length input; expected 1 but given 2")
   expect_equal(xp$pack(list(a = 1)), 1)
   expect_error(xp$pack(list(a = 1:2)),
-               "Invalid structure to unpack")
+               "Invalid structure to 'pack()'",
+               fixed = TRUE)
 })
 
 
