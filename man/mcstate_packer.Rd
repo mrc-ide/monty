@@ -107,7 +107,7 @@ The \code{process} function is a get-out-of-jail function designed to
 let you do arbitrary transformations when unpacking a vector.  In
 general, this should not be the first choice to use because it is
 less easy to reason about by other tooling (for example, as we
-develop automatic diferentiation support for use with the HMC
+develop automatic differentiation support for use with the HMC
 algorithm, a \code{process} function will be problematic because we
 will need to make sure we can differentiate this process).
 However, there are cases where it will be only way to achieve some
