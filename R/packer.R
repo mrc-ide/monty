@@ -57,7 +57,7 @@
 ##' let you do arbitrary transformations when unpacking a vector.  In
 ##' general, this should not be the first choice to use because it is
 ##' less easy to reason about by other tooling (for example, as we
-##' develop automatic diferentiation support for use with the HMC
+##' develop automatic differentiation support for use with the HMC
 ##' algorithm, a `process` function will be problematic because we
 ##' will need to make sure we can differentiate this process).
 ##' However, there are cases where it will be only way to achieve some
