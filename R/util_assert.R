@@ -62,6 +62,32 @@ assert_scalar_character <- function(x, name = deparse(substitute(x)),
 }
 
 
+assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
+                         arg = name, call = NULL) {
+  if (is.null(names(x))) {
+    cli::cli_abort("'{name}' must be named", call = call, arg = arg)
+  }
+  if (unique && anyDuplicated(names(x))) {
+    dups <- unique(names(x)[duplicated(names(x))])
+    cli::cli_abort(
+      c("'{name}' must have unique names",
+        i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
+      call = call, arg = arg)
+  }
+  invisible(x)
+}
+
+
+assert_list <- function(x, name = deparse(substitute(x)), arg = name,
+                        call = NULL) {
+  if (!is.list(x)) {
+    cli::cli_abort("Expected '{name}' to be a list",
+                   arg = arg, call = call)
+  }
+  invisible(x)
+}
+
+
 match_value <- function(x, choices, name = deparse(substitute(x)), arg = name,
                         call = NULL) {
   assert_scalar_character(x, call = call, arg = arg)
