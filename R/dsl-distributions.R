@@ -16,6 +16,12 @@ distribution <- function(name, density, cpp, sample = NULL, variant = NULL) {
 }
 
 
+distr_binomial <- distribution(
+  name = "Binomial",
+  density = function(x, size, prob) dbinom(x, size, prob, log = TRUE),
+  sample = function(rng, size, prob) rng$binomial(1, size, prob),
+  cpp = list(density = NULL, sample = "binomial"))
+
 distr_exponential_rate <- distribution(
   name = "Exponential",
   variant = "rate",
@@ -36,6 +42,12 @@ distr_normal <- distribution(
   sample = function(rng, mean, sd) rng$normal(1, mean, sd),
   cpp = list(density = "normal", sample = "normal"))
 
+distr_poisson <- distribution(
+  name = "Poisson",
+  density = function(x, lambda) dpois(x, lambda, log = TRUE),
+  sample = function(rng, lambda) rng$poisson(1, lambda),
+  cpp = list(density = "poisson", sample = "poisson"))
+
 distr_uniform <- distribution(
   name = "Uniform",
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
@@ -44,9 +56,11 @@ distr_uniform <- distribution(
 
 dsl_distributions <- local({
   d <- list(
+    distr_binomial,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,
     distr_normal,
+    distr_poisson,
     distr_uniform)
   split(d, vapply(d, "[[", "", "name"))
 })
