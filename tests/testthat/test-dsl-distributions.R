@@ -25,7 +25,7 @@ test_that("match against set of candidates", {
   expect_equal(match_call(list(scale = 0, shape = 0), candidates),
                list(success = TRUE, index = 2, args = 2:1))
 
-  error <- c(x = "Failed to match given arguments: .",
+  error <- c(x = "Failed to match given arguments: <1>",
              i = "Call should match one of:",
              "*" = "a, b",
              "*" = "shape, scale")
@@ -98,10 +98,15 @@ test_that("can sample from uniform distribution", {
 test_that("can create a distribution object", {
   density <- function(x, a, b) NULL
   sample <- function(rng, a, b) NULL
-  d <- distribution("Foo", density, sample)
+  d <- distribution("Foo", density, NULL, sample)
   expect_equal(
     d,
-    list(name = "Foo", args = c("a", "b"), density = density, sample = sample))
+    list(name = "Foo",
+         variant = NULL,
+         args = c("a", "b"),
+         density = density,
+         sample = sample,
+         cpp = NULL))
 })
 
 

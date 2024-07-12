@@ -105,7 +105,7 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
   ## information in order to fix the error.
   if (!rlang::is_call(expr)) {
     name <- name %||% deparse(substitute(expr))
-    error < - cli::format_inline("{name} is not a function call")
+    error <- cli::format_inline("{name} is not a function call")
     return(list(success = FALSE, error = error))
   }
 
