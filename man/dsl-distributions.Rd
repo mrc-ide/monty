@@ -4,5 +4,6 @@
 \alias{dsl-distributions}
 \title{Supported distributions}
 \description{
-Subject to change....
+To be described later; this manual page exists so that an error
+message makes more sense only, sorry
 }

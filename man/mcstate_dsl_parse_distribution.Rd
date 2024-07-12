@@ -4,7 +4,7 @@
 \alias{mcstate_dsl_parse_distribution}
 \title{Parse distribution expression}
 \usage{
-mcstate_dsl_parse_distribution(expr, name = "expr")
+mcstate_dsl_parse_distribution(expr, name = NULL)
 }
 \arguments{
 \item{expr}{An expression}
