@@ -103,3 +103,58 @@ test_that("can create a distribution object", {
     d,
     list(name = "Foo", args = c("a", "b"), density = density, sample = sample))
 })
+
+
+test_that("can parse a simple distribution call", {
+  expect_mapequal(
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))),
+    list(success = TRUE,
+         value = list(name = "Normal",
+                      variant = NULL,
+                      args = list(0, 1),
+                      density = dsl_distributions$Normal[[1]]$density,
+                      sample = dsl_distributions$Normal[[1]]$sample,
+                      cpp = list(density = "normal", sample = "normal"))))
+
+  expect_equal(
+    mcstate_dsl_parse_distribution(quote(Normal(mean = 0, sd = 1))),
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+  expect_equal(
+    mcstate_dsl_parse_distribution(quote(Normal(sd = 1, mean = 0))),
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+})
+
+
+test_that("report back on failure to match distribution", {
+  res <- mcstate_dsl_parse_distribution(quote(Norm(0, 1)))
+  expect_false(res$success)
+  expect_length(res$error, 3)
+  expect_equal(res$error[[1]], "Unknown distribution 'Norm'")
+  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
+               fixed = TRUE)
+  expect_match(res$error[[3]], "Did you mean: 'Normal'?",
+               fixed = TRUE)
+})
+
+
+test_that("report back on failure to match distribution without suggestion", {
+  res <- mcstate_dsl_parse_distribution(quote(Banana(0, 1)))
+  expect_false(res$success)
+  expect_length(res$error, 2)
+  expect_equal(res$error[[1]], "Unknown distribution 'Banana'")
+  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
+               fixed = TRUE)
+})
+
+
+test_that("report back on failure to match arguments", {
+  res <- mcstate_dsl_parse_distribution(quote(Normal(0, 1, 2)))
+  expect_false(res$success)
+  expect_length(res$error, 4)
+  expect_match(res$error[[1]], "Invalid call to 'Normal()'",
+               fixed = TRUE)
+  expect_match(res$error[[2]], "Failed to match given arguments: <1>, <2>, <3>",
+               fixed = TRUE)
+  expect_match(res$error[[3]], "Call should match:")
+  expect_match(res$error[[4]], "mean, sd")
+})

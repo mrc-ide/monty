@@ -54,3 +54,95 @@ mcstate_dsl_parse <- function(x, type = NULL) {
   exprs <- dsl_preprocess(x, type)
   dsl_parse(exprs)
 }
+
+
+##' Parse an expression as if it was a call to one of mcstate2's
+##' distribution functions (e.g., `Normal`, `Poisson`).  This will
+##' fill in any defaults, disambiguate where mulitple
+##' parameterisations of the distribution are available, and provide
+##' links through to the C++ API.  This function is designed for use
+##' from other packages that use mcstate2, and is unlikely to be
+##' useful to most users.
+##'
+##' @title Parse distribution expression
+##'
+##' @param expr An expression
+##'
+##' @param name Name for the expression, used in constructing messages
+##'   that you can use in errors.
+##'
+##' @return A list; the contents of this are subject to change.
+##'   However you can (to a degree) rely on the following elements:
+##'
+##' * `name`: The name of the distribution (e.g., `Normal`).  This
+##'   will be the same as the name of the function called in in `expr`
+##'
+##' * `variant`: The name of the distribution variant, if more than
+##'   one is supported.
+##'
+##' * `args`: The arguments that you provided, in position-matched
+##'   order
+##'
+##' * `cpp`: The names of the C++ entrypoint to use.  This is a list
+##'   with elements `density` and `sample` for the log-density and
+##'   sampling functions, and `NULL` where these do not yet exist.
+##'
+##' Currently we also also include:
+##'
+##' * `density`: A function to compute the log-density.  This will
+##'   likely change once we support creation of differentiable models
+##'   because we will want to do something with the arguments
+##'   provided!
+##'
+##' * `sample`: A function to sample from the distribution, given (as
+##'   a first argument) a rng object (see [mcstate_rng])
+##'
+##' @export
+mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
+  ## Here, the user has not provided a call to anything, or a call to
+  ## something that is not recognised as a distribution.  We throw the
+  ## same error in both cases, but with different contextual
+  ## information in order to fix the error.
+  if (!rlang::is_call(expr)) {
+    name <- name %||% deparse(substitute(expr))
+    error < - cli::format_inline("{name} is not a function call")
+    return(list(success = FALSE, error = error))
+  }
+
+  if (!rlang::is_call(expr, names(dsl_distributions))) {
+    distr_name <- as.character(expr[[1]])
+    error <- c(
+      cli::format_inline("Unknown distribution '{distr_name}'"),
+      i = paste("See ?'dsl-distributions' for details on",
+                "supported distributions"))
+    dym <- near_match(distr_name, names(dsl_distributions))
+    if (length(dym) > 0) {
+      error <- c(error, i = cli::format_inline("Did you mean: {squote(dym)}?"))
+    }
+    return(list(success = FALSE, error = error))
+  }
+
+  ## Next, match the arguments to the call, in order to
+  distr_name <- as.character(expr[[1]])
+  args <- as.list(expr[-1])
+  candidates <- dsl_distributions[[distr_name]]
+  match <- match_call(args, lapply(candidates, "[[", "args"))
+  if (!match$success) {
+    error <- c(cli::format_inline("Invalid call to '{distr_name}()'"),
+               match$error)
+    return(list(success = FALSE, error = error))
+  }
+
+  value <- candidates[[match$index]]
+  value$args <- unname(args[match$args])
+  list(success = TRUE,
+       value = value)
+}
+
+
+##' To be described later; this manual page exists so that an error
+##' message makes more sense only, sorry
+##'
+##' @title Supported distributions
+##' @name dsl-distributions
+NULL

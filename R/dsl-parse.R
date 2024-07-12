@@ -33,40 +33,10 @@ dsl_parse_expr_stochastic <- function(expr) {
   }
   rhs <- expr[[3]]
 
-  ## Here, the user has not provided a call to anything, or a call to
-  ## something that is not recognised as a distribution.  We throw the
-  ## same error in both cases, but with different contextual
-  ## information in order to fix the error.
-  if (!rlang::is_call(rhs, names(dsl_distributions))) {
-    if (!rlang::is_call(rhs)) {
-      detail <- c("x" = "rhs is not a function call")
-    } else {
-      detail <- c(i = paste("See ?'dsl-distributions' for details on",
-                            "supported distributions"))
-      distr_name <- as.character(rhs[[1]])
-      dym <- near_match(distr_name, names(dsl_distributions))
-      if (length(dym) > 0) {
-        detail <- c(
-          "i" = paste("Unknown distribution '{distr_name}', did you mean:",
-                      "{squote(dym)}"),
-          detail)
-      }
-    }
-    dsl_parse_error(
-      c("Expected rhs of '~' relationship to be a call to a distribution",
-        detail),
-      expr)
-  }
+  res <- mcstate_dsl_parse_distribution(rhs)
 
-  ## Next, match the arguments to the call, in order to
-  distr_name <- as.character(rhs[[1]])
-  args <- as.list(rhs[-1])
-  candidates <- dsl_distributions[[distr_name]]
-  match <- match_call(args, lapply(candidates, "[[", "args"))
-  if (!match$success) {
-    dsl_parse_error(
-      c("Invalid call to '{distr_name}()'", match$error),
-      expr)
+  if (!res$success) {
+    dsl_parse_error(res$error, expr)
   }
 
   ## This probably requires a little more care in order to know that
@@ -79,8 +49,7 @@ dsl_parse_expr_stochastic <- function(expr) {
   ## too, but that's also easy enough to do elsewhere.
   list(type = "stochastic",
        name = as.character(lhs),
-       distribution = candidates[[match$index]],
-       args = args[match$args],
+       distribution = res$value,
        depends = depends,
        expr = expr)
 }
