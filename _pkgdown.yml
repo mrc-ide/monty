@@ -16,7 +16,7 @@ reference:
       - dsl-distributions
 
   - subtitle: Advanced
-      contents:
+    contents:
       - mcstate_dsl_parse_distribution
 
   - title: Draw samples from a model
