@@ -17,7 +17,7 @@ A list; the contents of this are subject to change.
 However you can (to a degree) rely on the following elements:
 \itemize{
 \item \code{name}: The name of the distribution (e.g., \code{Normal}).  This
-will be the same as the name of the function called in in \code{expr}
+will be the same as the name of the function called in \code{expr}
 \item \code{variant}: The name of the distribution variant, if more than
 one is supported.
 \item \code{args}: The arguments that you provided, in position-matched
@@ -27,7 +27,7 @@ with elements \code{density} and \code{sample} for the log-density and
 sampling functions, and \code{NULL} where these do not yet exist.
 }
 
-Currently we also also include:
+Currently we also include:
 \itemize{
 \item \code{density}: A function to compute the log-density.  This will
 likely change once we support creation of differentiable models
@@ -38,7 +38,7 @@ a first argument) a rng object (see \link{mcstate_rng})
 }
 }
 \description{
-Parse an expression as if it was a call to one of mcstate2's
+Parse an expression as if it were a call to one of mcstate2's
 distribution functions (e.g., \code{Normal}, \code{Poisson}).  This will
 fill in any defaults, disambiguate where mulitple
 parameterisations of the distribution are available, and provide
