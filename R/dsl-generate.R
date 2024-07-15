@@ -77,7 +77,8 @@ dsl_generate_density_stochastic <- function(expr, env, density) {
 
 dsl_generate_sample_stochastic <- function(expr, env) {
   lhs <- bquote(.(env)[[.(expr$name)]])
-  args <- lapply(expr$args, dsl_generate_density_rewrite_lookup, env)
+  args <- lapply(expr$distribution$args, dsl_generate_density_rewrite_lookup,
+                 env)
   rhs <- rlang::call2(expr$distribution$sample, quote(rng), !!!args)
   rlang::call2("<-", lhs, rhs)
 }
