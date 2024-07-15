@@ -14,7 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-`mcstate2` includes a probabilistic programming language DSL that is inspired by stan and Statistical Rethinking.  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in future.
+`mcstate2` includes simple a probabilistic programming language DSL that is inspired by `stan` and Statistical Rethinking.  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in future.  In particular we do not expect the DSL to be useful in writing likelihood functions for comparison to data; we expect that if your model is simple enough for this you would be better off using `stan` or some similarly flexible system.
+
+```{r}
+library(mcstate2)
+```
 
 # Some simple examples
 
@@ -28,7 +32,7 @@ prior <- mcstate_dsl({
 })
 ```
 
-This will define a new [mcstate_model()] object that represents the prior, but with all the bits that we might need depending on how we want to use it:
+This will define a new `mcstate_model()` object that represents the prior, but with all the bits that we might need depending on how we want to use it:
 
 We have model parameters
 
@@ -38,7 +42,7 @@ prior$parameters
 
 These are defined in the order that they appear in your definition (so `alpha` is first and `sigma` is last)
 
-The model domain can be derived
+The model domain is still a work in progress (note that this is not really correct for `sigma` which we should be able to detect is defined on $[0, 50]$)
 
 ```{r}
 prior$domain
@@ -50,7 +54,7 @@ We can draw samples from the model if we provide an [mcstate_rng] object
 
 ```{r}
 rng <- mcstate_rng()
-theta <- prior$sample(rng)
+theta <- prior$direct_sample(rng)
 theta
 ```
 
