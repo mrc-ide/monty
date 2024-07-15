@@ -56,7 +56,7 @@ mcstate_dsl_parse <- function(x, type = NULL) {
 }
 
 
-##' Parse an expression as if it was a call to one of mcstate2's
+##' Parse an expression as if it were a call to one of mcstate2's
 ##' distribution functions (e.g., `Normal`, `Poisson`).  This will
 ##' fill in any defaults, disambiguate where mulitple
 ##' parameterisations of the distribution are available, and provide
@@ -75,7 +75,7 @@ mcstate_dsl_parse <- function(x, type = NULL) {
 ##'   However you can (to a degree) rely on the following elements:
 ##'
 ##' * `name`: The name of the distribution (e.g., `Normal`).  This
-##'   will be the same as the name of the function called in in `expr`
+##'   will be the same as the name of the function called in `expr`
 ##'
 ##' * `variant`: The name of the distribution variant, if more than
 ##'   one is supported.
@@ -87,7 +87,7 @@ mcstate_dsl_parse <- function(x, type = NULL) {
 ##'   with elements `density` and `sample` for the log-density and
 ##'   sampling functions, and `NULL` where these do not yet exist.
 ##'
-##' Currently we also also include:
+##' Currently we also include:
 ##'
 ##' * `density`: A function to compute the log-density.  This will
 ##'   likely change once we support creation of differentiable models
