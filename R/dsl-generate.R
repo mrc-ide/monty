@@ -1,5 +1,5 @@
 dsl_generate <- function(dat) {
-  env <- new.env(parent = asNamespace("mcstate"))
+  env <- new.env(parent = asNamespace("mcstate2"))
   env$packer <- mcstate_packer(dat$parameters)
 
   density <- dsl_generate_density(dat, env)
