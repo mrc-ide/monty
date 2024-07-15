@@ -5,7 +5,7 @@ test_that("Can run high level dsl function", {
 })
 
 
-test_that("can generate model with simple assignement", {
+test_that("can generate model with simple assignment", {
   x <- quote({
     mu <- 5
     a ~ Normal(mu, 1)

@@ -2,6 +2,7 @@
 
 S3method("+",mcstate_model)
 export(mcstate_dsl)
+export(mcstate_dsl_parse_distribution)
 export(mcstate_model)
 export(mcstate_model_combine)
 export(mcstate_model_properties)

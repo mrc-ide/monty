@@ -119,7 +119,7 @@ test_that("require that stochastic relationships assign to a symbol", {
 test_that("require that stochastic relationships use known distributions", {
   expect_error(
     dsl_parse_expr_stochastic(quote(a ~ f(0, 1))),
-    "Expected rhs of '~' relationship to be a call to a distribution",
+    "Unknown distribution 'f'",
     fixed = TRUE)
 })
 
@@ -167,24 +167,24 @@ test_that("Can run high level dsl parse function", {
 test_that("require that rhs to stochastic statement is a call", {
   err <- expect_error(
     mcstate_dsl_parse(a ~ 1),
-    "Expected rhs of '~' relationship to be a call to a distribution")
-  expect_equal(err$body[[1]], "rhs is not a function call")
+    "rhs is not a function call")
 })
 
 
 test_that("require that rhs to stochastic statement is known distribution", {
   err <- expect_error(
     mcstate_dsl_parse(a ~ normal(0, 1)),
-    "Expected rhs of '~' relationship to be a call to a distribution")
-  expect_equal(err$body[[1]],
-               "Unknown distribution 'normal', did you mean: 'Normal'")
+    "Unknown distribution 'normal'")
+  expect_match(conditionMessage(err),
+               "Did you mean: 'Normal'")
 })
+
 
 test_that("sensisible error if no suggestions for distribution found", {
   err <- expect_error(
     mcstate_dsl_parse(a ~ QQQ(0, 1)),
-    "Expected rhs of '~' relationship to be a call to a distribution")
-  expect_no_match(conditionMessage(err), "did you mean")
+    "Unknown distribution 'QQQ'")
+  expect_no_match(conditionMessage(err), "Did you mean:")
 })
 
 
@@ -194,7 +194,7 @@ test_that("report back invalid distribution calls", {
     "Invalid call to 'Normal()'", fixed = TRUE)
   expect_equal(
     err$body,
-    c("x" = "Failed to match given arguments: ., ., .",
+    c("x" = "Failed to match given arguments: <1>, <2>, <3>",
       "i" = "Call should match:",
       "*" = "mean, sd"))
 })

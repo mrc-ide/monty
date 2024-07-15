@@ -53,6 +53,6 @@ dsl_generate_density_assignment <- function(expr) {
 dsl_generate_density_stochastic <- function(expr) {
   lhs <- bquote(.density[[.(expr$name)]])
   rhs <- rlang::call2(expr$distribution$density,
-                      as.name(expr$name), !!!expr$args)
+                      as.name(expr$name), !!!expr$distribution$args)
   rlang::call2("<-", lhs, rhs)
 }

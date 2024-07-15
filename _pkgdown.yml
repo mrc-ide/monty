@@ -10,9 +10,14 @@ reference:
     - mcstate_model_combine
     - mcstate_model_properties
 
-  - subtitle: Domain specific language
+  - title: Domain specific language
     contents:
       - mcstate_dsl
+      - dsl-distributions
+
+  - subtitle: Advanced
+    contents:
+      - mcstate_dsl_parse_distribution
 
   - title: Draw samples from a model
     contents:
