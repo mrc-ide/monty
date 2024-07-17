@@ -7,13 +7,36 @@
 ##'
 ##' @param vcv A variance covariance matrix for the proposal.
 ##'
+##' @param boundaries Control the behaviour of proposals that are
+##'   outside the model domain.  The suported options are:
+##'
+##'   * "reflect" (the default): we reflect proposed parmeters that
+##'     lie outside the domain back into the domain (as many times as
+##'     needed)
+##'
+##'   * "ignore": evaluate the point anyway, even if it lies outside
+##'     the domain.
+##'
+##' The initial point selected will lie within the domain, as this is
+##' enforced by [mcstate_sample].
+##'
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
 ##'
 ##' @export
-mcstate_sampler_random_walk <- function(vcv = NULL) {
+mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
+
+  ## We'll also support rejection here but this requires a little work
+  ## in the interface for the multiple-parameter set runner, so that
+  ## we can say "only run this subset please".  We need this for the
+  ## PT algorithms too, in order to not evaluate likelihood for the
+  ## sampling directly from the prior, and this is its own piece of
+  ## work really, which I might start in dust, and the we'll formalise
+  ## as part of the expected model interface.
+  internal$boundaries <-
+    match_value(boundaries, c("reflect", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
     n_pars <- length(model$parameters)
@@ -24,7 +47,8 @@ mcstate_sampler_random_walk <- function(vcv = NULL) {
     }
 
     vcv <- sampler_validate_vcv(vcv, pars)
-    internal$proposal <- make_rmvnorm(vcv)
+    internal$proposal <-
+      make_random_walk_proposal(vcv, model$domain, boundaries)
     initialise_state(pars, model, observer, rng)
   }
 
@@ -55,4 +79,54 @@ mcstate_sampler_random_walk <- function(vcv = NULL) {
                   finalise,
                   get_internal_state,
                   set_internal_state)
+}
+
+
+make_random_walk_proposal <- function(vcv, domain, boundaries) {
+  mvn <- make_rmvnorm(vcv)
+  if (boundaries == "ignore" || !any(is.finite(domain))) {
+    return(mvn)
+  }
+
+  x_min <- domain[, 1]
+  x_max <- domain[, 2]
+  function(x, rng) {
+    reflect_proposal(mvn(x, rng), x_min, x_max)
+  }
+}
+
+
+## create function to reflect proposal boundaries at pars_min and pars_max
+## this ensures the proposal is symetrical and we can simplify the MH step
+reflect_proposal <- function(x, x_min, x_max) {
+  i <- x < x_min | x > x_max
+  if (any(i)) {
+    i_both <- i & is.finite(x_min) & is.finite(x_max)
+    i_min <- i & is.finite(x_min) & !is.finite(x_max)
+    i_max <- i & !is.finite(x_min) & is.finite(x_max)
+    if (is.matrix(x)) {
+      ## This will be a bit different if the model supports array
+      ## specifications of the domain, which we might want to support
+      ## later I guess. Replicating these helps tidy up the
+      ## bookkeeping, and also means we don't have to think about this
+      ## very much.
+      x_min <- array(x_min, dim(x))
+      x_max <- array(x_max, dim(x))
+    }
+    x[i_both] <- reflect_proposal_both(x[i_both], x_min[i_both], x_max[i_both])
+    x[i_min] <- reflect_proposal_one(x[i_min], x_min[i_min])
+    x[i_max] <- reflect_proposal_one(x[i_max], x_max[i_max])
+  }
+  x
+}
+
+
+reflect_proposal_both <- function(x, x_min, x_max) {
+  x_r <- x_max - x_min
+  abs((x + x_r - x_min) %% (2 * x_r) - x_r) + x_min
+}
+
+
+reflect_proposal_one <- function(x, x_bound) {
+  2 * x_bound - x
 }

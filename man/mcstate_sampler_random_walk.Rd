@@ -4,10 +4,23 @@
 \alias{mcstate_sampler_random_walk}
 \title{Random Walk Sampler}
 \usage{
-mcstate_sampler_random_walk(vcv = NULL)
+mcstate_sampler_random_walk(vcv = NULL, boundaries = "reflect")
 }
 \arguments{
 \item{vcv}{A variance covariance matrix for the proposal.}
+
+\item{boundaries}{Control the behaviour of proposals that are
+outside the model domain.  The suported options are:
+\itemize{
+\item "reflect" (the default): we reflect proposed parmeters that
+lie outside the domain back into the domain (as many times as
+needed)
+\item "ignore": evaluate the point anyway, even if it lies outside
+the domain.
+}
+
+The initial point selected will lie within the domain, as this is
+enforced by \link{mcstate_sample}.}
 }
 \value{
 A \code{mcstate_sampler} object, which can be used with
