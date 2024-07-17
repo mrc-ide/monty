@@ -74,8 +74,9 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   could be anything really.  Models can return `-Inf` if things
 ##'   are impossible, and we'll try and cope gracefully with that
 ##'   wherever possible.  If the property `allow_multiple_parameters`
-##'   is `TRUE`, then this function must be able to handle a matrix
-##'   argument parameters and return a vector valued density.
+##'   is `TRUE`, then this function must be able to handle the 
+##'   argument parameter being a matrix,  and return a vector 
+##'   of densities.
 ##'
 ##' * `parameters`: A character vector of parameter names.  This
 ##'   vector is the source of truth for the length of the parameter
