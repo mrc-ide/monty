@@ -37,7 +37,7 @@ mcstate_domain_expand <- function(domain, packer) {
   }
   if (ncol(domain) != 2) {
     cli::cli_abort(
-      "Expected 'domain' to have 2 columns but it had {ncol(domain)}",
+      "Expected 'domain' to have 2 columns, but it had {ncol(domain)}",
       arg = "domain")
   }
   if (nrow(domain) == 0) {
