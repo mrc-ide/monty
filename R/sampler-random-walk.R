@@ -8,9 +8,9 @@
 ##' @param vcv A variance covariance matrix for the proposal.
 ##'
 ##' @param boundaries Control the behaviour of proposals that are
-##'   outside the model domain.  The suported options are:
+##'   outside the model domain.  The supported options are:
 ##'
-##'   * "reflect" (the default): we reflect proposed parmeters that
+##'   * "reflect" (the default): we reflect proposed parameters that
 ##'     lie outside the domain back into the domain (as many times as
 ##'     needed)
 ##'
@@ -33,7 +33,7 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   ## we can say "only run this subset please".  We need this for the
   ## PT algorithms too, in order to not evaluate likelihood for the
   ## sampling directly from the prior, and this is its own piece of
-  ## work really, which I might start in dust, and the we'll formalise
+  ## work really, which I might start in dust, and then we'll formalise
   ## as part of the expected model interface.
   internal$boundaries <-
     match_value(boundaries, c("reflect", "ignore"))
@@ -97,7 +97,7 @@ make_random_walk_proposal <- function(vcv, domain, boundaries) {
 
 
 ## create function to reflect proposal boundaries at pars_min and pars_max
-## this ensures the proposal is symetrical and we can simplify the MH step
+## this ensures the proposal is symmetrical and we can simplify the MH step
 reflect_proposal <- function(x, x_min, x_max) {
   i <- x < x_min | x > x_max
   if (any(i)) {
