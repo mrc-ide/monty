@@ -31,13 +31,6 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
 
-  ## We'll also support rejection here but this requires a little work
-  ## in the interface for the multiple-parameter set runner, so that
-  ## we can say "only run this subset please".  We need this for the
-  ## PT algorithms too, in order to not evaluate likelihood for the
-  ## sampling directly from the prior, and this is its own piece of
-  ## work really, which I might start in dust, and then we'll formalise
-  ## as part of the expected model interface.
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
