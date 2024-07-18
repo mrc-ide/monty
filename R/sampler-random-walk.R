@@ -14,6 +14,9 @@
 ##'     lie outside the domain back into the domain (as many times as
 ##'     needed)
 ##'
+##'   * "reject": we do not evaluate the density function, and return
+##'     `-Inf` for its density instead.
+##'
 ##'   * "ignore": evaluate the point anyway, even if it lies outside
 ##'     the domain.
 ##'
@@ -35,8 +38,7 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   ## sampling directly from the prior, and this is its own piece of
   ## work really, which I might start in dust, and then we'll formalise
   ## as part of the expected model interface.
-  internal$boundaries <-
-    match_value(boundaries, c("reflect", "ignore"))
+  boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
     n_pars <- length(model$parameters)
@@ -54,7 +56,16 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
 
   step <- function(state, model, observer, rng) {
     pars_next <- internal$proposal(state$pars, rng)
-    density_next <- model$density(pars_next)
+    reject_some <- boundaries == "reject" &&
+      !all(i <- is_parameters_in_domain(pars_next, model$domain))
+    if (reject_some) {
+      density_next <- rep(-Inf, length(state$density))
+      if (any(i)) {
+        density_next[i] <- model$density(pars_next[, i, drop = FALSE])
+      }
+    } else {
+      density_next <- model$density(pars_next)
+    }
     accept <- density_next - state$density > log(rng$random_real(1))
     state <- update_state(state, pars_next, density_next, accept,
                           model, observer, rng)
@@ -84,7 +95,7 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
 
 make_random_walk_proposal <- function(vcv, domain, boundaries) {
   mvn <- make_rmvnorm(vcv)
-  if (boundaries == "ignore" || !any(is.finite(domain))) {
+  if (boundaries != "reflect" || !any(is.finite(domain))) {
     return(mvn)
   }
 
@@ -129,4 +140,16 @@ reflect_proposal_both <- function(x, x_min, x_max) {
 
 reflect_proposal_one <- function(x, x_bound) {
   2 * x_bound - x
+}
+
+
+is_parameters_in_domain <- function(x, domain) {
+  x_min <- domain[, 1]
+  x_max <- domain[, 2]
+  i <- x < x_min | x > x_max
+  if (any(i)) {
+    if (is.matrix(x)) apply(x, 2, any) else FALSE
+  } else {
+    if (is.matrix(x)) rep(TRUE, ncol(x)) else TRUE
+  }
 }

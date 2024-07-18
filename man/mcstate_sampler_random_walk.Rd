@@ -10,11 +10,13 @@ mcstate_sampler_random_walk(vcv = NULL, boundaries = "reflect")
 \item{vcv}{A variance covariance matrix for the proposal.}
 
 \item{boundaries}{Control the behaviour of proposals that are
-outside the model domain.  The suported options are:
+outside the model domain.  The supported options are:
 \itemize{
-\item "reflect" (the default): we reflect proposed parmeters that
+\item "reflect" (the default): we reflect proposed parameters that
 lie outside the domain back into the domain (as many times as
 needed)
+\item "reject": we do not evaluate the density function, and return
+\code{-Inf} for its density instead.
 \item "ignore": evaluate the point anyway, even if it lies outside
 the domain.
 }

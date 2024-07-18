@@ -256,6 +256,46 @@ test_that("can run sampler with reflecting boundaries", {
 
   s1 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
   s2 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reflect")
+  s3 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
+
+  expect_error(mcstate_sample(model, s1, 100), "parameter out of bounds")
+
+  res2 <- mcstate_sample(model, s2, 100)
+  r2 <- range(drop(res2$pars))
+  expect_gt(diff(r2), 0.75)
+  expect_gt(r2[[1]], -1)
+  expect_lt(r2[[2]], 1)
+
+  res3 <- mcstate_sample(model, s3, 100)
+  r3 <- range(drop(res3$pars))
+  expect_gt(diff(r3), 0.75)
+  expect_gt(r3[[1]], -1)
+  expect_lt(r3[[2]], 1)
+
+  ## Different with rejection than reflection, and more step
+  ## rejections when rejection used.
+  expect_true(!all(res2$pars == res3$pars))
+  expect_gt(sum(diff(drop(res3$pars)) == 0),
+            sum(diff(drop(res2$pars)) == 0))
+})
+
+
+test_that("can run sampler with rejecting boundaries", {
+  model <- mcstate_model(
+    list(parameters = "x",
+         domain = cbind(-1, 1),
+         density = function(x) {
+           if (abs(x) > 1) {
+             stop("parameter out of bounds")
+           }
+           0.5
+         },
+         direct_sample = function(rng) {
+           rng$uniform(1, -1, 1)
+         }))
+
+  s1 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
+  s2 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
 
   expect_error(mcstate_sample(model, s1, 100), "parameter out of bounds")
   res <- mcstate_sample(model, s2, 100)
