@@ -91,6 +91,21 @@
 ##'   better, but while the chains find the location and scale of the posterior
 ##'   mode it might be useful to explore with it switched off.
 ##'
+##' @param boundaries Control the behaviour of proposals that are
+##'   outside the model domain.  The supported options are:
+##'
+##'   * "reflect" (the default): we reflect proposed parameters that
+##'     lie outside the domain back into the domain (as many times as
+##'     needed)
+##'
+##'   * "reject": we do not evaluate the density function, and return
+##'     `-Inf` for its density instead.
+##'
+##'   * "ignore": evaluate the point anyway, even if it lies outside
+##'     the domain.
+##'
+##' The initial point selected will lie within the domain, as this is
+##' enforced by [mcstate_sample].
 ##'
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
@@ -107,11 +122,14 @@ mcstate_sampler_adaptive <- function(initial_vcv,
                                      forget_rate = 0.2,
                                      forget_end = Inf,
                                      adapt_end = Inf,
-                                     pre_diminish = 0) {
+                                     pre_diminish = 0,
+                                     boundaries = "reflect") {
   ## This sampler is stateful; we will be updating our estimate of the
   ## mean and vcv of the target distribution, along with the our
   ## scaling factor, weight and autocorrelations.
   internal <- new.env()
+  
+  boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
     require_deterministic(model,
@@ -148,10 +166,22 @@ mcstate_sampler_adaptive <- function(initial_vcv,
       calc_proposal_vcv(internal$scaling, internal$vcv, internal$weight,
                         initial_vcv, initial_vcv_weight)
 
-    pars_next <- rmvnorm(state$pars, proposal_vcv, rng)
+    proposal <- 
+      make_random_walk_proposal(proposal_vcv, model$domain, boundaries)
+    
+    pars_next <- proposal(state$pars, rng)
 
     u <- rng$random_real(1)
-    density_next <- model$density(pars_next)
+    reject_some <- boundaries == "reject" &&
+      !all(i <- is_parameters_in_domain(pars_next, model$domain))
+    if (reject_some) {
+      density_next <- rep(-Inf, length(state$density))
+      if (any(i)) {
+        density_next[i] <- model$density(pars_next[, i, drop = FALSE])
+      }
+    } else {
+      density_next <- model$density(pars_next)
+    }
 
     accept_prob <- min(1, exp(density_next - state$density))
 
