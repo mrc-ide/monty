@@ -42,13 +42,11 @@ prior$parameters
 
 These are defined in the order that they appear in your definition (so `alpha` is first and `sigma` is last)
 
-The model domain is still a work in progress (note that this is not really correct for `sigma` which we should be able to detect is defined on $[0, 50]$)
+We can compute the domain for your model:
 
 ```{r}
 prior$domain
 ```
-
-I'm not completely sure that we can derive this for all models (most obviously for a model where the bounds of a uniform distribution vary with another parameter).
 
 We can draw samples from the model if we provide an [mcstate_rng] object
 
@@ -62,12 +60,6 @@ We can compute the (log) density at a point in parameter space
 
 ```{r}
 prior$density(theta)
-```
-
-We can also compute the gradient of the log density with respect to the parameters
-
-```{r}
-prior$gradient(theta)
 ```
 
 The computed properties for the model are:
