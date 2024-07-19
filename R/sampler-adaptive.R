@@ -134,8 +134,13 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     internal$autocorrelation <- array(0, dim(initial_vcv))
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
                                internal$weight)
-
-    internal$scaling <- rep(initial_scaling, dim(pars)[2])
+    
+    if (internal$multiple_parameters) {
+      internal$scaling <- rep(initial_scaling, dim(pars)[2])
+    } else {
+      internal$scaling <- initial_scaling
+    }
+    
     internal$scaling_increment <- scaling_increment %||%
       calc_scaling_increment(n_pars, acceptance_target,
                              log_scaling_update)
@@ -170,7 +175,11 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     if (is.null(internal$history_pars)) {
       internal$history_pars <- array(state$pars, c(1, dim2(state$pars)))
     } else {
-      internal$history_pars <- abind1(internal$history_pars, state$pars)
+      if (internal$multiple_parameters) {
+        internal$history_pars <- abind1(internal$history_pars, state$pars)
+      } else {
+        internal$history_pars <- rbind(internal$history_pars, state$pars)
+      }
     }
     
     if (internal$iteration > adapt_end) {
