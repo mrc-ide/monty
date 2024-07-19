@@ -27,6 +27,7 @@ Suggests:
     decor,
     knitr,
     dust,
+    mockery,
     mvtnorm,
     numDeriv,
     pkgload,
