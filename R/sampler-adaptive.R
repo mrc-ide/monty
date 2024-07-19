@@ -111,32 +111,38 @@ mcstate_sampler_adaptive <- function(initial_vcv,
   ## This sampler is stateful; we will be updating our estimate of the
   ## mean and vcv of the target distribution, along with the our
   ## scaling factor, weight and autocorrelations.
+  check_vcv(initial_vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
 
   initialise <- function(pars, model, observer, rng) {
     require_deterministic(model,
                           "Can't use adaptive sampler with stochastic models")
-    if (is.matrix(pars)) {
-      cli::cli_abort(
-        "Can't use 'mcstate_sampler_adaptive' with simultaneous chains")
+    
+    internal$multiple_parameters <- length(dim2(pars)) > 1
+    if (internal$multiple_parameters) {
+      ## this is enforced elsewhere
+      stopifnot(model$properties$allow_multiple_parameters)
     }
+    
+    initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
+    
     internal$weight <- 0
     internal$iteration <- 0
 
     internal$mean <- unname(pars)
     n_pars <- length(model$parameters)
-    internal$autocorrelation <- matrix(0, n_pars, n_pars)
+    internal$autocorrelation <- array(0, dim(initial_vcv))
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
                                internal$weight)
 
-    internal$scaling <- initial_scaling
+    internal$scaling <- rep(initial_scaling, dim(pars)[2])
     internal$scaling_increment <- scaling_increment %||%
       calc_scaling_increment(n_pars, acceptance_target,
                              log_scaling_update)
     internal$scaling_weight <- initial_scaling_weight %||%
       5 / (acceptance_target * (1 - acceptance_target))
 
-    internal$history_pars <- numeric()
+    internal$history_pars <- NULL
     internal$included <- integer()
     internal$scaling_history <- internal$scaling
 
@@ -148,19 +154,25 @@ mcstate_sampler_adaptive <- function(initial_vcv,
       calc_proposal_vcv(internal$scaling, internal$vcv, internal$weight,
                         initial_vcv, initial_vcv_weight)
 
-    pars_next <- rmvnorm(state$pars, proposal_vcv, rng)
+    proposal <- make_rmvnorm(proposal_vcv)
+    pars_next <- proposal(state$pars, rng)
 
     u <- rng$random_real(1)
     density_next <- model$density(pars_next)
 
-    accept_prob <- min(1, exp(density_next - state$density))
+    accept_prob <- pmin(1, exp(density_next - state$density))
 
     accept <- u < accept_prob
     state <- update_state(state, pars_next, density_next, accept,
                           model, observer, rng)
 
     internal$iteration <- internal$iteration + 1
-    internal$history_pars <- rbind(internal$history_pars, state$pars)
+    if (is.null(internal$history_pars)) {
+      internal$history_pars <- array(state$pars, c(1, dim2(state$pars)))
+    } else {
+      internal$history_pars <- abind1(internal$history_pars, state$pars)
+    }
+    
     if (internal$iteration > adapt_end) {
       internal$scaling_history <- c(internal$scaling_history, internal$scaling)
       return(state)
@@ -173,7 +185,12 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     is_replacement <-
       check_replacement(internal$iteration, forget_rate, forget_end)
     if (is_replacement) {
-      pars_remove <- internal$history_pars[internal$included[1L], ]
+      if (length(dim(internal$history_pars)) == 2) {
+        pars_remove <- internal$history_pars[internal$included[1L], ]
+      } else {
+        pars_remove <- internal$history_pars[internal$included[1L], , ]
+        pars_remove <- array(pars_remove, dim(state$pars))
+      }
       internal$included <- c(internal$included[-1L], internal$iteration)
     } else {
       pars_remove <- NULL
@@ -236,7 +253,12 @@ calc_scaling_increment <- function(n_pars, acceptance_target,
 
 
 qp <- function(x) {
-  outer(x, x)
+  if (length(dim(x)) > 1) {
+    vapply(seq_len(ncol(x)), function (i) qp(x[, i]),
+           array(0, c(nrow(x), nrow(x))))
+  } else {
+    outer(x, x)  
+  }
 }
 
 
@@ -248,7 +270,16 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
     ((weight - 1) * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
     (weight + initial_vcv_weight + n_pars + 1)
 
-  2.38^2 / n_pars * scaling^2 * weighted_vcv
+  if (length(scaling) == 1) {
+    proposal_vcv <- 2.38^2 / n_pars * scaling^2 * weighted_vcv  
+  } else {
+    proposal_vcv <- 2.38^2 / n_pars * 
+      vapply(seq_along(scaling),
+             function (i) scaling[i]^2 * weighted_vcv[, , i],
+             array(0, c(n_pars, n_pars)))
+    proposal_vcv <- array(proposal_vcv, c(n_pars, n_pars, length(scaling)))
+  }
+  proposal_vcv
 }
 
 
@@ -268,9 +299,9 @@ update_scaling <- function(scaling, scaling_weight, accept_prob,
     sqrt(scaling_weight)
 
   if (log_scaling_update) {
-    max(min_scaling, scaling * exp(scaling_change))
+    pmax(min_scaling, scaling * exp(scaling_change))
   } else {
-    max(min_scaling, scaling + scaling_change)
+    pmax(min_scaling, scaling + scaling_change)
   }
 
 }
