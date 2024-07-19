@@ -140,10 +140,10 @@ reflect_proposal_one <- function(x, x_bound) {
 is_parameters_in_domain <- function(x, domain) {
   x_min <- domain[, 1]
   x_max <- domain[, 2]
-  i <- x < x_min | x > x_max
-  if (any(i)) {
-    if (is.matrix(x)) apply(x, 2, any) else FALSE
-  } else {
+  i <- x > x_min & x < x_max
+  if (all(i)) {
     if (is.matrix(x)) rep(TRUE, ncol(x)) else TRUE
+  } else {
+    if (is.matrix(x)) apply(i, 2, all) else FALSE
   }
 }

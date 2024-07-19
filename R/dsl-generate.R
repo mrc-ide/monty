@@ -32,13 +32,6 @@ dsl_generate_direct_sample <- function(dat, env) {
 }
 
 
-dsl_generate_density_unpack <- function(parameters) {
-  lapply(seq_along(parameters), function(i) {
-    call("<-", as.name(parameters[[i]]), bquote(.x[.(i)]))
-  })
-}
-
-
 dsl_generate_density_expr <- function(expr, env, density) {
   switch(expr$type,
          assignment = dsl_generate_assignment(expr, env),
