@@ -124,14 +124,14 @@ mcstate_sampler_adaptive <- function(initial_vcv,
       stopifnot(model$properties$allow_multiple_parameters)
     }
     
-    initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
+    internal$initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
     
     internal$weight <- 0
     internal$iteration <- 0
 
     internal$mean <- unname(pars)
     n_pars <- length(model$parameters)
-    internal$autocorrelation <- array(0, dim(initial_vcv))
+    internal$autocorrelation <- array(0, dim(internal$initial_vcv))
     internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
                                internal$weight)
     
@@ -157,7 +157,7 @@ mcstate_sampler_adaptive <- function(initial_vcv,
   step <- function(state, model, observer, rng) {
     proposal_vcv <-
       calc_proposal_vcv(internal$scaling, internal$vcv, internal$weight,
-                        initial_vcv, initial_vcv_weight)
+                        internal$initial_vcv, initial_vcv_weight)
 
     proposal <- make_rmvnorm(proposal_vcv)
     pars_next <- proposal(state$pars, rng)

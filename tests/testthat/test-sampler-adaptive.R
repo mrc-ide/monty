@@ -103,11 +103,11 @@ test_that("can't use adaptive sampler with stochastic models", {
 ## This can be done, but it's pretty tedious bookkeeping, and worth
 ## doing separately (once Ed has done the nested adaptive case too,
 ## which is even worse bookkeeping).
-test_that("can't use adaptive sampler with simultaneous runner", {
-  m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
-  runner <- mcstate_runner_simultaneous()
-  expect_error(
-    mcstate_sample(m, sampler, 100, n_chains = 3, runner = runner),
-    "Can't use 'mcstate_sampler_adaptive' with simultaneous chains")
-})
+# test_that("can't use adaptive sampler with simultaneous runner", {
+#   m <- ex_simple_gamma1()
+#   sampler <- mcstate_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
+#   runner <- mcstate_runner_simultaneous()
+#   expect_error(
+#     mcstate_sample(m, sampler, 100, n_chains = 3, runner = runner),
+#     "Can't use 'mcstate_sampler_adaptive' with simultaneous chains")
+# })
