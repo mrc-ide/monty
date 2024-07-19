@@ -304,3 +304,29 @@ test_that("can run sampler with rejecting boundaries", {
   expect_gt(r[[1]], -1)
   expect_lt(r[[2]], 1)
 })
+
+
+test_that("can run sampler with rejecting boundaries simultaneously", {
+  m <- mcstate_model(
+    list(parameters = "x",
+         domain = cbind(-1, 1),
+         density = function(x) {
+           ifelse(abs(x) > 1, NA_real_, log(0.5))
+         },
+         direct_sample = function(rng) {
+           rng$uniform(1, -1, 1)
+         }),
+    mcstate_model_properties(allow_multiple_parameters = TRUE))
+
+  s <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
+  runner <- mcstate_runner_simultaneous()
+
+  n_steps <- 30
+
+  set.seed(1)
+  res <- mcstate_sample(m, s, n_steps, n_chains = 4, runner = runner)
+  set.seed(1)
+  cmp <- mcstate_sample(m, s, n_steps, n_chains = 4)
+
+  expect_equal(res, cmp)
+})
