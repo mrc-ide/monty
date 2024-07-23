@@ -183,3 +183,46 @@ test_that("can combine gradients where parameters do not agree", {
     ab$gradient(c(2, 3, 4)),
     c(sqrt(2) + log(2), sqrt(3), log(4)))
 })
+
+
+test_that("can combine a stochastic and deterministic model", {
+  ll <- ex_dust_sir_likelihood()
+  prior <- mcstate_dsl({
+    beta ~ Gamma(shape = 1, rate = 1 / 0.5)
+    gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
+  })
+  post <- ll + prior
+  expect_true(post$properties$is_stochastic)
+
+  expect_identical(post$rng_state$get(), ll$rng_state$get())
+})
+
+
+test_that("can't disable stochastic model on combination", {
+  ll <- ex_dust_sir_likelihood()
+  prior <- mcstate_dsl({
+    beta ~ Gamma(shape = 1, rate = 1 / 0.5)
+    gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
+  })
+  properties <- mcstate_model_properties(is_stochastic = FALSE)
+  expect_error(
+    mcstate_model_combine(ll, prior, properties),
+    "Refusing to create non-stochastic model from stochastic components")
+})
+
+
+test_that("can't create model out of two stochastic halves", {
+  ll <- ex_dust_sir_likelihood()
+  expect_error(
+    ll + ll,
+    "Can't combine two stochastic models")
+})
+
+
+test_that("Can't force creation of stochastic model from deterministic", {
+  a <- mcstate_model(list(parameters = "x",
+                          density = function(x) dnorm(x, log = TRUE)))
+  expect_error(
+    mcstate_model_combine(a, a, mcstate_model_properties(is_stochastic = TRUE)),
+    "Can't create stochastic support functions for these models")
+})
