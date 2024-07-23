@@ -41,6 +41,24 @@ distr_exponential_mean <- distribution(
   sample = function(rng, mean) rng$exponential(1, 1 / mean),
   cpp = list(density = NULL, sample = NULL))
 
+distr_gamma_rate <- distribution(
+  name = "Gamma",
+  variant = "rate",
+  density = function(x, shape, rate) dgamma(x, shape, rate = rate, log = TRUE),
+  domain = c(0, Inf),
+  sample = function(rng, shape, rate) rng$gamma(1, shape, 1 / rate),
+  cpp = list(density = NULL, sample = NULL))
+
+distr_gamma_scale <- distribution(
+  name = "Gamma",
+  variant = "rate",
+  density = function(x, shape, scale) {
+    dgamma(x, shape, scale = scale, log = TRUE)
+  },
+  domain = c(0, Inf),
+  sample = function(rng, shape, scale) rng$gamma(1, shape, scale),
+  cpp = list(density = NULL, sample = NULL))
+
 distr_normal <- distribution(
   name = "Normal",
   density = function(x, mean, sd) dnorm(x, mean, sd, log = TRUE),
@@ -69,6 +87,8 @@ dsl_distributions <- local({
     distr_binomial,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,
+    distr_gamma_rate,
+    distr_gamma_scale,
     distr_normal,
     distr_poisson,
     distr_uniform)
