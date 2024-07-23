@@ -167,15 +167,3 @@ duplicate_values <- function(x) {
 collapseq <- function(x) {
   paste(squote(x), collapse = ", ")
 }
-
-
-abind1 <- function(a, b) {
-  na <- dim(a)[1]
-  nb <- dim(b)[1]
-  nab <- dim(a)[2:3]
-  ret <- array(NA_real_, c(na + nb, nab))
-  ret[seq_len(na), , ] <- a
-  ret[seq_len(nb) + na, , ] <- b
-  rownames(ret) <- c(rownames(a), rownames(b))
-  ret
-}
