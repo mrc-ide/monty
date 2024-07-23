@@ -57,6 +57,8 @@ take that function (this is the case for a prior model when
 combined with a likelihood).  Other cases will be errors, which
 can be avoided by setting \code{has_direct_gradient = FALSE} in
 \code{properties}.
+\item \code{is_stochastic}: a model is stochastic if \emph{either} component is
+stochastic.
 }
 
 The properties of the model will be combined as above, reflecting
