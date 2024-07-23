@@ -343,7 +343,7 @@ calc_scaling_increment <- function(n_pars, acceptance_target,
                                    log_scaling_update) {
   if (log_scaling_update) {
     A <- -stats::qnorm(acceptance_target / 2)
-    
+
     scaling_increment <-
       (1 - 1 / n_pars) * (sqrt(2 * pi) * exp(A^2 / 2)) / (2 * A) +
       1 / (n_pars * acceptance_target * (1 - acceptance_target))
@@ -392,7 +392,7 @@ update_scaling <- function(scaling, scaling_weight, accept_prob,
   } else {
     max(min_scaling, scaling + scaling_change)
   }
-  
+
 }
 
 
