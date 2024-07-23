@@ -117,47 +117,75 @@ mcstate_sampler_adaptive <- function(initial_vcv,
   initialise <- function(pars, model, observer, rng) {
     require_deterministic(model,
                           "Can't use adaptive sampler with stochastic models")
-    
+
     internal$multiple_parameters <- length(dim2(pars)) > 1
     if (internal$multiple_parameters) {
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
     
-    internal$initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
-    
-    internal$weight <- 0
-    internal$iteration <- 0
-
-    internal$mean <- unname(pars)
-    n_pars <- length(model$parameters)
-    internal$autocorrelation <- array(0, dim(internal$initial_vcv))
-    internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
-                               internal$weight)
+    initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
     
     if (internal$multiple_parameters) {
-      internal$scaling <- rep(initial_scaling, dim(pars)[2])
+      d <- dim(initial_vcv)
+      internal$adaptive <- 
+        lapply(seq_len(d[3]),
+               function(i) initialise_adaptive(
+                 pars[, i],
+                 array(initial_vcv[, , i], d[c(1, 2)]),
+                 initial_vcv_weight,
+                 initial_scaling,
+                 initial_scaling_weight,
+                 min_scaling,
+                 scaling_increment,
+                 log_scaling_update,
+                 acceptance_target,
+                 forget_rate,
+                 forget_end,
+                 adapt_end,
+                 pre_diminish
+               ))
     } else {
-      internal$scaling <- initial_scaling
+      internal$adaptive <- 
+        initialise_adaptive(pars,
+                            initial_vcv,
+                            initial_vcv_weight,
+                            initial_scaling,
+                            initial_scaling_weight,
+                            min_scaling,
+                            scaling_increment,
+                            log_scaling_update,
+                            acceptance_target,
+                            forget_rate,
+                            forget_end,
+                            adapt_end,
+                            pre_diminish)
     }
-    
-    internal$scaling_increment <- scaling_increment %||%
-      calc_scaling_increment(n_pars, acceptance_target,
-                             log_scaling_update)
-    internal$scaling_weight <- initial_scaling_weight %||%
-      5 / (acceptance_target * (1 - acceptance_target))
-
-    internal$history_pars <- NULL
-    internal$included <- integer()
-    internal$scaling_history <- internal$scaling
 
     initialise_state(pars, model, observer, rng)
   }
 
   step <- function(state, model, observer, rng) {
-    proposal_vcv <-
-      calc_proposal_vcv(internal$scaling, internal$vcv, internal$weight,
-                        internal$initial_vcv, initial_vcv_weight)
+    if (internal$multiple_parameters) {
+      d <- dim(state$pars)
+      proposal_vcv <- 
+        vapply(seq_len(d[2]),
+               function (i) 
+                 calc_proposal_vcv(internal$adaptive[[i]]$scaling, 
+                                   internal$adaptive[[i]]$vcv,
+                                   internal$adaptive[[i]]$weight, 
+                                   internal$adaptive[[i]]$initial_vcv,
+                                   internal$adaptive[[i]]$initial_vcv_weight),
+               array(0, c(d[1], d[1])))
+      proposal_vcv <- array(proposal_vcv, c(d[1], d[1], d[2]))
+    } else {
+      proposal_vcv <-
+        calc_proposal_vcv(internal$adaptive$scaling,
+                          internal$adaptive$vcv,
+                          internal$adaptive$weight, 
+                          internal$adaptive$initial_vcv,
+                          internal$adaptive$initial_vcv_weight)
+    }
 
     proposal <- make_rmvnorm(proposal_vcv)
     pars_next <- proposal(state$pars, rng)
@@ -171,61 +199,33 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     state <- update_state(state, pars_next, density_next, accept,
                           model, observer, rng)
 
-    internal$iteration <- internal$iteration + 1
-    if (is.null(internal$history_pars)) {
-      internal$history_pars <- array(state$pars, c(1, dim2(state$pars)))
+    if (internal$multiple_parameters) {
+      internal$adaptive <- 
+        lapply(seq_len(dim(state$pars)[2]),
+               function (i) update_adaptive(internal$adaptive[[i]],
+                                            state$pars[, i],
+                                            accept_prob[i]))
     } else {
-      if (internal$multiple_parameters) {
-        internal$history_pars <- abind1(internal$history_pars, state$pars)
-      } else {
-        internal$history_pars <- rbind(internal$history_pars, state$pars)
-      }
+      internal$adaptive <-
+        update_adaptive(internal$adaptive, state$pars, accept_prob)
     }
     
-    if (internal$iteration > adapt_end) {
-      internal$scaling_history <- c(internal$scaling_history, internal$scaling)
-      return(state)
-    }
-
-    if (internal$iteration > pre_diminish) {
-      internal$scaling_weight <- internal$scaling_weight + 1
-    }
-
-    is_replacement <-
-      check_replacement(internal$iteration, forget_rate, forget_end)
-    if (is_replacement) {
-      if (length(dim(internal$history_pars)) == 2) {
-        pars_remove <- internal$history_pars[internal$included[1L], ]
-      } else {
-        pars_remove <- internal$history_pars[internal$included[1L], , ]
-        pars_remove <- array(pars_remove, dim(state$pars))
-      }
-      internal$included <- c(internal$included[-1L], internal$iteration)
-    } else {
-      pars_remove <- NULL
-      internal$included <- c(internal$included, internal$iteration)
-      internal$weight <- internal$weight + 1
-    }
-
-    internal$scaling <-
-      update_scaling(internal$scaling, internal$scaling_weight, accept_prob,
-                     internal$scaling_increment, min_scaling, acceptance_target,
-                     log_scaling_update)
-    internal$scaling_history <- c(internal$scaling_history, internal$scaling)
-    internal$autocorrelation <- update_autocorrelation(
-      state$pars, internal$weight, internal$autocorrelation, pars_remove)
-    internal$mean <- update_mean(state$pars, internal$weight, internal$mean,
-                                 pars_remove)
-    internal$vcv <- update_vcv(internal$mean, internal$autocorrelation,
-                               internal$weight)
-
     state
   }
 
   finalise <- function(state, model, rng) {
-    out <- as.list(internal)
-    out[c("autocorrelation", "mean", "vcv", "weight", "included",
-          "scaling_history", "scaling_weight", "scaling_increment")]
+    out <- internal$adaptive
+    
+    keep_adaptive <- c("autocorrelation", "mean", "vcv", "weight", "included",
+                       "scaling_history", "scaling_weight", "scaling_increment")
+    
+    if (internal$multiple_parameters) {
+      out <- lapply(out, function(x) x[keep_adaptive])
+    } else {
+      out <- out[keep_adaptive]
+    }
+    
+    out
   }
 
   get_internal_state <- function() {
@@ -245,50 +245,130 @@ mcstate_sampler_adaptive <- function(initial_vcv,
 }
 
 
+initialise_adaptive <- function(pars,
+                                initial_vcv,
+                                initial_vcv_weight,
+                                initial_scaling,
+                                initial_scaling_weight,
+                                min_scaling,
+                                scaling_increment,
+                                log_scaling_update,
+                                acceptance_target,
+                                forget_rate,
+                                forget_end,
+                                adapt_end,
+                                pre_diminish) {
+  weight <- 0
+  iteration <- 0
+  
+  mean <- unname(pars)
+  n_pars <- length(pars)
+  autocorrelation <- array(0, dim(initial_vcv))
+  vcv <- update_vcv(mean, autocorrelation, weight)
+  
+  scaling <- initial_scaling
+  
+  scaling_increment <- scaling_increment %||%
+    calc_scaling_increment(n_pars, acceptance_target, log_scaling_update)
+  scaling_weight <- initial_scaling_weight %||%
+    5 / (acceptance_target * (1 - acceptance_target))
+  
+  history_pars <- NULL
+  included <- integer()
+  scaling_history <- scaling
+  
+  list(initial_vcv = initial_vcv,
+       initial_vcv_weight = initial_vcv_weight,
+       weight = weight,
+       iteration = iteration,
+       mean = mean,
+       autocorrelation = autocorrelation,
+       vcv = vcv,
+       scaling = scaling,
+       scaling_increment = scaling_increment,
+       scaling_weight = scaling_weight,
+       min_scaling = min_scaling,
+       log_scaling_update = log_scaling_update,
+       acceptance_target = acceptance_target,
+       forget_rate = forget_rate,
+       forget_end = forget_end,
+       adapt_end = adapt_end,
+       pre_diminish = pre_diminish,
+       history_pars = history_pars,
+       included = included,
+       scaling_history = scaling_history
+       )
+}
+
+update_adaptive <- function(adaptive, pars, accept_prob) {
+  adaptive$iteration <- adaptive$iteration + 1
+  adaptive$history_pars <- rbind(adaptive$history_pars, pars)
+  if (adaptive$iteration > adaptive$adapt_end) {
+    adaptive$scaling_history <- c(adaptive$scaling_history, adaptive$scaling)
+    return(adaptive)
+  }
+  
+  if (adaptive$iteration > adaptive$pre_diminish) {
+    adaptive$scaling_weight <- adaptive$scaling_weight + 1
+  }
+  
+  is_replacement <- check_replacement(adaptive$iteration, adaptive$forget_rate, 
+                                      adaptive$forget_end)
+  if (is_replacement) {
+    pars_remove <- adaptive$history_pars[adaptive$included[1L], ]
+    adaptive$included <- c(adaptive$included[-1L], adaptive$iteration)
+  } else {
+    pars_remove <- NULL
+    adaptive$included <- c(adaptive$included, adaptive$iteration)
+    adaptive$weight <- adaptive$weight + 1
+  }
+  
+  adaptive$scaling <-
+    update_scaling(adaptive$scaling, adaptive$scaling_weight, accept_prob,
+                   adaptive$scaling_increment, adaptive$min_scaling,
+                   adaptive$acceptance_target, adaptive$log_scaling_update)
+  adaptive$scaling_history <- c(adaptive$scaling_history, adaptive$scaling)
+  adaptive$autocorrelation <- update_autocorrelation(
+    pars, adaptive$weight, adaptive$autocorrelation, pars_remove)
+  adaptive$mean <- update_mean(pars, adaptive$weight, adaptive$mean,
+                               pars_remove)
+  adaptive$vcv <- update_vcv(adaptive$mean, adaptive$autocorrelation,
+                             adaptive$weight)
+  
+  adaptive
+}
+
+
 calc_scaling_increment <- function(n_pars, acceptance_target,
                                    log_scaling_update) {
   if (log_scaling_update) {
     A <- -stats::qnorm(acceptance_target / 2)
-
+    
     scaling_increment <-
       (1 - 1 / n_pars) * (sqrt(2 * pi) * exp(A^2 / 2)) / (2 * A) +
       1 / (n_pars * acceptance_target * (1 - acceptance_target))
   } else {
     scaling_increment <- 1 / 100
   }
-
+  
   scaling_increment
 }
 
 
 qp <- function(x) {
-  if (length(dim(x)) > 1) {
-    vapply(seq_len(ncol(x)), function (i) qp(x[, i]),
-           array(0, c(nrow(x), nrow(x))))
-  } else {
-    outer(x, x)  
-  }
+  outer(x, x)
 }
 
 
 calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
                               initial_vcv_weight) {
   n_pars <- nrow(vcv)
-
+  
   weighted_vcv <-
     ((weight - 1) * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
     (weight + initial_vcv_weight + n_pars + 1)
-
-  if (length(scaling) == 1) {
-    proposal_vcv <- 2.38^2 / n_pars * scaling^2 * weighted_vcv  
-  } else {
-    proposal_vcv <- 2.38^2 / n_pars * 
-      vapply(seq_along(scaling),
-             function (i) scaling[i]^2 * weighted_vcv[, , i],
-             array(0, c(n_pars, n_pars)))
-    proposal_vcv <- array(proposal_vcv, c(n_pars, n_pars, length(scaling)))
-  }
-  proposal_vcv
+  
+  2.38^2 / n_pars * scaling^2 * weighted_vcv
 }
 
 
@@ -296,7 +376,7 @@ check_replacement <- function(iteration, forget_rate, forget_end) {
   is_forget_step <- floor(forget_rate * iteration) >
     floor(forget_rate * (iteration - 1))
   is_before_forget_end <- iteration <= forget_end
-
+  
   is_forget_step & is_before_forget_end
 }
 
@@ -306,13 +386,13 @@ update_scaling <- function(scaling, scaling_weight, accept_prob,
                            acceptance_target, log_scaling_update) {
   scaling_change <- scaling_increment * (accept_prob - acceptance_target) /
     sqrt(scaling_weight)
-
+  
   if (log_scaling_update) {
-    pmax(min_scaling, scaling * exp(scaling_change))
+    max(min_scaling, scaling * exp(scaling_change))
   } else {
-    pmax(min_scaling, scaling + scaling_change)
+    max(min_scaling, scaling + scaling_change)
   }
-
+  
 }
 
 
@@ -332,7 +412,7 @@ update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
       autocorrelation <- autocorrelation + qp(pars)
     }
   }
-
+  
   autocorrelation
 }
 
@@ -343,7 +423,7 @@ update_mean <- function(pars, weight, mean, pars_remove) {
   } else {
     mean <- (1 - 1 / weight) * mean + 1 / weight * pars
   }
-
+  
   mean
 }
 
@@ -354,6 +434,6 @@ update_vcv <- function(mean, autocorrelation, weight) {
   } else {
     vcv <- 0 * autocorrelation
   }
-
+  
   vcv
 }
