@@ -4,10 +4,16 @@
 \alias{with_trace_random}
 \title{Trace random number calls}
 \usage{
-with_trace_random(code)
+with_trace_random(code, max_calls = 5, show_stack = FALSE)
 }
 \arguments{
 \item{code}{Code to run with tracing on}
+
+\item{max_calls}{Maximum number of calls to report.  The default
+is 5}
+
+\item{show_stack}{Logical, indicating if we should show the stack
+at the point of the call}
 }
 \value{
 The result of evaluating \code{code}
