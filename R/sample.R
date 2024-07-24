@@ -301,7 +301,7 @@ combine_chains <- function(res, observer = NULL) {
                 "results will not be reproducible as you change the sample",
                 "runner"),
       i = paste("If you are not using a parallel runner, you can debug",
-                "this with 'with_trace_random()'"))
+                "this with 'with_trace_random()'")))
   }
 
   samples <- list(pars = pars,
