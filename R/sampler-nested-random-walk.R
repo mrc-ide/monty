@@ -59,7 +59,7 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
                    arg = "vcv")
   }
   if (!is.null(vcv$base)) {
-    check_vcv(vcv$base, call = environment())
+    check_vcv(vcv$base, allow_3d = TRUE, call = environment())
   }
   if (!is.list(vcv$groups)) {
     cli::cli_abort("Expected 'vcv$groups' to be a list")
@@ -68,8 +68,8 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
     cli::cli_abort("Expected 'vcv$groups' to have at least one element")
   }
   for (i in seq_along(vcv$groups)) {
-    check_vcv(vcv$groups[[i]], name = sprintf("vcv$groups[%d]", i),
-              call = environment())
+    check_vcv(vcv$groups[[i]], allow_3d = TRUE,
+              name = sprintf("vcv$groups[%d]", i), call = environment())
   }
 
   internal <- new.env(parent = emptyenv())
@@ -78,7 +78,8 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
-    internal$proposal <- nested_proposal(vcv, model$parameter_groups)
+    
+    internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars)
 
     initialise_rng_state(model, rng)
     density <- model$density(pars, by_group = TRUE)
@@ -93,7 +94,7 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
                     "elements corresponding to parameter groups to be",
                     "included with your density")))
     }
-    if (length(density_by_group) != n_groups) {
+    if (dim2(density_by_group)[1] != n_groups) {
         cli::cli_abort(
           paste("model$density(x, by_group = TRUE) produced a 'by_group'",
                 "attribute with incorrect length {length(density_by_group)}",
@@ -118,12 +119,20 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
   step <- function(state, model, observer, rng) {
+    browser()
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
       density_by_group_next <- attr(density_next, "by_group")
       accept <- density_next - state$density > log(rng$random_real(1))
-      if (accept) {
+      if (any(accept)) {
+        if (!all(accept)) {
+          ## Retain some older parameters
+          i <-  which(!accept)
+          pars_next[, i] <- state$pars[, i]
+          density_next <- model$density(pars_next, by_group = TRUE)
+          density_by_group_next <- attr(density_next, "by_group")
+        }
         state$pars <- pars_next
         state$density <- density_next
         internal$density_by_group <- density_by_group_next
@@ -205,7 +214,7 @@ check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
 }
 
 
-nested_proposal <- function(vcv, parameter_groups, call = NULL) {
+nested_proposal <- function(vcv, parameter_groups, pars, call = NULL) {
   i_base <- parameter_groups == 0
   n_base <- sum(i_base)
   n_groups <- max(parameter_groups)
@@ -240,6 +249,11 @@ nested_proposal <- function(vcv, parameter_groups, call = NULL) {
 
   has_base <- n_base > 0
   if (has_base) {
+    if (is.matrix(pars)) {
+      vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base, , drop = FALSE])
+    } else {
+      vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base])
+    }
     mvn_base <- make_rmvnorm(vcv$base)
     proposal_base <- function(x, rng) {
       ## This approach is likely to be a bit fragile, so we'll
@@ -251,6 +265,17 @@ nested_proposal <- function(vcv, parameter_groups, call = NULL) {
     proposal_base <- NULL
   }
 
+  for (i in seq_len(n_groups)) {
+    if (is.matrix(pars)) {
+      vcv$groups[[i]] <- 
+        sampler_validate_vcv(vcv$groups[[i]],
+                             pars[i_group[[i]], , drop = FALSE])
+    } else {
+      vcv$groups[[i]] <- 
+        sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
+    }
+  }
+  browser()
   mvn_groups <- lapply(vcv$groups, make_rmvnorm)
   proposal_groups <- function(x, rng) {
     for (i in seq_len(n_groups)) {

@@ -197,3 +197,20 @@ test_that("can run an observer during a nested fit", {
     c(1, 100, 1))
   expect_gt(max(res$observations$n), 120) # called way more than once per step
 })
+
+
+test_that("can run nested random walk sampler simultaneously", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  sampler <- mcstate_sampler_nested_random_walk(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)))
+  
+  set.seed(1)
+  res1 <- mcstate_sample(m, sampler, 100, n_chains = 3)
+  
+  set.seed(1)
+  runner <- mcstate_runner_simultaneous()
+  res2 <- mcstate_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
+})
