@@ -17,6 +17,7 @@
 ##' @export
 with_trace_random <- function(code, max_calls = 5, show_stack = FALSE) {
   fns <- list("set.seed",
+              "sample",
               "rbeta",
               "rbinom",
               "rcauchy",
