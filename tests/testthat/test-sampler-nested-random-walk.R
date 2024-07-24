@@ -25,7 +25,7 @@ test_that("validate vcv inputs on construction of sampler", {
     "Expected 'vcv' to have elements 'base' and 'groups'")
   expect_error(
     mcstate_sampler_nested_random_walk(list(base = TRUE, groups = TRUE)),
-    "Expected a matrix for 'vcv$base'",
+    "Expected a matrix or 3d array for 'vcv$base'",
     fixed = TRUE)
   expect_error(
     mcstate_sampler_nested_random_walk(list(base = NULL, groups = TRUE)),
@@ -37,7 +37,7 @@ test_that("validate vcv inputs on construction of sampler", {
     fixed = TRUE)
   expect_error(
     mcstate_sampler_nested_random_walk(list(base = NULL, groups = list(TRUE))),
-    "Expected a matrix for 'vcv$groups[1]'",
+    "Expected a matrix or 3d array for 'vcv$groups[1]'",
     fixed = TRUE)
 
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
@@ -92,7 +92,8 @@ test_that("can build nested proposal functions", {
   vcv <- list(base = NULL,
               groups = list(v, v / 100))
   g <- c(1, 1, 2, 2)
-  f <- nested_proposal(vcv, g)
+  
+  f <- nested_proposal(vcv, g, rep(0, 4))
 
   expect_null(f$base)
   expect_true(is.function(f$groups))
@@ -112,8 +113,9 @@ test_that("can build nested proposal functions with base components", {
   v <- matrix(c(1, .5, .5, 1), 2, 2)
   vcv <- list(base = v / 10,
               groups = list(v, v / 100))
-  f <- nested_proposal(vcv, c(0, 0, 1, 1, 2, 2))
-  g <- nested_proposal(list(base = NULL, groups = vcv$groups), c(1, 1, 2, 2))
+  f <- nested_proposal(vcv, c(0, 0, 1, 1, 2, 2), 1:6)
+  g <- 
+    nested_proposal(list(base = NULL, groups = vcv$groups),c(1, 1, 2, 2), 3:6)
 
   expect_true(is.function(f$base))
   expect_true(is.function(f$groups))

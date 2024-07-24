@@ -79,6 +79,12 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
     
+    internal$multiple_parameters <- length(dim2(pars)) > 1
+    if (internal$multiple_parameters) {
+      ## this is enforced elsewhere
+      stopifnot(model$properties$allow_multiple_parameters)
+    }
+    
     internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars)
 
     initialise_rng_state(model, rng)
@@ -119,7 +125,6 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
   step <- function(state, model, observer, rng) {
-    browser()
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       density_next <- model$density(pars_next, by_group = TRUE)
@@ -146,13 +151,23 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
     density_next <- model$density(pars_next, by_group = TRUE)
     density_by_group_next <- attr(density_next, "by_group")
     accept <- density_by_group_next - internal$density_by_group >
-      log(rng$random_real(length(density_by_group_next)))
+      log(rng$random_real(dim2(density_by_group_next)[1]))
 
     if (any(accept)) {
       if (!all(accept)) {
         ## Retain some older parameters
-        i <- model$parameter_groups %in% which(!accept)
-        pars_next[i] <- state$pars[i]
+        if (internal$multiple_parameters) {
+          for (j in seq_len(ncol(accept))) {
+            if (!all(accept[, j])) {
+              i <- model$parameter_groups %in% which(!accept[, j])
+              pars_next[i, j] <- state$pars[i, j]
+            }
+          }
+        } else {
+          i <- model$parameter_groups %in% which(!accept)
+          pars_next[i] <- state$pars[i]
+        }
+        
         density_next <- model$density(pars_next, by_group = TRUE)
         density_by_group_next <- attr(density_next, "by_group")
       }
@@ -251,16 +266,24 @@ nested_proposal <- function(vcv, parameter_groups, pars, call = NULL) {
   if (has_base) {
     if (is.matrix(pars)) {
       vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base, , drop = FALSE])
+      mvn_base <- make_rmvnorm(vcv$base)
+      proposal_base <- function(x, rng) {
+        ## This approach is likely to be a bit fragile, so we'll
+        ## probably want some naming related verification here soon too.
+        x[i_base] <- mvn_base(x[i_base, ], rng)
+        x
+      }
     } else {
       vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base])
+      mvn_base <- make_rmvnorm(vcv$base)
+      proposal_base <- function(x, rng) {
+        ## This approach is likely to be a bit fragile, so we'll
+        ## probably want some naming related verification here soon too.
+        x[i_base] <- mvn_base(x[i_base], rng)
+        x
+      }
     }
-    mvn_base <- make_rmvnorm(vcv$base)
-    proposal_base <- function(x, rng) {
-      ## This approach is likely to be a bit fragile, so we'll
-      ## probably want some naming related verification here soon too.
-      x[i_base] <- mvn_base(x[i_base], rng)
-      x
-    }
+    
   } else {
     proposal_base <- NULL
   }
@@ -275,11 +298,14 @@ nested_proposal <- function(vcv, parameter_groups, pars, call = NULL) {
         sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
     }
   }
-  browser()
   mvn_groups <- lapply(vcv$groups, make_rmvnorm)
   proposal_groups <- function(x, rng) {
     for (i in seq_len(n_groups)) {
-      x[i_group[[i]]] <- mvn_groups[[i]](x[i_group[[i]]], rng)
+      if (is.matrix(x)) {
+        x[i_group[[i]], ] <- mvn_groups[[i]](x[i_group[[i]], ], rng)
+      } else {
+        x[i_group[[i]]] <- mvn_groups[[i]](x[i_group[[i]]], rng)
+      }
     }
     x
   }
