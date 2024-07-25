@@ -188,6 +188,8 @@ mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
                                                model$parameter_groups))
     
     if (reject_some) {
+      density_next <- rep(-Inf, length(state$density))
+      density_by_group_next <- array(-Inf, dim2(internal$density_by_group))
       if (any(i)) {
         if (internal$multiple_parameters) {
           for (j in seq_len(ncol(i))) {
@@ -202,9 +204,6 @@ mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
         }
         density_next <- model$density(pars_next, by_group = TRUE)
         density_by_group_next <- attr(density_next, "by_group")
-      } else {
-        density_next <- rep(-Inf, length(state$density))
-        density_by_group_next <- array(-Inf, dim2(internal$density_by_group))
       }
     } else {
       density_next <- model$density(pars_next, by_group = TRUE)
