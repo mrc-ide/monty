@@ -187,6 +187,11 @@ mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
       !all(i <- is_parameters_in_domain_groups(pars_next, model$domain, 
                                                model$parameter_groups))
     
+    ## This bit is potentially inefficient - for any proposed parameters out of
+    ## bounds I substitute in the current parameters, so that we can run the
+    ## density on all groups. Ideally we would want to only run the density on
+    ## groups with all parameters in bounds. A bit fiddly to do that in a nice
+    ## way when doing simultaneous sampling
     if (reject_some) {
       density_next <- rep(-Inf, length(state$density))
       density_by_group_next <- array(-Inf, dim2(internal$density_by_group))
@@ -227,7 +232,9 @@ mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
           i <- model$parameter_groups %in% which(!accept)
           pars_next[i] <- state$pars[i]
         }
-        
+        ## If e.g. density is provided by a particle filter, would this bit
+        ## mean rerunning it? Increases time cost if so, and would result in
+        ## new value of density (different to that which was accepted)
         density_next <- model$density(pars_next, by_group = TRUE)
         density_by_group_next <- attr(density_next, "by_group")
       }
