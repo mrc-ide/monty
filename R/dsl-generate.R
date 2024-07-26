@@ -4,9 +4,11 @@ dsl_generate <- function(dat) {
 
   density <- dsl_generate_density(dat, env)
   direct_sample <- dsl_generate_direct_sample(dat, env)
+  domain <- dsl_generate_domain(dat)
   mcstate_model(
     list(parameters = dat$parameters,
          density = density,
+         domain = domain,
          direct_sample = direct_sample))
 }
 
@@ -85,5 +87,37 @@ dsl_generate_density_rewrite_lookup <- function(expr, env) {
     call("[[", env, as.character(expr))
   } else {
     expr
+  }
+}
+
+
+dsl_generate_domain <- function(dat) {
+  n <- length(dat$parameters)
+  domain <- cbind(rep(-Inf, n), rep(Inf, n))
+  rownames(domain) <- dat$parameters
+  env <- new.env(parent = baseenv())
+  for (e in dat$exprs) {
+    if (e$type == "assignment") {
+      env[[e$name]] <- dsl_static_eval(e$rhs, env)
+    } else { # type is "stochastic"
+      e_domain <- e$distribution$domain
+      if (is.function(e_domain)) {
+        args <- lapply(e$distribution$args, dsl_static_eval, env)
+        domain[e$name, ] <- do.call(e_domain, args)
+      } else {
+        domain[e$name, ] <- e_domain
+      }
+    }
+  }
+  domain
+}
+
+
+dsl_static_eval <- function(expr, env) {
+  uses <- all.vars(expr)
+  if (length(uses) == 0 || all(uses %in% names(env))) {
+    eval(expr, env)
+  } else {
+    NA_real_
   }
 }

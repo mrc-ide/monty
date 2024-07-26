@@ -5,12 +5,14 @@
 ## We also need the domain from the distributions, but the uniform
 ## makes this surprisingly hard because it is either domain [a, b]
 ## with constant parameters or it is (-Inf, Inf) otherwise!
-distribution <- function(name, density, cpp, sample = NULL, variant = NULL) {
+distribution <- function(name, density, domain, cpp,
+                         sample = NULL, variant = NULL) {
   args <- names(formals(density))[-1]
   list(name = name,
        variant = variant,
        args = args,
        density = density,
+       domain = domain,
        sample = sample,
        cpp = cpp)
 }
@@ -19,6 +21,7 @@ distribution <- function(name, density, cpp, sample = NULL, variant = NULL) {
 distr_binomial <- distribution(
   name = "Binomial",
   density = function(x, size, prob) dbinom(x, size, prob, log = TRUE),
+  domain = c(0, Inf),
   sample = function(rng, size, prob) rng$binomial(1, size, prob),
   cpp = list(density = NULL, sample = "binomial"))
 
@@ -26,6 +29,7 @@ distr_exponential_rate <- distribution(
   name = "Exponential",
   variant = "rate",
   density = function(x, rate) dexp(x, rate, log = TRUE),
+  domain = c(0, Inf),
   sample = function(rng, rate) rng$exponential(1, rate),
   cpp = list(density = NULL, sample = "exponential"))
 
@@ -33,18 +37,39 @@ distr_exponential_mean <- distribution(
   name = "Exponential",
   variant = "mean",
   density = function(x, mean) dexp(x, 1 / mean, log = TRUE),
+  domain = c(0, Inf),
   sample = function(rng, mean) rng$exponential(1, 1 / mean),
+  cpp = list(density = NULL, sample = NULL))
+
+distr_gamma_rate <- distribution(
+  name = "Gamma",
+  variant = "rate",
+  density = function(x, shape, rate) dgamma(x, shape, rate = rate, log = TRUE),
+  domain = c(0, Inf),
+  sample = function(rng, shape, rate) rng$gamma(1, shape, 1 / rate),
+  cpp = list(density = NULL, sample = NULL))
+
+distr_gamma_scale <- distribution(
+  name = "Gamma",
+  variant = "rate",
+  density = function(x, shape, scale) {
+    dgamma(x, shape, scale = scale, log = TRUE)
+  },
+  domain = c(0, Inf),
+  sample = function(rng, shape, scale) rng$gamma(1, shape, scale),
   cpp = list(density = NULL, sample = NULL))
 
 distr_normal <- distribution(
   name = "Normal",
   density = function(x, mean, sd) dnorm(x, mean, sd, log = TRUE),
+  domain = c(-Inf, Inf),
   sample = function(rng, mean, sd) rng$normal(1, mean, sd),
   cpp = list(density = "normal", sample = "normal"))
 
 distr_poisson <- distribution(
   name = "Poisson",
   density = function(x, lambda) dpois(x, lambda, log = TRUE),
+  domain = c(0, Inf),
   sample = function(rng, lambda) rng$poisson(1, lambda),
   cpp = list(density = "poisson", sample = "poisson"))
 
@@ -52,6 +77,9 @@ distr_uniform <- distribution(
   name = "Uniform",
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
   sample = function(rng, min, max) rng$uniform(1, min, max),
+  domain = function(min, max) {
+    c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)
+  },
   cpp = list(density = NULL, sample = "uniform"))
 
 dsl_distributions <- local({
@@ -59,6 +87,8 @@ dsl_distributions <- local({
     distr_binomial,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,
+    distr_gamma_rate,
+    distr_gamma_scale,
     distr_normal,
     distr_poisson,
     distr_uniform)
