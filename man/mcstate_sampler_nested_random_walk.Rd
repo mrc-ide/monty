@@ -9,9 +9,9 @@ mcstate_sampler_nested_random_walk(vcv, boundaries = "reflect")
 \arguments{
 \item{vcv}{A list of variance covariance matrices.  We expect this
 to be a list with elements \code{base} and \code{groups} corresponding to
-the covariance matrix for base parameters (if any) and groups.
+the covariance matrix for base parameters (if any) and groups.}
 
-##' @param boundaries Control the behaviour of proposals that are
+\item{boundaries}{Control the behaviour of proposals that are
 outside the model domain.  The supported options are:
 \itemize{
 \item "reflect" (the default): we reflect proposed parameters that

@@ -43,7 +43,7 @@
 ##'   to be a list with elements `base` and `groups` corresponding to
 ##'   the covariance matrix for base parameters (if any) and groups.
 ##'   
-##' ##' @param boundaries Control the behaviour of proposals that are
+##' @param boundaries Control the behaviour of proposals that are
 ##'   outside the model domain.  The supported options are:
 ##'
 ##'   * "reflect" (the default): we reflect proposed parameters that
