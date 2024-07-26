@@ -41,6 +41,8 @@ reference:
     contents:
     - mcstate_observer
     - mcstate_packer
+    - mcstate_domain_expand
+    - with_trace_random
 
   - title: Random numbers
     desc: >-
