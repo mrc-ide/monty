@@ -133,8 +133,11 @@ test_that("can run sampler with reflecting boundaries", {
   
   expect_error(mcstate_sample(model, s1, 100), "parameter out of bounds")
   
-  ## seems to be a bit of a problem here - the scaling blows up and as a result
-  ## the reflecting goes a bit wild, resulting in values on the boundary
+  ## Seems to be a bit of a problem here - since the density is flat, the
+  ## acceptance probability is always 1. The effect on the scaling then is that
+  ## it just keeps increasing! When it gets large enough, it causes problems
+  ## with the reflecting, which throws some warnings about probable complete
+  ## loss of accuracy in modulus, and results in values lying on the boundary
   res2 <- mcstate_sample(model, s2, 100)
   r2 <- range(drop(res2$pars))
   expect_gt(diff(r2), 0.75)
