@@ -53,7 +53,7 @@ I'm not completely sure that we can derive this for all models (most obviously f
 We can draw samples from the model if we provide an [mcstate_rng] object
 
 ```{r}
-rng <- mcstate_rng()
+rng <- mcstate_rng$new()
 theta <- prior$direct_sample(rng)
 theta
 ```
