@@ -81,3 +81,39 @@ test_that("give up on bounds if they come from a stochastic process", {
                      d = c(-Inf, 10),
                      e = c(-Inf, Inf)))
 })
+
+
+test_that("can prevent creation of gradient function", {
+  code <- "a ~ Normal(0, 1)"
+  m1 <- mcstate_dsl(code, gradient = FALSE)
+  expect_false(m1$properties$has_gradient)
+  expect_null(m1$gradient)
+
+  m2 <- mcstate_dsl(code, gradient = TRUE)
+  expect_true(m2$properties$has_gradient)
+  expect_true(is.function(m2$gradient))
+
+  m3 <- mcstate_dsl(code, gradient = NULL)
+  expect_true(m3$properties$has_gradient)
+  expect_true(is.function(m3$gradient))
+})
+
+
+test_that("handle failure to create gradient function", {
+  code <- "a ~ Normal(0, 1)\nb ~ Normal(trigamma(a), 1)"
+  m1 <- mcstate_dsl(code, gradient = FALSE)
+  expect_false(m1$properties$has_gradient)
+  expect_null(m1$gradient)
+
+  err <- expect_error(
+    mcstate_dsl(code, gradient = TRUE),
+    "Failed to generate gradient function for this model")
+  expect_s3_class(err$parent, "mcstate_differentiation_failure")
+
+  w <- expect_warning(
+    m3 <- mcstate_dsl(code, gradient = NULL),
+    "Failed to compute gradient for this model")
+  expect_s3_class(w$parent, "mcstate_differentiation_failure")
+  expect_false(m3$properties$has_gradient)
+  expect_null(m3$gradient)
+})
