@@ -5,7 +5,7 @@
 ## We also need the domain from the distributions, but the uniform
 ## makes this surprisingly hard because it is either domain [a, b]
 ## with constant parameters or it is (-Inf, Inf) otherwise!
-distribution <- function(name, density, domain, cpp, expr = NULL,
+distribution <- function(name, density, domain, cpp, expr,
                          sample = NULL, variant = NULL) {
   args <- names(formals(density))[-1]
   list(name = name,
@@ -24,6 +24,10 @@ distr_binomial <- distribution(
   density = function(x, size, prob) dbinom(x, size, prob, log = TRUE),
   domain = c(0, Inf),
   sample = function(rng, size, prob) rng$binomial(1, size, prob),
+  expr = list(
+    density = quote(lchoose(size, x) + x * log(prob) +
+                    (size - x) * log(1 - prob)),
+    mean = quote(size * prob)),
   cpp = list(density = NULL, sample = "binomial"))
 
 distr_exponential_rate <- distribution(
@@ -32,6 +36,9 @@ distr_exponential_rate <- distribution(
   density = function(x, rate) dexp(x, rate, log = TRUE),
   domain = c(0, Inf),
   sample = function(rng, rate) rng$exponential(1, rate),
+  expr = list(
+    density = quote(log(rate) - rate * x),
+    mean = quote(1 / rate)),
   cpp = list(density = NULL, sample = "exponential"))
 
 distr_exponential_mean <- distribution(
@@ -40,6 +47,9 @@ distr_exponential_mean <- distribution(
   density = function(x, mean) dexp(x, 1 / mean, log = TRUE),
   domain = c(0, Inf),
   sample = function(rng, mean) rng$exponential(1, 1 / mean),
+  expr = list(
+    density = quote(-log(mean) - x / mean),
+    mean = quote(mean)),
   cpp = list(density = NULL, sample = NULL))
 
 distr_gamma_rate <- distribution(
@@ -91,10 +101,10 @@ distr_poisson <- distribution(
 distr_uniform <- distribution(
   name = "Uniform",
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
+  sample = function(rng, min, max) rng$uniform(1, min, max),
   expr = list(
     density = quote(if (x < min || x > max) -Inf else -log(b - a)),
     mean = quote((b - a) / 2)),
-  sample = function(rng, min, max) rng$uniform(1, min, max),
   domain = function(min, max) {
     c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)
   },

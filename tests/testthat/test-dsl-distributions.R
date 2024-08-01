@@ -98,7 +98,8 @@ test_that("can sample from uniform distribution", {
 test_that("can create a distribution object", {
   density <- function(x, a, b) NULL
   sample <- function(rng, a, b) NULL
-  d <- distribution("Foo", density, c(1,2), cpp = NULL, sample = sample)
+  d <- distribution("Foo", density, c(1,2), cpp = NULL, expr = NULL,
+                    sample = sample)
   expect_equal(
     d,
     list(name = "Foo",
