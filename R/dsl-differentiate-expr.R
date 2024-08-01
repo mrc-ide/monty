@@ -163,6 +163,10 @@ derivative <- list(
   abs = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("sign", a))
+  },
+  lgamma = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    maths$times(differentiate(a, name), call("digamma", a))
   }
 )
 
