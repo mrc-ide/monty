@@ -76,7 +76,8 @@ differentiate <- function(expr, name) {
     fn <- as.character(expr[[1]])
     if (!fn %in% names(derivative)) {
       cli::cli_abort(
-        "Unsupported function '{fn}' in 'differentiate()'")
+        "Unsupported function '{fn}' in 'differentiate()'",
+        class = "mcstate_differentiation_failure")
     }
     derivative[[fn]](expr, name)
   }
@@ -155,8 +156,9 @@ derivative <- list(
     maths$times(differentiate(a, name), call("digamma", maths$plus(a, 1)))
   },
   sin = function(expr, name) {
-    ## f(g(x)) => f'(g(x)) g'(x)
-    ## Differentiate sin(f(x)) -> 
+    ## This was just included for me to play around with the adjoint
+    ## models, but sooner or later we'll need to support this and all
+    ## other maths functions we support.
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("cos", a))
   },
@@ -167,6 +169,24 @@ derivative <- list(
   lgamma = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("digamma", a))
+  },
+  lchoose = function(expr, name) {
+    ## This case exists only so that we can differentiate binomial
+    ## likelihoods, it may not always be a reasonable thing to do,
+    ## because the derivative is only defined with respect to 'n' not
+    ## 'k' the way that the density is defined in R.
+    ##
+    ## We can consider this as:
+    ## lfactorial(n) - lfactorial(k) - lfactorial(n - k)
+    ## ^--a            ^--b            ^--c
+    ##
+    ## and then apply the chain rule as:
+    n <- maths$rewrite(expr[[2]])
+    k <- maths$rewrite(expr[[3]])
+    a <- differentiate(call("lfactorial", n), name)
+    b <- differentiate(call("lfactorial", k), name)
+    c <- differentiate(call("lfactorial", maths$minus(n, k)), name)
+    maths$minus(maths$minus(a, b), c)
   }
 )
 

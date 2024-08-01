@@ -150,11 +150,13 @@ test_that("error if asked to differentiate something not yet supported", {
   expect_error(
     differentiate(quote(f(x)), "x"),
     "Unsupported function 'f' in 'differentiate()'",
-    fixed = TRUE)
+    fixed = TRUE,
+    class = "mcstate_differentiation_failure")
   expect_error(
     differentiate(quote(exp(2 * f(x))), "x"),
     "Unsupported function 'f' in 'differentiate()'",
-    fixed = TRUE)
+    fixed = TRUE,
+    class = "mcstate_differentiation_failure")
 })
 
 
@@ -366,4 +368,22 @@ test_that("can use public interface", {
   obj <- mcstate_differentiation()
   expect_identical(obj$differentiate, differentiate)
   expect_identical(obj$maths, maths)
+})
+
+
+test_that("can differentiate lgamma", {
+  expect_identical(differentiate(quote(lgamma(x)), "x"),
+                   quote(digamma(x)))
+  expect_identical(differentiate(quote(lgamma(x^2)), "x"),
+                   quote((x + x) * digamma(x * x)))
+})
+
+
+test_that("can differentiate lchoose", {
+  expect_identical(
+    differentiate(quote(lchoose(a, b)), "a"),
+    quote(digamma(1 + a) - digamma(`+`(1, a - b))))
+  expect_identical(
+    differentiate(quote(lchoose(a, b)), "b"),
+    quote(-digamma(1 + b) - (-digamma(`+`(1, a - b)))))
 })
