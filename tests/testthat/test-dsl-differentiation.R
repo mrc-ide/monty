@@ -360,3 +360,10 @@ test_that("can rewrite expressions", {
   expect_identical(maths$rewrite(quote(((b)) + (a))), quote(b + a))
   expect_identical(maths$rewrite(quote((a + b) * c)), quote((a + b) * c))
 })
+
+
+test_that("can use public interface", {
+  obj <- mcstate_differentiation()
+  expect_identical(obj$differentiate, differentiate)
+  expect_identical(obj$maths, maths)
+})
