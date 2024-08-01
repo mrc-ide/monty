@@ -48,6 +48,10 @@ distr_gamma_rate <- distribution(
   density = function(x, shape, rate) dgamma(x, shape, rate = rate, log = TRUE),
   domain = c(0, Inf),
   sample = function(rng, shape, rate) rng$gamma(1, shape, 1 / rate),
+  expr = list(
+    density = quote((shape - 1) * log(x) - rate * x -
+                    lgamma(shape) + shape * log(rate)),
+    mean = quote(shape / rate)),
   cpp = list(density = NULL, sample = NULL))
 
 distr_gamma_scale <- distribution(
@@ -58,6 +62,10 @@ distr_gamma_scale <- distribution(
   },
   domain = c(0, Inf),
   sample = function(rng, shape, scale) rng$gamma(1, shape, scale),
+  expr = list(
+    density = quote((shape - 1) * log(x) - x / scale -
+                    lgamma(shape) - shape * log(scale)),
+    mean = quote(shape * scale)),
   cpp = list(density = NULL, sample = NULL))
 
 distr_normal <- distribution(
