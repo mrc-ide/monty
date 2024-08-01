@@ -4,10 +4,12 @@ dsl_generate <- function(dat) {
 
   density <- dsl_generate_density(dat, env)
   direct_sample <- dsl_generate_direct_sample(dat, env)
+  gradient <- dsl_generate_gradient(dat, env)
   domain <- dsl_generate_domain(dat)
   mcstate_model(
     list(parameters = dat$parameters,
          density = density,
+         gradient = gradient,
          domain = domain,
          direct_sample = direct_sample))
 }
@@ -20,6 +22,21 @@ dsl_generate_density <- function(dat, env) {
             quote(density <- numeric()),
             exprs,
             quote(sum(density)))
+  as_function(alist(x = ), body, env)
+}
+
+
+dsl_generate_gradient <- function(dat, env) {
+  exprs <- adjoint_rewrite_stochastic(dat$exprs, dat$parameters, "__density_")
+  adjoint <- adjoint_create(exprs, dat$parameters, "__adjoint_")
+
+  eqs <- lapply(adjoint$exprs, dsl_generate_assignment, quote(data))
+  eq_return <- fold_c(
+    lapply(adjoint$gradient, function(nm) call("[[", quote(data), nm)))
+
+  body <- c(quote(data <- packer$unpack(x)),
+            unname(eqs),
+            eq_return)
   as_function(alist(x = ), body, env)
 }
 
@@ -56,7 +73,7 @@ dsl_generate_sample_expr <- function(expr, env, result) {
 
 dsl_generate_assignment <- function(expr, env) {
   e <- expr$expr
-  e[[2]] <- call("$", quote(pars), e[[2]])
+  e[[2]] <- call("[[", env, as.character(e[[2]]))
   e[[3]] <- dsl_generate_density_rewrite_lookup(e[[3]], env)
   e
 }
@@ -120,4 +137,9 @@ dsl_static_eval <- function(expr, env) {
   } else {
     NA_real_
   }
+}
+
+
+fold_c <- function(x) {
+  if (length(x) == 1) x[[1]] else as.call(c(quote(c), x))
 }

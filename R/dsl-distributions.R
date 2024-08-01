@@ -5,15 +5,17 @@
 ## We also need the domain from the distributions, but the uniform
 ## makes this surprisingly hard because it is either domain [a, b]
 ## with constant parameters or it is (-Inf, Inf) otherwise!
-distribution <- function(name, density, domain, cpp,
+distribution <- function(name, density, domain, cpp, expr = NULL,
                          sample = NULL, variant = NULL) {
   args <- names(formals(density))[-1]
   list(name = name,
        variant = variant,
        args = args,
+       argnames = args,
        density = density,
        domain = domain,
        sample = sample,
+       expr = expr,
        cpp = cpp)
 }
 
@@ -63,6 +65,9 @@ distr_normal <- distribution(
   name = "Normal",
   density = function(x, mean, sd) dnorm(x, mean, sd, log = TRUE),
   domain = c(-Inf, Inf),
+  expr = list(
+    density = quote(-(x - mean)^2 / (2 * sd^2) - log(2 * pi) / 2 - log(sd)),
+    mean = quote(mean)),
   sample = function(rng, mean, sd) rng$normal(1, mean, sd),
   cpp = list(density = "normal", sample = "normal"))
 
@@ -70,12 +75,18 @@ distr_poisson <- distribution(
   name = "Poisson",
   density = function(x, lambda) dpois(x, lambda, log = TRUE),
   domain = c(0, Inf),
+  expr = list(
+    density = quote(x * log(lambda) - lambda - lfactorial(x)),
+    mean = quote(lambda)),
   sample = function(rng, lambda) rng$poisson(1, lambda),
   cpp = list(density = "poisson", sample = "poisson"))
 
 distr_uniform <- distribution(
   name = "Uniform",
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
+  expr = list(
+    density = quote(if (x < min || x > max) -Inf else -log(b - a)),
+    mean = quote((b - a) / 2)),
   sample = function(rng, min, max) rng$uniform(1, min, max),
   domain = function(min, max) {
     c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)

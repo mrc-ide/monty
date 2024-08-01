@@ -3,6 +3,7 @@ test_that("Can run high level dsl function", {
   expect_s3_class(m, "mcstate_model")
   expect_equal(m$density(0), dnorm(0, 0, 1, log = TRUE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
+  expect_equal(m$gradient(0), 0)
 })
 
 
@@ -15,6 +16,8 @@ test_that("can generate model with simple assignment", {
   expect_s3_class(m, "mcstate_model")
   expect_equal(m$density(0), dnorm(0, 5, 1, log = TRUE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
+  expect_equal(m$gradient(0), 5)
+  expect_equal(m$gradient(2), 3)
 })
 
 
