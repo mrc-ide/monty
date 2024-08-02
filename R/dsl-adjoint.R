@@ -89,7 +89,7 @@ adjoint_create <- function(exprs, parameters, prefix_adjoint) {
   keep <- nms_gradient
   for (i in rev(names(adj))) {
     if (i %in% keep) {
-      keep <- union(keep, adj[[i]]$depends)
+      keep <- union(adj[[i]]$depends, keep)
     }
   }
 

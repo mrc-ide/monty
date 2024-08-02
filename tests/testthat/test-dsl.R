@@ -117,3 +117,27 @@ test_that("handle failure to create gradient function", {
   expect_false(m3$properties$has_gradient)
   expect_null(m3$gradient)
 })
+
+
+test_that("can compute gradients of complicated models", {
+  m <- mcstate_dsl({
+    a ~ Normal(0, 1)
+    x <- a^2
+    b ~ Exponential(2)
+    c ~ Normal(x, b)
+  })
+
+  expect_equal(m$parameters, c("a", "b", "c"))
+  expect_true(m$properties$has_gradient)
+
+  p <- c(-.8, 0.03, 0.7)
+
+  ## Silly density:
+  expect_equal(
+    m$density(p),
+    dnorm(p[[1]], 0, 1, log = TRUE) +
+    dexp(p[[2]], 2, log = TRUE) +
+    dnorm(p[[3]], p[[1]]^2, p[[2]], log = TRUE))
+
+  expect_equal(m$gradient(p), numDeriv::grad(m$density, p))
+})
