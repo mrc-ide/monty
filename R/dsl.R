@@ -48,12 +48,13 @@ mcstate_dsl <- function(x, type = NULL, gradient = NULL) {
   }
   call <- environment()
   exprs <- dsl_preprocess(x, type, call)
-  dat <- dsl_parse(exprs, call)
-  dsl_generate(dat, gradient_required = gradient)
+  dat <- dsl_parse(exprs, gradient, call)
+  dsl_generate(dat)
 }
 
 
-mcstate_dsl_parse <- function(x, type = NULL) {
+
+mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -61,8 +62,8 @@ mcstate_dsl_parse <- function(x, type = NULL) {
   } else {
     x <- rlang::quo_get_expr(quo)
   }
-  exprs <- dsl_preprocess(x, type)
-  dsl_parse(exprs, call)
+  exprs <- dsl_preprocess(x, type, call)
+  dsl_parse(exprs, gradient, call)
 }
 
 

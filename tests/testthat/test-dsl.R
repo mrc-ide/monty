@@ -101,19 +101,20 @@ test_that("can prevent creation of gradient function", {
 
 test_that("handle failure to create gradient function", {
   code <- "a ~ Normal(0, 1)\nb ~ Normal(trigamma(a), 1)"
-  m1 <- mcstate_dsl(code, gradient = FALSE)
+  expect_no_warning(m1 <- mcstate_dsl(code, gradient = FALSE))
   expect_false(m1$properties$has_gradient)
   expect_null(m1$gradient)
 
   err <- expect_error(
     mcstate_dsl(code, gradient = TRUE),
-    "Failed to generate gradient function for this model")
+    "Failed to differentiate this model")
   expect_s3_class(err$parent, "mcstate_differentiation_failure")
 
   w <- expect_warning(
     m3 <- mcstate_dsl(code, gradient = NULL),
-    "Failed to compute gradient for this model")
-  expect_s3_class(w$parent, "mcstate_differentiation_failure")
+    "Not creating a gradient function for this model")
+  expect_s3_class(w$parent, "mcstate2_parse_error")
+  expect_s3_class(w$parent$parent, "mcstate_differentiation_failure")
   expect_false(m3$properties$has_gradient)
   expect_null(m3$gradient)
 })

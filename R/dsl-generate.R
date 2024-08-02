@@ -1,10 +1,10 @@
-dsl_generate <- function(dat, gradient_required) {
+dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("mcstate2"))
   env$packer <- mcstate_packer(dat$parameters)
 
   density <- dsl_generate_density(dat, env)
   direct_sample <- dsl_generate_direct_sample(dat, env)
-  gradient <- dsl_generate_gradient(dat, env, gradient_required)
+  gradient <- dsl_generate_gradient(dat, env)
   domain <- dsl_generate_domain(dat)
   mcstate_model(
     list(parameters = dat$parameters,
@@ -26,31 +26,17 @@ dsl_generate_density <- function(dat, env) {
 }
 
 
-dsl_generate_gradient <- function(dat, env, required) {
-  if (isFALSE(required)) {
-    return(NULL)
-  }
-  exprs <- adjoint_rewrite_stochastic(dat$exprs, dat$parameters, "__density_")
-  adjoint <- tryCatch(
-    adjoint_create(exprs, dat$parameters, "__adjoint_"),
-    mcstate_differentiation_failure = identity)
-  if (inherits(adjoint, "mcstate_differentiation_failure")) {
-    if (isTRUE(required)) {
-      cli::cli_abort("Failed to generate gradient function for this model",
-                     parent = adjoint)
-    } else {
-      cli::cli_warn(
-        c("Failed to compute gradient for this model",
-          i = paste("Pass 'gradient = FALSE' to disable creating the",
-                    "gradient function, which will disable this warning")),
-        parent = adjoint)
-    }
+dsl_generate_gradient <- function(dat, env) {
+  if (is.null(dat$adjoint)) {
     return(NULL)
   }
 
-  eqs <- lapply(adjoint$exprs, dsl_generate_assignment, quote(data))
+  i_main <- match(dat$adjoint$exprs_main, vcapply(dat$exprs, "[[", "name"))
+  exprs <- c(dat$exprs[i_main], dat$adjoint$exprs)
+
+  eqs <- lapply(exprs, dsl_generate_assignment, quote(data))
   eq_return <- fold_c(
-    lapply(adjoint$gradient, function(nm) call("[[", quote(data), nm)))
+    lapply(dat$adjoint$gradient, function(nm) call("[[", quote(data), nm)))
 
   body <- c(quote(data <- packer$unpack(x)),
             unname(eqs),

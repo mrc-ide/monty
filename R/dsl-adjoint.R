@@ -1,3 +1,30 @@
+dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
+  if (isFALSE(required)) {
+    return(NULL)
+  }
+  exprs <- adjoint_rewrite_stochastic(parameters, exprs)
+  rlang::try_fetch(
+    adjoint_create(parameters, exprs),
+    mcstate2_parse_error = function(e) {
+      if (is.null(required)) {
+        ## TODO: this might change as #52 is merged, to print slightly
+        ## more nicely.  At present we need one extra parent on this
+        ## than ideal because otherwise we don't get the contextual
+        ## information about the differentiation failure attached to
+        ## the warning.
+        cli::cli_warn(
+          c("Not creating a gradient function for this model",
+            i = paste("Pass 'gradient = FALSE' to disable creating the",
+                      "gradient function, which will disable this warning")),
+          parent = e)
+        NULL
+      } else {
+        rlang::zap() # not handling this, throw it anyway.
+      }
+    })
+}
+
+
 ## The first step is to rewrite our equations of the form
 ##
 ## > a ~ Normal(mu, sd)
@@ -14,7 +41,8 @@
 ## densities.
 ##
 ## > __density_a + __density_b + ... + __density_n
-adjoint_rewrite_stochastic <- function(exprs, parameters, prefix_density) {
+adjoint_rewrite_stochastic <- function(parameters, exprs) {
+  prefix_density <- "__density"
   f <- function(eq) {
     if (eq$type == "assignment") {
       eq
@@ -28,7 +56,8 @@ adjoint_rewrite_stochastic <- function(exprs, parameters, prefix_density) {
            name = name,
            depends = c(eq$name, eq$depends),
            rhs = rhs,
-           expr = call("<-", as.name(name), rhs))
+           expr = call("<-", as.name(name), rhs),
+           original = eq)
     }
   }
 
@@ -44,11 +73,9 @@ adjoint_rewrite_stochastic <- function(exprs, parameters, prefix_density) {
 
 
 ## This step builds the adjoint system by working backwards through
-## the set of equations.  The result will be a list of adjoint
-## equations.
-adjoint_create <- function(exprs, parameters, prefix_adjoint) {
-  ## Collect all the dependencies, we'll go through this list quite
-  ## few times
+## the set of equations.
+adjoint_create <- function(parameters, exprs, call = NULL) {
+  prefix_adjoint <- "__adjoint_"
   deps <- lapply(exprs, function(e) e$depends)
 
   ## Adjoint expressions will be collected here:
@@ -61,12 +88,30 @@ adjoint_create <- function(exprs, parameters, prefix_adjoint) {
     if (is.numeric(value)) value else as.name(nm)
   }
 
+  ## Helper to make the loop below easier to understand.  This helps
+  ## by throwing an error that contains information about the source
+  ## line that caused the differentiation failure, rather than just
+  ## the generic information about which function failed to be
+  ## differentiated.
+  differentiate_or_rethrow <- function(eq, nm) {
+    rlang::try_fetch(
+      differentiate(eq$rhs, nm),
+      mcstate_differentiation_failure = function(e) {
+        expr <- (eq$original %||% eq)$expr
+        dsl_parse_error("Failed to differentiate this model",
+                        expr, call = call, parent = e)
+      })
+  }
+
+  ## We accumulate adjoint expressions and values in adj and look them
+  ## up as we go, so this is a sequential loop rather than something
+  ## we can lapply over
   for (nm in c(rev(names(exprs)), parameters)) {
     if (nzchar(nm)) {
       i <- vlapply(deps, function(x) any(nm %in% x))
       parts <- lapply(exprs[i], function(eq) {
         maths$times(lookup_or_value(paste0(prefix_adjoint, eq$name)),
-                    differentiate(eq$rhs, nm))
+                    differentiate_or_rethrow(eq, nm))
       })
       rhs <- maths$plus_fold(parts)
     } else {
@@ -93,7 +138,14 @@ adjoint_create <- function(exprs, parameters, prefix_adjoint) {
     }
   }
 
-  list(exprs = c(exprs[intersect(keep, names(exprs))],
-                 adj[intersect(keep, names(adj))]),
+  ## The names here are not great, and are subject to change, but
+  ## 'exprs_main' is the *names* of the equations in the main model,
+  ## while 'exprs' are the values of the expressions in the adjoint
+  ## model.
+  nms_main <- intersect(keep, names(exprs))
+  nms_adj <- intersect(keep, names(adj))
+
+  list(exprs_main = nms_main,
+       exprs = adj[nms_adj],
        gradient = nms_gradient)
 }
