@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-`mcstate2` includes simple a probabilistic programming language DSL that is inspired by `stan` and Statistical Rethinking.  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in future.  In particular we do not expect the DSL to be useful in writing likelihood functions for comparison to data; we expect that if your model is simple enough for this you would be better off using `stan` or some similarly flexible system.
+`mcstate2` includes a simple probabilistic domain-specific language (DSL) that is inspired by `stan` and [Statistical Rethinking](https://xcelab.net/rm/).  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in the future.  In particular we do not expect the DSL to be useful in writing likelihood functions for comparison to data; we expect that if your model is simple enough for this you would be better off using `stan` or some similarly flexible system.
 
 ```{r}
 library(mcstate2)
