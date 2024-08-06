@@ -3,7 +3,7 @@
 ##' The idea is that if you see an error you can link through to get
 ##' more information on what it means and how to resolve it.  The
 ##' current implementation of this will send you to the rendered
-##' vignettes, but in future we will arrange for offline rendering
+##' vignettes, but in the future we will arrange for offline rendering
 ##' too.
 ##'
 ##' @title Explain mcstate2 error
@@ -16,7 +16,7 @@
 ##' @export
 mcstate_dsl_error_explain <- function(code) {
   ## See odin2 for the canonical implementation of this, we're just
-  ## shaddowing it here really as our dsl is much simpler.  Note that
+  ## shadowing it here really as our dsl is much simpler.  Note that
   ## error codes from mcstate are three numbers long, whereas they are
   ## four long in odin so that it's easy (for us) to tell who the
   ## error belongs to.
