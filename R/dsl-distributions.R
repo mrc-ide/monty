@@ -54,7 +54,7 @@ distr_binomial <- distribution(
     density = quote(lchoose(size, x) + x * log(prob) +
                     (size - x) * log(1 - prob)),
     mean = quote(size * prob)),
-  cpp = list(density = NULL, sample = "binomial"))
+  cpp = list(density = "binomial", sample = "binomial"))
 
 distr_exponential_rate <- distribution(
   name = "Exponential",
@@ -83,7 +83,7 @@ distr_gamma_rate <- distribution(
   variant = "rate",
   density = function(x, shape, rate) dgamma(x, shape, rate = rate, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, shape, rate) rng$gamma(1, shape, 1 / rate),
+  sample = function(rng, shape, rate) rng$gamma_rate(1, shape, rate),
   expr = list(
     density = quote((shape - 1) * log(x) - rate * x -
                     lgamma(shape) + shape * log(rate)),
@@ -97,7 +97,7 @@ distr_gamma_scale <- distribution(
     dgamma(x, shape, scale = scale, log = TRUE)
   },
   domain = c(0, Inf),
-  sample = function(rng, shape, scale) rng$gamma(1, shape, scale),
+  sample = function(rng, shape, scale) rng$gamma_scale(1, shape, scale),
   expr = list(
     density = quote((shape - 1) * log(x) - x / scale -
                     lgamma(shape) - shape * log(scale)),

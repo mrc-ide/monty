@@ -48,8 +48,12 @@ mcstate_rng_hypergeometric <- function(ptr, n, r_n1, r_n2, r_k, n_threads, is_fl
   .Call(`_mcstate2_mcstate_rng_hypergeometric`, ptr, n, r_n1, r_n2, r_k, n_threads, is_float)
 }
 
-mcstate_rng_gamma <- function(ptr, n, r_a, r_b, n_threads, is_float) {
-  .Call(`_mcstate2_mcstate_rng_gamma`, ptr, n, r_a, r_b, n_threads, is_float)
+mcstate_rng_gamma_scale <- function(ptr, n, r_shape, r_scale, n_threads, is_float) {
+  .Call(`_mcstate2_mcstate_rng_gamma_scale`, ptr, n, r_shape, r_scale, n_threads, is_float)
+}
+
+mcstate_rng_gamma_rate <- function(ptr, n, r_shape, r_rate, n_threads, is_float) {
+  .Call(`_mcstate2_mcstate_rng_gamma_rate`, ptr, n, r_shape, r_rate, n_threads, is_float)
 }
 
 mcstate_rng_poisson <- function(ptr, n, r_lambda, n_threads, is_float) {

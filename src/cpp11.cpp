@@ -92,10 +92,17 @@ extern "C" SEXP _mcstate2_mcstate_rng_hypergeometric(SEXP ptr, SEXP n, SEXP r_n1
   END_CPP11
 }
 // random.cpp
-cpp11::sexp mcstate_rng_gamma(SEXP ptr, int n, cpp11::doubles r_a, cpp11::doubles r_b, int n_threads, bool is_float);
-extern "C" SEXP _mcstate2_mcstate_rng_gamma(SEXP ptr, SEXP n, SEXP r_a, SEXP r_b, SEXP n_threads, SEXP is_float) {
+cpp11::sexp mcstate_rng_gamma_scale(SEXP ptr, int n, cpp11::doubles r_shape, cpp11::doubles r_scale, int n_threads, bool is_float);
+extern "C" SEXP _mcstate2_mcstate_rng_gamma_scale(SEXP ptr, SEXP n, SEXP r_shape, SEXP r_scale, SEXP n_threads, SEXP is_float) {
   BEGIN_CPP11
-    return cpp11::as_sexp(mcstate_rng_gamma(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_b), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+    return cpp11::as_sexp(mcstate_rng_gamma_scale(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_scale), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// random.cpp
+cpp11::sexp mcstate_rng_gamma_rate(SEXP ptr, int n, cpp11::doubles r_shape, cpp11::doubles r_rate, int n_threads, bool is_float);
+extern "C" SEXP _mcstate2_mcstate_rng_gamma_rate(SEXP ptr, SEXP n, SEXP r_shape, SEXP r_rate, SEXP n_threads, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(mcstate_rng_gamma_rate(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_rate), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
   END_CPP11
 }
 // random.cpp
@@ -163,7 +170,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mcstate2_mcstate_rng_cauchy",           (DL_FUNC) &_mcstate2_mcstate_rng_cauchy,           6},
     {"_mcstate2_mcstate_rng_exponential_mean", (DL_FUNC) &_mcstate2_mcstate_rng_exponential_mean, 5},
     {"_mcstate2_mcstate_rng_exponential_rate", (DL_FUNC) &_mcstate2_mcstate_rng_exponential_rate, 5},
-    {"_mcstate2_mcstate_rng_gamma",            (DL_FUNC) &_mcstate2_mcstate_rng_gamma,            6},
+    {"_mcstate2_mcstate_rng_gamma_rate",       (DL_FUNC) &_mcstate2_mcstate_rng_gamma_rate,       6},
+    {"_mcstate2_mcstate_rng_gamma_scale",      (DL_FUNC) &_mcstate2_mcstate_rng_gamma_scale,      6},
     {"_mcstate2_mcstate_rng_hypergeometric",   (DL_FUNC) &_mcstate2_mcstate_rng_hypergeometric,   7},
     {"_mcstate2_mcstate_rng_jump",             (DL_FUNC) &_mcstate2_mcstate_rng_jump,             2},
     {"_mcstate2_mcstate_rng_long_jump",        (DL_FUNC) &_mcstate2_mcstate_rng_long_jump,        2},

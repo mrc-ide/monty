@@ -188,6 +188,7 @@ __host__ __device__ T exponential_rate(T x, T rate, bool log) {
   return maybe_log(mcstate::math::log(rate) - rate * x, log);
 }
 
+// TODO: rename as scale
 template <typename T>
 __host__ __device__ T exponential_mean(T x, T mean, bool log) {
 #ifndef __CUDA_ARCH__
@@ -197,7 +198,27 @@ __host__ __device__ T exponential_mean(T x, T mean, bool log) {
   return maybe_log(-mcstate::math::log(mean) - x / mean, log);
 }
 
+template <typename T>
+__host__ __device__ T gamma_rate(T x, T shape, T rate, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "gamma should only be used with real types");
+#endif
+  const auto ret = (shape - 1) * mcstate::math::log(x) - rate * x -
+    random::utils::lgamma(shape) + shape * mcstate::math::log(rate);
+  return maybe_log(ret, log);
+}
 
+template <typename T>
+__host__ __device__ T gamma_scale(T x, T shape, T scale, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "gamma should only be used with real types");
+#endif
+  const auto ret = (shape - 1) * mcstate::math::log(x) - x / scale -
+    random::utils::lgamma(shape) - shape * mcstate::math::log(scale);
+  return maybe_log(ret, log);
+}
 
 
 }

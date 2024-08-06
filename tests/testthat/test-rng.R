@@ -1264,7 +1264,7 @@ test_that("gamma for a = 1 is the same as exponential", {
   n <- 10
   b <- 3
 
-  gamma <- rng1$gamma(n, 1, b)
+  gamma <- rng1$gamma_scale(n, 1, b)
   exp <- rng2$exponential_rate(n, 1 / b)
 
   expect_equal(gamma, exp)
@@ -1277,28 +1277,28 @@ test_that("can draw gamma random numbers", {
   b <- 3
   n <- 10000000
 
-  ans1 <- mcstate_rng$new(1)$gamma(n, a, b)
-  ans2 <- mcstate_rng$new(1)$gamma(n, a, b)
+  ans1 <- mcstate_rng$new(1)$gamma_scale(n, a, b)
+  ans2 <- mcstate_rng$new(1)$gamma_scale(n, a, b)
   expect_identical(ans1, ans2)
 
   expect_equal(mean(ans1), a * b, tolerance = 1e-3)
   expect_equal(var(ans1), a * b^2, tolerance = 1e-3)
 
-  ans_f <- mcstate_rng$new(1, real_type = "float")$gamma(n, a, b)
+  ans_f <- mcstate_rng$new(1, real_type = "float")$gamma_scale(n, a, b)
   expect_equal(mean(ans_f), a * b, tolerance = 1e-3)
   expect_equal(var(ans_f), a * b^2, tolerance = 1e-3)
 
   ## when a < 1
   a <- 0.5
 
-  ans3 <- mcstate_rng$new(1)$gamma(n, a, b)
-  ans4 <- mcstate_rng$new(1)$gamma(n, a, b)
+  ans3 <- mcstate_rng$new(1)$gamma_scale(n, a, b)
+  ans4 <- mcstate_rng$new(1)$gamma_scale(n, a, b)
   expect_identical(ans3, ans4)
 
   expect_equal(mean(ans3), a * b, tolerance = 1e-3)
   expect_equal(var(ans3), a * b^2, tolerance = 1e-3)
 
-  ans_f <- mcstate_rng$new(1, real_type = "float")$gamma(n, a, b)
+  ans_f <- mcstate_rng$new(1, real_type = "float")$gamma_scale(n, a, b)
   expect_equal(mean(ans_f), a * b, tolerance = 1e-3)
   expect_equal(var(ans_f), a * b^2, tolerance = 1e-3)
 })
@@ -1314,9 +1314,9 @@ test_that("deterministic gamma returns mean", {
   state_f <- rng_f$state()
   state_d <- rng_d$state()
 
-  expect_equal(rng_f$gamma(n_reps, a, b), a * b,
+  expect_equal(rng_f$gamma_scale(n_reps, a, b), a * b,
                tolerance = 1e-6)
-  expect_equal(rng_d$gamma(n_reps, a, b), a * b)
+  expect_equal(rng_d$gamma_scale(n_reps, a, b), a * b)
 
   expect_equal(rng_f$state(), state_f)
   expect_equal(rng_d$state(), state_d)
@@ -1325,14 +1325,14 @@ test_that("deterministic gamma returns mean", {
 
 test_that("gamma random numbers prevent bad inputs", {
   r <- mcstate_rng$new(1)
-  expect_equal(r$gamma(1, 0, 0), 0)
-  expect_equal(r$gamma(1, Inf, Inf), Inf)
+  expect_equal(r$gamma_scale(1, 0, 0), 0)
+  expect_equal(r$gamma_scale(1, Inf, Inf), Inf)
 
   expect_error(
-    r$gamma(1, -1.1, 5.1),
+    r$gamma_scale(1, -1.1, 5.1),
     "Invalid call to gamma with shape = -1.1, scale = 5.1")
   expect_error(
-    r$gamma(1, 5.1, -1.1),
+    r$gamma_scale(1, 5.1, -1.1),
     "Invalid call to gamma with shape = 5.1, scale = -1.1")
 })
 
