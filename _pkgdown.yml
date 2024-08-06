@@ -13,6 +13,7 @@ reference:
   - title: Domain specific language
     contents:
       - mcstate_dsl
+      - mcstate_differentiation
       - dsl-distributions
 
   - subtitle: Advanced
