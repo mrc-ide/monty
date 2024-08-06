@@ -39,12 +39,12 @@
 ##'   `plus_fold`.
 ##'
 ##' We will expand this soon to advertise what functions we are able
-##' to differentiate to allow programmes to fail fast.
+##' to differentiate to allow programs to fail fast.
 ##'
 ##' @export
 mcstate_differentiation <- function() {
   ## TODO: we might want to export a stripped down copy of maths
-  ## perhaps.  We
+  ## perhaps.
   list(differentiate = differentiate,
        maths = maths)
 }
