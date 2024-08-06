@@ -14,6 +14,7 @@ reference:
     contents:
       - mcstate_dsl
       - mcstate_dsl_error_explain
+      - mcstate_differentiation
       - dsl-distributions
 
   - subtitle: Advanced
