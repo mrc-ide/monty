@@ -104,7 +104,7 @@ real_type gamma(rng_state_type& rng_state, real_type shape, real_type scale) {
   }
 
   if (shape == 1) {
-    return exponential(rng_state, 1 / scale);
+    return exponential_mean(rng_state, scale);
   }
 
   return gamma_large<real_type>(rng_state, shape) * scale;

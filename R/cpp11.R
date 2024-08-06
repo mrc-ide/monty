@@ -24,8 +24,12 @@ mcstate_rng_uniform <- function(ptr, n, r_min, r_max, n_threads, is_float) {
   .Call(`_mcstate2_mcstate_rng_uniform`, ptr, n, r_min, r_max, n_threads, is_float)
 }
 
-mcstate_rng_exponential <- function(ptr, n, r_rate, n_threads, is_float) {
-  .Call(`_mcstate2_mcstate_rng_exponential`, ptr, n, r_rate, n_threads, is_float)
+mcstate_rng_exponential_rate <- function(ptr, n, r_rate, n_threads, is_float) {
+  .Call(`_mcstate2_mcstate_rng_exponential_rate`, ptr, n, r_rate, n_threads, is_float)
+}
+
+mcstate_rng_exponential_mean <- function(ptr, n, r_mean, n_threads, is_float) {
+  .Call(`_mcstate2_mcstate_rng_exponential_mean`, ptr, n, r_mean, n_threads, is_float)
 }
 
 mcstate_rng_normal <- function(ptr, n, r_mean, r_sd, n_threads, algorithm, is_float) {

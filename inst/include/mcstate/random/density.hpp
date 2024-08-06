@@ -179,5 +179,26 @@ __host__ __device__ T poisson(int x, T lambda, bool log) {
   return maybe_log(ret, log);
 }
 
+template <typename T>
+__host__ __device__ T exponential_rate(T x, T rate, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "exponential should only be used with real types");
+#endif
+  return maybe_log(mcstate::math::log(rate) - rate * x, log);
+}
+
+template <typename T>
+__host__ __device__ T exponential_mean(T x, T mean, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "exponential should only be used with real types");
+#endif
+  return maybe_log(-mcstate::math::log(mean) - x / mean, log);
+}
+
+
+
+
 }
 }

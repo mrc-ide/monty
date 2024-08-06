@@ -108,7 +108,10 @@
 ##' rng$poisson(5, 2)
 ##'
 ##' # Exponentially distributed random numbers with rate
-##' rng$exponential(5, 2)
+##' rng$exponential_rate(5, 2)
+##'
+##' # Exponentially distributed random numbers with mean
+##' rng$exponential_mean(5, 0.5)
 ##'
 ##' # Multinomial distributed random numbers with size and vector of
 ##' # probabiltiies prob
@@ -333,8 +336,21 @@ mcstate_rng <- R6::R6Class(
     ##' @param rate The rate of the exponential
     ##'
     ##' @param n_threads Number of threads to use; see Details
-    exponential = function(n, rate, n_threads = 1L) {
-      mcstate_rng_exponential(private$ptr, n, rate, n_threads, private$float)
+    exponential_rate = function(n, rate, n_threads = 1L) {
+      mcstate_rng_exponential_rate(private$ptr, n, rate, n_threads,
+                                   private$float)
+    },
+
+    ##' @description Generate `n` numbers from a exponential distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param mean The mean of the exponential
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    exponential_mean = function(n, mean, n_threads = 1L) {
+      mcstate_rng_exponential_mean(private$ptr, n, mean, n_threads,
+                                   private$float)
     },
 
     ##' @description Generate `n` draws from a Cauchy distribution.

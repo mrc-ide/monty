@@ -323,7 +323,7 @@ test_that("Prevent unknown normal algorithms", {
 test_that("rexp agrees with stats::rexp", {
   n <- 100000
   rate <- 0.04
-  ans <- mcstate_rng$new(2)$exponential(n, rate)
+  ans <- mcstate_rng$new(2)$exponential_rate(n, rate)
   expect_equal(mean(ans), 1 / rate, tolerance = 1e-2)
   expect_equal(var(ans), 1 / rate^2, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pexp", rate)$p.value, 0.1)
@@ -658,7 +658,7 @@ test_that("std uniform random numbers from floats have correct distribution", {
 test_that("exponential random numbers from floats have correct distribution", {
   n <- 100000
   rate <- 4
-  yf <- mcstate_rng$new(1, real_type = "float")$exponential(n, rate)
+  yf <- mcstate_rng$new(1, real_type = "float")$exponential_rate(n, rate)
   expect_equal(mean(yf), 1 / rate, tolerance = 1e-2)
   expect_equal(var(yf), 1 / rate^2, tolerance = 5e-2)
   expect_gt(suppressWarnings(ks.test(yf, "pexp", rate)$p.value), 0.1)
@@ -956,8 +956,8 @@ test_that("deterministic rexp returns mean", {
   rng_d <- mcstate_rng$new(1, real_type = "double", deterministic = TRUE)
   state_f <- rng_f$state()
   state_d <- rng_d$state()
-  expect_equal(rng_f$exponential(m, rate), 1 / rate, tolerance = 1e-6)
-  expect_equal(rng_d$exponential(m, rate), 1 / rate)
+  expect_equal(rng_f$exponential_rate(m, rate), 1 / rate, tolerance = 1e-6)
+  expect_equal(rng_d$exponential_rate(m, rate), 1 / rate)
   expect_equal(rng_f$state(), state_f)
   expect_equal(rng_d$state(), state_d)
 })
@@ -1265,7 +1265,7 @@ test_that("gamma for a = 1 is the same as exponential", {
   b <- 3
 
   gamma <- rng1$gamma(n, 1, b)
-  exp <- rng2$exponential(n, 1 / b)
+  exp <- rng2$exponential_rate(n, 1 / b)
 
   expect_equal(gamma, exp)
 })
@@ -1423,4 +1423,11 @@ test_that("can fetch rng state", {
   expect_false(is.null(get_r_rng_state()))
   rm(list = ".Random.seed", envir = .GlobalEnv)
   expect_true(is.null(get_r_rng_state()))
+})
+
+
+test_that("exponential by mean agrees with rate", {
+  ans1 <- mcstate_rng$new(1)$exponential_rate(100, 0.5)
+  ans2 <- mcstate_rng$new(1)$exponential_mean(100, 2)
+  expect_equal(ans1, ans2)
 })

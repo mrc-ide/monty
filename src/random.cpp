@@ -208,8 +208,8 @@ cpp11::sexp mcstate_rng_uniform(SEXP ptr, int n,
 }
 
 template <typename real_type, typename T>
-cpp11::sexp mcstate_rng_exponential(SEXP ptr, int n, cpp11::doubles r_rate,
-                                 int n_threads) {
+cpp11::sexp mcstate_rng_exponential_rate(SEXP ptr, int n, cpp11::doubles r_rate,
+                                         int n_threads) {
   T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
@@ -227,13 +227,40 @@ cpp11::sexp mcstate_rng_exponential(SEXP ptr, int n, cpp11::doubles r_rate,
     auto rate_i = rate_vary.generator ? rate + rate_vary.offset * i : rate;
     for (size_t j = 0; j < (size_t)n; ++j) {
       auto rate_ij = rate_vary.draw ? rate_i[j] : rate_i[0];
-      y_i[j] = mcstate::random::exponential<real_type>(state, rate_ij);
+      y_i[j] = mcstate::random::exponential_rate<real_type>(state, rate_ij);
     }
   }
 
   return sexp_matrix(ret, n, n_streams);
 }
 
+
+template <typename real_type, typename T>
+cpp11::sexp mcstate_rng_exponential_mean(SEXP ptr, int n, cpp11::doubles r_mean,
+                                         int n_threads) {
+  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  const int n_streams = rng->size();
+  cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
+  double * y = REAL(ret);
+
+  const double * mean = REAL(r_mean);
+  auto mean_vary = check_input_type(r_mean, n, n_streams, "mean");
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) num_threads(n_threads)
+#endif
+  for (int i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    auto y_i = y + n * i;
+    auto mean_i = mean_vary.generator ? mean + mean_vary.offset * i : mean;
+    for (size_t j = 0; j < (size_t)n; ++j) {
+      auto mean_ij = mean_vary.draw ? mean_i[j] : mean_i[0];
+      y_i[j] = mcstate::random::exponential_mean<real_type>(state, mean_ij);
+    }
+  }
+
+  return sexp_matrix(ret, n, n_streams);
+}
 
 template <typename real_type, mcstate::random::algorithm::normal A, typename T>
 cpp11::sexp mcstate_rng_normal(SEXP ptr, int n,
@@ -648,12 +675,21 @@ cpp11::sexp mcstate_rng_uniform(SEXP ptr, int n,
 }
 
 [[cpp11::register]]
-cpp11::sexp mcstate_rng_exponential(SEXP ptr, int n, cpp11::doubles r_rate,
-                                 int n_threads,
-                                 bool is_float) {
+cpp11::sexp mcstate_rng_exponential_rate(SEXP ptr, int n, cpp11::doubles r_rate,
+                                         int n_threads,
+                                         bool is_float) {
   return is_float ?
-    mcstate_rng_exponential<float, default_rng32>(ptr, n, r_rate, n_threads) :
-    mcstate_rng_exponential<double, default_rng64>(ptr, n, r_rate, n_threads);
+    mcstate_rng_exponential_rate<float, default_rng32>(ptr, n, r_rate, n_threads) :
+    mcstate_rng_exponential_rate<double, default_rng64>(ptr, n, r_rate, n_threads);
+}
+
+[[cpp11::register]]
+cpp11::sexp mcstate_rng_exponential_mean(SEXP ptr, int n, cpp11::doubles r_mean,
+                                         int n_threads,
+                                         bool is_float) {
+  return is_float ?
+    mcstate_rng_exponential_mean<float, default_rng32>(ptr, n, r_mean, n_threads) :
+    mcstate_rng_exponential_mean<double, default_rng64>(ptr, n, r_mean, n_threads);
 }
 
 [[cpp11::register]]

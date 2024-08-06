@@ -61,22 +61,22 @@ distr_exponential_rate <- distribution(
   variant = "rate",
   density = function(x, rate) dexp(x, rate, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, rate) rng$exponential(1, rate),
+  sample = function(rng, rate) rng$exponential_rate(1, rate),
   expr = list(
     density = quote(log(rate) - rate * x),
     mean = quote(1 / rate)),
-  cpp = list(density = NULL, sample = "exponential"))
+  cpp = list(density = "exponential_rate", sample = "exponential_rate"))
 
 distr_exponential_mean <- distribution(
   name = "Exponential",
   variant = "mean",
   density = function(x, mean) dexp(x, 1 / mean, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, mean) rng$exponential(1, 1 / mean),
+  sample = function(rng, mean) rng$exponential_mean(1, mean),
   expr = list(
     density = quote(-log(mean) - x / mean),
     mean = quote(mean)),
-  cpp = list(density = NULL, sample = NULL))
+  cpp = list(density = "exponential_mean", sample = "exponential_mean"))
 
 distr_gamma_rate <- distribution(
   name = "Gamma",
