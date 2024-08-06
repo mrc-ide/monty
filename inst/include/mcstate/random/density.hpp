@@ -242,5 +242,16 @@ __host__ __device__ T hypergeometric(T x, T n1, T n2, T k, bool log) {
   return maybe_log(ret, log);
 }
 
+template <typename T>
+__host__ __device__ T beta(T x, T a, T b, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "beta should only be used with real types");
+#endif
+  const auto ret = (a - 1) * mcstate::math::log(x) +
+    (b - 1) * mcstate::math::log(1 - x) - lbeta(a, b);
+  return maybe_log(ret, log);
+}
+
 }
 }

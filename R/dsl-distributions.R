@@ -44,6 +44,15 @@ distribution <- function(name, density, domain, cpp, expr,
        cpp = cpp)
 }
 
+distr_beta <- distribution(
+  name = "Beta",
+  density = function(x, a, b) dbeta(x, a, b, log = TRUE),
+  domain = c(0, 1),
+  sample = function(rng, a, b) rng$beta(1, a, b),
+  expr = list(
+    density = quote((a - 1) * log(x) + (b - 1) * log(1 - x) - lbeta(a, b)),
+    mean = quote(a / (a + b))),
+  cpp = list(density = "beta", sample = "beta"))
 
 distr_binomial <- distribution(
   name = "Binomial",
@@ -148,11 +157,13 @@ distr_uniform <- distribution(
 
 dsl_distributions <- local({
   d <- list(
+    distr_beta,
     distr_binomial,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,
     distr_gamma_rate,
     distr_gamma_scale,
+    distr_hypergeometric,
     distr_normal,
     distr_poisson,
     distr_uniform)
