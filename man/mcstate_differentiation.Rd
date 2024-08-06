@@ -18,7 +18,7 @@ bits on here are the function elements \code{times}, \code{plus} and
 }
 
 We will expand this soon to advertise what functions we are able
-to differentiate to allow programmes to fail fast.
+to differentiate to allow programs to fail fast.
 }
 \description{
 Differentiate expressions in the mcstate dsl.  This function is
