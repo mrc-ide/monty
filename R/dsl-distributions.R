@@ -48,7 +48,7 @@ distribution <- function(name, density, domain, cpp, expr,
 distr_binomial <- distribution(
   name = "Binomial",
   density = function(x, size, prob) dbinom(x, size, prob, log = TRUE),
-  domain = c(0, Inf),
+  domain = c(0, Inf), # size?
   sample = function(rng, size, prob) rng$binomial(1, size, prob),
   expr = list(
     density = quote(lchoose(size, x) + x * log(prob) +
@@ -88,7 +88,7 @@ distr_gamma_rate <- distribution(
     density = quote((shape - 1) * log(x) - rate * x -
                     lgamma(shape) + shape * log(rate)),
     mean = quote(shape / rate)),
-  cpp = list(density = NULL, sample = NULL))
+  cpp = list(density = "gamma_rate", sample = "gamma_rate"))
 
 distr_gamma_scale <- distribution(
   name = "Gamma",
@@ -102,7 +102,17 @@ distr_gamma_scale <- distribution(
     density = quote((shape - 1) * log(x) - x / scale -
                     lgamma(shape) - shape * log(scale)),
     mean = quote(shape * scale)),
-  cpp = list(density = NULL, sample = NULL))
+  cpp = list(density = "gamma_scale", sample = "gamma_scale"))
+
+distr_hypergeometric <- distribution(
+  name = "Hypergeometric",
+  density = function(x, m, n, k) dhyper(x, n1, n2, k, log = TRUE),
+  domain = c(0, Inf), # the true version here is quite complex
+  sample = function(rng, n1, n2, k) rng$hypergeometric(1, n1, n2, k),
+  expr = list(
+    density = quote(lchoose(n1, x) + lchoose(n2, k - x) - lchoose(n1 + n2, k)),
+    mean = quote(k * n1 / (n1 + n2))),
+  cpp = list(density = "hypergeometric", sample = "hypergeometric"))
 
 distr_normal <- distribution(
   name = "Normal",
@@ -129,12 +139,12 @@ distr_uniform <- distribution(
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
   sample = function(rng, min, max) rng$uniform(1, min, max),
   expr = list(
-    density = quote(if (x < min || x > max) -Inf else -log(b - a)),
-    mean = quote((b - a) / 2)),
+    density = quote(if (x < min || x > max) -Inf else -log(max - min)),
+    mean = quote((max - min) / 2)),
   domain = function(min, max) {
     c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)
   },
-  cpp = list(density = NULL, sample = "uniform"))
+  cpp = list(density = "uniform", sample = "uniform"))
 
 dsl_distributions <- local({
   d <- list(

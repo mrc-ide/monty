@@ -221,5 +221,26 @@ __host__ __device__ T gamma_scale(T x, T shape, T scale, bool log) {
 }
 
 
+template <typename T>
+__host__ __device__ T uniform(T x, T min, T max, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "uniform should only be used with real types");
+#endif
+  const auto ret = (x < min || x > max) ? 0 : 1 / (max - min);
+  return log ? mcstate::math::log(ret) : ret;
+}
+
+template <typename T>
+__host__ __device__ T hypergeometric(T x, T n1, T n2, T k, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "hypergeometric should only be used with real types");
+#endif
+  const auto ret = lchoose<T>(n1, x) + lchoose<T>(n2, k - x) -
+    lchoose<T>(n1 + n2, k);
+  return maybe_log(ret, log);
+}
+
 }
 }
