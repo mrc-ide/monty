@@ -167,3 +167,9 @@ duplicate_values <- function(x) {
 collapseq <- function(x) {
   paste(squote(x), collapse = ", ")
 }
+
+
+## This is definitely possible with rlang, but I am not sure how.
+substitute_ <- function(expr, env) {
+  eval(substitute(substitute(y, env), list(y = expr)))
+}

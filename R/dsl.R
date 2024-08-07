@@ -15,6 +15,14 @@
 ##'   as `x`.  If given, valid options are `expression`, `text` or
 ##'   `file`.
 ##'
+##' @param gradient Control gradient derivation.  If `NULL` (the
+##'   default) we try and generate a gradient function for your model
+##'   and warn if this is not possible.  If `FALSE`, then we do not
+##'   attempt to construct a gradient function, which prevents a
+##'   warning being generated if this is not possible.  If `TRUE`,
+##'   then we will error if it is not possible to create a gradient
+##'   function.
+##'
 ##' @return A [mcstate_model] object derived from the expressions you
 ##'   provide.
 ##'
@@ -31,7 +39,7 @@
 ##'
 ##' # You can also pass strings
 ##' mcstate_dsl("a ~ Normal(0, 1)")
-mcstate_dsl <- function(x, type = NULL) {
+mcstate_dsl <- function(x, type = NULL, gradient = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
@@ -40,12 +48,13 @@ mcstate_dsl <- function(x, type = NULL) {
   }
   call <- environment()
   exprs <- dsl_preprocess(x, type, call)
-  dat <- dsl_parse(exprs, call)
+  dat <- dsl_parse(exprs, gradient, call)
   dsl_generate(dat)
 }
 
 
-mcstate_dsl_parse <- function(x, type = NULL) {
+
+mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -53,8 +62,8 @@ mcstate_dsl_parse <- function(x, type = NULL) {
   } else {
     x <- rlang::quo_get_expr(quo)
   }
-  exprs <- dsl_preprocess(x, type)
-  dsl_parse(exprs, call)
+  exprs <- dsl_preprocess(x, type, call)
+  dsl_parse(exprs, gradient, call)
 }
 
 

@@ -1,4 +1,5 @@
-dsl_parse <- function(exprs, call) {
+## The default of gradient_required = TRUE here helps with tests
+dsl_parse <- function(exprs, gradient_required = TRUE, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
   dsl_parse_check_duplicates(exprs, call)
@@ -7,7 +8,9 @@ dsl_parse <- function(exprs, call) {
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
-  list(parameters = parameters, exprs = exprs)
+  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
+
+  list(parameters = parameters, exprs = exprs, adjoint = adjoint)
 }
 
 

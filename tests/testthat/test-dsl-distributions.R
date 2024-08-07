@@ -98,7 +98,8 @@ test_that("can sample from uniform distribution", {
 test_that("can create a distribution object", {
   density <- function(x, a, b) NULL
   sample <- function(rng, a, b) NULL
-  d <- distribution("Foo", density, c(1,2), NULL, sample)
+  d <- distribution("Foo", density, c(1,2), cpp = NULL, expr = NULL,
+                    sample = sample)
   expect_equal(
     d,
     list(name = "Foo",
@@ -107,6 +108,7 @@ test_that("can create a distribution object", {
          density = density,
          domain = c(1, 2),
          sample = sample,
+         expr = NULL,
          cpp = NULL))
 })
 
@@ -121,6 +123,7 @@ test_that("can parse a simple distribution call", {
                       density = dsl_distributions$Normal[[1]]$density,
                       domain = c(-Inf, Inf),
                       sample = dsl_distributions$Normal[[1]]$sample,
+                      expr = dsl_distributions$Normal[[1]]$expr,
                       cpp = list(density = "normal", sample = "normal"))))
 
   expect_equal(
