@@ -168,3 +168,8 @@ test_that("report back on failure to match arguments", {
   expect_match(res$error[[3]], "Call should match:")
   expect_match(res$error[[4]], "mean, sd")
 })
+
+
+test_that("can get information about distributions", {
+  expect_identical(mcstate_dsl_distributions(), dsl_distribution_summary)
+})
