@@ -11,13 +11,13 @@ A data.frame with columns
 \itemize{
 \item \code{name} the name of the distribution; each name begins with a
 capital letter, and there are duplicate names where different
-parametrisations are supported.
+parameterisations are supported.
 \item \code{args} the arguments of all parameters, \emph{except} the random
 variable itself which is given as the first argument to density
 functions.
 }
 
-We may expand the output here in future to include information on
+We may expand the output here in the future to include information on
 if distributions have support in C++, but we might end up
 supporting everything this way soon.
 }
