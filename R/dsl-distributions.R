@@ -1,3 +1,29 @@
+##' Report information about supported distributions in the dsl.  This
+##' is primarily intended for use in packages which use
+##' [mcstate_dsl_parse_distribution], as this function reports
+##' information about which distributions and arguments would succeed
+##' there.
+##'
+##' @title Information about supported distributions
+##'
+##' @return A data.frame with columns
+##'
+##' * `name` the name of the distribution; each name begins with a
+##'   capital letter, and there are duplicate names where different
+##'   parameterisations are supported.
+##' * `args` the arguments of all parameters, *except* the random
+##'   variable itself which is given as the first argument to density
+##'   functions.
+##'
+##' We may expand the output here in the future to include information on
+##'   if distributions have support in C++, but we might end up
+##'   supporting everything this way soon.
+##'
+##' @export
+mcstate_dsl_distributions <- function() {
+  dsl_distribution_summary
+}
+
 ## We will expand this later to support differentiation; that might
 ## impact the density calculation depending on how we handle the
 ## symbolic differentiation vs the automatic differentiation.
@@ -121,6 +147,17 @@ dsl_distributions <- local({
     distr_poisson,
     distr_uniform)
   split(d, vapply(d, "[[", "", "name"))
+})
+
+
+## Just compute this once, on build:
+dsl_distribution_summary <- local({
+  dat <- unlist(dsl_distributions, FALSE, FALSE)
+  data.frame(
+    name = vapply(dat, function(x) x$name, ""),
+    args = I(lapply(dat, function(x) names(formals(x$density))[-1])),
+    stringsAsFactors = FALSE,
+    check.names = FALSE)
 })
 
 
