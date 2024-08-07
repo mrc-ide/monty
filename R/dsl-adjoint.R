@@ -99,7 +99,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
       mcstate_differentiation_failure = function(e) {
         expr <- (eq$original %||% eq)$expr
         dsl_parse_error("Failed to differentiate this model",
-                        expr, call = call, parent = e)
+                        "E206", expr, call = call, parent = e)
       })
   }
 

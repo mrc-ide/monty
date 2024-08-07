@@ -121,3 +121,7 @@ a <- 10
 # `E205`
 
 Variables are used out of order.  If you are using odin this is a big departure - at the moment you must declare your expressions (assignments and relationships) in order.  However, because we forbid multiple assignment we may relax this in the future, but no existing programs should be changed.
+
+# `E206`
+
+Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the dsl can currently be differentiated by mcstate2; if you think that yours should be, please let us know.
