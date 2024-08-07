@@ -124,7 +124,7 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
     distr_name <- as.character(expr[[1]])
     error <- c(
       cli::format_inline("Unknown distribution '{distr_name}'"),
-      i = paste("See ?'dsl-distributions' for details on",
+      i = paste("See {.run mcstate2::mcstate_dsl_distributions} for details on",
                 "supported distributions"))
     dym <- near_match(distr_name, names(dsl_distributions))
     if (length(dym) > 0) {
@@ -149,11 +149,3 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
   list(success = TRUE,
        value = value)
 }
-
-
-##' To be described later; this manual page exists so that an error
-##' message makes more sense only, sorry
-##'
-##' @title Supported distributions
-##' @name dsl-distributions
-NULL

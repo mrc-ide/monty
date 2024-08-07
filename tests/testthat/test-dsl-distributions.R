@@ -140,8 +140,8 @@ test_that("report back on failure to match distribution", {
   expect_false(res$success)
   expect_length(res$error, 3)
   expect_equal(res$error[[1]], "Unknown distribution 'Norm'")
-  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
-               fixed = TRUE)
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
   expect_match(res$error[[3]], "Did you mean: 'Normal'?",
                fixed = TRUE)
 })
@@ -152,8 +152,8 @@ test_that("report back on failure to match distribution without suggestion", {
   expect_false(res$success)
   expect_length(res$error, 2)
   expect_equal(res$error[[1]], "Unknown distribution 'Banana'")
-  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
-               fixed = TRUE)
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
 })
 
 

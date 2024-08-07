@@ -7,8 +7,8 @@
 mcstate_dsl_error_explain(code)
 }
 \arguments{
-\item{code}{The error code, as a string, in the form \code{Exxxx} (a
-capital "E" followed by four numbers)}
+\item{code}{The error code, as a string, in the form \code{Exxx} (a
+capital "E" followed by three numbers)}
 }
 \value{
 Nothing, this is called for its side effect only
@@ -19,6 +19,6 @@ and we would like feedback on what is useful as we improve it.
 The idea is that if you see an error you can link through to get
 more information on what it means and how to resolve it.  The
 current implementation of this will send you to the rendered
-vignettes, but in future we will arrange for offline rendering
+vignettes, but in the future we will arrange for offline rendering
 too.
 }
