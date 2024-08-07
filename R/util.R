@@ -169,7 +169,7 @@ collapseq <- function(x) {
 }
 
 
-## This is definiteion possible with rlang, but I am not sure how.
+## This is definitely possible with rlang, but I am not sure how.
 substitute_ <- function(expr, env) {
   eval(substitute(substitute(y, env), list(y = expr)))
 }
