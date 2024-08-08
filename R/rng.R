@@ -405,6 +405,19 @@ mcstate_rng <- R6::R6Class(
                               private$float)
     },
 
+    ##' @description Generate `n` numbers from a beta distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param a The first shape parameter
+    ##'
+    ##' @param b The second shape parameter
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    beta = function(n, a, b, n_threads = 1L) {
+      mcstate_rng_beta(private$ptr, n, a, b, n_threads, private$float)
+    },
+
     ##' @description
     ##' Returns the state of the random number stream. This returns a
     ##' raw vector of length 32 * n_streams. It is primarily intended for

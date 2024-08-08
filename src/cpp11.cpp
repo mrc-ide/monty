@@ -120,6 +120,13 @@ extern "C" SEXP _mcstate2_mcstate_rng_cauchy(SEXP ptr, SEXP n, SEXP r_location, 
   END_CPP11
 }
 // random.cpp
+cpp11::sexp mcstate_rng_beta(SEXP ptr, int n, cpp11::doubles r_a, cpp11::doubles r_b, int n_threads, bool is_float);
+extern "C" SEXP _mcstate2_mcstate_rng_beta(SEXP ptr, SEXP n, SEXP r_a, SEXP r_b, SEXP n_threads, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(mcstate_rng_beta(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_b), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// random.cpp
 cpp11::sexp mcstate_rng_multinomial(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_prob, int n_threads, bool is_float);
 extern "C" SEXP _mcstate2_mcstate_rng_multinomial(SEXP ptr, SEXP n, SEXP r_size, SEXP r_prob, SEXP n_threads, SEXP is_float) {
   BEGIN_CPP11
@@ -166,6 +173,7 @@ extern "C" SEXP _mcstate2_test_xoshiro_run(SEXP obj) {
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
     {"_mcstate2_mcstate_rng_alloc",            (DL_FUNC) &_mcstate2_mcstate_rng_alloc,            4},
+    {"_mcstate2_mcstate_rng_beta",             (DL_FUNC) &_mcstate2_mcstate_rng_beta,             6},
     {"_mcstate2_mcstate_rng_binomial",         (DL_FUNC) &_mcstate2_mcstate_rng_binomial,         6},
     {"_mcstate2_mcstate_rng_cauchy",           (DL_FUNC) &_mcstate2_mcstate_rng_cauchy,           6},
     {"_mcstate2_mcstate_rng_exponential_mean", (DL_FUNC) &_mcstate2_mcstate_rng_exponential_mean, 5},

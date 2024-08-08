@@ -1271,6 +1271,16 @@ test_that("gamma for a = 1 is the same as exponential", {
 })
 
 
+test_that("gamma_rate follows from gamma_scale", {
+  rng1 <- mcstate_rng$new(seed = 1L)
+  rng2 <- mcstate_rng$new(seed = 1L)
+  b <- 3
+  expect_identical(
+    rng1$gamma_rate(100, 5, 1 / b),
+    rng2$gamma_scale(100, 5, b))
+})
+
+
 test_that("can draw gamma random numbers", {
   ## when a > 1
   a <- 5
@@ -1430,4 +1440,27 @@ test_that("exponential by mean agrees with rate", {
   ans1 <- mcstate_rng$new(1)$exponential_rate(100, 0.5)
   ans2 <- mcstate_rng$new(1)$exponential_mean(100, 2)
   expect_equal(ans1, ans2)
+})
+
+
+test_that("can sample from the beta distribution", {
+  rng <- mcstate_rng$new(1, seed = 42)
+  a <- 2.5
+  b <- 1.5
+  r <- rng$beta(1000000, a, b)
+  expect_equal(mean(r), a / (a + b), tolerance = 1e-3)
+  expect_equal(var(r), a * b / ((a + b)^2 * (a + b + 1)), tolerance = 1e-2)
+})
+
+
+test_that("beta generation algorithm is correct", {
+  rng1 <- mcstate_rng$new(1, seed = 42)
+  rng2 <- mcstate_rng$new(1, seed = 42)
+  a <- 2.5
+  b <- 1.5
+  r <- rng1$beta(1, a, b)
+
+  x <- rng2$gamma_scale(1, a, 1)
+  y <- rng2$gamma_scale(1, b, 1)
+  expect_equal(r, x / (x + y))
 })

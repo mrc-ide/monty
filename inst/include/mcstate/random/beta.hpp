@@ -22,8 +22,8 @@ real_type beta(rng_state_type& rng_state, real_type a, real_type b) {
     return a / (a + b);
   }
 
-  const auto x = gamma_scale<real_type>(a, 1);
-  const auto y = gamma_scale<real_type>(b, 1);
+  const auto x = gamma_scale<real_type>(rng_state, a, 1);
+  const auto y = gamma_scale<real_type>(rng_state, b, 1);
   return x / (x + y);
 }
 

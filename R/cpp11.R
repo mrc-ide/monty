@@ -64,6 +64,10 @@ mcstate_rng_cauchy <- function(ptr, n, r_location, r_scale, n_threads, is_float)
   .Call(`_mcstate2_mcstate_rng_cauchy`, ptr, n, r_location, r_scale, n_threads, is_float)
 }
 
+mcstate_rng_beta <- function(ptr, n, r_a, r_b, n_threads, is_float) {
+  .Call(`_mcstate2_mcstate_rng_beta`, ptr, n, r_a, r_b, n_threads, is_float)
+}
+
 mcstate_rng_multinomial <- function(ptr, n, r_size, r_prob, n_threads, is_float) {
   .Call(`_mcstate2_mcstate_rng_multinomial`, ptr, n, r_size, r_prob, n_threads, is_float)
 }
