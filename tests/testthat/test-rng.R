@@ -1464,3 +1464,17 @@ test_that("beta generation algorithm is correct", {
   y <- rng2$gamma_scale(1, b, 1)
   expect_equal(r, x / (x + y))
 })
+
+
+test_that("deterministic beta returns mean", {
+  n <- 10
+  a <- rexp(n)
+  b <- rexp(n)
+
+  rng <- mcstate_rng$new(1, deterministic = TRUE)
+  state <- rng$state()
+
+  expect_equal(rng$beta(n, a, b), a / (a + b))
+
+  expect_equal(rng$state(), state)
+})
