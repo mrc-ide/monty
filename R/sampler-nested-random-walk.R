@@ -170,6 +170,7 @@ mcstate_sampler_nested_random_walk <- function(vcv) {
   }
 
   mcstate_sampler("Nested random walk",
+                  "mcstate_sampler_nested_random_walk",
                   initialise,
                   step,
                   finalise,

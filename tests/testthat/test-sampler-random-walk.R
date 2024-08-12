@@ -330,3 +330,14 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
 
   expect_equal(res, cmp)
 })
+
+
+test_that("can print a sampler object", {
+  s <- mcstate_sampler_random_walk(diag(1))
+  res <- evaluate_promise(withVisible(print(s)))
+  expect_mapequal(res$result, list(value = s, visible = FALSE))
+  expect_match(
+    res$messages,
+    "<mcstate_sampler: Random walk (mcstate_random_walk)>",
+    fixed = TRUE, all = FALSE)
+})
