@@ -145,3 +145,14 @@ test_that("require that process is well-behaved", {
                "'process()' is trying to overwrite entries in parameters",
                fixed = TRUE)
 })
+
+
+test_that("Can print a packer", {
+  p <- mcstate_packer(c("x", "y"))
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_mapequal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<mcstate_packer>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "Packing 2 parameters: 'x' and 'y'",
+               fixed = TRUE, all = FALSE)
+})
