@@ -3,6 +3,7 @@
 S3method("+",mcstate_model)
 S3method(cnd_footer,mcstate2_parse_error)
 S3method(print,mcstate_model)
+S3method(print,mcstate_observer)
 S3method(print,mcstate_packer)
 S3method(print,mcstate_runner)
 S3method(print,mcstate_sampler)

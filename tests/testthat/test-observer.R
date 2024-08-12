@@ -45,3 +45,14 @@ test_that("don't append incompatible observations", {
     observer_append_auto(list(a = cbind(1:5)), list(a = cbind(6:8, 9:11))),
     list(a = list(cbind(1:5), cbind(6:8, 9:11))))
 })
+
+
+test_that("can print an observer", {
+  o <- mcstate_observer(identity)
+  res <- evaluate_promise(withVisible(print(o)))
+  expect_mapequal(res$result, list(value = o, visible = FALSE))
+  expect_match(
+    res$messages,
+    "<mcstate_observer>",
+    fixed = TRUE, all = FALSE)
+})
