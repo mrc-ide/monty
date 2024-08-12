@@ -184,7 +184,6 @@ print.mcstate_sampler <- function(x, ...) {
 }
 
 
-
 initial_parameters <- function(initial, model, rng, call = NULL) {
   n_pars <- length(model$parameters)
   n_chains <- length(rng)
