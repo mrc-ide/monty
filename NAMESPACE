@@ -2,6 +2,7 @@
 
 S3method("+",mcstate_model)
 S3method(cnd_footer,mcstate2_parse_error)
+S3method(print,mcstate_model)
 S3method(print,mcstate_packer)
 export(mcstate_differentiation)
 export(mcstate_domain_expand)

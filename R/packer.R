@@ -298,9 +298,8 @@ array_indices <- function(shape) {
 ##' @export
 print.mcstate_packer <- function(x, ...) {
   cli::cli_h1("<mcstate_packer>")
-  n <- length(x$parameters)
   cli::cli_alert_info(
-    "Packing {n} parameter{?s}: {squote(x$parameters)}")
+    "Packing {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
   cli::cli_alert_info(
     "Use '$pack()' to convert from a list to a vector")
   cli::cli_alert_info(
