@@ -43,12 +43,14 @@
 ##' @return A list of parameters and densities; we'll write tools for
 ##'   dealing with this later.  Elements include:
 ##'
-##' * `pars`: A matrix with as many columns as you have parameters, and
-##'   as many rows as the total number of samples taken across all
-##'   chains (`n_steps * n_chains`)
+##' * `pars`: An array with three dimensions representing (in turn)
+##'   parameter, sample and chain, so that `pars[i, j, k]` is the
+##'   `i`th parameter from the `j`th sample from the `k`th chain.  The
+##'   rows will be named with the names of the parameters, from your
+##'   model.
 ##'
-##' * `density`: A vector of model log densities, one per step (length
-##'   `n_steps * n_chains`)
+##' * `density`: A matrix of model log densities, with `n_steps` rows
+##'   and `n_chains` columns.
 ##'
 ##' * `initial`: A record of the initial conditions, a matrix with as
 ##'   many rows as you have parameters and `n_chains` columns (this is
@@ -59,8 +61,8 @@
 ##'   be a list of length `n_chains` (or `NULL`) and the details
 ##'   depend on the sampler.  This one is subject to change.
 ##'
-##' * `chain`: An integer vector indicating the chain that the samples
-##'   came from (1, 2, ..., `n_chains`)
+##' * `observations`: Additional details reported by the model.  This
+##'   one is also subject to change.
 ##'
 ##' @export
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL,

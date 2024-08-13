@@ -26,16 +26,16 @@ library(mcstate2)
 ## The bendy banana
 
 This example shows HMC outperforming a random walk on a two dimensional banana-shaped function.  Our model takes two parameters `alpha` and `beta`, and is based on two successive simple draws, with the one conditional on the other:
-￼
+
 \[
 \beta \sim Normal(1,0) \\
 \alpha \sim Normal(\beta^2, \sigma)
 \]
-￼
+
 with $\sigma$ the standard deviation of the conditional draw.
 
 We'll use R's `dnorm` for the likelihood calculations and then differentiate the density by hand (using the formula of the gaussian density) to derive the gradient by hand.  We skip the details here as this will be automated in an upcoming version of the package.
-￼
+
 ```{r}
 banana_model <- function(sd = 0.5) {
   mcstate_model(list(
