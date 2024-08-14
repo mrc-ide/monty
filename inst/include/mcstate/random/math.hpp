@@ -338,6 +338,20 @@ inline float atanh(float x) {
 
 template <typename T>
 __host__ __device__
+T copysign(T x) {
+  return std::copysign(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float copysign(float x) {
+  return ::copysignf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
 T atan2(T x, T y) {
   return std::atan2(x, y);
 }
