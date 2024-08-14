@@ -440,5 +440,16 @@ real_type lfactorial(int x) {
   return lgamma(static_cast<real_type>(x + 1));
 }
 
+// We can do this (more efficiently!) with copysign, but end up with
+// having a bit of fight with different overloads.  This way is fine.
+//
+// https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+// https://en.cppreference.com/w/cpp/numeric/math/copysign
+template <typename T>
+__host__ __device__
+T sign(T x) {
+  return (T(0) < x) - (x < T(0));
+}
+
 }
 }
