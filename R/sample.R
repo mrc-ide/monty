@@ -161,9 +161,10 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE,
 }
 
 
-mcstate_sampler <- function(name, initialise, step, finalise,
+mcstate_sampler <- function(name, help, initialise, step, finalise,
                             get_internal_state, set_internal_state) {
   ret <- list(name = name,
+              help = help,
               initialise = initialise,
               step = step,
               finalise = finalise,
@@ -171,6 +172,15 @@ mcstate_sampler <- function(name, initialise, step, finalise,
               set_internal_state = set_internal_state)
   class(ret) <- "mcstate_sampler"
   ret
+}
+
+
+##' @export
+print.mcstate_sampler <- function(x, ...) {
+  cli::cli_h1("<mcstate_sampler: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help mcstate_sample} to use this sampler")
+  cli::cli_alert_info("See {.help {x$help}} for more information")
+  invisible(x)
 }
 
 

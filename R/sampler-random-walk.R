@@ -78,6 +78,7 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   }
 
   mcstate_sampler("Random walk",
+                  "mcstate_random_walk",
                   initialise,
                   step,
                   finalise,

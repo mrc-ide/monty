@@ -293,3 +293,17 @@ prepare_pack_array <- function(name, shape, call = NULL) {
 array_indices <- function(shape) {
   unname(as.matrix(do.call(expand.grid, lapply(shape, seq_len))))
 }
+
+
+##' @export
+print.mcstate_packer <- function(x, ...) {
+  cli::cli_h1("<mcstate_packer>")
+  cli::cli_alert_info(
+    "Packing {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
+  cli::cli_alert_info(
+    "Use '$pack()' to convert from a list to a vector")
+  cli::cli_alert_info(
+    "Use '$unpack()' to convert from a vector to a list")
+  cli::cli_alert_info("See {.help mcstate_packer} for more information")
+  invisible(x)
+}

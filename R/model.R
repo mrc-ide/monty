@@ -427,3 +427,28 @@ require_multiple_parameters <- function(model, message, ...) {
         ...)
   }
 }
+
+
+##' @export
+print.mcstate_model <- function(x, ...) {
+  cli::cli_h1("<mcstate_model>")
+  cli::cli_alert_info(
+    "Model has {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
+  ## TODO: once the interface around multiple parameters stabilises,
+  ## we should reflect information about allow_multiple_parameters and
+  ## has_parameter_groups back here.
+  str <- mcstate_model_properties_str(x$properties)
+  if (length(str) > 0) {
+    cli::cli_alert_info("This model:")
+    cli::cli_bullets(set_names(str, "*"))
+  }
+  cli::cli_alert_info("See {.help mcstate_model} for more information")
+  invisible(x)
+}
+
+
+mcstate_model_properties_str <- function(properties) {
+  c(if (properties$has_gradient) "can compute gradients",
+    if (properties$has_direct_sample) "can be directly sampled from",
+    if (properties$is_stochastic) "is stochastic")
+}
