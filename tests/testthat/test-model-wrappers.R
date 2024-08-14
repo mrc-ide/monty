@@ -51,3 +51,36 @@ test_that("can compute multiple densities if enabled", {
     "'parameters' has rownames but these disagree with 'model$parameters'",
     fixed = TRUE)
 })
+
+
+test_that("can compute gradient where enabled", {
+  m <- ex_simple_gamma1()
+  expect_equal(mcstate_model_gradient(m, 1), -1)
+  expect_equal(mcstate_model_gradient(m, 1, named = TRUE), c(gamma = -1))
+})
+
+
+test_that("can directly sample from a model", {
+  m <- ex_simple_gamma1()
+  r1 <- mcstate_rng$new(seed = 42)
+  r2 <- mcstate_rng$new(seed = 42)
+
+  expect_equal(mcstate_model_direct_sample(m, r1),
+               m$direct_sample(r2))
+  expect_equal(mcstate_model_direct_sample(m, r1, named = TRUE),
+               c(gamma = m$direct_sample(r2)))
+})
+
+
+test_that("can compute multiple gradients", {
+  m <- ex_banana()
+  expect_equal(mcstate_model_gradient(m, c(0, 0)), c(0, 0))
+  expect_equal(mcstate_model_gradient(m, c(0, 0), named = TRUE),
+               c(a = 0, b = 0))
+
+  p <- cbind(c(0, 0), c(1, 0), c(0, 1))
+  expect_equal(mcstate_model_gradient(m, p),
+               rbind(c(0, -4, 4), c(0, 0, -9)))
+  expect_equal(mcstate_model_gradient(m, p, named = TRUE),
+               rbind(a = c(0, -4, 4), b = c(0, 0, -9)))
+})

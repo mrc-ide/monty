@@ -4,12 +4,15 @@
 \alias{mcstate_model_gradient}
 \title{Compute gradient of log density}
 \usage{
-mcstate_model_gradient(model, parameters)
+mcstate_model_gradient(model, parameters, named = FALSE)
 }
 \arguments{
 \item{model}{An \link{mcstate_model} object}
 
 \item{parameters}{A vector or matrix of parameters}
+
+\item{named}{Logical, indicating if the output should be named
+using the parameter names.}
 }
 \value{
 A vector or matrix of gradients

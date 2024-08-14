@@ -230,13 +230,16 @@ mcstate_model_density <- function(model, parameters) {
 ##'
 ##' @inheritParams mcstate_model_density
 ##'
+##' @param named Logical, indicating if the output should be named
+##'   using the parameter names.
+##'
 ##' @return A vector or matrix of gradients
 ##'
 ##' @seealso [mcstate_model_density] for log density, and
 ##'   [mcstate_model_direct_sample] to sample from a model
 ##'
 ##' @export
-mcstate_model_gradient <- function(model, parameters) {
+mcstate_model_gradient <- function(model, parameters, named = FALSE) {
   if (!inherits(model, "mcstate_model")) {
     cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
                    arg = "model")
@@ -246,7 +249,16 @@ mcstate_model_gradient <- function(model, parameters) {
     "Can't compute gradient, as this model does not support it",
     call = environment())
   check_model_parameters(model, parameters, environment())
-  model$gradient(model, parameters)
+  assert_scalar_logical(named, call = environment())
+  ret <- model$gradient(parameters)
+  if (named) {
+    if (is.matrix(ret)) {
+      rownames(ret) <- model$parameters
+    } else {
+      names(ret) <- model$parameters
+    }
+  }
+  ret
 }
 
 
@@ -255,7 +267,7 @@ mcstate_model_gradient <- function(model, parameters) {
 ##'
 ##' @title Directly sample from a model
 ##'
-##' @inheritParams mcstate_model_density
+##' @inheritParams mcstate_model_gradient
 ##'
 ##' @param rng Random number state, created by [mcstate_rng].  Use of
 ##'   an RNG with more than one stream may or may not work as
@@ -264,7 +276,7 @@ mcstate_model_gradient <- function(model, parameters) {
 ##' @return A vector or matrix of sampled parameters
 ##'
 ##' @export
-mcstate_model_direct_sample <- function(model, rng) {
+mcstate_model_direct_sample <- function(model, rng, named = FALSE) {
   if (!inherits(model, "mcstate_model")) {
     cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
                    arg = "model")
@@ -273,7 +285,12 @@ mcstate_model_direct_sample <- function(model, rng) {
     model,
     "Can't directly sample from this model",
     call = environment())
-  model$direct_sample(rng)
+  assert_scalar_logical(named, call = environment())
+  ret <- model$direct_sample(rng)
+  if (named) {
+    names(ret) <- model$parameters
+  }
+  ret
 }
 
 

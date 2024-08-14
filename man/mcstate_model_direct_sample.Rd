@@ -4,7 +4,7 @@
 \alias{mcstate_model_direct_sample}
 \title{Directly sample from a model}
 \usage{
-mcstate_model_direct_sample(model, rng)
+mcstate_model_direct_sample(model, rng, named = FALSE)
 }
 \arguments{
 \item{model}{An \link{mcstate_model} object}
@@ -12,6 +12,9 @@ mcstate_model_direct_sample(model, rng)
 \item{rng}{Random number state, created by \link{mcstate_rng}.  Use of
 an RNG with more than one stream may or may not work as
 expected; this is something we need to tidy up (mrc-5292)}
+
+\item{named}{Logical, indicating if the output should be named
+using the parameter names.}
 }
 \value{
 A vector or matrix of sampled parameters
