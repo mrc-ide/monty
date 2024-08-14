@@ -47,6 +47,10 @@ list (say, for your generative model)
 parameters back into a numeric vector suitable for the
 statistical model.  This ignores values created by a
 \code{preprocess} function.
+\item \code{index}: a function which produces a named list where each
+element has the name of a value in \code{parameters} and each value
+has the indices within an unstructured vector where these values
+can be found.
 }
 }
 \description{
@@ -89,7 +93,7 @@ have a series of values destined to be treated as a vector:
 
 So here we might have a vector of length 7, where the first three
 elements will represent be the scalar values \code{a}, \code{b} and \code{c} but
-ther next four will be a vector \code{d}.
+the next four will be a vector \code{d}.
 
 Unpacked, this might be written as:
 

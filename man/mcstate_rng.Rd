@@ -149,6 +149,7 @@ rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
 \item \href{#method-mcstate_rng-exponential_mean}{\code{mcstate_rng$exponential_mean()}}
 \item \href{#method-mcstate_rng-cauchy}{\code{mcstate_rng$cauchy()}}
 \item \href{#method-mcstate_rng-multinomial}{\code{mcstate_rng$multinomial()}}
+\item \href{#method-mcstate_rng-beta}{\code{mcstate_rng$beta()}}
 \item \href{#method-mcstate_rng-state}{\code{mcstate_rng$state()}}
 }
 }
@@ -550,6 +551,29 @@ In contrast with most of the distributions here, each draw is a
 trial. This does not need to sum to 1 (though all elements
 must be non-negative), in which case we interpret \code{prob} as
 weights and normalise so that they equal 1 before sampling.}
+
+\item{\code{n_threads}}{Number of threads to use; see Details}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-mcstate_rng-beta"></a>}}
+\if{latex}{\out{\hypertarget{method-mcstate_rng-beta}{}}}
+\subsection{Method \code{beta()}}{
+Generate \code{n} numbers from a beta distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{mcstate_rng$beta(n, a, b, n_threads = 1L)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of samples to draw (per stream)}
+
+\item{\code{a}}{The first shape parameter}
+
+\item{\code{b}}{The second shape parameter}
 
 \item{\code{n_threads}}{Number of threads to use; see Details}
 }

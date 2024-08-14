@@ -37,7 +37,7 @@
 ##'
 ##' So here we might have a vector of length 7, where the first three
 ##' elements will represent be the scalar values `a`, `b` and `c` but
-##' ther next four will be a vector `d`.
+##' the next four will be a vector `d`.
 ##'
 ##' Unpacked, this might be written as:
 ##'
