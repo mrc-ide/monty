@@ -121,6 +121,10 @@
 ##'   parameters back into a numeric vector suitable for the
 ##'   statistical model.  This ignores values created by a
 ##'   `preprocess` function.
+##' * `index`: a function which produces a named list where each
+##'   element has the name of a value in `parameters` and each value
+##'   has the indices within an unstructured vector where these values
+##'   can be found.
 ##'
 ##' @export
 mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
@@ -245,7 +249,8 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
 
   ret <- list(parameters = parameters,
               unpack = unpack,
-              pack = pack)
+              pack = pack,
+              index = function() idx)
   class(ret) <- "mcstate_packer"
   ret
 }
