@@ -8,15 +8,22 @@ print.mcstate_samples <- function(x, ...) {
     paste("<mcstate_samples: {n_pars} parameter{?s} x {n_samples} sample{?s}",
           "x {n_chains} chain{?s}>"))
   cli::cli_alert_info("Parameters: {squote(rownames(x$pars))}")
+
+  target <- rbind(c("posterior", "as_draws_array"),
+                  c("posterior", "as_draws_df"),
+                  c("coda", "as.mcmc.list"))
+  status <- suggested_package_status(target[, 1])
+  status_cls <- c(missing = "danger", installed = "warning", loaded = "success")
+  target_str <- sprintf("{.alert-%s %s::%s() {cli::col_grey('[package %s]')}}",
+                        status_cls[status], target[, 1], target[, 2], status)
   cli::cli_alert_info(
     "Conversion to other types is possible:")
+  cli::cli_bullets(set_names(target_str, ">"))
 
-  ## Later, we can render something indicating if these can actually
-  ## be used basd on other packages being available.
-  targets <- c("posterior::as_draws_array",
-               "posterior::as_draws_df",
-               "coda::as.mcmc.list")
-  cli::cli_bullets(set_names(sprintf("%s()", targets), ">"))
+  cli::cli_alert_info(
+    paste('See {.help mcstate_sample} and {.run vignette("samples")} for more',
+          "information"))
+
   invisible(x)
 }
 

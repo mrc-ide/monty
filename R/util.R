@@ -173,3 +173,13 @@ collapseq <- function(x) {
 substitute_ <- function(expr, env) {
   eval(substitute(substitute(y, env), list(y = expr)))
 }
+
+
+suggested_package_status <- function(pkg) {
+  status <- ifelse(pkg %in% loadedNamespaces(), "loaded", "missing")
+  i <- status == "missing"
+  if (any(i)) {
+    status[i] <- ifelse(pkg[i] %in% .packages(TRUE), "installed", "missing")
+  }
+  set_names(status, pkg)
+}
