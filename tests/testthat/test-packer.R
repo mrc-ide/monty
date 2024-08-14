@@ -17,6 +17,7 @@ test_that("trivial packer", {
   expect_error(xp$pack(list(a = 1:2)),
                "Invalid structure to 'pack()'",
                fixed = TRUE)
+  expect_equal(xp$index(), list(a = 1))
 })
 
 
@@ -25,6 +26,7 @@ test_that("multiple scalar unpacking", {
   expect_equal(xp$parameters, c("a", "b", "c"))
   expect_equal(xp$unpack(1:3), list(a = 1, b = 2, c = 3))
   expect_equal(xp$pack(list(a = 1, b = 2, c = 3)), 1:3)
+  expect_equal(xp$index(), list(a = 1, b = 2, c = 3))
 })
 
 
@@ -49,6 +51,7 @@ test_that("can use integer vectors for array inputs", {
   expect_equal(xp$parameters,
                c("a", sprintf("b[%d]", 1:3), sprintf("c[%d]", 1:4)))
   expect_equal(xp$unpack(1:8), list(a = 1, b = 2:4, c = 5:8))
+  expect_equal(xp$index(), list(a = 1, b = 2:4, c = 5:8))
 })
 
 
