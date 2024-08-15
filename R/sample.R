@@ -68,10 +68,7 @@
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
                            n_chains = 1L, runner = NULL, observer = NULL,
                            restartable = FALSE) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
-                   arg = "model")
-  }
+  require_mcstate_model(model)
   if (!inherits(sampler, "mcstate_sampler")) {
     cli::cli_abort("Expected 'sampler' to be an 'mcstate_sampler'",
                    arg = "sampler")

@@ -213,11 +213,8 @@ mcstate_model <- function(model, properties = NULL) {
 ##'
 ##' @export
 mcstate_model_density <- function(model, parameters) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
-                   arg = "model")
-  }
-  check_model_parameters(model, parameters, environment())
+  require_mcstate_model(model)
+  check_model_parameters(model, parameters)
   model$density(parameters)
 }
 
@@ -240,15 +237,12 @@ mcstate_model_density <- function(model, parameters) {
 ##'
 ##' @export
 mcstate_model_gradient <- function(model, parameters, named = FALSE) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
-                   arg = "model")
-  }
+  require_mcstate_model(model)
   require_gradient(
     model,
     "Can't compute gradient, as this model does not support it",
     call = environment())
-  check_model_parameters(model, parameters, environment())
+  check_model_parameters(model, parameters)
   assert_scalar_logical(named, call = environment())
   ret <- model$gradient(parameters)
   if (named) {
@@ -277,14 +271,10 @@ mcstate_model_gradient <- function(model, parameters, named = FALSE) {
 ##'
 ##' @export
 mcstate_model_direct_sample <- function(model, rng, named = FALSE) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
-                   arg = "model")
-  }
+  require_mcstate_model(model)
   require_direct_sample(
     model,
-    "Can't directly sample from this model",
-    call = environment())
+    "Can't directly sample from this model")
   assert_scalar_logical(named, call = environment())
   ret <- model$direct_sample(rng)
   if (named) {
@@ -476,37 +466,46 @@ validate_model_parameter_groups <- function(model, properties, call) {
 }
 
 
-require_direct_sample <- function(model, message, ...) {
+require_mcstate_model <- function(model, arg = deparse(substitute(model)),
+                                  call = parent.frame()) {
+  if (!inherits(model, "mcstate_model")) {
+    cli::cli_abort("Expected '{arg}' to be an 'mcstate_model'",
+                   arg = arg, call = call)
+  }
+}
+
+
+require_direct_sample <- function(model, message, ..., call = parent.frame()) {
   if (!model$properties$has_direct_sample) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide 'direct_sample()', so we",
                   "cannot directly sample from its parameter space")),
-      ...)
+      ..., call = call)
   }
 }
 
 
-require_deterministic <- function(model, message, ...) {
+require_deterministic <- function(model, message, ..., call = parent.frame()) {
   if (model$properties$is_stochastic) {
     cli::cli_abort(
       c(message,
         i = paste("This model is stochastic (its 'is_stochastic' property",
                   "is TRUE) so cannot be used in contexts that require",
                   "a deterministic density")),
-      ...)
+      ..., call = call)
   }
 }
 
 
-require_gradient <- function(model, message, ...) {
+require_gradient <- function(model, message, ..., call = parent.frame()) {
   if (!model$properties$has_gradient) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide a gradient (its 'has_gradient'",
                   "property is FALSE) so cannot be used in contexts that",
                   "require one")),
-      ...)
+      ..., call = call)
   }
 }
 
@@ -551,7 +550,7 @@ mcstate_model_properties_str <- function(properties) {
 }
 
 
-check_model_parameters <- function(model, parameters, call) {
+check_model_parameters <- function(model, parameters, call = parent.frame()) {
   n_pars <- length(model$parameters)
   if (is.matrix(parameters)) {
     require_multiple_parameters(
