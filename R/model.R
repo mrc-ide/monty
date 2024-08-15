@@ -223,7 +223,7 @@ mcstate_model_density <- function(model, parameters) {
 
 
 ##' Compute the gradient of log density (which is returned by
-##' [mcstate_density]) with respect to parameters.  Not all models
+##' [mcstate_model_density]) with respect to parameters.  Not all models
 ##' support this, and an error will be thrown if it is not possible.
 ##'
 ##' @title Compute gradient of log density
