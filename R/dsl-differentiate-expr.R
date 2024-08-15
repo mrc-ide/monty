@@ -141,6 +141,24 @@ derivative <- list(
     a <- maths$rewrite(expr[[2]])
     maths$divide(differentiate(a, name), a)
   },
+  expm1 = function(expr, name) {
+    ## exp(x) - 1, so this is the same as exp(x)
+    a <- maths$rewrite(expr[[2]])
+    maths$times(differentiate(a, name), call("exp", a))
+  },
+  log1p = function(expr, name) {
+    ## log(1 + x)
+    a <- maths$rewrite(expr[[2]])
+    maths$divide(differentiate(a, name), maths$plus(1, a))
+  },
+  log2 = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    maths$divide(differentiate(a, name), maths$times(a, log(2)))
+  },
+  log10 = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    maths$divide(differentiate(a, name), maths$times(a, log(10)))
+  },
   sqrt = function(expr, name) {
     maths$divide(differentiate(expr[[2]], name),
                  maths$times(2, maths$rewrite(expr)))
@@ -151,16 +169,32 @@ derivative <- list(
     db <- differentiate(expr[[4]], name)
     if (identical(da, db)) da else call("if", condition, da, db)
   },
+  min = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    b <- maths$rewrite(expr[[3]])
+    call("if", call("<", a, b), differentiate(a, name), differentiate(b, name))
+  },
+  max = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    b <- maths$rewrite(expr[[3]])
+    call("if", call(">=", a, b), differentiate(a, name), differentiate(b, name))
+  },
   lfactorial = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("digamma", maths$plus(a, 1)))
   },
   sin = function(expr, name) {
-    ## This was just included for me to play around with the adjoint
-    ## models, but sooner or later we'll need to support this and all
-    ## other maths functions we support.
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("cos", a))
+  },
+  cos = function(expr, name) {
+    a <- maths$rewrite(expr[[2]])
+    maths$uminus(maths$times(differentiate(a, name), call("sin", a)))
+  },
+  tan = function(expr, name) {
+    ## d/dx tan(x) = sec^2(x) = 1/cos^2(x)
+    a <- maths$rewrite(expr[[2]])
+    maths$divide(differentiate(a, name), call("^", call("cos", a), 2))
   },
   abs = function(expr, name) {
     a <- maths$rewrite(expr[[2]])

@@ -387,3 +387,59 @@ test_that("can differentiate lchoose", {
     differentiate(quote(lchoose(a, b)), "b"),
     quote(-digamma(1 + b) - (-digamma(`+`(1, a - b)))))
 })
+
+
+test_that("can differentiate expm1", {
+  expect_identical(
+    differentiate(quote(expm1(x)), "x"),
+    quote(exp(x)))
+  expect_identical(
+    differentiate(quote(expm1(sin(x))), "x"),
+    quote(cos(x) * exp(sin(x))))
+})
+
+
+test_that("can differentiate log1p", {
+  expect_identical(
+    differentiate(quote(log1p(x)), "x"),
+    quote(1 / (1 + x)))
+  expect_identical(
+    differentiate(quote(log1p(sin(x))), "x"),
+    quote(cos(x) / (1 + sin(x))))
+})
+
+
+test_that("can differentiate log2, log10", {
+  expect_identical(
+    differentiate(quote(log2(x)), "x"),
+    bquote(1/(.(log(2)) * x)))
+  expect_identical(
+    differentiate(quote(log10(x)), "x"),
+    bquote(1/(.(log(10)) * x)))
+  expect_identical(
+    differentiate(quote(log10(sin(x))), "x"),
+    bquote(cos(x) / (.(log(10)) * sin(x))))
+})
+
+
+test_that("can differentiate min, max", {
+  expect_identical(
+    differentiate(quote(min(sin(x), cos(x))), "x"),
+    quote(if (sin(x) < cos(x)) cos(x) else -sin(x)))
+  expect_identical(
+    differentiate(quote(max(sin(x), cos(x))), "x"),
+    quote(if (sin(x) >= cos(x)) cos(x) else -sin(x)))
+})
+
+
+test_that("can diferentiate basic trig functions", {
+  expect_identical(
+    differentiate(quote(sin(x)), "x"),
+    quote(cos(x)))
+  expect_identical(
+    differentiate(quote(cos(x)), "x"),
+    quote(-sin(x)))
+  expect_identical(
+    differentiate(quote(tan(x)), "x"),
+    quote(1 / cos(x)^2))
+})
