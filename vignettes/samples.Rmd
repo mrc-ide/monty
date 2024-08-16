@@ -1,0 +1,95 @@
+---
+title: "Working with samples"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with samples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+set.seed(1)
+```
+
+This vignette outlines some ways of working with samples generated from running an MCMC with `mcstate_sample`.  We'll flesh this out as we develop nicer ways of working with samples, and mostly exists so that we can point to it from other documentation, including from other packages (e.g., from [`odin2`](https://mrc-ide.github.io/odin2)).
+
+```{r}
+library(mcstate2)
+```
+
+# The structure of mcstate samples
+
+All samplers and runners produce samples with the same basic structure.  This structure is documented (here) so you are free to use this structure if you want to just dive in and manipulate things.  Please treat output as read-only; extract data all you want, but make a copy and don't change any value within the samples structure if you are going to pass it back into an `mcstate2` function, as we assume that they have not been modified.
+
+```{r, include = FALSE}
+# This is the example from before samplers.Rmd; at some point we will
+# need some easy-to-use examples in the package.
+banana <- function(sd = 0.5) {
+  mcstate_model(list(
+    parameters = c("alpha", "beta"),
+    direct_sample = function(rng) {
+      beta <- rng$random_normal(1)
+      alpha <- rng$normal(1, beta^2, sd)
+      c(alpha, beta)
+    },
+    density = function(x) {
+      alpha <- x[[1]]
+      beta <- x[[2]]
+      dnorm(beta, log = TRUE) + dnorm((alpha - beta^2) / sd, log = TRUE)
+    },
+    gradient = function(x) {
+      alpha <- x[[1]]
+      beta <- x[[2]]
+      c((beta^2 - alpha) / sd^2,
+        -beta + 2 * beta * (alpha - beta^2) / sd^2)
+    },
+    domain = rbind(c(-Inf, Inf), c(-Inf, Inf))))
+}
+
+set.seed(1)
+sampler <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
+samples <- mcstate_sample(banana(0.5), sampler, 2000, n_chains = 4)
+```
+
+Below, `samples` is a poorly mixed result of samples with 2 parameters, 2000 samples, and 4 chains.  It was the result of running `mcstate_sample()` on the banana model from `vignette("samplers")`, and has class `mcstate_samples`.
+
+```{r}
+samples
+```
+
+Each `mcstate_samples` object contains an element `pars` which contains sampled parameters
+
+```{r}
+dim(samples$pars)
+```
+
+## Conversion to `posterior`'s `draw` objects
+
+We implement methods for `posterior::as_draws_array` and `posterior::as_draws_df`, which you can use to convert to formats that you might be familiar with from use with other statistical packages.  This only preserves the parameters (`$pars`) from above.
+
+```{r}
+samples_df <- posterior::as_draws_df(samples)
+```
+
+With this, you can access summary methods already implemented elsewhere:
+
+```{r}
+posterior::summarise_draws(samples_df)
+```
+
+With these objects you should be able to use any of the plotting functions in [`bayesplot`](https://mc-stan.org/bayesplot), for example, [MCMC visual diagnostics](https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html), without much trouble.
+
+We also support conversion to `draws_array`; let us know if you need the other conversion functions (`as_draws_list`, `as_draws_rvars`, `as_draws_matrix`).
+
+## Conversion to `coda`'s `mcmc.list` objects
+
+The `coda` package has utilities for working with MCMC, and many other packages are compatible with its `mcmc.list` object type (e.g., the [`ggmcmc`](https://cran.r-project.org/package=ggmcmc) package).  We provide a method for `coda`'s `as.mcmc.list`, if that package is available:
+
+```{r}
+samples_coda <- coda::as.mcmc.list(samples)
+coda::effectiveSize(samples_coda)
+```

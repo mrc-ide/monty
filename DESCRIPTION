@@ -24,6 +24,7 @@ LinkingTo:
     cpp11
 Suggests:
     cpp11,
+    coda,
     decor,
     knitr,
     dust,
@@ -31,6 +32,7 @@ Suggests:
     mvtnorm,
     numDeriv,
     pkgload,
+    posterior,
     rmarkdown,
     testthat (>= 3.0.0),
     withr

@@ -53,11 +53,13 @@ object.}
 A list of parameters and densities; we'll write tools for
 dealing with this later.  Elements include:
 \itemize{
-\item \code{pars}: A matrix with as many columns as you have parameters, and
-as many rows as the total number of samples taken across all
-chains (\code{n_steps * n_chains})
-\item \code{density}: A vector of model log densities, one per step (length
-\code{n_steps * n_chains})
+\item \code{pars}: An array with three dimensions representing (in turn)
+parameter, sample and chain, so that \code{pars[i, j, k]} is the
+\code{i}th parameter from the \code{j}th sample from the \code{k}th chain.  The
+rows will be named with the names of the parameters, from your
+model.
+\item \code{density}: A matrix of model log densities, with \code{n_steps} rows
+and \code{n_chains} columns.
 \item \code{initial}: A record of the initial conditions, a matrix with as
 many rows as you have parameters and \code{n_chains} columns (this is
 the same format as the matrix form of the \code{initial} input
@@ -65,8 +67,8 @@ parameter)
 \item \code{details}: Additional details reported by the sampler; this will
 be a list of length \code{n_chains} (or \code{NULL}) and the details
 depend on the sampler.  This one is subject to change.
-\item \code{chain}: An integer vector indicating the chain that the samples
-came from (1, 2, ..., \code{n_chains})
+\item \code{observations}: Additional details reported by the model.  This
+one is also subject to change.
 }
 }
 \description{
