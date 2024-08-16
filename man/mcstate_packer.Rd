@@ -16,9 +16,12 @@ generated names that include square brackets.}
 \item{array}{A list, where names correspond to the names of array
 parameters and values correspond to the lengths of parameters.
 Multiple dimensions are allowed (so if you provide an element
-with two entries these represent dimensions of a matrix).  In
-future, you may be able to use \emph{strings} as values for the
-lengths, in which case these will be looked for within \code{fixed}.}
+with two entries these represent dimensions of a matrix).
+Zero-length integer vectors or \code{NULL} values are counted as
+scalars, which allows you to put scalars at positions other than
+the front of the packing vector. In future, you may be able to
+use \emph{strings} as values for the lengths, in which case these
+will be looked for within \code{fixed}.}
 
 \item{fixed}{A named list of fixed parameters; these will be added
 into the final list directly.  These typically represent

@@ -102,14 +102,27 @@ test_that("names for scalar, array and fixed must be reasonable", {
 
 test_that("validate array inputs", {
   expect_error(
-    mcstate_packer(array = list(a = integer(), b = 2)),
-    "Elements of 'array' must have at least one element, but 'a' has none")
-  expect_error(
     mcstate_packer(array = list(a = 1, b = 2.5)),
     "Elements of 'array' must be integer-like vectors, but 'b' is not")
   expect_error(
     mcstate_packer(array = list(a = 1, b = c(3, 0, 2))),
     "All dimensions in 'array' must be at least 1, but 'b' violates this")
+})
+
+
+test_that("can pass empty array elements as scalars", {
+  p <- mcstate_packer(array = list(a = integer(), b = 2))
+  expect_equal(p$parameters, c("a", "b[1]", "b[2]"))
+  expect_equal(p$unpack(1:3), list(a = 1, b = 2:3))
+  expect_equal(p$pack(list(a = 1, b = 2:3)), 1:3)
+})
+
+
+test_that("can pass empty array elements as scalars in odd order", {
+  p <- mcstate_packer(array = list(a = 2, b = NULL))
+  expect_equal(p$parameters, c("a[1]", "a[2]", "b"))
+  expect_equal(p$unpack(1:3), list(a = 1:2, b = 3))
+  expect_equal(p$pack(list(a = 1:2, b = 3)), 1:3)
 })
 
 

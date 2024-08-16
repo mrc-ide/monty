@@ -91,9 +91,12 @@
 ##' @param array A list, where names correspond to the names of array
 ##'   parameters and values correspond to the lengths of parameters.
 ##'   Multiple dimensions are allowed (so if you provide an element
-##'   with two entries these represent dimensions of a matrix).  In
-##'   future, you may be able to use *strings* as values for the
-##'   lengths, in which case these will be looked for within `fixed`.
+##'   with two entries these represent dimensions of a matrix).
+##'   Zero-length integer vectors or `NULL` values are counted as
+##'   scalars, which allows you to put scalars at positions other than
+##'   the front of the packing vector. In future, you may be able to
+##'   use *strings* as values for the lengths, in which case these
+##'   will be looked for within `fixed`.
 ##'
 ##' @param fixed A named list of fixed parameters; these will be added
 ##'   into the final list directly.  These typically represent
@@ -259,17 +262,17 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
 ## Helper function to create array bookkeeping for the
 ## unpacking/packing process.
 prepare_pack_array <- function(name, shape, call = NULL) {
-  if (length(shape) == 0) {
-    cli::cli_abort(
-      paste("Elements of 'array' must have at least one element, but",
-            "'{name}' has none"),
-      arg = "array", call = call)
+  if (is.null(shape)) {
+    shape <- integer()
   }
   if (!rlang::is_integerish(shape)) {
     cli::cli_abort(
       paste("Elements of 'array' must be integer-like vectors, but",
             "'{name}' is not"),
       arg = "array", call = call)
+  }
+  if (length(shape) == 0) {
+    return(list(names = name, shape = 1, n = 1L))
   }
   if (any(shape <= 0)) {
     cli::cli_abort(
