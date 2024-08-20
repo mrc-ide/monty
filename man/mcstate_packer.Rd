@@ -136,3 +136,39 @@ b22)\verb{.  We would then write }process` as something like:
 which creates the symmetric 2x2 matrix \code{b} from \code{b_raw}.
 }
 
+\section{Unpacking matrices}{
+If you do not use \code{fixed} or \code{process} when defining your packer,
+then you can use \verb{$unpack()} with a matrix or higher-dimensional
+output.  There are two ways that you might like to unpack this
+sort of output.  Assume you have a matrix \code{m} with 3 rows and 2
+columns; this means that we have two sets of parameters or state
+(one per column) and 3 states within each; this is the format that
+mcmc parameters will be in for example.
+
+The first would to be return a list where the \code{i}th element is the
+result of unpacking the \code{i}th parameter/state vector.  You can do
+this by running
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{apply(m, 2, p$unpack)
+}\if{html}{\out{</div>}}
+
+The second would be to return a named list with three elements
+where the \code{ith} element is the unpacked version of the \code{i}th
+state.  In this case you can pass the matrix directly in to the
+unpacker:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{p$unpack(m)
+}\if{html}{\out{</div>}}
+
+When you do this, the elements of \code{m} will acquire an additional
+dimension; scalars become vectors (one per set), vectors become
+matrices (one column per set) and so on.
+
+This approach generalises to higher dimensional input, though we
+suspect you'll spend a bit of time headscratching if you use it.
+
+We do not currently offer the ability to pack this sort of output
+back up, though it's not hard.  Please let us know if you would
+use this.
+}
+

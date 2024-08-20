@@ -172,3 +172,51 @@ test_that("Can print a packer", {
   expect_match(res$messages, "Packing 2 parameters: 'x' and 'y'",
                fixed = TRUE, all = FALSE)
 })
+
+
+test_that("unpack a matrix", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 12)
+
+  res <- p$unpack(m)
+  expect_equal(res$x, c(1, 13, 25))
+  expect_equal(res$y, cbind(2:6, 14:18, 26:30))
+  expect_equal(res$z, array(c(7:12, 19:24, 31:36), c(2, 3, 3)))
+})
+
+
+test_that("error if given the wrong size input to unpack", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 9)
+  expect_error(
+    p$unpack(m),
+    "Incorrect length of first dimension of input; expected 12 but given 9")
+})
+
+
+test_that("error if given the wrong size input to unpack", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 12)
+  rownames(m) <- letters[1:12]
+  expect_error(
+    p$unpack(m),
+    "Incorrect rownames in input")
+})
+
+
+test_that("can't used fixed with array unpacking", {
+  p <- mcstate_packer(c("x", "y"), fixed = list(a = 10))
+  expect_equal(p$unpack(1:2), list(x = 1, y = 2, a = 10))
+  expect_error(
+    p$unpack(matrix(1:6, 2)),
+    "Can't unpack a matrix where the unpacker uses 'fixed'")
+})
+
+
+test_that("can't used process with array unpacking", {
+  p <- mcstate_packer(c("x", "y"), process = function(d) list(z = d$x + d$y))
+  expect_equal(p$unpack(1:2), list(x = 1, y = 2, z = 3))
+  expect_error(
+    p$unpack(matrix(1:6, 2)),
+    "Can't unpack a matrix where the unpacker uses 'process'")
+})
