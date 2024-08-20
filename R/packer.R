@@ -349,7 +349,7 @@ unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
     if (length(err) > 0) {
       cli::cli_abort(
         c("'process()' is trying to overwrite entries in parameters",
-          i = paste("The 'process()' function should only create elemements",
+          i = paste("The 'process()' function should only create elements",
                     "that are not already present in 'scalar', 'array'",
                     "or 'fixed', as this lets us reverse the transformation",
                     "process"),
