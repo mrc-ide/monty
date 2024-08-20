@@ -256,7 +256,7 @@ mcstate_model_gradient <- function(model, parameters, named = FALSE) {
 }
 
 
-##' Directly sample from a model.  Not all models suport this, and an
+##' Directly sample from a model.  Not all models support this, and an
 ##' error will be thrown if it is not possible.
 ##'
 ##' @title Directly sample from a model
