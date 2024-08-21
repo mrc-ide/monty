@@ -331,6 +331,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
   }
 
   mcstate_sampler("Nested adaptive Metropolis-Hastings",
+                  "mcstate_sampler_nested_adaptive",
                   initialise,
                   step,
                   finalise,
