@@ -1,17 +1,17 @@
 test_that("can select sensible values for progress", {
-  withr::with_options(list(mcstate2.progress = TRUE), {
+  withr::with_options(list(monty.progress = TRUE), {
     expect_false(show_progress_bar(FALSE))
     expect_true(show_progress_bar(TRUE))
     expect_true(show_progress_bar(NULL))
   })
 
-  withr::with_options(list(mcstate2.progress = FALSE), {
+  withr::with_options(list(monty.progress = FALSE), {
     expect_false(show_progress_bar(FALSE))
     expect_true(show_progress_bar(TRUE))
     expect_false(show_progress_bar(NULL))
   })
 
-  withr::with_options(list(mcstate2.progress = NULL), {
+  withr::with_options(list(monty.progress = NULL), {
     expect_false(show_progress_bar(FALSE))
     expect_true(show_progress_bar(TRUE))
     expect_true(show_progress_bar(NULL))

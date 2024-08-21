@@ -1,4 +1,4 @@
-##' Explain error codes produced by mcstate2.  This is a work in progress,
+##' Explain error codes produced by monty.  This is a work in progress,
 ##' and we would like feedback on what is useful as we improve it.
 ##' The idea is that if you see an error you can link through to get
 ##' more information on what it means and how to resolve it.  The
@@ -6,7 +6,7 @@
 ##' vignettes, but in the future we will arrange for offline rendering
 ##' too.
 ##'
-##' @title Explain mcstate2 error
+##' @title Explain monty error
 ##'
 ##' @param code The error code, as a string, in the form `Exxx` (a
 ##'   capital "E" followed by three numbers)
@@ -14,10 +14,10 @@
 ##' @return Nothing, this is called for its side effect only
 ##'
 ##' @export
-mcstate_dsl_error_explain <- function(code) {
+monty_dsl_error_explain <- function(code) {
   ## See odin2 for the canonical implementation of this, we're just
   ## shadowing it here really as our dsl is much simpler.  Note that
-  ## error codes from mcstate are three numbers long, whereas they are
+  ## error codes from monty are three numbers long, whereas they are
   ## four long in odin so that it's easy (for us) to tell who the
   ## error belongs to.
   assert_scalar_character(code)
@@ -34,7 +34,7 @@ mcstate_dsl_error_explain <- function(code) {
       arg = "code")
   }
   url <- sprintf(
-    "https://mrc-ide.github.io/mcstate2/articles/dsl-errors.html#%s",
+    "https://mrc-ide.github.io/monty/articles/dsl-errors.html#%s",
     tolower(code))
   utils::browseURL(url)
 }
@@ -44,7 +44,7 @@ dsl_parse_error <- function(msg, code, src, call, ...,
                             .envir = parent.frame()) {
   stopifnot(grepl("^E[0-9]{3}$", code))
   cli::cli_abort(msg,
-                 class = "mcstate2_parse_error",
+                 class = "monty_parse_error",
                  code = code,
                  src = src,
                  call = call,
@@ -55,7 +55,7 @@ dsl_parse_error <- function(msg, code, src, call, ...,
 
 ##' @importFrom rlang cnd_footer
 ##' @export
-cnd_footer.mcstate2_parse_error <- function(cnd, ...) {
+cnd_footer.monty_parse_error <- function(cnd, ...) {
   detail <- c(">" = "In expression",
               format_error_src(cnd$src))
   for (i in seq_along(cnd$context)) {
@@ -76,7 +76,7 @@ cnd_footer.mcstate2_parse_error <- function(cnd, ...) {
   ## RStudio will only run code in namespaced form
   explain <- cli::format_inline(
     paste("For more information, run",
-          "{.run mcstate2::mcstate2_dsl_error_explain(\"{code}\")}"))
+          "{.run monty::monty_dsl_error_explain(\"{code}\")}"))
   c(detail, i = explain)
 }
 

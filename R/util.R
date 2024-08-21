@@ -49,8 +49,8 @@ is_positive_definite <- function(x, tol = sqrt(.Machine$double.eps)) {
 }
 
 
-mcstate_file <- function(path) {
-  system.file(path, package = "mcstate2", mustWork = TRUE)
+monty_file <- function(path) {
+  system.file(path, package = "monty", mustWork = TRUE)
 }
 
 

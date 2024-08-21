@@ -19,7 +19,7 @@ data <- list(
   string = as.character(version))
 
 root <- here::here()
-dest <- file.path(root, "inst/include/mcstate/random/version.hpp")
+dest <- file.path(root, "inst/include/monty/random/version.hpp")
 template <- paste(
   readLines(file.path(root, "inst/template/version.hpp")),
   collapse = "\n")

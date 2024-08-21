@@ -1,18 +1,18 @@
 ##' Check and expand a domain, where it is used alongside a
-##' [mcstate_packer] object.  This can be used to expand domains for
+##' [monty_packer] object.  This can be used to expand domains for
 ##' logical parameters (e.g. a vector `b`) into its specific names
 ##' (e.g., `b[1]`, `b[2]`, etc) without having to rely on the
 ##' internals about how these names are constructed.
 ##'
 ##' @title Expand (and check) domain against a packer
 ##'
-##' @param domain A two-column matrix as defined in [mcstate_model],
+##' @param domain A two-column matrix as defined in [monty_model],
 ##'   with row names corresponding to either logical names (e.g., `b`)
 ##'   or specific names `b[1]` that are present in your packer.
 ##'   `NULL` is allowed where all parameters are defined over the
 ##'   entire real line.
 ##'
-##' @param packer A [mcstate_packer] object
+##' @param packer A [monty_packer] object
 ##'
 ##' @return A two dimensional matrix representing your domain, or
 ##'   `NULL` if `domain` was given as `NULL`.
@@ -20,13 +20,13 @@
 ##' @export
 ##' @examples
 ##'
-##' packer <- mcstate_packer(c("a", "b"), list(x = 3, y = c(2, 2)))
-##' mcstate_domain_expand(NULL, packer)
-##' mcstate_domain_expand(rbind(x = c(0, 1)), packer)
-##' mcstate_domain_expand(rbind(x = c(0, 1), "x[2]" = c(0, Inf)), packer)
-##' mcstate_domain_expand(rbind(x = c(0, 1), "y" = c(0, Inf)), packer)
-mcstate_domain_expand <- function(domain, packer) {
-  assert_is(packer, "mcstate_packer")
+##' packer <- monty_packer(c("a", "b"), list(x = 3, y = c(2, 2)))
+##' monty_domain_expand(NULL, packer)
+##' monty_domain_expand(rbind(x = c(0, 1)), packer)
+##' monty_domain_expand(rbind(x = c(0, 1), "x[2]" = c(0, Inf)), packer)
+##' monty_domain_expand(rbind(x = c(0, 1), "y" = c(0, Inf)), packer)
+monty_domain_expand <- function(domain, packer) {
+  assert_is(packer, "monty_packer")
   if (is.null(domain)) {
     return(domain)
   }

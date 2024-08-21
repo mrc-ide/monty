@@ -1,10 +1,10 @@
-PATH_MCSTATE_INCLUDE=@path_mcstate@/include
+PATH_MONTY_INCLUDE=@path_monty@/include
 OPENMP_FLAGS=@openmp_flags@
 
 all: rnguse
 
 rnguse: rnguse.cpp
-	$(CXX) -I$(PATH_MCSTATE_INCLUDE) $(OPENMP_FLAGS) -O2 -std=c++11 -o rnguse rnguse.cpp
+	$(CXX) -I$(PATH_MONTY_INCLUDE) $(OPENMP_FLAGS) -O2 -std=c++11 -o rnguse rnguse.cpp
 
 clean:
 	$(RM) rnguse

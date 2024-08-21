@@ -94,7 +94,7 @@ glue_whisker <- function(template, data) {
 if (!interactive()) {
   root <- here::here()
   dest <- file.path(root,
-                    "inst/include/mcstate/random/normal_ziggurat_tables.hpp")
+                    "inst/include/monty/random/normal_ziggurat_tables.hpp")
   template <- paste(
     readLines(file.path(root, "inst/template/normal_ziggurat_tables.hpp")),
     collapse = "\n")

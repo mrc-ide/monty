@@ -48,11 +48,11 @@ test_that("don't append incompatible observations", {
 
 
 test_that("can print an observer", {
-  o <- mcstate_observer(identity)
+  o <- monty_observer(identity)
   res <- evaluate_promise(withVisible(print(o)))
   expect_mapequal(res$result, list(value = o, visible = FALSE))
   expect_match(
     res$messages,
-    "<mcstate_observer>",
+    "<monty_observer>",
     fixed = TRUE, all = FALSE)
 })

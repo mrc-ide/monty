@@ -2,7 +2,7 @@ test_that("xoshiro output agrees with reference data", {
   path <- "xoshiro-ref"
   status <- list()
   for (name in dir(path)) {
-    obj <- mcstate_rng_pointer$new(seed = 42, algorithm = name)
+    obj <- monty_rng_pointer$new(seed = 42, algorithm = name)
     res <- test_xoshiro_run(obj)
     obj$sync()
     len <- if (grepl("^xoshiro128", name)) 4 else 8

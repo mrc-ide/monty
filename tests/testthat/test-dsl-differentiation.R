@@ -151,12 +151,12 @@ test_that("error if asked to differentiate something not yet supported", {
     differentiate(quote(f(x)), "x"),
     "Unsupported function 'f' in 'differentiate()'",
     fixed = TRUE,
-    class = "mcstate_differentiation_failure")
+    class = "monty_differentiation_failure")
   expect_error(
     differentiate(quote(exp(2 * f(x))), "x"),
     "Unsupported function 'f' in 'differentiate()'",
     fixed = TRUE,
-    class = "mcstate_differentiation_failure")
+    class = "monty_differentiation_failure")
 })
 
 
@@ -365,7 +365,7 @@ test_that("can rewrite expressions", {
 
 
 test_that("can use public interface", {
-  obj <- mcstate_differentiation()
+  obj <- monty_differentiation()
   expect_identical(obj$differentiate, differentiate)
   expect_identical(obj$maths, maths)
 })

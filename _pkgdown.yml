@@ -1,4 +1,4 @@
-url: https://mrc-ide.github.io/mcstate2
+url: https://mrc-ide.github.io/monty
 
 template:
   bootstrap: 5
@@ -6,51 +6,51 @@ template:
 reference:
   - title: Models
     contents:
-    - mcstate_model
-    - mcstate_model_combine
-    - mcstate_model_properties
+    - monty_model
+    - monty_model_combine
+    - monty_model_properties
 
   - subtitle: Functions for working with models
     contents:
-    - mcstate_model_density
-    - mcstate_model_gradient
-    - mcstate_model_direct_sample
+    - monty_model_density
+    - monty_model_gradient
+    - monty_model_direct_sample
 
   - title: Domain specific language
     contents:
-      - mcstate_dsl
-      - mcstate_dsl_error_explain
-      - mcstate_differentiation
+      - monty_dsl
+      - monty_dsl_error_explain
+      - monty_differentiation
 
   - subtitle: Advanced
     contents:
-      - mcstate_dsl_distributions
-      - mcstate_dsl_parse_distribution
+      - monty_dsl_distributions
+      - monty_dsl_parse_distribution
 
   - title: Draw samples from a model
     contents:
-    - mcstate_sample
-    - mcstate_sample_continue
+    - monty_sample
+    - monty_sample_continue
 
   - subtitle: Samplers
     contents:
-    - mcstate_sampler_random_walk
-    - mcstate_sampler_adaptive
-    - mcstate_sampler_hmc
-    - mcstate_sampler_nested_random_walk
-    - mcstate_sampler_nested_adaptive
+    - monty_sampler_random_walk
+    - monty_sampler_adaptive
+    - monty_sampler_hmc
+    - monty_sampler_nested_random_walk
+    - monty_sampler_nested_adaptive
 
   - subtitle: Chain runners
     contents:
-    - mcstate_runner_serial
-    - mcstate_runner_parallel
-    - mcstate_runner_simultaneous
+    - monty_runner_serial
+    - monty_runner_parallel
+    - monty_runner_simultaneous
 
   - subtitle: Tools
     contents:
-    - mcstate_observer
-    - mcstate_packer
-    - mcstate_domain_expand
+    - monty_observer
+    - monty_packer
+    - monty_domain_expand
     - with_trace_random
 
   - title: Random numbers
@@ -59,7 +59,7 @@ reference:
       imported from dust, and we'll change it to better suit the needs
       in this package.
     contents:
-    - mcstate_rng
-    - mcstate_rng_distributed_pointer
-    - mcstate_rng_distributed_state
-    - mcstate_rng_pointer
+    - monty_rng
+    - monty_rng_distributed_pointer
+    - monty_rng_distributed_state
+    - monty_rng_pointer

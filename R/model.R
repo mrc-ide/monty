@@ -1,6 +1,6 @@
 ##' Describe properties of a model.  Use of this function is optional,
 ##' but you can pass the return value of this as the `properties`
-##' argument of mcstate_model to enforce that your model does actually
+##' argument of monty_model to enforce that your model does actually
 ##' have these properties.
 ##'
 ##' @title Describe model properties
@@ -20,7 +20,7 @@
 ##' @param has_parameter_groups Logical, indicating that the model can
 ##'   be decomposed into parameter groups which are independent of
 ##'   each other.  This is indicated by using the `parameter_groups`
-##'   field within the `model` object passed to [mcstate_model], and
+##'   field within the `model` object passed to [monty_model], and
 ##'   by the presence of a `by_group` argument to `density` and (later
 ##'   we may also support this in `gradient`).  Use `NULL` (the
 ##'   default) to detect this from the model.
@@ -36,15 +36,15 @@
 ##'   may be much more efficient (via vectorisation or
 ##'   parallelisation) to do this yourself.
 ##'
-##' @return A list of class `mcstate_model_properties` which should
+##' @return A list of class `monty_model_properties` which should
 ##'   not be modified.
 ##'
 ##' @export
-mcstate_model_properties <- function(has_gradient = NULL,
-                                     has_direct_sample = NULL,
-                                     is_stochastic = NULL,
-                                     has_parameter_groups = NULL,
-                                     allow_multiple_parameters = FALSE) {
+monty_model_properties <- function(has_gradient = NULL,
+                                   has_direct_sample = NULL,
+                                   is_stochastic = NULL,
+                                   has_parameter_groups = NULL,
+                                   allow_multiple_parameters = FALSE) {
   ## TODO: What name do we want for this property, really?
   assert_scalar_logical(allow_multiple_parameters)
   ret <- list(has_gradient = has_gradient,
@@ -53,14 +53,14 @@ mcstate_model_properties <- function(has_gradient = NULL,
               has_parameter_groups = has_parameter_groups,
               ## TODO: I am not convinced on this name
               allow_multiple_parameters = allow_multiple_parameters)
-  class(ret) <- "mcstate_model_properties"
+  class(ret) <- "monty_model_properties"
   ret
 }
 
-##' Create a basic `mcstate` model.  This takes a user-supplied object
+##' Create a basic `monty` model.  This takes a user-supplied object
 ##' that minimally can compute a probability density (via a `density`
 ##' function) and information about parameters; with this we can
-##' sample from the model using `MCMC` using [mcstate_sample].  We
+##' sample from the model using `MCMC` using [monty_sample].  We
 ##' don't imagine that many users will call this function directly,
 ##' but that this will be glue used by packages.
 ##'
@@ -99,12 +99,12 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   `(-Inf, Inf)`.
 ##'
 ##' * `direct_sample`: A function to sample directly from the
-##'   parameter space, given an [mcstate_rng] object to sample from.
+##'   parameter space, given a [monty_rng] object to sample from.
 ##'   In the case where a model returns a posterior (e.g., in Bayesian
 ##'   inference), this is assumed to be sampling from the prior.
 ##'   We'll use this for generating initial conditions for MCMC where
 ##'   those are not given, and possibly other uses.  If not given then
-##'   when using [mcstate_sample()] the user will have to provide a
+##'   when using [monty_sample()] the user will have to provide a
 ##'   vector of initial states.
 ##'
 ##' * `gradient`: A function to compute the gradient of `density` with
@@ -122,10 +122,10 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   look after their own stream, and that they may need many
 ##'   streams).  Models that provide this method are assumed to be
 ##'   stochastic; however, you can use the `is_stochastic` property
-##'   (via [mcstate_model_properties()]) to override this (e.g., to
+##'   (via [monty_model_properties()]) to override this (e.g., to
 ##'   run a stochastic model with its deterministic expectation).
 ##'   This function takes a raw vector of random number state from
-##'   [mcstate_rng] and uses it to set the random number state for
+##'   [monty_rng] and uses it to set the random number state for
 ##'   your model; this is derived from the random number stream for a
 ##'   particular chain, jumped ahead.
 ##'
@@ -146,10 +146,10 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##' @param model A list or environment with elements as described in
 ##'   Details.
 ##'
-##' @param properties Optionally, a [mcstate_model_properties] object,
+##' @param properties Optionally, a [monty_model_properties] object,
 ##'   used to enforce or clarify properties of the model.
 ##'
-##' @return An object of class `mcstate_model`.  This will have elements:
+##' @return An object of class `monty_model`.  This will have elements:
 ##'
 ##' * `model`: The model as provided
 ##' * `parameters`: The parameter name vector
@@ -158,14 +158,14 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##' * `direct_sample`: The `direct_sample` function, if provided by the model
 ##' * `gradient`: The `gradient` function, if provided by the model
 ##' * `properties`: A list of properties of the model;
-##'   see [mcstate_model_properties()].  Currently this contains:
+##'   see [monty_model_properties()].  Currently this contains:
 ##'     * `has_gradient`: the model can compute its gradient
 ##'     * `has_direct_sample`: the model can sample from parameters space
 ##'     * `is_stochastic`: the model will behave stochastically
 ##'     * `has_parameter_groups`: The model has separable parameter groups
 ##'
 ##' @export
-mcstate_model <- function(model, properties = NULL) {
+monty_model <- function(model, properties = NULL) {
   call <- environment() # for nicer stack traces
   parameters <- validate_model_parameters(model, call)
   domain <- validate_model_domain(model, call)
@@ -192,52 +192,52 @@ mcstate_model <- function(model, properties = NULL) {
               direct_sample = direct_sample,
               rng_state = rng_state,
               properties = properties)
-  class(ret) <- "mcstate_model"
+  class(ret) <- "monty_model"
   ret
 }
 
 
 ##' Compute log density for a model.  This is a wrapper around the
-##' `$density` property within an [mcstate_model] object.
+##' `$density` property within a [monty_model] object.
 ##'
 ##' @title Compute log density
 ##'
-##' @param model An [mcstate_model] object
+##' @param model A [monty_model] object
 ##'
 ##' @param parameters A vector or matrix of parameters
 ##'
 ##' @return A log-density value, or vector of log-density values
 ##'
-##' @seealso [mcstate_model_gradient] for computing gradients and
-##'   [mcstate_model_direct_sample] for sampling from a model.
+##' @seealso [monty_model_gradient] for computing gradients and
+##'   [monty_model_direct_sample] for sampling from a model.
 ##'
 ##' @export
-mcstate_model_density <- function(model, parameters) {
-  require_mcstate_model(model)
+monty_model_density <- function(model, parameters) {
+  require_monty_model(model)
   check_model_parameters(model, parameters)
   model$density(parameters)
 }
 
 
 ##' Compute the gradient of log density (which is returned by
-##' [mcstate_model_density]) with respect to parameters.  Not all models
+##' [monty_model_density]) with respect to parameters.  Not all models
 ##' support this, and an error will be thrown if it is not possible.
 ##'
 ##' @title Compute gradient of log density
 ##'
-##' @inheritParams mcstate_model_density
+##' @inheritParams monty_model_density
 ##'
 ##' @param named Logical, indicating if the output should be named
 ##'   using the parameter names.
 ##'
 ##' @return A vector or matrix of gradients
 ##'
-##' @seealso [mcstate_model_density] for log density, and
-##'   [mcstate_model_direct_sample] to sample from a model
+##' @seealso [monty_model_density] for log density, and
+##'   [monty_model_direct_sample] to sample from a model
 ##'
 ##' @export
-mcstate_model_gradient <- function(model, parameters, named = FALSE) {
-  require_mcstate_model(model)
+monty_model_gradient <- function(model, parameters, named = FALSE) {
+  require_monty_model(model)
   require_gradient(
     model,
     "Can't compute gradient, as this model does not support it",
@@ -261,17 +261,17 @@ mcstate_model_gradient <- function(model, parameters, named = FALSE) {
 ##'
 ##' @title Directly sample from a model
 ##'
-##' @inheritParams mcstate_model_gradient
+##' @inheritParams monty_model_gradient
 ##'
-##' @param rng Random number state, created by [mcstate_rng].  Use of
+##' @param rng Random number state, created by [monty_rng].  Use of
 ##'   an RNG with more than one stream may or may not work as
 ##'   expected; this is something we need to tidy up (mrc-5292)
 ##'
 ##' @return A vector or matrix of sampled parameters
 ##'
 ##' @export
-mcstate_model_direct_sample <- function(model, rng, named = FALSE) {
-  require_mcstate_model(model)
+monty_model_direct_sample <- function(model, rng, named = FALSE) {
+  require_monty_model(model)
   require_direct_sample(
     model,
     "Can't directly sample from this model")
@@ -286,9 +286,9 @@ mcstate_model_direct_sample <- function(model, rng, named = FALSE) {
 
 validate_model_properties <- function(properties, call = NULL) {
   if (is.null(properties)) {
-    return(mcstate_model_properties())
+    return(monty_model_properties())
   }
-  assert_is(properties, "mcstate_model_properties", call = call)
+  assert_is(properties, "monty_model_properties", call = call)
   properties
 }
 
@@ -466,10 +466,10 @@ validate_model_parameter_groups <- function(model, properties, call) {
 }
 
 
-require_mcstate_model <- function(model, arg = deparse(substitute(model)),
-                                  call = parent.frame()) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected '{arg}' to be an 'mcstate_model'",
+require_monty_model <- function(model, arg = deparse(substitute(model)),
+                                call = parent.frame()) {
+  if (!inherits(model, "monty_model")) {
+    cli::cli_abort("Expected '{arg}' to be a 'monty_model'",
                    arg = arg, call = call)
   }
 }
@@ -520,30 +520,30 @@ require_multiple_parameters <- function(model, message, ...) {
                   "does not support this (or does not advertise that it",
                   "does), with the property 'allow_multiple_parameters'",
                   "set to FALSE")),
-        ...)
+      ...)
   }
 }
 
 
 ##' @export
-print.mcstate_model <- function(x, ...) {
-  cli::cli_h1("<mcstate_model>")
+print.monty_model <- function(x, ...) {
+  cli::cli_h1("<monty_model>")
   cli::cli_alert_info(
     "Model has {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
   ## TODO: once the interface around multiple parameters stabilises,
   ## we should reflect information about allow_multiple_parameters and
   ## has_parameter_groups back here.
-  str <- mcstate_model_properties_str(x$properties)
+  str <- monty_model_properties_str(x$properties)
   if (length(str) > 0) {
     cli::cli_alert_info("This model:")
     cli::cli_bullets(set_names(str, "*"))
   }
-  cli::cli_alert_info("See {.help mcstate_model} for more information")
+  cli::cli_alert_info("See {.help monty_model} for more information")
   invisible(x)
 }
 
 
-mcstate_model_properties_str <- function(properties) {
+monty_model_properties_str <- function(properties) {
   c(if (properties$has_gradient) "can compute gradients",
     if (properties$has_direct_sample) "can be directly sampled from",
     if (properties$is_stochastic) "is stochastic")

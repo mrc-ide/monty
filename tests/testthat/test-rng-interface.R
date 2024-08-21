@@ -1,5 +1,5 @@
 test_that("Can create pointer object", {
-  obj <- mcstate_rng_pointer$new()
+  obj <- monty_rng_pointer$new()
   expect_true(obj$is_current())
   expect_type(obj$state(), "raw")
   expect_length(obj$state(), 32)
@@ -11,7 +11,7 @@ test_that("Can create pointer object", {
 
 
 test_that("Using object requires sync", {
-  obj <- mcstate_rng_pointer$new()
+  obj <- monty_rng_pointer$new()
   expect_true(obj$is_current())
   r <- obj$state()
   test_xoshiro_run(obj)
@@ -23,7 +23,7 @@ test_that("Using object requires sync", {
 
 
 test_that("Fetching state syncs", {
-  obj <- mcstate_rng_pointer$new()
+  obj <- monty_rng_pointer$new()
   expect_true(obj$is_current())
   r <- obj$state()
   test_xoshiro_run(obj)
@@ -34,7 +34,7 @@ test_that("Fetching state syncs", {
 
 
 test_that("Invalidated pointers can be rebuilt", {
-  obj1 <- mcstate_rng_pointer$new()
+  obj1 <- monty_rng_pointer$new()
   obj2 <- corrupt_pointer(obj1)
   expect_equal(
     test_xoshiro_run(obj2),
@@ -57,17 +57,17 @@ test_that("Invalidated pointers can be rebuilt", {
 
 test_that("can't create invalid pointer types", {
   expect_error(
-    mcstate_rng_pointer$new(algorithm = "mt19937"),
+    monty_rng_pointer$new(algorithm = "mt19937"),
     "Unknown algorithm 'mt19937'")
 })
 
 
 test_that("Validate pointers on fetch", {
-  obj <- mcstate_rng_pointer$new(algorithm = "xoshiro256starstar")
+  obj <- monty_rng_pointer$new(algorithm = "xoshiro256starstar")
   expect_error(
     test_rng_pointer_get(obj, 1),
     "Incorrect rng type: given xoshiro256starstar, expected xoshiro256plus")
-  obj <- mcstate_rng_pointer$new(algorithm = "xoshiro256plus", n_streams = 4)
+  obj <- monty_rng_pointer$new(algorithm = "xoshiro256plus", n_streams = 4)
   expect_error(
     test_rng_pointer_get(obj, 20),
     "Requested a rng with 20 streams but only have 4")
@@ -79,11 +79,11 @@ test_that("Validate pointers on fetch", {
 
 
 test_that("Create pointer with a long jump", {
-  s0 <- mcstate_rng_pointer$new(1, 4, 0)$state()
-  s1 <- mcstate_rng_pointer$new(1, 4, 1)$state()
-  s2 <- mcstate_rng_pointer$new(1, 4, 2)$state()
+  s0 <- monty_rng_pointer$new(1, 4, 0)$state()
+  s1 <- monty_rng_pointer$new(1, 4, 1)$state()
+  s2 <- monty_rng_pointer$new(1, 4, 2)$state()
 
-  cmp <- mcstate_rng$new(1, 4)
+  cmp <- monty_rng$new(1, 4)
   expect_equal(s0, cmp$state())
   expect_equal(s1, cmp$long_jump()$state())
   expect_equal(s2, cmp$long_jump()$state())
@@ -91,7 +91,7 @@ test_that("Create pointer with a long jump", {
 
 
 test_that("can summarise errors", {
-  r <- mcstate_rng$new(n_streams = 10)
+  r <- monty_rng$new(n_streams = 10)
   err <- expect_error(
     r$binomial(1, 1, -1),
     "10 generators reported errors")

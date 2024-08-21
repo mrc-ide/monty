@@ -20,6 +20,6 @@ The result of evaluating \code{code}
 }
 \description{
 Trace calls to R's random-number-generating functions, to detect
-unexpected use of random number generation outside of mcstate2's
+unexpected use of random number generation outside of monty's
 control.
 }

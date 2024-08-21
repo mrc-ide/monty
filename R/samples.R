@@ -1,11 +1,11 @@
 ##' @export
-print.mcstate_samples <- function(x, ...) {
+print.monty_samples <- function(x, ...) {
   d <- dim(x$pars)
   n_pars <- d[[1]]
   n_samples <- d[[2]]
   n_chains <- d[[3]]
   cli::cli_h1(
-    paste("<mcstate_samples: {n_pars} parameter{?s} x {n_samples} sample{?s}",
+    paste("<monty_samples: {n_pars} parameter{?s} x {n_samples} sample{?s}",
           "x {n_chains} chain{?s}>"))
   cli::cli_alert_info("Parameters: {squote(rownames(x$pars))}")
 
@@ -21,7 +21,7 @@ print.mcstate_samples <- function(x, ...) {
   cli::cli_bullets(set_names(target_str, ">"))
 
   cli::cli_alert_info(
-    paste('See {.help mcstate_sample} and {.run vignette("samples")} for more',
+    paste('See {.help monty_sample} and {.run vignette("samples")} for more',
           "information"))
 
   invisible(x)
@@ -29,7 +29,7 @@ print.mcstate_samples <- function(x, ...) {
 
 
 ##' @exportS3Method posterior::as_draws_array
-as_draws_array.mcstate_samples <- function(x, ...) {
+as_draws_array.monty_samples <- function(x, ...) {
   arr <- aperm(x$pars, c(2, 3, 1))
   names(dimnames(arr)) <- c("chain", "iteration", "variable")
   class(arr) <- c("draws_array", "draws", "array")
@@ -37,13 +37,13 @@ as_draws_array.mcstate_samples <- function(x, ...) {
 }
 
 ##' @exportS3Method posterior::as_draws_df
-as_draws_df.mcstate_samples <- function(x, ...) {
-  posterior::as_draws_df(as_draws_array.mcstate_samples(x))
+as_draws_df.monty_samples <- function(x, ...) {
+  posterior::as_draws_df(as_draws_array.monty_samples(x))
 }
 
 
 ##' @exportS3Method coda::as.mcmc.list
-as.mcmc.list.mcstate_samples <- function(x, ...) {
+as.mcmc.list.monty_samples <- function(x, ...) {
   n_chains <- dim(x$pars)[[3]]
   coda::mcmc.list(lapply(seq_len(n_chains), function(i) {
     coda::mcmc(t(array_drop(x$pars[, , i, drop = FALSE], 3)))

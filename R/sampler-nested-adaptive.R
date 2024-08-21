@@ -1,12 +1,12 @@
 ##' Create a nested adaptive Metropolis-Hastings sampler, which extends the 
-##' adaptive sampler [mcstate_sampler_adaptive], tuning the variance covariance
+##' adaptive sampler [monty_sampler_adaptive], tuning the variance covariance
 ##' matrices for proposal for the separable sections
 ##' of a nested model (vs the simple nested random walk sampler
-##' [mcstate_sampler_random_walk]). This sampler requires
+##' [monty_sampler_random_walk]). This sampler requires
 ##' that models support the `has_parameter_groups` property.
 ##'
 ##' Much like the simple nested random walk sampler
-##' [mcstate_sampler_random_walk], the strategy is to propose all the 
+##' [monty_sampler_random_walk], the strategy is to propose all the
 ##' shared parameters as a deviation from the current point in parameter space
 ##' as a single move and accept or reject as a block. Then we generate points
 ##' for all the region-specific parameters, compute the density and then
@@ -15,29 +15,29 @@
 ##' region B.
 ##'
 ##' The adaptive proposal algorithm of the non-nested adaptive sampler 
-##' [mcstate_sampler_adaptive] is extended here to adaptively tune the variance
+##' [monty_sampler_adaptive] is extended here to adaptively tune the variance
 ##' covariance matrix of each of these parameter chunks.
 ##'
 ##' @title Nested Adaptive Metropolis-Hastings Sampler
 ##'
-##' @inheritParams mcstate_sampler_adaptive
+##' @inheritParams monty_sampler_adaptive
 ##'
-##' @return A `mcstate_sampler` object, which can be used with
-##'   [mcstate_sample]
+##' @return A `monty_sampler` object, which can be used with
+##'   [monty_sample]
 ##'
 ##' @export
-mcstate_sampler_nested_adaptive <- function(initial_vcv,
-                                            initial_vcv_weight = 1000,
-                                            initial_scaling = 1,
-                                            initial_scaling_weight = NULL,
-                                            min_scaling = 0,
-                                            scaling_increment = NULL,
-                                            log_scaling_update = TRUE,
-                                            acceptance_target = 0.234,
-                                            forget_rate = 0.2,
-                                            forget_end = Inf,
-                                            adapt_end = Inf,
-                                            pre_diminish = 0) {
+monty_sampler_nested_adaptive <- function(initial_vcv,
+                                          initial_vcv_weight = 1000,
+                                          initial_scaling = 1,
+                                          initial_scaling_weight = NULL,
+                                          min_scaling = 0,
+                                          scaling_increment = NULL,
+                                          log_scaling_update = TRUE,
+                                          acceptance_target = 0.234,
+                                          forget_rate = 0.2,
+                                          forget_end = Inf,
+                                          adapt_end = Inf,
+                                          pre_diminish = 0) {
   if (!is.list(initial_vcv)) {
     cli::cli_abort(
       "Expected a list for 'initial_vcv'",
@@ -94,10 +94,10 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
                     "included with your density")))
     }
     if (length(density_by_group) != n_groups) {
-        cli::cli_abort(
-          paste("model$density(x, by_group = TRUE) produced a 'by_group'",
-                "attribute with incorrect length {length(density_by_group)}",
-                "but I expected length {n_groups}"))
+      cli::cli_abort(
+        paste("model$density(x, by_group = TRUE) produced a 'by_group'",
+              "attribute with incorrect length {length(density_by_group)}",
+              "but I expected length {n_groups}"))
     }
 
     internal$density_by_group <- density_by_group
@@ -147,7 +147,7 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     
     internal$scaling_increment$groups <- 
       Map(function(x, n) {x %||% 
-          calc_scaling_increment(n, acceptance_target, log_scaling_update)},
+                            calc_scaling_increment(n, acceptance_target, log_scaling_update)},
           internal$scaling_increment$groups, lengths(i_group))
     internal$scaling_weight$groups <- 
       lapply(internal$scaling_weight$groups,
@@ -332,13 +332,13 @@ mcstate_sampler_nested_adaptive <- function(initial_vcv,
     list2env(state, internal)
   }
 
-  mcstate_sampler("Nested adaptive Metropolis-Hastings",
-                  "mcstate_sampler_nested_adaptive",
-                  initialise,
-                  step,
-                  finalise,
-                  get_internal_state,
-                  set_internal_state)
+  monty_sampler("Nested adaptive Metropolis-Hastings",
+                "monty_sampler_nested_adaptive",
+                initialise,
+                step,
+                finalise,
+                get_internal_state,
+                set_internal_state)
 }
 
 
