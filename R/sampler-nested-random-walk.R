@@ -43,7 +43,7 @@
 ##'   to be a list with elements `base` and `groups` corresponding to
 ##'   the covariance matrix for base parameters (if any) and groups.
 ##'   
-##" @inheritParams mcstate_sampler_random_walk
+##' @inheritParams mcstate_sampler_random_walk
 ##'
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
