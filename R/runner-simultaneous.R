@@ -57,8 +57,10 @@ mcstate_runner_simultaneous <- function(progress = NULL) {
                                          n_steps, progress)
   }
 
-  structure(list(run = run, continue = continue),
-            class = "mcstate_runner")
+  mcstate_runner("Simultaneous",
+                 "mcstate_runner_simultaneous",
+                 run,
+                 continue)
 }
 
 

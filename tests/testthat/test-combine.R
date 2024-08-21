@@ -126,10 +126,10 @@ test_that("validate input args", {
   x <- ex_simple_gamma1()
   expect_error(
     mcstate_model_combine(x, NULL),
-    "Expected 'b' to be a 'mcstate_model' object")
+    "Expected 'b' to be an 'mcstate_model'")
   expect_error(
     mcstate_model_combine(NULL, x),
-    "Expected 'a' to be a 'mcstate_model' object")
+    "Expected 'a' to be an 'mcstate_model'")
   expect_error(
     mcstate_model_combine(x, x, TRUE),
     "Expected 'properties' to be a 'mcstate_model_properties' object")

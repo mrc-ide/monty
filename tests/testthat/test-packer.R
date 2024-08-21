@@ -17,6 +17,7 @@ test_that("trivial packer", {
   expect_error(xp$pack(list(a = 1:2)),
                "Invalid structure to 'pack()'",
                fixed = TRUE)
+  expect_equal(xp$index(), list(a = 1))
 })
 
 
@@ -25,6 +26,7 @@ test_that("multiple scalar unpacking", {
   expect_equal(xp$parameters, c("a", "b", "c"))
   expect_equal(xp$unpack(1:3), list(a = 1, b = 2, c = 3))
   expect_equal(xp$pack(list(a = 1, b = 2, c = 3)), 1:3)
+  expect_equal(xp$index(), list(a = 1, b = 2, c = 3))
 })
 
 
@@ -49,6 +51,7 @@ test_that("can use integer vectors for array inputs", {
   expect_equal(xp$parameters,
                c("a", sprintf("b[%d]", 1:3), sprintf("c[%d]", 1:4)))
   expect_equal(xp$unpack(1:8), list(a = 1, b = 2:4, c = 5:8))
+  expect_equal(xp$index(), list(a = 1, b = 2:4, c = 5:8))
 })
 
 
@@ -99,14 +102,27 @@ test_that("names for scalar, array and fixed must be reasonable", {
 
 test_that("validate array inputs", {
   expect_error(
-    mcstate_packer(array = list(a = integer(), b = 2)),
-    "Elements of 'array' must have at least one element, but 'a' has none")
-  expect_error(
     mcstate_packer(array = list(a = 1, b = 2.5)),
     "Elements of 'array' must be integer-like vectors, but 'b' is not")
   expect_error(
     mcstate_packer(array = list(a = 1, b = c(3, 0, 2))),
     "All dimensions in 'array' must be at least 1, but 'b' violates this")
+})
+
+
+test_that("can pass empty array elements as scalars", {
+  p <- mcstate_packer(array = list(a = integer(), b = 2))
+  expect_equal(p$parameters, c("a", "b[1]", "b[2]"))
+  expect_equal(p$unpack(1:3), list(a = 1, b = 2:3))
+  expect_equal(p$pack(list(a = 1, b = 2:3)), 1:3)
+})
+
+
+test_that("can pass empty array elements as scalars in odd order", {
+  p <- mcstate_packer(array = list(a = 2, b = NULL))
+  expect_equal(p$parameters, c("a[1]", "a[2]", "b"))
+  expect_equal(p$unpack(1:3), list(a = 1:2, b = 3))
+  expect_equal(p$pack(list(a = 1:2, b = 3)), 1:3)
 })
 
 
@@ -144,4 +160,63 @@ test_that("require that process is well-behaved", {
   expect_error(xp$unpack(1:3),
                "'process()' is trying to overwrite entries in parameters",
                fixed = TRUE)
+})
+
+
+test_that("Can print a packer", {
+  p <- mcstate_packer(c("x", "y"))
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_mapequal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<mcstate_packer>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "Packing 2 parameters: 'x' and 'y'",
+               fixed = TRUE, all = FALSE)
+})
+
+
+test_that("unpack a matrix", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 12)
+
+  res <- p$unpack(m)
+  expect_equal(res$x, c(1, 13, 25))
+  expect_equal(res$y, cbind(2:6, 14:18, 26:30))
+  expect_equal(res$z, array(c(7:12, 19:24, 31:36), c(2, 3, 3)))
+})
+
+
+test_that("error if given the wrong size input to unpack", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 9)
+  expect_error(
+    p$unpack(m),
+    "Incorrect length of first dimension of input; expected 12 but given 9")
+})
+
+
+test_that("error if given the wrong size input to unpack", {
+  p <- mcstate_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  m <- matrix(seq_len(12 * 3), 12)
+  rownames(m) <- letters[1:12]
+  expect_error(
+    p$unpack(m),
+    "Incorrect rownames in input")
+})
+
+
+test_that("can't used fixed with array unpacking", {
+  p <- mcstate_packer(c("x", "y"), fixed = list(a = 10))
+  expect_equal(p$unpack(1:2), list(x = 1, y = 2, a = 10))
+  expect_error(
+    p$unpack(matrix(1:6, 2)),
+    "Can't unpack a matrix where the unpacker uses 'fixed'")
+})
+
+
+test_that("can't used process with array unpacking", {
+  p <- mcstate_packer(c("x", "y"), process = function(d) list(z = d$x + d$y))
+  expect_equal(p$unpack(1:2), list(x = 1, y = 2, z = 3))
+  expect_error(
+    p$unpack(matrix(1:6, 2)),
+    "Can't unpack a matrix where the unpacker uses 'process'")
 })

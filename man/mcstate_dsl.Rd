@@ -4,7 +4,7 @@
 \alias{mcstate_dsl}
 \title{Domain Specific Language for mcstate}
 \usage{
-mcstate_dsl(x, type = NULL)
+mcstate_dsl(x, type = NULL, gradient = NULL)
 }
 \arguments{
 \item{x}{The model as an expression.  This may be given as an
@@ -18,6 +18,14 @@ details.}
 \item{type}{Force interpretation of the type of expression given
 as \code{x}.  If given, valid options are \code{expression}, \code{text} or
 \code{file}.}
+
+\item{gradient}{Control gradient derivation.  If \code{NULL} (the
+default) we try and generate a gradient function for your model
+and warn if this is not possible.  If \code{FALSE}, then we do not
+attempt to construct a gradient function, which prevents a
+warning being generated if this is not possible.  If \code{TRUE},
+then we will error if it is not possible to create a gradient
+function.}
 }
 \value{
 A \link{mcstate_model} object derived from the expressions you

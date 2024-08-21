@@ -1,8 +1,8 @@
 test_that("can throw sensible errors with expression information", {
   expr <- structure(quote(a + b), line = 10, str = "a+b")
   msg <- "some error message"
-  err <- expect_error(dsl_parse_error(msg, expr), "some error message")
-  expect_equal(err$expr, expr)
+  err <- expect_error(dsl_parse_error(msg, "E001", expr), "some error message")
+  expect_equal(err$src, expr)
   expect_match(cli::ansi_strip(conditionMessage(err)),
                "In expression\n 10| a+b", fixed = TRUE)
 })
@@ -11,8 +11,8 @@ test_that("can throw sensible errors with expression information", {
 test_that("can throw sensible errors without expression information", {
   expr <- quote(a + b)
   msg <- "some error message"
-  err <- expect_error(dsl_parse_error(msg, expr), "some error message")
-  expect_equal(err$expr, expr)
+  err <- expect_error(dsl_parse_error(msg, "E100", expr), "some error message")
+  expect_equal(err$src, expr)
 })
 
 
@@ -55,7 +55,7 @@ test_that("prevent models that imply duplicated parameters", {
   res <- expect_error(
     mcstate_dsl_parse("a~Normal(0,1)\na  ~  Uniform( 0,  1 )"),
     "Duplicated relationship 'a'")
-  expect_equal(res$expr,
+  expect_equal(res$src,
                structure(quote(a ~ Uniform(0, 1)),
                          line = 2, str = "a  ~  Uniform( 0,  1 )"))
   expect_equal(names(res$context), "Previous definition")
@@ -89,7 +89,7 @@ test_that("variables are not used out of order", {
       a <- Normal(0, 1)
     }),
     "Invalid use of variable 'a'")
-  expect_equal(res$expr, quote(b <- Normal(a, 1)))
+  expect_equal(res$src, quote(b <- Normal(a, 1)))
   expect_equal(res$context,
                list("'a' is defined later:" = quote(a <- Normal(0, 1))))
 })
@@ -102,7 +102,7 @@ test_that("variables must be defined somewhere", {
       b <- Normal(a, sd)
     }),
     "Invalid use of variable 'sd'")
-  expect_equal(res$expr, quote(b <- Normal(a, sd)))
+  expect_equal(res$src, quote(b <- Normal(a, sd)))
 })
 
 
@@ -197,4 +197,36 @@ test_that("report back invalid distribution calls", {
     c("x" = "Failed to match given arguments: <1>, <2>, <3>",
       "i" = "Call should match:",
       "*" = "mean, sd"))
+})
+
+
+test_that("can explain an error", {
+  skip_if_not_installed("mockery")
+  mock_browse <- mockery::mock()
+  mockery::stub(mcstate_dsl_error_explain, "utils::browseURL", mock_browse)
+  mcstate_dsl_error_explain("E101")
+  mockery::expect_called(mock_browse, 1)
+  expect_equal(
+    mockery::mock_args(mock_browse)[[1]],
+    list("https://mrc-ide.github.io/mcstate2/articles/dsl-errors.html#e101"))
+})
+
+
+test_that("error if given invalid code", {
+  msg <- "Invalid code 'E01', should match 'Exxx'"
+  expect_error(mcstate_dsl_error_explain("E01"),
+               "Invalid code 'E01', should match 'Exxx'")
+  expect_error(mcstate_dsl_error_explain("e0001"),
+               "Invalid code 'e0001', should match 'Exxx'")
+  expect_error(mcstate_dsl_error_explain("E0001"),
+               "Invalid code 'E0001', should match 'Exxx'")
+  expect_error(mcstate_dsl_error_explain("anything"),
+               "Invalid code 'anything', should match 'Exxx'")
+})
+
+
+test_that("error if given unknown code", {
+  expect_error(
+    mcstate_dsl_error_explain("E999"),
+    "Error 'E999' is undocumented")
 })

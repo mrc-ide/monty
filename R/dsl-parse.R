@@ -1,42 +1,46 @@
-dsl_parse <- function(exprs) {
-  exprs <- lapply(exprs, dsl_parse_expr)
+## The default of gradient_required = TRUE here helps with tests
+dsl_parse <- function(exprs, gradient_required = TRUE, call = NULL) {
+  exprs <- lapply(exprs, dsl_parse_expr, call)
 
-  dsl_parse_check_duplicates(exprs)
-  dsl_parse_check_usage(exprs)
+  dsl_parse_check_duplicates(exprs, call)
+  dsl_parse_check_usage(exprs, call)
 
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
-  list(parameters = parameters, exprs = exprs)
+  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
+
+  list(parameters = parameters, exprs = exprs, adjoint = adjoint)
 }
 
 
-dsl_parse_expr <- function(expr) {
+dsl_parse_expr <- function(expr, call) {
   if (rlang::is_call(expr, "~")) {
-    dsl_parse_expr_stochastic(expr)
+    dsl_parse_expr_stochastic(expr, call)
   } else if (rlang::is_call(expr, c("<-", "="))) {
-    dsl_parse_expr_assignment(expr)
+    dsl_parse_expr_assignment(expr, call)
   } else {
     dsl_parse_error(
       "Unhandled expression; expected something involving '~' or '<-'",
-      expr)
+      "E101", expr, call)
   }
 }
 
 
-dsl_parse_expr_stochastic <- function(expr) {
+dsl_parse_expr_stochastic <- function(expr, call) {
   lhs <- expr[[2]]
   if (!rlang::is_symbol(lhs)) {
     ## TODO: once we support array expressions this will be relaxed a
     ## little to allow lhs to be 'symbol[index]'
-    dsl_parse_error("Expected lhs of '~' relationship to be a symbol", expr)
+    dsl_parse_error("Expected lhs of '~' relationship to be a symbol",
+                    "E102", expr, call)
   }
   rhs <- expr[[3]]
 
   res <- mcstate_dsl_parse_distribution(rhs)
 
   if (!res$success) {
-    dsl_parse_error(res$error, expr)
+    dsl_parse_error(res$error, "E103", expr, call)
   }
 
   ## This probably requires a little more care in order to know that
@@ -55,12 +59,13 @@ dsl_parse_expr_stochastic <- function(expr) {
 }
 
 
-dsl_parse_expr_assignment <- function(expr) {
+dsl_parse_expr_assignment <- function(expr, call) {
   lhs <- expr[[2]]
   if (!rlang::is_symbol(lhs)) {
     ## TODO: once we support array expressions this will be relaxed a
     ## little to allow lhs to be 'symbol[index]'
-    dsl_parse_error("Expected lhs of assignment to be a symbol", expr)
+    dsl_parse_error("Expected lhs of assignment to be a symbol",
+                   "E104", expr, call)
   }
   rhs <- expr[[3]]
   ## I suspect we'll need to be quite restrictive about what
@@ -74,50 +79,7 @@ dsl_parse_expr_assignment <- function(expr) {
 }
 
 
-dsl_parse_error <- function(msg, expr, ..., envir = parent.frame(),
-                            call = NULL) {
-  cli::cli_abort(msg,
-                 ...,
-                 expr = expr,
-                 footer = dsl_parse_error_show_context,
-                 .envir = envir,
-                 class = "mcstate2_parse_error",
-                 call = call)
-}
-
-
-dsl_parse_error_show_context <- function(cnd, ...) {
-  detail <- c(">" = "In expression",
-              format_error_expr(cnd$expr))
-  for (i in seq_along(cnd$context)) {
-    detail <- c(detail,
-                "",
-                i = names(cnd$context)[[i]],
-                format_error_expr(cnd$context[[i]]))
-  }
-  ## Annoyingly, there's no way of marking text as whitespace
-  ## preserving within cli, so we need to do a substitution here for
-  ## "nonbreaking space" which does ok.  We should also convert tabs
-  ## to some number of spaces, probably.
-  gsub(" ", "\u00a0", detail)
-}
-
-
-format_error_expr <- function(expr) {
-  str <- attr(expr, "str", exact = TRUE)
-  if (is.null(str)) {
-    detail <- deparse(expr)
-  } else {
-    ## We can adjust the formatting here later, but this will
-    ## hopefully be fairly nice for users.
-    lines <- seq(attr(expr, "line"), length.out = length(str))
-    detail <- sprintf("%s| %s", cli::col_grey(format(lines, width = 3)), str)
-  }
-  detail
-}
-
-
-dsl_parse_check_duplicates <- function(exprs) {
+dsl_parse_check_duplicates <- function(exprs, call) {
   type <- vcapply(exprs, "[[", "type")
   name <- vcapply(exprs, "[[", "name")
   i_err <- anyDuplicated(name)
@@ -127,23 +89,27 @@ dsl_parse_check_duplicates <- function(exprs) {
     if (type[[i_err]] == type[[i_prev]]) {
       if (type[[i_err]] == "stochastic") {
         msg <- "Duplicated relationship '{name_err}'"
+        code <- "E201"
       } else {
         msg <- "Duplicated assignment '{name_err}'"
+        code <- "E202"
       }
     } else {
       if (type[[i_err]] == "stochastic") {
         msg <- "Relationship '{name_err}' shadows previous assignment"
+        code <- "E203"
       } else {
         msg <- "Assignment '{name_err}' shadows previous relationship"
+        code <- "E204"
       }
     }
     context <- list("Previous definition" = exprs[[i_prev]]$expr)
-    dsl_parse_error(msg, exprs[[i_err]]$expr, context = context)
+    dsl_parse_error(msg, code, exprs[[i_err]]$expr, call, context = context)
   }
 }
 
 
-dsl_parse_check_usage <- function(exprs) {
+dsl_parse_check_usage <- function(exprs, call) {
   name <- vcapply(exprs, "[[", "name")
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
@@ -165,7 +131,7 @@ dsl_parse_check_usage <- function(exprs) {
       ## probably something rlang can do for us as it does that with
       ## the 'arg' argument to rlang::abort already?
       dsl_parse_error("Invalid use of variable{?s} {squote(err)}",
-                      e$expr, context = context)
+                      "E205", e$expr, call, context = context)
     }
   }
 }

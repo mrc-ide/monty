@@ -39,8 +39,10 @@ mcstate_runner_serial <- function(progress = NULL) {
       })
   }
 
-  structure(list(run = run, continue = continue),
-            class = "mcstate_runner")
+  mcstate_runner("Serial",
+                 "mcstate_runner_serial",
+                 run,
+                 continue)
 }
 
 
@@ -134,8 +136,10 @@ mcstate_runner_parallel <- function(n_workers) {
       MoreArgs = args)
   }
 
-  structure(list(run = run, continue = continue),
-            class = "mcstate_runner")
+  mcstate_runner("Parallel",
+                 "mcstate_runner_parallel",
+                 run,
+                 continue)
 }
 
 
@@ -238,4 +242,23 @@ mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
        details = details,
        observations = history_observation,
        internal = internal)
+}
+
+
+mcstate_runner <- function(name, help, run, continue) {
+  ret <- list(name = name,
+              help = help,
+              run = run,
+              continue = continue)
+  class(ret) <- "mcstate_runner"
+  ret
+}
+
+
+##' @export
+print.mcstate_runner <- function(x, ...) {
+  cli::cli_h1("<mcstate_runner: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help mcstate_sample} to use this runner")
+  cli::cli_alert_info("See {.help {x$help}} for more information")
+  invisible(x)
 }

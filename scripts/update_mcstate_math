@@ -7,7 +7,8 @@ fn1 <- c("round", "ceil", "floor", "trunc", "sqrt",
          "cos", "sin", "tan",
          "acos", "asin", "atan",
          "cosh", "sinh", "tanh",
-         "acosh", "asinh", "atanh")
+         "acosh", "asinh", "atanh",
+         "copysign")
 fn2 <- c("atan2")
 
 template1 <- "template <typename T>

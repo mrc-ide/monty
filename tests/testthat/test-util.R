@@ -98,3 +98,31 @@ test_that("can get near matches", {
     near_match("apple", x, 2, 3),
     c("apples", "applez", "appell"))
 })
+
+
+test_that("can report on package status", {
+  skip_if_not_installed("mockery")
+  mock_loaded <- mockery::mock(c("a", "b", "c"), c("a", "c"), "a")
+  mock_pkgs <- mockery::mock("b", cycle = TRUE)
+
+  mockery::stub(suggested_package_status, "loadedNamespaces", mock_loaded)
+  mockery::stub(suggested_package_status, ".packages", mock_pkgs)
+
+  expect_equal(
+    suggested_package_status(c("a", "b", "c")),
+    c(a = "loaded", b = "loaded", c = "loaded"))
+  mockery::expect_called(mock_loaded, 1)
+  mockery::expect_called(mock_pkgs, 0)
+
+  expect_equal(
+    suggested_package_status(c("a", "b", "c")),
+    c(a = "loaded", b = "installed", c = "loaded"))
+  mockery::expect_called(mock_loaded, 2)
+  mockery::expect_called(mock_pkgs, 1)
+
+  expect_equal(
+    suggested_package_status(c("a", "b", "c")),
+    c(a = "loaded", b = "installed", c = "missing"))
+  mockery::expect_called(mock_loaded, 3)
+  mockery::expect_called(mock_pkgs, 2)
+})

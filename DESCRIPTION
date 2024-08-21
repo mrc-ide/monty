@@ -1,6 +1,6 @@
 Package: mcstate2
 Title: Next Generation mcstate
-Version: 0.1.0
+Version: 0.1.7
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"),
              person("Imperial College of Science, Technology and Medicine",
@@ -24,12 +24,15 @@ LinkingTo:
     cpp11
 Suggests:
     cpp11,
+    coda,
     decor,
     knitr,
     dust,
+    mockery,
     mvtnorm,
     numDeriv,
     pkgload,
+    posterior,
     rmarkdown,
     testthat (>= 3.0.0),
     withr
