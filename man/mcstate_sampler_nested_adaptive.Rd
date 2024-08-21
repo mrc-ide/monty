@@ -20,61 +20,41 @@ mcstate_sampler_nested_adaptive(
 )
 }
 \arguments{
-\item{initial_vcv}{A list of initial variance covariance matrices. We
-expect this to be a list with elements \code{base} and \code{groups} corresponding
-to the initial covariance matrix for base parameters (if any) and groups.
-We'll start using these in the proposal, which will gradually become more
-weighted towards the empirical covariance matrices calculated from the
-chain.}
+\item{initial_vcv}{An initial variance covariance matrix; we'll start
+using this in the proposal, which will gradually become more weighted
+towards the empirical covariance matrix calculated from the chain.}
 
 \item{initial_vcv_weight}{Weight of the initial variance-covariance
-matrices used to build the proposal of the random-walk. Higher
+matrix used to build the proposal of the random-walk. Higher
 values translate into higher confidence of the initial
 variance-covariance matrix and means that update from additional
-samples will be slower. This can be either (a) a list with elements \code{base}
-and \code{groups}, where the \code{groups} element can in turn be a list of values
-for each group or a single value applying to all groups or (b) a single
-value which applies to the base parameters and all groups.}
+samples will be slower.}
 
-\item{initial_scaling}{The initial scalings of the variance
+\item{initial_scaling}{The initial scaling of the variance
 covariance matrix to be used to generate the multivariate normal
 proposal for the random-walk Metropolis-Hastings algorithm. To generate
 the proposal matrix, the weighted variance covariance matrix is
 multiplied by the scaling parameter squared times 2.38^2 / n_pars (where
-n_pars is the number of fitted parameters in the parameter chunk). Can be
-either (a) a list with elements \code{base} and \code{groups}, where the \code{groups}
-element can in turn be a list of values for each group or a single value
-applying to all groups or (b) a single value which applies to the base
-parameters and all groups.}
+n_pars is the number of fitted parameters). Thus, in a Gaussian target
+parameter space, the optimal scaling will be around 1.}
 
-\item{initial_scaling_weight}{The initial weights used in the scaling
-update. The scaling weight will increase after the first \code{pre_diminish}
+\item{initial_scaling_weight}{The initial weight used in the scaling update.
+The scaling weight will increase after the first \code{pre_diminish}
 iterations, and as the scaling weight increases the adaptation of the
-scaling diminishes. Can be either (a) a list with elements
-\code{base} and \code{groups}, where the \code{groups} element can in turn be a list of
-values for each group or a single value applying to all groups or (b) a
-single value which applies to the base parameters and all groups. If
-\code{NULL} (the default) the value is
+scaling diminishes. If \code{NULL} (the default) the value is
 5 / (acceptance_target * (1 - acceptance_target)).}
 
-\item{min_scaling}{The minimum scalings of the variance covariance
+\item{min_scaling}{The minimum scaling of the variance covariance
 matrix to be used to generate the multivariate normal proposal
-for the random-walk Metropolis-Hastings algorithm. Can be either (a) a
-list with elements \code{base} and \code{groups}, where the \code{groups} element can in
-turn be a list of values for each group or a single value applying to all
-groups or (b) a single value which applies to the base parameters and all
-groups.}
+for the random-walk Metropolis-Hastings algorithm.}
 
-\item{scaling_increment}{The scaling increments which are added or
+\item{scaling_increment}{The scaling increment which is added or
 subtracted to the scaling factor of the variance-covariance
-after each adaptive step. Can be either (a) a list with elements
-\code{base} and \code{groups}, where the \code{groups} element can in turn be a list of
-values for each group or a single value applying to all groups or (b) a
-single value which applies to the base parameters and all groups. If
-\code{NULL} (the default) then an optimal value will be calculated.}
+after each adaptive step. If \code{NULL} (the default) then an optimal
+value will be calculated.}
 
 \item{log_scaling_update}{Logical, whether or not changes to the
-scaling parameters are made on the log-scale.}
+scaling parameter are made on the log-scale.}
 
 \item{acceptance_target}{The target for the fraction of proposals
 that should be accepted (optimally) for the adaptive part of the
