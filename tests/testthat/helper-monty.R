@@ -4,7 +4,7 @@ ex_simple_gamma1 <- function(shape = 1, rate = 1) {
   e$rate <- rate
   with(
     e,
-    mcstate_model(
+    monty_model(
       list(
         parameters = "gamma",
         direct_sample = function(rng) {
@@ -15,7 +15,7 @@ ex_simple_gamma1 <- function(shape = 1, rate = 1) {
         },
         gradient = function(x) drop((shape - 1) / x - rate),
         domain = rbind(c(0, Inf))),
-      mcstate_model_properties(allow_multiple_parameters = TRUE)))
+      monty_model_properties(allow_multiple_parameters = TRUE)))
 }
 
 
@@ -25,7 +25,7 @@ ex_simple_nested <- function(n_groups) {
   e$i <- as.numeric(seq_len(n_groups))
   with(
     e,
-    mcstate_model(list(
+    monty_model(list(
       parameters = paste0("mu_", i),
       direct_sample = function(rng) {
         rng$normal(n_groups, i, 1)
@@ -49,7 +49,7 @@ ex_simple_nested_with_base <- function(n_groups) {
   e$n_groups <- n_groups
   with(
     e,
-    mcstate_model(list(
+    monty_model(list(
       parameters = c("sigma", paste0("mu_", seq_len(n_groups))),
       direct_sample = function(rng) {
         sigma <- rng$uniform(1, 0, 10)
@@ -77,7 +77,7 @@ ex_simple_nested_with_base <- function(n_groups) {
       },
       parameter_groups = c(0, seq_len(n_groups)),
       mu = mu),
-      mcstate_model_properties(allow_multiple_parameters = TRUE)))
+      monty_model_properties(allow_multiple_parameters = TRUE)))
 }
 
 
@@ -154,7 +154,7 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
     if (length(rng_state) != 32 * n_streams) {
       ## Expand the state by short jumps; we'll make this nicer once
       ## we refactor the RNG interface and dust.
-      rng_state <- mcstate_rng$new(rng_state, n_streams)$state()
+      rng_state <- monty_rng$new(rng_state, n_streams)$state()
     }
     model$set_rng_state(rng_state)
   }
@@ -163,7 +163,7 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
     model$rng_state()
   }
 
-  mcstate_model(
+  monty_model(
     list(model = model,
          details = details,
          density = density,
@@ -172,13 +172,13 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
          domain = cbind(c(0, 0), c(Inf, Inf)),
          set_rng_state = set_rng_state,
          get_rng_state = get_rng_state),
-    mcstate_model_properties(is_stochastic = !deterministic))
+    monty_model_properties(is_stochastic = !deterministic))
 }
 
 
 ex_simple_gaussian <- function(vcv) {
   n <- nrow(vcv)
-  mcstate_model(list(
+  monty_model(list(
     parameters = letters[seq_len(n)],
     direct_sample = make_rmvnorm(vcv, centred = TRUE),
     density = make_ldmvnorm(vcv),
@@ -188,7 +188,7 @@ ex_simple_gaussian <- function(vcv) {
 
 
 ex_banana <- function(sd = 0.5) {
-  mcstate_model(
+  monty_model(
     list(parameters = c("a", "b"),
          direct_sample = function(rng) {
            b <- rng$random_normal(1)
@@ -219,7 +219,7 @@ ex_banana <- function(sd = 0.5) {
            }
          },
          domain = cbind(rep(-Inf, 2), rep(Inf, 2))),
-    mcstate_model_properties(allow_multiple_parameters = TRUE))
+    monty_model_properties(allow_multiple_parameters = TRUE))
 }
 
 
@@ -292,7 +292,7 @@ ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
     if (length(rng_state) != 32 * n_streams) {
       ## Expand the state by short jumps; we'll make this nicer once
       ## we refactor the RNG interface and dust.
-      rng_state <- mcstate_rng$new(rng_state, n_streams)$state()
+      rng_state <- monty_rng$new(rng_state, n_streams)$state()
     }
     model$set_rng_state(rng_state)
   }
@@ -301,12 +301,12 @@ ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
     model$rng_state()
   }
 
-  mcstate_model(
+  monty_model(
     list(model = model,
          details = details,
          density = density,
          parameters = c("beta", "gamma"),
          set_rng_state = set_rng_state,
          get_rng_state = get_rng_state),
-    mcstate_model_properties(is_stochastic = !deterministic))
+    monty_model_properties(is_stochastic = !deterministic))
 }

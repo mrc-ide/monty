@@ -193,8 +193,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_random_real",      (DL_FUNC) &_monty_monty_rng_random_real,      4},
     {"_monty_monty_rng_state",            (DL_FUNC) &_monty_monty_rng_state,            2},
     {"_monty_monty_rng_uniform",          (DL_FUNC) &_monty_monty_rng_uniform,          6},
-    {"_monty_test_rng_pointer_get",         (DL_FUNC) &_monty_test_rng_pointer_get,         2},
-    {"_monty_test_xoshiro_run",             (DL_FUNC) &_monty_test_xoshiro_run,             1},
+    {"_monty_test_rng_pointer_get",       (DL_FUNC) &_monty_test_rng_pointer_get,       2},
+    {"_monty_test_xoshiro_run",           (DL_FUNC) &_monty_test_xoshiro_run,           1},
     {NULL, NULL, 0}
 };
 }

@@ -1,4 +1,4 @@
-chains *simultaneously*.  This differs from
+##' Run chains *simultaneously*.  This differs from
 ##' [monty_runner_parallel], which runs chains individually in
 ##' parallel by working with models that can evaluate multiple
 ##' densities at the same time.  There are situations where this might

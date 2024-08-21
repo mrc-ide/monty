@@ -1,10 +1,10 @@
 test_that("Empirical VCV calculated correctly with forget_rate = 0", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
-                                      forget_rate = 0,
-                                      log_scaling_update = FALSE)
-  res <- mcstate_sample(m, sampler, 1000)
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
+                                    forget_rate = 0,
+                                    log_scaling_update = FALSE)
+  res <- monty_sample(m, sampler, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
 
@@ -19,9 +19,9 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
-                                      forget_rate = 0.1)
-  res <- mcstate_sample(m, sampler, 1000)
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
+                                    forget_rate = 0.1)
+  res <- monty_sample(m, sampler, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
 
@@ -37,10 +37,10 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
 test_that("Empirical VCV correct using both forget_rate and forget_end", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
-                                      forget_rate = 0.5,
-                                      forget_end = 200)
-  res <- mcstate_sample(m, sampler, 1000)
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
+                                    forget_rate = 0.5,
+                                    forget_end = 200)
+  res <- monty_sample(m, sampler, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
 
@@ -57,11 +57,11 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
 test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
-                                      forget_rate = 0.25,
-                                      forget_end = 100,
-                                      adapt_end = 300)
-  res <- mcstate_sample(m, sampler, 1000)
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
+                                    forget_rate = 0.25,
+                                    forget_end = 100,
+                                    adapt_end = 300)
+  res <- monty_sample(m, sampler, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
 
@@ -77,14 +77,14 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
 
 test_that("can continue adaptive sampler", {
   m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
 
   set.seed(1)
-  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+  res1 <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
 
   set.seed(1)
-  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
-  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20, restartable = TRUE)
 
   expect_equal(res2b, res1)
 })
@@ -93,9 +93,9 @@ test_that("can continue adaptive sampler", {
 test_that("can't use adaptive sampler with stochastic models", {
   set.seed(1)
   m <- ex_dust_sir()
-  sampler <- mcstate_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
+  sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
   expect_error(
-    mcstate_sample(m, sampler, 30, n_chains = 3),
+    monty_sample(m, sampler, 30, n_chains = 3),
     "Can't use adaptive sampler with stochastic models")
 })
 
@@ -105,9 +105,9 @@ test_that("can't use adaptive sampler with stochastic models", {
 ## which is even worse bookkeeping).
 test_that("can't use adaptive sampler with simultaneous runner", {
   m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
-  runner <- mcstate_runner_simultaneous()
+  sampler <- monty_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
+  runner <- monty_runner_simultaneous()
   expect_error(
-    mcstate_sample(m, sampler, 100, n_chains = 3, runner = runner),
-    "Can't use 'mcstate_sampler_adaptive' with simultaneous chains")
+    monty_sample(m, sampler, 100, n_chains = 3, runner = runner),
+    "Can't use 'monty_sampler_adaptive' with simultaneous chains")
 })

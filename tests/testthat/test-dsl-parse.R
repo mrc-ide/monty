@@ -17,7 +17,7 @@ test_that("can throw sensible errors without expression information", {
 
 
 test_that("can parse trivial model", {
-  res <- mcstate_dsl_parse(a ~ Normal(0, 1))
+  res <- monty_dsl_parse(a ~ Normal(0, 1))
   expect_equal(res$parameters, "a")
   expect_length(res$exprs, 1)
   expect_equal(res$exprs,
@@ -26,7 +26,7 @@ test_that("can parse trivial model", {
 
 
 test_that("can parse two-parameter model", {
-  res <- mcstate_dsl_parse({
+  res <- monty_dsl_parse({
     a ~ Normal(0, 1)
     b ~ Exponential(1)
   })
@@ -39,7 +39,7 @@ test_that("can parse two-parameter model", {
 
 
 test_that("can parse model with expressions", {
-  res <- mcstate_dsl_parse({
+  res <- monty_dsl_parse({
     sd <- sqrt(10)
     a ~ Normal(0, sd)
   })
@@ -53,7 +53,7 @@ test_that("can parse model with expressions", {
 
 test_that("prevent models that imply duplicated parameters", {
   res <- expect_error(
-    mcstate_dsl_parse("a~Normal(0,1)\na  ~  Uniform( 0,  1 )"),
+    monty_dsl_parse("a~Normal(0,1)\na  ~  Uniform( 0,  1 )"),
     "Duplicated relationship 'a'")
   expect_equal(res$src,
                structure(quote(a ~ Uniform(0, 1)),
@@ -84,7 +84,7 @@ test_that("assignments and relationships must be distinct", {
 
 test_that("variables are not used out of order", {
   res <- expect_error(
-    mcstate_dsl_parse({
+    monty_dsl_parse({
       b <- Normal(a, 1)
       a <- Normal(0, 1)
     }),
@@ -97,7 +97,7 @@ test_that("variables are not used out of order", {
 
 test_that("variables must be defined somewhere", {
   res <- expect_error(
-    mcstate_dsl_parse({
+    monty_dsl_parse({
       a <- Normal(0, 1)
       b <- Normal(a, sd)
     }),
@@ -157,23 +157,23 @@ test_that("every expression is classifiable", {
 
 
 test_that("Can run high level dsl parse function", {
-  res <- mcstate_dsl_parse("a ~ Normal(0, 1)")
+  res <- monty_dsl_parse("a ~ Normal(0, 1)")
   expect_equal(res$parameters, "a")
   x <- "a ~ Normal(0, 1)"
-  expect_equal(mcstate_dsl_parse(x), res)
+  expect_equal(monty_dsl_parse(x), res)
 })
 
 
 test_that("require that rhs to stochastic statement is a call", {
   err <- expect_error(
-    mcstate_dsl_parse(a ~ 1),
+    monty_dsl_parse(a ~ 1),
     "rhs is not a function call")
 })
 
 
 test_that("require that rhs to stochastic statement is known distribution", {
   err <- expect_error(
-    mcstate_dsl_parse(a ~ normal(0, 1)),
+    monty_dsl_parse(a ~ normal(0, 1)),
     "Unknown distribution 'normal'")
   expect_match(conditionMessage(err),
                "Did you mean: 'Normal'")
@@ -182,7 +182,7 @@ test_that("require that rhs to stochastic statement is known distribution", {
 
 test_that("sensisible error if no suggestions for distribution found", {
   err <- expect_error(
-    mcstate_dsl_parse(a ~ QQQ(0, 1)),
+    monty_dsl_parse(a ~ QQQ(0, 1)),
     "Unknown distribution 'QQQ'")
   expect_no_match(conditionMessage(err), "Did you mean:")
 })
@@ -190,7 +190,7 @@ test_that("sensisible error if no suggestions for distribution found", {
 
 test_that("report back invalid distribution calls", {
   err <- expect_error(
-    mcstate_dsl_parse(a ~ Normal(0, 1, 2)),
+    monty_dsl_parse(a ~ Normal(0, 1, 2)),
     "Invalid call to 'Normal()'", fixed = TRUE)
   expect_equal(
     err$body,
@@ -203,8 +203,8 @@ test_that("report back invalid distribution calls", {
 test_that("can explain an error", {
   skip_if_not_installed("mockery")
   mock_browse <- mockery::mock()
-  mockery::stub(mcstate_dsl_error_explain, "utils::browseURL", mock_browse)
-  mcstate_dsl_error_explain("E101")
+  mockery::stub(monty_dsl_error_explain, "utils::browseURL", mock_browse)
+  monty_dsl_error_explain("E101")
   mockery::expect_called(mock_browse, 1)
   expect_equal(
     mockery::mock_args(mock_browse)[[1]],
@@ -214,19 +214,19 @@ test_that("can explain an error", {
 
 test_that("error if given invalid code", {
   msg <- "Invalid code 'E01', should match 'Exxx'"
-  expect_error(mcstate_dsl_error_explain("E01"),
+  expect_error(monty_dsl_error_explain("E01"),
                "Invalid code 'E01', should match 'Exxx'")
-  expect_error(mcstate_dsl_error_explain("e0001"),
+  expect_error(monty_dsl_error_explain("e0001"),
                "Invalid code 'e0001', should match 'Exxx'")
-  expect_error(mcstate_dsl_error_explain("E0001"),
+  expect_error(monty_dsl_error_explain("E0001"),
                "Invalid code 'E0001', should match 'Exxx'")
-  expect_error(mcstate_dsl_error_explain("anything"),
+  expect_error(monty_dsl_error_explain("anything"),
                "Invalid code 'anything', should match 'Exxx'")
 })
 
 
 test_that("error if given unknown code", {
   expect_error(
-    mcstate_dsl_error_explain("E999"),
+    monty_dsl_error_explain("E999"),
     "Error 'E999' is undocumented")
 })

@@ -1,8 +1,8 @@
 test_that("repeated calls rmvnorm agrees with one-shot", {
   vcv <- matrix(c(4, 2, 2, 3), ncol = 2)
   x <- runif(4)
-  g1 <- mcstate_rng$new(seed = 42)
-  g2 <- mcstate_rng$new(seed = 42)
+  g1 <- monty_rng$new(seed = 42)
+  g2 <- monty_rng$new(seed = 42)
   r1 <- rmvnorm(x, vcv, g1)
   r2 <- make_rmvnorm(vcv)(x, g2)
   expect_identical(r2, r1)
@@ -11,8 +11,8 @@ test_that("repeated calls rmvnorm agrees with one-shot", {
 
 test_that("rmvnorm has correct behaviour in trivial case", {
   vcv <- matrix(1, 1, 1)
-  g1 <- mcstate_rng$new(seed = 42)
-  g2 <- mcstate_rng$new(seed = 42)
+  g1 <- monty_rng$new(seed = 42)
+  g2 <- monty_rng$new(seed = 42)
   r1 <- replicate(100, rmvnorm(0, vcv, g1))
   r2 <- g2$random_normal(100)
   expect_identical(r1, r2)
@@ -23,7 +23,7 @@ test_that("rmvnorm has correct behaviour in trivial case", {
 test_that("rvnorm produces correct expectation", {
   vcv <- matrix(c(4, 2, 2, 3), ncol = 2)
   f <- make_rmvnorm(vcv)
-  rng <- mcstate_rng$new(seed = 42)
+  rng <- monty_rng$new(seed = 42)
   x <- c(1, 2)
   r <- t(replicate(1e5, f(x, rng)))
   expect_equal(colMeans(r), c(1, 2), tolerance = 0.01)
@@ -58,8 +58,8 @@ test_that("can compute derivatives of multivariate normal log density", {
 
 
 test_that("Can draw samples from many single-variable MVNs", {
-  r1 <- mcstate_rng$new(seed = 42, n_streams = 4)
-  r2 <- mcstate_rng$new(seed = 42, n_streams = 4)
+  r1 <- monty_rng$new(seed = 42, n_streams = 4)
+  r2 <- monty_rng$new(seed = 42, n_streams = 4)
   vcv <- array(1, c(1, 1, 4))
   x <- runif(4)
   expect_equal(rmvnorm(x, vcv, r2), r1$random_normal(1) + x)
@@ -70,8 +70,8 @@ test_that("Can draw samples from many single-variable MVNs", {
 
 
 test_that("Can draw samples from many centred single-variable MVNs", {
-  r1 <- mcstate_rng$new(seed = 42, n_streams = 4)
-  r2 <- mcstate_rng$new(seed = 42, n_streams = 4)
+  r1 <- monty_rng$new(seed = 42, n_streams = 4)
+  r2 <- monty_rng$new(seed = 42, n_streams = 4)
   vcv <- array(1, c(1, 1, 4))
   x <- runif(4)
   expect_equal(make_rmvnorm(vcv, centred = TRUE)(r2),
@@ -87,9 +87,9 @@ test_that("Can draw samples from many centred single-variable MVNs", {
 
 
 test_that("Can draw samples from many bivariate MVNs", {
-  r1 <- mcstate_rng$new(seed = 42, n_streams = 5)
-  r2 <- mcstate_rng$new(seed = 42, n_streams = 5)
-  r3 <- mcstate_rng$new(seed = 42, n_streams = 5)
+  r1 <- monty_rng$new(seed = 42, n_streams = 5)
+  r2 <- monty_rng$new(seed = 42, n_streams = 5)
+  r3 <- monty_rng$new(seed = 42, n_streams = 5)
   vcv <- array(0, c(2, 2, 5))
   set.seed(1)
   vcv[1, 1, ] <- 1:5
@@ -103,7 +103,7 @@ test_that("Can draw samples from many bivariate MVNs", {
   ## A bit of work do do these separately:
   rng_state <- matrix(r1$state(), ncol = 5)
   z <- vapply(1:5, function(i) {
-    rmvnorm(x[, i], vcv[, , i], mcstate_rng$new(rng_state[, i]))
+    rmvnorm(x[, i], vcv[, , i], monty_rng$new(rng_state[, i]))
   }, numeric(2))
   expect_identical(y, z)
 
