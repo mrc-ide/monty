@@ -40,7 +40,7 @@
 #define SYNCWARP
 #endif
 
-namespace mcstate {
+namespace monty {
 namespace utils {
 
 // We cannot throw errors in GPU code, we can only send a trap signal,

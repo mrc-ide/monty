@@ -14,10 +14,10 @@
 ##' @return Nothing, this is called for its side effect only
 ##'
 ##' @export
-mcstate_dsl_error_explain <- function(code) {
+monty_dsl_error_explain <- function(code) {
   ## See odin2 for the canonical implementation of this, we're just
   ## shadowing it here really as our dsl is much simpler.  Note that
-  ## error codes from mcstate are three numbers long, whereas they are
+  ## error codes from monty are three numbers long, whereas they are
   ## four long in odin so that it's easy (for us) to tell who the
   ## error belongs to.
   assert_scalar_character(code)

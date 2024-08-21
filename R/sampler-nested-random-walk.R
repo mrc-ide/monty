@@ -43,13 +43,13 @@
 ##'   to be a list with elements `base` and `groups` corresponding to
 ##'   the covariance matrix for base parameters (if any) and groups.
 ##'   
-##' @inheritParams mcstate_sampler_random_walk
+##' @inheritParams monty_sampler_random_walk
 ##'
-##' @return A `mcstate_sampler` object, which can be used with
-##'   [mcstate_sample]
+##' @return A `monty_sampler` object, which can be used with
+##'   [monty_sample]
 ##'
 ##' @export
-mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
+monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
   if (!is.list(vcv)) {
     cli::cli_abort(
       "Expected a list for 'vcv'",
@@ -246,13 +246,13 @@ mcstate_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
     list2env(state, internal)
   }
 
-  mcstate_sampler("Nested random walk",
-                  "mcstate_sampler_nested_random_walk",
-                  initialise,
-                  step,
-                  finalise,
-                  get_internal_state,
-                  set_internal_state)
+  monty_sampler("Nested random walk",
+                "monty_sampler_nested_random_walk",
+                initialise,
+                step,
+                finalise,
+                get_internal_state,
+                set_internal_state)
 }
 
 

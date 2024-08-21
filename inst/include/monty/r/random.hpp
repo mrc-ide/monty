@@ -9,10 +9,10 @@
 
 #include <R_ext/Random.h>
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/prng.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/prng.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 namespace r {
 
@@ -37,12 +37,12 @@ std::vector<typename rng_state_type::int_type> raw_seed(cpp11::raws seed_data) {
 ///
 /// @param r_seed An R object to use as a seed. Valid options are:
 /// * a scalar integer (or integer-like number) which we pass to
-///   `mcstate::random::seed`
+///   `monty::random::seed`
 /// * a vector of raw values, which we take as a serialised vector of
 ///   integers of appropriate width.
 /// * the R value `NULL` (i.e., `R_NilValue`, **not** a C++ `nullptr`),
 ///   in which case we draw a random integer from R's random number
-///   generator and pass that to `mcstate::random::seed`
+///   generator and pass that to `monty::random::seed`
 template <typename rng_state_type>
 std::vector<typename rng_state_type::int_type> as_rng_seed(cpp11::sexp r_seed) {
   using int_type = typename rng_state_type::int_type;
@@ -50,7 +50,7 @@ std::vector<typename rng_state_type::int_type> as_rng_seed(cpp11::sexp r_seed) {
   std::vector<int_type> seed;
   if (seed_type == INTSXP || seed_type == REALSXP) {
     size_t seed_int = cpp11::as_cpp<size_t>(r_seed);
-    seed = mcstate::random::seed_data<rng_state_type>(seed_int);
+    seed = monty::random::seed_data<rng_state_type>(seed_int);
   } else if (seed_type == RAWSXP) {
     cpp11::raws seed_data = cpp11::as_cpp<cpp11::raws>(r_seed);
     seed = raw_seed<rng_state_type>(seed_data);
@@ -59,7 +59,7 @@ std::vector<typename rng_state_type::int_type> as_rng_seed(cpp11::sexp r_seed) {
     size_t seed_int =
       std::ceil(std::abs(::unif_rand()) * std::numeric_limits<size_t>::max());
     PutRNGstate();
-    seed = mcstate::random::seed_data<rng_state_type>(seed_int);
+    seed = monty::random::seed_data<rng_state_type>(seed_int);
   } else {
     cpp11::stop("Invalid type for 'seed'");
   }
@@ -128,8 +128,8 @@ SEXP rng_pointer_init(int n_streams, cpp11::sexp r_seed, int long_jump) {
 ///
 /// @tparam rng_state_type The random number state type to use
 ///
-/// @param obj An `mcstate_rng_pointer` object, created in R with
-/// ``mcstate::mcstate_rng_pointer``
+/// @param obj An `monty_rng_pointer` object, created in R with
+/// ``monty::monty_rng_pointer``
 ///
 /// @param n_streams The number of required streams. Set this to 0 to
 /// disable the check.  If you are going to use 100 streams pass 100

@@ -2,9 +2,9 @@
 
 #include <array>
 
-#include "mcstate/random/numeric.hpp"
+#include "monty/random/numeric.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 // See for more background:

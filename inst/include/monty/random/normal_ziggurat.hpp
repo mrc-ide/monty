@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/math.hpp"
-#include "mcstate/random/normal_ziggurat_tables.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/math.hpp"
+#include "monty/random/normal_ziggurat_tables.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 __nv_exec_check_disable__
@@ -17,8 +17,8 @@ real_type normal_ziggurat_tail(rng_state_type& rng_state, real_type x1,
   do {
     const auto u1 = random_real<real_type>(rng_state);
     const auto u2 = random_real<real_type>(rng_state);
-    const auto x = mcstate::math::log(u1) / x1;
-    const auto y = mcstate::math::log(u2);
+    const auto x = monty::math::log(u1) / x1;
+    const auto y = monty::math::log(u2);
     if (- 2 * y > x * x) {
       ret = negative ? x - x1 : x1 - x;
       break;
@@ -92,7 +92,7 @@ real_type random_normal_ziggurat(rng_state_type& rng_state) {
     const auto i = ziggurat_layer_draw(rng_state, value, n);
     const auto u0 = 2 * int_to_real<real_type>(value) - 1;
 
-    if (mcstate::math::abs(u0) < y[i]) {
+    if (monty::math::abs(u0) < y[i]) {
       ret = u0 * x[i];
       break;
     }
@@ -101,8 +101,8 @@ real_type random_normal_ziggurat(rng_state_type& rng_state) {
       break;
     }
     const auto z = u0 * x[i];
-    const auto f0 = mcstate::math::exp(-0.5 * (x[i] * x[i] - z * z));
-    const auto f1 = mcstate::math::exp(-0.5 * (x[i + 1] * x[i + 1] - z * z));
+    const auto f0 = monty::math::exp(-0.5 * (x[i] * x[i] - z * z));
+    const auto f1 = monty::math::exp(-0.5 * (x[i + 1] * x[i + 1] - z * z));
     const auto u1 = random_real<real_type>(rng_state);
     if (f1 + u1 * (f0 - f1) < 1.0) {
       ret = z;

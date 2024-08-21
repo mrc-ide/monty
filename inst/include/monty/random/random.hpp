@@ -1,23 +1,23 @@
 #pragma once
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/prng.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/prng.hpp"
 
-#include "mcstate/random/beta.hpp"
-#include "mcstate/random/binomial.hpp"
-#include "mcstate/random/cauchy.hpp"
-#include "mcstate/random/exponential.hpp"
-#include "mcstate/random/gamma.hpp"
-#include "mcstate/random/hypergeometric.hpp"
-#include "mcstate/random/multinomial.hpp"
-#include "mcstate/random/nbinomial.hpp"
-#include "mcstate/random/normal.hpp"
-#include "mcstate/random/poisson.hpp"
-#include "mcstate/random/uniform.hpp"
+#include "monty/random/beta.hpp"
+#include "monty/random/binomial.hpp"
+#include "monty/random/cauchy.hpp"
+#include "monty/random/exponential.hpp"
+#include "monty/random/gamma.hpp"
+#include "monty/random/hypergeometric.hpp"
+#include "monty/random/multinomial.hpp"
+#include "monty/random/nbinomial.hpp"
+#include "monty/random/normal.hpp"
+#include "monty/random/poisson.hpp"
+#include "monty/random/uniform.hpp"
 
-#include "mcstate/random/version.hpp"
+#include "monty/random/version.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 namespace {

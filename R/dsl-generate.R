@@ -1,12 +1,12 @@
 dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
-  env$packer <- mcstate_packer(dat$parameters)
+  env$packer <- monty_packer(dat$parameters)
 
   density <- dsl_generate_density(dat, env)
   direct_sample <- dsl_generate_direct_sample(dat, env)
   gradient <- dsl_generate_gradient(dat, env)
   domain <- dsl_generate_domain(dat)
-  mcstate_model(
+  monty_model(
     list(parameters = dat$parameters,
          density = density,
          gradient = gradient,

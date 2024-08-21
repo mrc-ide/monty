@@ -4,21 +4,21 @@
 // support for generating reals on the interval 0..1
 //
 // Typically this will be too low level for most applications and you
-// should use mcstate::random::prng which provides a parallel random
+// should use monty::random::prng which provides a parallel random
 // number generator.
 //
 // The api is:
 //
-// * the mcstate::random::xoshiro_state type, plus all the
+// * the monty::random::xoshiro_state type, plus all the
 //   specific versions of it (e.g., xoshiro256starstar); these
 //   objects can be created but should be considered opaque.
 //
-// * mcstate::random::random_real which yields a real (of the
+// * monty::random::random_real which yields a real (of the
 //   requested type) given a xoshiro_state state
 //
-// * mcstate::random::seed which seeds a generator
+// * monty::random::seed which seeds a generator
 //
-// * mcstate::random::jump and mcstate::random::long_jump which "jump" the
+// * monty::random::jump and monty::random::long_jump which "jump" the
 //   generator state forward, a key part of the parallel generators.
 
 #include <algorithm>
@@ -28,23 +28,23 @@
 #include <type_traits>
 #include <vector>
 
-#include "mcstate/random/cuda_compatibility.hpp"
-#include "mcstate/random/utils.hpp"
-#include "mcstate/random/xoshiro_state.hpp"
+#include "monty/random/cuda_compatibility.hpp"
+#include "monty/random/utils.hpp"
+#include "monty/random/xoshiro_state.hpp"
 
 // 32 bit generators, 4 * uint32_t
-#include "mcstate/random/xoshiro128.hpp"
+#include "monty/random/xoshiro128.hpp"
 
 // 64 bit generators, 2 * uint64_t
-#include "mcstate/random/xoroshiro128.hpp"
+#include "monty/random/xoroshiro128.hpp"
 
 // 64 bit generators, 4 * uint64_t
-#include "mcstate/random/xoshiro256.hpp"
+#include "monty/random/xoshiro256.hpp"
 
 // 64 bit generators, 8 * uint64_t
-#include "mcstate/random/xoshiro512.hpp"
+#include "monty/random/xoshiro512.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 /// Jump the random number state forward by a number of steps equal to
@@ -127,13 +127,13 @@ __host__ void seed(T& state, uint64_t seed) {
 template <typename T>
 __host__ T seed(uint64_t seed) {
   T state;
-  mcstate::random::seed(state, seed);
+  monty::random::seed(state, seed);
   return state;
 }
 
 template <typename T>
 __host__ std::vector<typename T::int_type> seed_data(uint64_t seed) {
-  T state = mcstate::random::seed<T>(seed);
+  T state = monty::random::seed<T>(seed);
   const size_t n = state.size();
   std::vector<typename T::int_type> ret(n);
   std::copy_n(state.state, n, ret.begin());

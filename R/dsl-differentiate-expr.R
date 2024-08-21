@@ -1,4 +1,4 @@
-##' Differentiate expressions in the mcstate dsl.  This function is
+##' Differentiate expressions in the monty dsl.  This function is
 ##' exported for advanced use, and really so that we can use it from
 ##' odin.  But it has the potential to be generally useful, so while
 ##' we'll tweak the interface quite a lot over the next while it is
@@ -7,14 +7,14 @@
 ##' R already has support for differentiating expressions using [D],
 ##' which is useful for creating derivatives of simple functions to
 ##' pass into nonlinear optimisation.  We need something a bit more
-##' flexible for differentiating models in the mcstate dsl
-##' ([mcstate_dsl]) and also in the related odin dsl.
+##' flexible for differentiating models in the monty dsl
+##' ([monty_dsl]) and also in the related odin dsl.
 ##'
 ##' # Differences to [D()]
 ##'
 ##' * We try a little harder to simplify expressions.
 ##'
-##' * The distribution functions in the mcstate DSL (e.g., Poisson)
+##' * The distribution functions in the monty DSL (e.g., Poisson)
 ##'   are (will be) handled specially, allowing substitution of
 ##'   log-densities and expectations.
 ##'
@@ -42,7 +42,7 @@
 ##' to differentiate to allow programs to fail fast.
 ##'
 ##' @export
-mcstate_differentiation <- function() {
+monty_differentiation <- function() {
   ## TODO: we might want to export a stripped down copy of maths
   ## perhaps.
   list(differentiate = differentiate,
@@ -77,7 +77,7 @@ differentiate <- function(expr, name) {
     if (!fn %in% names(derivative)) {
       cli::cli_abort(
         "Unsupported function '{fn}' in 'differentiate()'",
-        class = "mcstate_differentiation_failure")
+        class = "monty_differentiation_failure")
     }
     derivative[[fn]](expr, name)
   }

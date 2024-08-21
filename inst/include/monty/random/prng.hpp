@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "mcstate/random/generator.hpp"
+#include "monty/random/generator.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 /// Container class for parallel random number streams. This class
@@ -46,7 +46,7 @@ public:
       if (i < n_seed) {
         std::copy_n(seed.begin() + i * len, len, std::begin(s.state));
       } else {
-        mcstate::random::jump(s);
+        monty::random::jump(s);
       }
       state_.push_back(s);
     }
@@ -61,14 +61,14 @@ public:
   void jump() {
     // TODO: I think this should be removed
     for (size_t i = 0; i < state_.size(); ++i) {
-      mcstate::random::jump(state_[i]);
+      monty::random::jump(state_[i]);
     }
   }
 
   /// Take a long jump for every generator
   void long_jump() {
     for (size_t i = 0; i < state_.size(); ++i) {
-      mcstate::random::long_jump(state_[i]);
+      monty::random::long_jump(state_[i]);
     }
   }
 

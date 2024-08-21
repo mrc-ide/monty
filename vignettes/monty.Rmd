@@ -26,13 +26,13 @@ library(monty)
 
 Draw samples from a model using Markov Chain Monte Carlo methods.  To do this you will need:
 
-* A **model**: this is an `mcstate_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
-* A **sampler**: this is some method of drawing samples from the model's distribution in a sequence.  We define several different sampler types, with the simplest one being `mcstate_sampler_random_walk()`, which implements a simple Metropolis algorithm random walk.
+* A **model**: this is an `monty_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
+* A **sampler**: this is some method of drawing samples from the model's distribution in a sequence.  We define several different sampler types, with the simplest one being `monty_sampler_random_walk()`, which implements a simple Metropolis algorithm random walk.
 * A **runner**: this controls how the chains will be run (e.g., one after another or in parallel).
 
 The system is designed to be composable; you can work in a Bayesian way by defining a model representing a likelihood and another model representing a prior and then pick a sampler based on the capabilities of the model, and pick a runner based on the capabilities your computer.
 
-The `mcstate_model()` interface is designed to be very flexible but not user-friendly.  We expect to write a higher-level interface to help work with this, and describe how to write wrappers for models implemented in other packages (so you might write a model in [dust](https://mrc-ide.github.io/dust) or [odin](https://mrc-ide.github.io/odin) and an adaptor would make it easy to work with the tools provided by `monty` to start making inferences with your model).
+The `monty_model()` interface is designed to be very flexible but not user-friendly.  We expect to write a higher-level interface to help work with this, and describe how to write wrappers for models implemented in other packages (so you might write a model in [dust](https://mrc-ide.github.io/dust) or [odin](https://mrc-ide.github.io/odin) and an adaptor would make it easy to work with the tools provided by `monty` to start making inferences with your model).
 
 # An example
 
@@ -57,7 +57,7 @@ plot(height ~ weight, data)
 A simple likelihood, following the model formulation in "Statistical Rethinking" chapter 3; height is modelled as normally distributed departures from a linear relationship with weight.
 
 ```{r}
-likelihood <- mcstate_model(
+likelihood <- monty_model(
   list(
     parameters = c("a", "b", "sigma"),
     density = function(x) {
@@ -79,7 +79,7 @@ prior <- local({
   b_sd <- 10
   sigma_min <- 0
   sigma_max <- 50
-  mcstate_model(
+  monty_model(
     list(
       parameters = c("a", "b", "sigma"),
       density = function(x) {
@@ -100,7 +100,7 @@ prior <- local({
 })
 ```
 
-The posterior distribution is the combination of these two models (indicated with a `+` because we're adding on a log-scale, or because we are using `prior` *and* `posterior`; you can use `mcstate_model_combine()` if you prefer).
+The posterior distribution is the combination of these two models (indicated with a `+` because we're adding on a log-scale, or because we are using `prior` *and* `posterior`; you can use `monty_model_combine()` if you prefer).
 
 ```{r}
 posterior <- likelihood + prior
@@ -112,14 +112,14 @@ Constructing a sensible initial variance-covariance matrix is a bit of a trick, 
 vcv <- rbind(c(4.5, -0.088, 0.076),
              c(-0.088, 0.0018, -0.0015),
              c(0.076, -0.0015, 0.0640))
-sampler <- mcstate_sampler_random_walk(vcv = vcv)
+sampler <- monty_sampler_random_walk(vcv = vcv)
 ```
 
 Now run the sampler.  We've started from a good starting point to make this simple sampler converge quickly:
 
 ```{r}
-samples <- mcstate_sample(posterior, sampler, 5000, initial = c(114, 0.9, 3),
-                          n_chains = 4)
+samples <- monty_sample(posterior, sampler, 5000, initial = c(114, 0.9, 3),
+                        n_chains = 4)
 ```
 
 We don't yet have tools for working with the samples objects, but we can see the density over time easily enough:

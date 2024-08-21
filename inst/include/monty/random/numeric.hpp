@@ -6,9 +6,9 @@
 #include <limits>
 #include <type_traits>
 
-#include "mcstate/random/cuda_compatibility.hpp"
+#include "monty/random/cuda_compatibility.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 namespace utils {
 

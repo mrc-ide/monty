@@ -5,14 +5,14 @@
 #endif
 
 #include <cpp11/external_pointer.hpp>
-#include <mcstate/r/random.hpp>
+#include <monty/r/random.hpp>
 
 [[cpp11::register]]
-cpp11::sexp mcstate_rng_pointer_init(int n_streams, cpp11::sexp seed,
-                                     int long_jump, std::string algorithm) {
+cpp11::sexp monty_rng_pointer_init(int n_streams, cpp11::sexp seed,
+                                   int long_jump, std::string algorithm) {
   cpp11::sexp ret;
 
-  using namespace mcstate::random;
+  using namespace monty::random;
   if (algorithm == "xoshiro256starstar") {
     ret = r::rng_pointer_init<xoshiro256starstar>(n_streams, seed, long_jump);
   } else if (algorithm == "xoshiro256plusplus") {
@@ -45,8 +45,8 @@ cpp11::sexp mcstate_rng_pointer_init(int n_streams, cpp11::sexp seed,
 }
 
 [[cpp11::register]]
-void mcstate_rng_pointer_sync(cpp11::environment obj, std::string algorithm) {
-  using namespace mcstate::random;
+void monty_rng_pointer_sync(cpp11::environment obj, std::string algorithm) {
+  using namespace monty::random;
   if (algorithm == "xoshiro256starstar") {
     r::rng_pointer_sync<xoshiro256starstar>(obj);
   } else if (algorithm == "xoshiro256plusplus") {
@@ -78,7 +78,7 @@ void mcstate_rng_pointer_sync(cpp11::environment obj, std::string algorithm) {
 // for use by users.
 [[cpp11::register]]
 double test_rng_pointer_get(cpp11::environment obj, int n_streams) {
-  using namespace mcstate::random;
+  using namespace monty::random;
   auto rng = r::rng_pointer_get<xoshiro256plus>(obj, n_streams);
   return random_real<double>(rng->state(0));
 }

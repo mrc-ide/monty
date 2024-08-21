@@ -38,7 +38,7 @@ data <- list(
 root <- here::here()
 
 dest <- file.path(root,
-                  "inst/include/mcstate/random/binomial_gamma_tables.hpp")
+                  "inst/include/monty/random/binomial_gamma_tables.hpp")
 template <- paste(
   readLines(file.path(root, "inst/template/binomial_gamma_tables.hpp")),
   collapse = "\n")

@@ -2,12 +2,12 @@
 
 #include <cmath>
 
-#include "mcstate/random/cauchy.hpp"
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/numeric.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/cauchy.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/numeric.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 __nv_exec_check_disable__
@@ -19,7 +19,7 @@ void poisson_validate(real_type lambda) {
     snprintf(buffer, 256,
              "Invalid call to Poisson with lambda = %g",
              lambda);
-    mcstate::utils::fatal_error(buffer);
+    monty::utils::fatal_error(buffer);
   }
 }
 
@@ -36,7 +36,7 @@ real_type poisson_knuth(rng_state_type& rng_state, real_type lambda) {
   // Thus to simulate a Poisson draw, we can draw X_i ~ Exp(lambda),
   // and N ~ Poisson(lambda), where N is the least number such that
   // \sum_i^N X_i > 1.
-  const real_type exp_neg_rate = mcstate::math::exp(-lambda);
+  const real_type exp_neg_rate = monty::math::exp(-lambda);
 
   real_type prod = 1;
 
@@ -80,13 +80,13 @@ real_type poisson_hormann(rng_state_type& rng_state, real_type lambda) {
   // G(u) = (2 * a / (2 - |u|) + b) * u + c
 
   int x = 0;
-  const real_type log_rate = mcstate::math::log(lambda);
+  const real_type log_rate = monty::math::log(lambda);
 
   // Constants used to define the dominating distribution. Names taken
   // from Hormann's paper. Constants were chosen to define the tightest
   // G(u) for the inverse Poisson CDF.
   const real_type b = static_cast<real_type>(0.931) +
-    static_cast<real_type>(2.53) * mcstate::math::sqrt(lambda);
+    static_cast<real_type>(2.53) * monty::math::sqrt(lambda);
   const real_type a = static_cast<real_type>(-0.059) +
     static_cast<real_type>(0.02483) * b;
 
@@ -101,7 +101,7 @@ real_type poisson_hormann(rng_state_type& rng_state, real_type lambda) {
     u -= static_cast<real_type>(0.5);
     real_type v = random_real<real_type>(rng_state);
 
-    real_type u_shifted = static_cast<real_type>(0.5) - mcstate::math::abs(u);
+    real_type u_shifted = static_cast<real_type>(0.5) - monty::math::abs(u);
     real_type k = floor((2 * a / u_shifted + b) * u + lambda + static_cast<real_type>(0.43));
 
     if (k > utils::integer_max()) {
@@ -125,7 +125,7 @@ real_type poisson_hormann(rng_state_type& rng_state, real_type lambda) {
 
     // The expression below is equivalent to the computation of step 2)
     // in transformed rejection (v <= alpha * F'(G(u)) * G'(u)).
-    real_type s = mcstate::math::log(v * inv_alpha / (a / (u_shifted * u_shifted) + b));
+    real_type s = monty::math::log(v * inv_alpha / (a / (u_shifted * u_shifted) + b));
     real_type t = -lambda + k * log_rate -
       utils::lgamma(static_cast<real_type>(k + 1));
     if (s <= t) {
@@ -162,9 +162,9 @@ real_type poisson_cauchy(rng_state_type& rng_state, real_type lambda) {
     // double precision here, which gets the job done.
     result = poisson_cauchy<double>(rng_state, static_cast<double>(lambda));
   } else {
-    const real_type log_lambda = mcstate::math::log<real_type>(lambda);
-    const real_type sqrt_2lambda = mcstate::math::sqrt<real_type>(2 * lambda);
-    const real_type magic_val = lambda * log_lambda - mcstate::math::lgamma<real_type>(1 + lambda);
+    const real_type log_lambda = monty::math::log<real_type>(lambda);
+    const real_type sqrt_2lambda = monty::math::sqrt<real_type>(2 * lambda);
+    const real_type magic_val = lambda * log_lambda - monty::math::lgamma<real_type>(1 + lambda);
     for (;;) {
       real_type comp_dev;
       for (;;) {
@@ -174,10 +174,10 @@ real_type poisson_cauchy(rng_state_type& rng_state, real_type lambda) {
           break;
         }
       }
-      result = mcstate::math::trunc<real_type>(result);
+      result = monty::math::trunc<real_type>(result);
       const real_type check = static_cast<real_type>(0.9) *
         (1 + comp_dev * comp_dev) *
-        mcstate::math::exp<real_type>(result * log_lambda - mcstate::math::lgamma<real_type>(1 + result) - magic_val);
+        monty::math::exp<real_type>(result * log_lambda - monty::math::lgamma<real_type>(1 + result) - magic_val);
       const real_type u = random_real<real_type>(rng_state);
       if (u <= check) {
         break;

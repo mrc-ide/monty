@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 
-namespace mcstate {
+namespace monty {
 namespace utils {
 
 template <typename T, typename U, typename Enable = void>

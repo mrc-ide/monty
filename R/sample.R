@@ -8,14 +8,14 @@
 ##' @title Sample from a model
 ##'
 ##' @param model The model to sample from; this should be a
-##'   `mcstate_model` for now, but we might change this in future to
+##'   `monty_model` for now, but we might change this in future to
 ##'   test to see if things match an interface rather than a
 ##'   particular class attribute.
 ##'
 ##' @param sampler A sampler to use.  These will be described later,
 ##'   but we hope to make these reasonably easy to implement so that
 ##'   we can try out different sampling ideas.  For now, the only
-##'   sampler implemented is [mcstate_sampler_random_walk()].
+##'   sampler implemented is [monty_sampler_random_walk()].
 ##'
 ##' @param n_steps The number of steps to run the sampler for.
 ##'
@@ -26,12 +26,12 @@
 ##'   single chain, but you will likely want to run more.
 ##'
 ##' @param runner A runner for your chains.  The default option is to
-##'   run chains in series (via [mcstate_runner_serial]).  The only
-##'   other current option is [mcstate_runner_parallel] which uses the
+##'   run chains in series (via [monty_runner_serial]).  The only
+##'   other current option is [monty_runner_parallel] which uses the
 ##'   `parallel` package to run chains in parallel.  If you only run
 ##'   one chain then this argument is best left alone.
 ##'
-##' @param observer An observer, created via [mcstate_observer], which
+##' @param observer An observer, created via [monty_observer], which
 ##'   you can use to extract additional information from your model at
 ##'   points included in the chain (for example, trajectories from a
 ##'   dynamical model).
@@ -65,23 +65,23 @@
 ##'   one is also subject to change.
 ##'
 ##' @export
-mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
-                           n_chains = 1L, runner = NULL, observer = NULL,
-                           restartable = FALSE) {
-  require_mcstate_model(model)
-  if (!inherits(sampler, "mcstate_sampler")) {
-    cli::cli_abort("Expected 'sampler' to be an 'mcstate_sampler'",
+monty_sample <- function(model, sampler, n_steps, initial = NULL,
+                         n_chains = 1L, runner = NULL, observer = NULL,
+                         restartable = FALSE) {
+  require_monty_model(model)
+  if (!inherits(sampler, "monty_sampler")) {
+    cli::cli_abort("Expected 'sampler' to be an 'monty_sampler'",
                    arg = "sampler")
   }
   if (is.null(runner)) {
-    runner <- mcstate_runner_serial()
+    runner <- monty_runner_serial()
   }
-  if (!is.null(observer) && !inherits(observer, "mcstate_observer")) {
-    cli::cli_abort("Expected 'observer' to be an 'mcstate_observer'",
+  if (!is.null(observer) && !inherits(observer, "monty_observer")) {
+    cli::cli_abort("Expected 'observer' to be an 'monty_observer'",
                    arg = "observer")
   }
-  if (!inherits(runner, "mcstate_runner")) {
-    cli::cli_abort("Expected 'runner' to be an 'mcstate_runner'",
+  if (!inherits(runner, "monty_runner")) {
+    cli::cli_abort("Expected 'runner' to be an 'monty_runner'",
                    arg = "runner")
   }
 
@@ -97,7 +97,7 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
 }
 
 
-##' Continue (restart) chains started by [mcstate_sample].  Requires
+##' Continue (restart) chains started by [monty_sample].  Requires
 ##' that the original chains were run with `restartable = TRUE`.
 ##' Running chains this way will result in the final state being
 ##' exactly the same as running for the total (original + continued)
@@ -105,44 +105,44 @@ mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
 ##'
 ##' @title Continue sampling
 ##'
-##' @param samples A `mcstate_samples` object created by
-##'   [mcstate_sample()]
+##' @param samples A `monty_samples` object created by
+##'   [monty_sample()]
 ##'
 ##' @param n_steps The number of new steps to run
 ##'
 ##' @param runner Optionally, a runner for your chains.  The default
 ##'   is to continue with the backend that you used to start the
-##'   chains via [mcstate_sample] (or on the previous restart with
+##'   chains via [monty_sample] (or on the previous restart with
 ##'   this function).  You can use this argument to change the runner,
 ##'   which might be useful if transferring a pilot run from a
 ##'   high-resource environment to a lower-resource environment.  If
-##'   given, must be an `mcstate_runner` object such as
-##'   [mcstate_runner_serial] or [mcstate_runner_parallel].  You can
+##'   given, must be an `monty_runner` object such as
+##'   [monty_runner_serial] or [monty_runner_parallel].  You can
 ##'   use this argument to change the configuration of a runner, as
 ##'   well as the type of runner (e.g., changing the number of
 ##'   allocated cores).
 ##'
-##' @inheritParams mcstate_sample
+##' @inheritParams monty_sample
 ##'
 ##' @return A list of parameters and densities
 ##' @export
-mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE,
-                                    runner = NULL) {
-  if (!inherits(samples, "mcstate_samples")) {
-    cli::cli_abort("Expected 'samples' to be an 'mcstate_samples' object")
+monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
+                                  runner = NULL) {
+  if (!inherits(samples, "monty_samples")) {
+    cli::cli_abort("Expected 'samples' to be an 'monty_samples' object")
   }
   if (is.null(samples$restart)) {
     cli::cli_abort(
       c("Your chains are not restartable",
-        i = paste("To work with 'mcstate_sample_continue', you must",
+        i = paste("To work with 'monty_sample_continue', you must",
                   "use the argument 'restartable = TRUE' when calling",
-                  "mcstate_sample()")))
+                  "monty_sample()")))
   }
 
   if (is.null(runner)) {
     runner <- samples$restart$runner
   } else {
-    assert_is(runner, "mcstate_runner")
+    assert_is(runner, "monty_runner")
   }
   state <- samples$restart$state
   model <- samples$restart$model
@@ -160,8 +160,8 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE,
 }
 
 
-mcstate_sampler <- function(name, help, initialise, step, finalise,
-                            get_internal_state, set_internal_state) {
+monty_sampler <- function(name, help, initialise, step, finalise,
+                          get_internal_state, set_internal_state) {
   ret <- list(name = name,
               help = help,
               initialise = initialise,
@@ -169,15 +169,15 @@ mcstate_sampler <- function(name, help, initialise, step, finalise,
               finalise = finalise,
               get_internal_state = get_internal_state,
               set_internal_state = set_internal_state)
-  class(ret) <- "mcstate_sampler"
+  class(ret) <- "monty_sampler"
   ret
 }
 
 
 ##' @export
-print.mcstate_sampler <- function(x, ...) {
-  cli::cli_h1("<mcstate_sampler: {x$name} ({x$help})>")
-  cli::cli_alert_info("Use {.help mcstate_sample} to use this sampler")
+print.monty_sampler <- function(x, ...) {
+  cli::cli_h1("<monty_sampler: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help monty_sample} to use this sampler")
   cli::cli_alert_info("See {.help {x$help}} for more information")
   invisible(x)
 }
@@ -318,7 +318,7 @@ combine_chains <- function(res, observer = NULL) {
                   initial = initial,
                   details = details,
                   observations = observations)
-  class(samples) <- "mcstate_samples"
+  class(samples) <- "monty_samples"
   samples
 }
 
@@ -334,14 +334,14 @@ append_chains <- function(prev, curr, observer = NULL) {
                   initial = prev$initial,
                   details = curr$details,
                   observations = observations)
-  class(samples) <- "mcstate_samples"
+  class(samples) <- "monty_samples"
   samples
 }
 
 
 initial_rng <- function(n_chains, seed = NULL) {
-  lapply(mcstate_rng_distributed_state(n_nodes = n_chains, seed = seed),
-         function(s) mcstate_rng$new(seed = s))
+  lapply(monty_rng_distributed_state(n_nodes = n_chains, seed = seed),
+         function(s) monty_rng$new(seed = s))
 }
 
 

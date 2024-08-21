@@ -2,11 +2,11 @@
 
 #include <cmath>
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/numeric.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/numeric.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 __nv_exec_check_disable__
@@ -22,7 +22,7 @@ real_type cauchy(rng_state_type& rng_state, real_type location,
   }
 #endif
   const real_type u = random_real<real_type>(rng_state);
-  return location + scale * mcstate::math::tan<real_type>(static_cast<real_type>(M_PI) * u);
+  return location + scale * monty::math::tan<real_type>(static_cast<real_type>(M_PI) * u);
 }
 
 }

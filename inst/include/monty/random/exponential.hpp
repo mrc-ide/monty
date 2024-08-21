@@ -2,10 +2,10 @@
 
 #include <cmath>
 
-#include <mcstate/random/generator.hpp>
-#include <mcstate/random/math.hpp>
+#include <monty/random/generator.hpp>
+#include <monty/random/math.hpp>
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 // Devroye 1986
@@ -21,10 +21,10 @@ template <typename real_type, typename rng_state_type>
 __host__ __device__
 real_type exponential_rand(rng_state_type& rng_state) {
 #ifdef __CUDA_ARCH__
-  return -mcstate::math::log(random_real<real_type>(rng_state));
+  return -monty::math::log(random_real<real_type>(rng_state));
 #else
   return rng_state.deterministic ? 1 :
-    -mcstate::math::log(random_real<real_type>(rng_state));
+    -monty::math::log(random_real<real_type>(rng_state));
 #endif
 }
 

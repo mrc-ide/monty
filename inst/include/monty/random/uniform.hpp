@@ -1,13 +1,13 @@
 #pragma once
 
-#include "mcstate/random/generator.hpp"
+#include "monty/random/generator.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 /// Draw a uniformly distributed random number with arbitrary bounds.
 /// This function simply scales the output of
-/// `mcstate::random::random_real`
+/// `monty::random::random_real`
 ///
 /// @tparam real_type The underlying real number type, typically
 /// `double` or `float`. A compile-time error will be thrown if you

@@ -3,11 +3,11 @@
 #include <climits>
 #include <cmath>
 
-#include "mcstate/random/binomial_gamma_tables.hpp"
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/binomial_gamma_tables.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 // Faster version of pow(x, n) for integer 'n' by using
@@ -142,7 +142,7 @@ real_type btrs(rng_state_type& rng_state, real_type n, real_type p) {
   const real_type half = 0.5;
 
   // This is spq in the paper.
-  const real_type stddev = mcstate::math::sqrt(n * p * (1 - p));
+  const real_type stddev = monty::math::sqrt(n * p * (1 - p));
 
   // Other coefficients for Transformed Rejection sampling.
   const real_type b = static_cast<real_type>(1.15) + static_cast<real_type>(2.53) * stddev;
@@ -160,7 +160,7 @@ real_type btrs(rng_state_type& rng_state, real_type n, real_type p) {
     real_type u = random_real<real_type>(rng_state);
     real_type v = random_real<real_type>(rng_state);
     u -= half;
-    real_type us = half - mcstate::math::abs(u);
+    real_type us = half - monty::math::abs(u);
     real_type k = std::floor((2 * a / us + b) * u + c);
 
     // Region for which the box is tight, and we
@@ -180,11 +180,11 @@ real_type btrs(rng_state_type& rng_state, real_type n, real_type p) {
     // This deviates from Hormann's BRTS algorithm, as there is a log missing.
     // For all (u, v) pairs outside of the bounding box, this calculates the
     // transformed-reject ratio.
-    v = mcstate::math::log(v * alpha / (a / (us * us) + b));
+    v = monty::math::log(v * alpha / (a / (us * us) + b));
     real_type upperbound =
-      ((m + half) * mcstate::math::log((m + 1) / (r * (n - m + 1))) +
-       (n + one) * mcstate::math::log((n - m + 1) / (n - k + 1)) +
-       (k + half) * mcstate::math::log(r * (n - k + 1) / (k + 1)) +
+      ((m + half) * monty::math::log((m + 1) / (r * (n - m + 1))) +
+       (n + one) * monty::math::log((n - m + 1) / (n - k + 1)) +
+       (k + half) * monty::math::log(r * (n - k + 1) / (k + 1)) +
        stirling_approx_tail(m) + stirling_approx_tail(n - m) -
        stirling_approx_tail(k) - stirling_approx_tail(n - k));
     if (v <= upperbound) {
@@ -203,7 +203,7 @@ void binomial_validate(real_type n, real_type p) {
     snprintf(buffer, 256,
              "Invalid call to binomial with n = %.0f, p = %g, q = %g",
              n, p, 1 - p);
-    mcstate::utils::fatal_error(buffer);
+    monty::utils::fatal_error(buffer);
   }
 }
 

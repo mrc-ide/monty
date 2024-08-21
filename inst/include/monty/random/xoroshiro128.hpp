@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mcstate/random/utils.hpp"
-#include "mcstate/random/xoshiro_state.hpp"
+#include "monty/random/utils.hpp"
+#include "monty/random/xoshiro_state.hpp"
 
 // 64-bit generators, state is 2 * uint64_t
 //
@@ -9,7 +9,7 @@
 //  xoroshiro128++  | https://prng.di.unimi.it/xoroshiro128plusplus.c
 //  xoroshiro128+   | https://prng.di.unimi.it/xoroshiro128plus.c
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 using xoroshiro128starstar =

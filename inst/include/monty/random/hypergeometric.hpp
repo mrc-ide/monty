@@ -4,15 +4,15 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/numeric.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/numeric.hpp"
 
 // Implementation follows Kachitvichyanukul & Schmeiser (1985)
 // https://www.tandfonline.com/doi/abs/10.1080/00949658508810839
 // and follows the Rust implementation
 // https://docs.rs/rand_distr/latest/src/rand_distr/hypergeometric.rs
 // but adapted to fit our needs.
-namespace mcstate {
+namespace monty {
 namespace random {
 namespace {
 
@@ -23,7 +23,7 @@ inline void hypergeometric_validate(real_type n1, real_type n2, real_type n, rea
     snprintf(buffer, 256,
              "Invalid call to hypergeometric with n1 = %.0f, n2 = %.0f, k = %.0f",
              n1, n2, k);
-    mcstate::utils::fatal_error(buffer);
+    monty::utils::fatal_error(buffer);
   }
 }
 

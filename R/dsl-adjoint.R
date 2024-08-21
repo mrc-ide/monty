@@ -96,7 +96,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
   differentiate_or_rethrow <- function(eq, nm) {
     rlang::try_fetch(
       differentiate(eq$rhs, nm),
-      mcstate_differentiation_failure = function(e) {
+      monty_differentiation_failure = function(e) {
         expr <- (eq$original %||% eq)$expr
         dsl_parse_error("Failed to differentiate this model",
                         "E206", expr, call = call, parent = e)

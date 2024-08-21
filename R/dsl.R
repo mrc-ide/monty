@@ -1,7 +1,7 @@
 ##' Create a model using the monty DSL; this function will likely
 ##' change name in future, as will its interface.
 ##'
-##' @title Domain Specific Language for mcstate
+##' @title Domain Specific Language for monty
 ##'
 ##' @param x The model as an expression.  This may be given as an
 ##'   expression, as a string, or as a path to a filename.  Typically,
@@ -23,7 +23,7 @@
 ##'   then we will error if it is not possible to create a gradient
 ##'   function.
 ##'
-##' @return A [mcstate_model] object derived from the expressions you
+##' @return A [monty_model] object derived from the expressions you
 ##'   provide.
 ##'
 ##' @export
@@ -31,15 +31,15 @@
 ##'
 ##' # Expressions that correspond to models can be passed in with no
 ##' # quoting
-##' mcstate_dsl(a ~ Normal(0, 1))
-##' mcstate_dsl({
+##' monty_dsl(a ~ Normal(0, 1))
+##' monty_dsl({
 ##'   a ~ Normal(0, 1)
 ##'   b ~ Exponential(1)
 ##' })
 ##'
 ##' # You can also pass strings
-##' mcstate_dsl("a ~ Normal(0, 1)")
-mcstate_dsl <- function(x, type = NULL, gradient = NULL) {
+##' monty_dsl("a ~ Normal(0, 1)")
+monty_dsl <- function(x, type = NULL, gradient = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
@@ -54,7 +54,7 @@ mcstate_dsl <- function(x, type = NULL, gradient = NULL) {
 
 
 
-mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
+monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -106,10 +106,10 @@ mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
 ##'   provided!
 ##'
 ##' * `sample`: A function to sample from the distribution, given (as
-##'   a first argument) a rng object (see [mcstate_rng])
+##'   a first argument) a rng object (see [monty_rng])
 ##'
 ##' @export
-mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
+monty_dsl_parse_distribution <- function(expr, name = NULL) {
   ## Here, the user has not provided a call to anything, or a call to
   ## something that is not recognised as a distribution.  We throw the
   ## same error in both cases, but with different contextual
@@ -124,7 +124,7 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
     distr_name <- as.character(expr[[1]])
     error <- c(
       cli::format_inline("Unknown distribution '{distr_name}'"),
-      i = paste("See {.run monty::mcstate_dsl_distributions} for details on",
+      i = paste("See {.run monty::monty_dsl_distributions} for details on",
                 "supported distributions"))
     dym <- near_match(distr_name, names(dsl_distributions))
     if (length(dym) > 0) {

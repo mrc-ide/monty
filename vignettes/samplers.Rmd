@@ -38,7 +38,7 @@ We'll use R's `dnorm` for the likelihood calculations and then differentiate the
 
 ```{r}
 banana_model <- function(sd = 0.5) {
-  mcstate_model(list(
+  monty_model(list(
     parameters = c("alpha", "beta"),
     direct_sample = function(rng) {
       beta <- rng$random_normal(1)
@@ -78,7 +78,7 @@ image(a, b, z, xlab = "alpha", ylab = "beta")
 In this particular case we can also easily generate samples, so we know what a good sampler will produce:
 
 ```{r}
-rng <- mcstate_rng$new()
+rng <- monty_rng$new()
 s <- vapply(seq(200), function(x) m$direct_sample(rng), numeric(2))
 image(a, b, z, xlab = "alpha", ylab = "beta")
 points(s[1, ], s[2, ], pch = 19, col = "#00000055")
@@ -107,8 +107,8 @@ It is not generally possible to directly sample from a density (otherwise MCMC a
 We can start with a basic random-walk sampler
 
 ```{r RW_sampling}
-sampler_rw <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
-res_rw <- mcstate_sample(m, sampler_rw, 2000)
+sampler_rw <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+res_rw <- monty_sample(m, sampler_rw, 2000)
 plot(res_rw$pars, pch = 19, col = "#ff222277")
 lines(z95[, 1], z95[, 2])
 ```
@@ -118,8 +118,8 @@ As we can see this is not great.  We can probably improve the samples here by fi
 Let's try the Hamiltonian Monte Carlo (HMC) sampler, which uses the gradient to move efficiently in parameter space:
 
 ```{r HMC_sampling}
-sampler_hmc <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-res_hmc <- mcstate_sample(m, sampler_hmc, 2000)
+sampler_hmc <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+res_hmc <- monty_sample(m, sampler_hmc, 2000)
 plot(res_hmc$pars, pch = 19, col = "#ff222277")
 lines(z95[, 1], z95[, 2])
 ```

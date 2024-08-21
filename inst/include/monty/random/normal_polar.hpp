@@ -1,9 +1,9 @@
 #pragma once
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 __nv_exec_check_disable__
@@ -18,7 +18,7 @@ real_type random_normal_polar(rng_state_type& rng_state) {
   } while (s > 1);
   SYNCWARP
 
-  return x * mcstate::math::sqrt(-2 * mcstate::math::log(s) / s);
+  return x * monty::math::sqrt(-2 * monty::math::log(s) / s);
 }
 
 }

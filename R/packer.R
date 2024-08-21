@@ -150,7 +150,7 @@
 ##'   not broken).  We will likely play around with this process in
 ##'   future in order to get automatic differentiation to work.
 ##'
-##' @return An object of class `mcstate_packer`, which has three
+##' @return An object of class `monty_packer`, which has three
 ##'   elements:
 ##'
 ##' * `parameters`: a character vector of computed parameter names;
@@ -168,8 +168,8 @@
 ##'   can be found.
 ##'
 ##' @export
-mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
-                           process = NULL) {
+monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
+                         process = NULL) {
   call <- environment()
 
   parameters <- character(0)
@@ -257,7 +257,7 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
               unpack = unpack,
               pack = pack,
               index = function() idx)
-  class(ret) <- "mcstate_packer"
+  class(ret) <- "monty_packer"
   ret
 }
 
@@ -307,15 +307,15 @@ array_indices <- function(shape) {
 
 
 ##' @export
-print.mcstate_packer <- function(x, ...) {
-  cli::cli_h1("<mcstate_packer>")
+print.monty_packer <- function(x, ...) {
+  cli::cli_h1("<monty_packer>")
   cli::cli_alert_info(
     "Packing {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
   cli::cli_alert_info(
     "Use '$pack()' to convert from a list to a vector")
   cli::cli_alert_info(
     "Use '$unpack()' to convert from a vector to a list")
-  cli::cli_alert_info("See {.help mcstate_packer} for more information")
+  cli::cli_alert_info("See {.help monty_packer} for more information")
   invisible(x)
 }
 

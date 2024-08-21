@@ -4,11 +4,11 @@
 #include <limits>
 #include <type_traits>
 
-#include "mcstate/random/cuda_compatibility.hpp"
-#include "mcstate/random/numeric.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/cuda_compatibility.hpp"
+#include "monty/random/numeric.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace density {
 
 namespace {
@@ -33,7 +33,7 @@ __host__ __device__ inline float norm_integral() {
 __nv_exec_check_disable__
 template <typename T>
 __host__ __device__ T maybe_log(T x, bool log) {
-  return log ? x : mcstate::math::exp(x);
+  return log ? x : monty::math::exp(x);
 }
 
 template <typename T>
@@ -62,8 +62,8 @@ __host__ __device__ T binomial(int x, int size, T prob, bool log) {
     ret = 0;
   } else {
     ret = lchoose<T>(size, x) +
-      x * mcstate::math::log(prob) +
-      (size - x) * mcstate::math::log(1 - prob);
+      x * monty::math::log(prob) +
+      (size - x) * monty::math::log(1 - prob);
   }
 
   SYNCWARP
@@ -83,7 +83,7 @@ __host__ __device__ T normal(T x, T mu, T sd, bool log) {
     ret = dirac_delta(x - mu, log); // This does maybe_log
   } else {
     const T dx = x - mu;
-    ret = - dx * dx / (2 * sd * sd) - norm_integral<T>() - mcstate::math::log(sd);
+    ret = - dx * dx / (2 * sd * sd) - norm_integral<T>() - monty::math::log(sd);
     ret = maybe_log(ret, log);
   }
 
@@ -112,15 +112,15 @@ __host__ __device__ T negative_binomial_mu(int x, T size, T mu, bool log) {
     // taking 100 * floating point eps as the change over.
     const T ratio = random::utils::epsilon<T>() * 100;
     if (mu < ratio * size) {
-      const T log_prob = mcstate::math::log(mu / (1 + mu / size));
+      const T log_prob = monty::math::log(mu / (1 + mu / size));
       ret = x * log_prob - mu - random::utils::lgamma(static_cast<T>(x + 1)) +
-        mcstate::math::log1p(x * (x - 1) / (2 * size));
+        monty::math::log1p(x * (x - 1) / (2 * size));
     } else {
       const T prob = size / (size + mu);
       ret = random::utils::lgamma(static_cast<T>(x + size)) -
         random::utils::lgamma(static_cast<T>(size)) -
         random::utils::lgamma(static_cast<T>(x + 1)) +
-        size * mcstate::math::log(prob) + x * mcstate::math::log(1 - prob);
+        size * monty::math::log(prob) + x * monty::math::log(1 - prob);
     }
   }
 
@@ -171,7 +171,7 @@ __host__ __device__ T poisson(int x, T lambda, bool log) {
   if (x == 0 && lambda == 0) {
     ret = 0;
   } else {
-    ret = x * mcstate::math::log(lambda) - lambda -
+    ret = x * monty::math::log(lambda) - lambda -
       random::utils::lgamma(static_cast<T>(x + 1));
   }
 
@@ -185,7 +185,7 @@ __host__ __device__ T exponential_rate(T x, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(mcstate::math::log(rate) - rate * x, log);
+  return maybe_log(monty::math::log(rate) - rate * x, log);
 }
 
 // TODO: rename as scale
@@ -195,7 +195,7 @@ __host__ __device__ T exponential_mean(T x, T mean, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(-mcstate::math::log(mean) - x / mean, log);
+  return maybe_log(-monty::math::log(mean) - x / mean, log);
 }
 
 template <typename T>
@@ -204,8 +204,8 @@ __host__ __device__ T gamma_rate(T x, T shape, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * mcstate::math::log(x) - rate * x -
-    random::utils::lgamma(shape) + shape * mcstate::math::log(rate);
+  const auto ret = (shape - 1) * monty::math::log(x) - rate * x -
+    random::utils::lgamma(shape) + shape * monty::math::log(rate);
   return maybe_log(ret, log);
 }
 
@@ -215,8 +215,8 @@ __host__ __device__ T gamma_scale(T x, T shape, T scale, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * mcstate::math::log(x) - x / scale -
-    random::utils::lgamma(shape) - shape * mcstate::math::log(scale);
+  const auto ret = (shape - 1) * monty::math::log(x) - x / scale -
+    random::utils::lgamma(shape) - shape * monty::math::log(scale);
   return maybe_log(ret, log);
 }
 
@@ -228,7 +228,7 @@ __host__ __device__ T uniform(T x, T min, T max, bool log) {
                 "uniform should only be used with real types");
 #endif
   const auto ret = (x < min || x > max) ? 0 : 1 / (max - min);
-  return log ? mcstate::math::log(ret) : ret;
+  return log ? monty::math::log(ret) : ret;
 }
 
 template <typename T>
@@ -248,8 +248,8 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "beta should only be used with real types");
 #endif
-  const auto ret = (a - 1) * mcstate::math::log(x) +
-    (b - 1) * mcstate::math::log(1 - x) - lbeta(a, b);
+  const auto ret = (a - 1) * monty::math::log(x) +
+    (b - 1) * monty::math::log(1 - x) - lbeta(a, b);
   return maybe_log(ret, log);
 }
 

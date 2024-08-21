@@ -4,9 +4,9 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "mcstate/random/gamma.hpp"
+#include "monty/random/gamma.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 template <typename real_type, typename rng_state_type>

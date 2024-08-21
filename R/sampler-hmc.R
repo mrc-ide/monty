@@ -16,12 +16,12 @@
 ##'   slow things down though as we accumulate the history
 ##'   inefficiently.
 ##'
-##' @return A `mcstate_sampler` object, which can be used with
-##'   [mcstate_sample]
+##' @return A `monty_sampler` object, which can be used with
+##'   [monty_sample]
 ##'
 ##' @export
-mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
-                                vcv = NULL, debug = FALSE) {
+monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
+                              vcv = NULL, debug = FALSE) {
   internal <- new.env()
 
   if (!is.null(vcv)) {
@@ -172,13 +172,13 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     }
   }
 
-  mcstate_sampler("Hamiltonian Monte Carlo",
-                  "mcstate_sampler_hmc",
-                  initialise,
-                  step,
-                  finalise,
-                  get_internal_state,
-                  set_internal_state)
+  monty_sampler("Hamiltonian Monte Carlo",
+                "monty_sampler_hmc",
+                initialise,
+                step,
+                finalise,
+                get_internal_state,
+                set_internal_state)
 }
 
 

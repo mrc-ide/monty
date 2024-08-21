@@ -41,7 +41,7 @@
 ##'
 ##' The `model` field will be an ordered, unnamed, list containing the
 ##' two elements corresponding to the first and second model (not the
-##' `mcstate_model`, but the underlying model, perhaps?).  This is the
+##' `monty_model`, but the underlying model, perhaps?).  This is the
 ##' only part that makes a distinction between the two models here;
 ##' for all components above they are equivalent.
 ##'
@@ -51,7 +51,7 @@
 ##'
 ##' @param b The second model
 ##'
-##' @param properties An [mcstate_model_properties] object, used to
+##' @param properties An [monty_model_properties] object, used to
 ##'   control (or enforce) properties of the combined model.
 ##'
 ##' @param name_a Name of the first model (defaulting to 'a'); you can
@@ -62,14 +62,14 @@
 ##'   use this to make error messages nicer to read, but it has no
 ##'   other practical effect.
 ##'
-##' @return An [mcstate_model] object
+##' @return An [monty_model] object
 ##'
 ##' @export
-mcstate_model_combine <- function(a, b, properties = NULL,
-                                  name_a = "a", name_b = "b") {
+monty_model_combine <- function(a, b, properties = NULL,
+                                name_a = "a", name_b = "b") {
   call <- environment()
-  require_mcstate_model(a)
-  require_mcstate_model(b)
+  require_monty_model(a)
+  require_monty_model(b)
   properties <- validate_model_properties(properties, call)
 
   parameters <- union(a$parameters, b$parameters)
@@ -84,7 +84,7 @@ mcstate_model_combine <- function(a, b, properties = NULL,
   stochastic <- model_combine_stochastic(
     a, b, properties)
 
-  mcstate_model(
+  monty_model(
     list(model = list(a, b),
          parameters = parameters,
          domain = domain,
@@ -98,13 +98,13 @@ mcstate_model_combine <- function(a, b, properties = NULL,
 
 
 ##' @export
-`+.mcstate_model` <- function(x, y) {
-  if (!inherits(y, "mcstate_model")) {
+`+.monty_model` <- function(x, y) {
+  if (!inherits(y, "monty_model")) {
     cli::cli_abort(
-      paste("Addition via '+' is only defined for 'mcstate_model'",
-            "with other 'mcstate_model' objects"))
+      paste("Addition via '+' is only defined for 'monty_model'",
+            "with other 'monty_model' objects"))
   }
-  mcstate_model_combine(x, y, properties = NULL, name_a = "lhs", name_b = "rhs")
+  monty_model_combine(x, y, properties = NULL, name_a = "lhs", name_b = "rhs")
 }
 
 

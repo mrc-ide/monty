@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Not intended to be a real configure script, just enough to let us
-# turn openmp on and off and to find mcstate (working around the issue
+# turn openmp on and off and to find monty (working around the issue
 # that we can't use Rscript from with R CMD check)
 
 USAGE="Usage:
-./configure [(<path_mcstate> | --find-mcstate) [(--openmp | --no-openmp)]]"
+./configure [(<path_monty> | --find-monty) [(--openmp | --no-openmp)]]"
 
 if [[ "$2" == "--no-openmp" ]]; then
     echo "Disabling openmp"
@@ -18,14 +18,14 @@ else
     exit 1
 fi
 
-if [[ -z "$1" || "$1" == "--find-mcstate" ]]; then
-    PATH_MCSTATE=$(Rscript -e 'cat(find.package("monty"))')
-    echo "Found mcstate at '$PATH_MCSTATE'"
+if [[ -z "$1" || "$1" == "--find-monty" ]]; then
+    PATH_MONTY=$(Rscript -e 'cat(find.package("monty"))')
+    echo "Found monty at '$PATH_MONTY'"
 else
-    PATH_MCSTATE=$1
-    echo "Using provided mcstate '$PATH_MCSTATE'"
+    PATH_MONTY=$1
+    echo "Using provided monty '$PATH_MONTY'"
 fi
 
-sed -e "s|@path_mcstate@|$PATH_MCSTATE|" Makefile.in | \
+sed -e "s|@path_monty@|$PATH_MONTY|" Makefile.in | \
     sed -e "s|@openmp_flags@|$OPENMP_FLAGS|" > \
         Makefile

@@ -1,5 +1,5 @@
 ##' Run MCMC chains in series (one after another).  This is the
-##' simplest chain runner, and the default used by [mcstate_sample()].
+##' simplest chain runner, and the default used by [monty_sample()].
 ##' It has nothing that can be configured (yet).
 ##'
 ##' @title Run MCMC chain in series
@@ -12,19 +12,19 @@
 ##'   `cli.progress_show_after` and `cli.progress_clear` will affect
 ##'   your experience.
 ##'
-##' @return A runner of class `mcstate_runner` that can be passed to
-##'   [mcstate_sample()]
+##' @return A runner of class `monty_runner` that can be passed to
+##'   [monty_sample()]
 ##'
 ##' @export
-mcstate_runner_serial <- function(progress = NULL) {
+monty_runner_serial <- function(progress = NULL) {
   run <- function(pars, model, sampler, observer, n_steps, rng) {
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, n_steps, progress, TRUE, environment())
     lapply(
       seq_along(rng),
       function(i) {
-        mcstate_run_chain(pars[, i], model, sampler, observer, n_steps,
-                          pb(i), rng[[i]])
+        monty_run_chain(pars[, i], model, sampler, observer, n_steps,
+                        pb(i), rng[[i]])
       })
   }
 
@@ -34,15 +34,15 @@ mcstate_runner_serial <- function(progress = NULL) {
     lapply(
       seq_along(state),
       function(i) {
-        mcstate_continue_chain(state[[i]], model, sampler, observer, n_steps,
-                               pb(i))
+        monty_continue_chain(state[[i]], model, sampler, observer, n_steps,
+                             pb(i))
       })
   }
 
-  mcstate_runner("Serial",
-                 "mcstate_runner_serial",
-                 run,
-                 continue)
+  monty_runner("Serial",
+               "monty_runner_serial",
+               run,
+               continue)
 }
 
 
@@ -57,7 +57,7 @@ mcstate_runner_serial <- function(progress = NULL) {
 ##' Mostly this exists as a proof of concept for us to think about the
 ##' different interfaces.  Unless your chains are quite slow, the
 ##' parallel runner will be slower than the serial runner
-##' ([mcstate_runner_serial]) due to the overhead cost of starting the
+##' ([monty_runner_serial]) due to the overhead cost of starting the
 ##' cluster.
 ##'
 ##' @title Run MCMC chain in parallel
@@ -71,11 +71,11 @@ mcstate_runner_serial <- function(progress = NULL) {
 ##'   Fewer cores than this will be used if you run fewer chains than
 ##'   you have workers.
 ##'
-##' @return A runner of class `mcstate_runner` that can be passed to
-##'   [mcstate_sample()]
+##' @return A runner of class `monty_runner` that can be passed to
+##'   [monty_sample()]
 ##'
 ##' @export
-mcstate_runner_parallel <- function(n_workers) {
+monty_runner_parallel <- function(n_workers) {
   ## TODO: accept a cluster as an optional argument here, I think.
   ## There is an interface we can use easily.
 
@@ -114,7 +114,7 @@ mcstate_runner_parallel <- function(n_workers) {
     ## you get nice stack traces.
     parallel::clusterMap(
       cl,
-      mcstate_run_chain_parallel,
+      monty_run_chain_parallel,
       pars = pars_list,
       rng = rng_state,
       MoreArgs = args)
@@ -131,28 +131,28 @@ mcstate_runner_parallel <- function(n_workers) {
                  progress = function(i) NULL)
     parallel::clusterMap(
       cl,
-      mcstate_continue_chain,
+      monty_continue_chain,
       state,
       MoreArgs = args)
   }
 
-  mcstate_runner("Parallel",
-                 "mcstate_runner_parallel",
-                 run,
-                 continue)
+  monty_runner("Parallel",
+               "monty_runner_parallel",
+               run,
+               continue)
 }
 
 
-mcstate_run_chain_parallel <- function(pars, model, sampler, observer,
-                                       n_steps, rng) {
-  rng <- mcstate_rng$new(rng)
+monty_run_chain_parallel <- function(pars, model, sampler, observer,
+                                     n_steps, rng) {
+  rng <- monty_rng$new(rng)
   progress <- function(i) NULL
-  mcstate_run_chain(pars, model, sampler, observer, n_steps, progress, rng)
+  monty_run_chain(pars, model, sampler, observer, n_steps, progress, rng)
 }
 
 
-mcstate_run_chain <- function(pars, model, sampler, observer, n_steps,
-                              progress, rng) {
+monty_run_chain <- function(pars, model, sampler, observer, n_steps,
+                            progress, rng) {
   r_rng_state <- get_r_rng_state()
   chain_state <- sampler$initialise(pars, model, observer, rng)
 
@@ -176,26 +176,26 @@ mcstate_run_chain <- function(pars, model, sampler, observer, n_steps,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  mcstate_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
-                     rng, r_rng_state)
+  monty_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
+                   rng, r_rng_state)
 }
 
 
-mcstate_continue_chain <- function(state, model, sampler, observer, n_steps,
-                                   progress) {
+monty_continue_chain <- function(state, model, sampler, observer, n_steps,
+                                 progress) {
   r_rng_state <- get_r_rng_state()
-  rng <- mcstate_rng$new(seed = state$rng)
+  rng <- monty_rng$new(seed = state$rng)
   sampler$set_internal_state(state$sampler)
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
-  mcstate_run_chain2(state$chain, model, sampler, observer, n_steps, progress,
-                     rng, r_rng_state)
+  monty_run_chain2(state$chain, model, sampler, observer, n_steps, progress,
+                   rng, r_rng_state)
 }
 
 
-mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
-                               progress, rng, r_rng_state) {
+monty_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
+                             progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   has_observer <- !is.null(observer)
@@ -245,20 +245,20 @@ mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
 }
 
 
-mcstate_runner <- function(name, help, run, continue) {
+monty_runner <- function(name, help, run, continue) {
   ret <- list(name = name,
               help = help,
               run = run,
               continue = continue)
-  class(ret) <- "mcstate_runner"
+  class(ret) <- "monty_runner"
   ret
 }
 
 
 ##' @export
-print.mcstate_runner <- function(x, ...) {
-  cli::cli_h1("<mcstate_runner: {x$name} ({x$help})>")
-  cli::cli_alert_info("Use {.help mcstate_sample} to use this runner")
+print.monty_runner <- function(x, ...) {
+  cli::cli_h1("<monty_runner: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help monty_sample} to use this runner")
   cli::cli_alert_info("See {.help {x$help}} for more information")
   invisible(x)
 }

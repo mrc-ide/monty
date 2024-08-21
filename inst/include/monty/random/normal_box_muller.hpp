@@ -8,10 +8,10 @@
 #define M_PI = 3.14159265358979
 #endif
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/math.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 __nv_exec_check_disable__
@@ -31,7 +31,7 @@ real_type random_normal_box_muller(rng_state_type& rng_state) {
   } while (u1 <= epsilon);
 
   SYNCWARP
-  return mcstate::math::sqrt(-2 * mcstate::math::log(u1)) * std::cos(two_pi * u2);
+  return monty::math::sqrt(-2 * monty::math::log(u1)) * std::cos(two_pi * u2);
 }
 
 

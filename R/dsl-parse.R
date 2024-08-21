@@ -37,7 +37,7 @@ dsl_parse_expr_stochastic <- function(expr, call) {
   }
   rhs <- expr[[3]]
 
-  res <- mcstate_dsl_parse_distribution(rhs)
+  res <- monty_dsl_parse_distribution(rhs)
 
   if (!res$success) {
     dsl_parse_error(res$error, "E103", expr, call)

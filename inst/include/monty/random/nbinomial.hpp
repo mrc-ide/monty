@@ -2,11 +2,11 @@
 
 #include <cmath>
 
-#include "mcstate/random/gamma.hpp"
-#include "mcstate/random/poisson.hpp"
-#include "mcstate/random/generator.hpp"
+#include "monty/random/gamma.hpp"
+#include "monty/random/poisson.hpp"
+#include "monty/random/generator.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 namespace {
@@ -18,7 +18,7 @@ void nbinomial_validate(real_type size, real_type prob) {
     snprintf(buffer, 256,
              "Invalid call to nbinomial with size = %g, prob = %g",
              size, prob);
-    mcstate::utils::fatal_error(buffer);
+    monty::utils::fatal_error(buffer);
   }
 }
 

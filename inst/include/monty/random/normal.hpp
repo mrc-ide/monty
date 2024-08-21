@@ -2,13 +2,13 @@
 
 #include <cmath>
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/numeric.hpp"
-#include "mcstate/random/normal_box_muller.hpp"
-#include "mcstate/random/normal_polar.hpp"
-#include "mcstate/random/normal_ziggurat.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/numeric.hpp"
+#include "monty/random/normal_box_muller.hpp"
+#include "monty/random/normal_polar.hpp"
+#include "monty/random/normal_ziggurat.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 namespace algorithm {
@@ -57,7 +57,7 @@ real_type random_normal(rng_state_type& rng_state) {
 
 /// Draw a normally distributed random number with arbitrary bounds.
 /// This function simply scales the output of
-/// `mcstate::random::random_real`
+/// `monty::random::random_real`
 ///
 /// @tparam real_type The underlying real number type, typically
 /// `double` or `float`. A compile-time error will be thrown if you

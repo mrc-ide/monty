@@ -4,19 +4,19 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "mcstate/random/generator.hpp"
-#include "mcstate/random/numeric.hpp"
-#include "mcstate/random/exponential.hpp"
-#include "mcstate/random/uniform.hpp"
-#include "mcstate/random/normal.hpp"
-#include "mcstate/random/math.hpp"
+#include "monty/random/generator.hpp"
+#include "monty/random/numeric.hpp"
+#include "monty/random/exponential.hpp"
+#include "monty/random/uniform.hpp"
+#include "monty/random/normal.hpp"
+#include "monty/random/math.hpp"
 
 // Algorithm from George Marsaglia and Wai Wan Tsang. 2000. "A Simple Method
 // for Generating Gamma Variables" *ACM Trans. Math. Softw.* 26, 3 (September 2000),
 // 363-372. DOI:[10.1145/358407.358414](https://doi.acm.org/10.1145/358407.358414)
 // and follows the Rust implementation https://docs.rs/rand/0.5.0/src/rand/distributions/gamma.rs.html
 // but adapted to fit our needs.
-namespace mcstate {
+namespace monty {
 namespace random {
 namespace {
 
@@ -27,7 +27,7 @@ void gamma_validate(real_type shape, real_type scale) {
     snprintf(buffer, 256,
              "Invalid call to gamma with shape = %g, scale = %g",
              shape, scale);
-    mcstate::utils::fatal_error(buffer);
+    monty::utils::fatal_error(buffer);
   }
 }
 
@@ -45,7 +45,7 @@ real_type gamma_large(rng_state_type& rng_state, real_type shape) {
     real_type u = random_real<real_type>(rng_state);
     real_type x_sqr = x * x;
     if (u < 1.0 - 0.0331 * x_sqr * x_sqr ||
-      mcstate::math::log(u) < 0.5 * x_sqr + d * (1.0 - v + mcstate::math::log(v))) {
+      monty::math::log(u) < 0.5 * x_sqr + d * (1.0 - v + monty::math::log(v))) {
       return d * v;
     }
   }
@@ -55,7 +55,7 @@ template <typename real_type, typename rng_state_type>
 real_type gamma_small(rng_state_type& rng_state, real_type shape) {
   real_type inv_shape = 1 / shape;
   real_type u = random_real<real_type>(rng_state);
-  return gamma_large(rng_state, shape + 1.0) * mcstate::math::pow(u, inv_shape);
+  return gamma_large(rng_state, shape + 1.0) * monty::math::pow(u, inv_shape);
 }
 
 template <typename real_type>
