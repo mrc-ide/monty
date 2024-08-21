@@ -15,6 +15,14 @@
 ##'   as `x`.  If given, valid options are `expression`, `text` or
 ##'   `file`.
 ##'
+##' @param gradient Control gradient derivation.  If `NULL` (the
+##'   default) we try and generate a gradient function for your model
+##'   and warn if this is not possible.  If `FALSE`, then we do not
+##'   attempt to construct a gradient function, which prevents a
+##'   warning being generated if this is not possible.  If `TRUE`,
+##'   then we will error if it is not possible to create a gradient
+##'   function.
+##'
 ##' @return A [mcstate_model] object derived from the expressions you
 ##'   provide.
 ##'
@@ -31,28 +39,31 @@
 ##'
 ##' # You can also pass strings
 ##' mcstate_dsl("a ~ Normal(0, 1)")
-mcstate_dsl <- function(x, type = NULL) {
+mcstate_dsl <- function(x, type = NULL, gradient = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
   } else {
     x <- rlang::quo_get_expr(quo)
   }
-  exprs <- dsl_preprocess(x, type)
-  dat <- dsl_parse(exprs)
+  call <- environment()
+  exprs <- dsl_preprocess(x, type, call)
+  dat <- dsl_parse(exprs, gradient, call)
   dsl_generate(dat)
 }
 
 
-mcstate_dsl_parse <- function(x, type = NULL) {
+
+mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
+  call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
   } else {
     x <- rlang::quo_get_expr(quo)
   }
-  exprs <- dsl_preprocess(x, type)
-  dsl_parse(exprs)
+  exprs <- dsl_preprocess(x, type, call)
+  dsl_parse(exprs, gradient, call)
 }
 
 
@@ -113,7 +124,7 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
     distr_name <- as.character(expr[[1]])
     error <- c(
       cli::format_inline("Unknown distribution '{distr_name}'"),
-      i = paste("See ?'dsl-distributions' for details on",
+      i = paste("See {.run mcstate2::mcstate_dsl_distributions} for details on",
                 "supported distributions"))
     dym <- near_match(distr_name, names(dsl_distributions))
     if (length(dym) > 0) {
@@ -138,11 +149,3 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
   list(success = TRUE,
        value = value)
 }
-
-
-##' To be described later; this manual page exists so that an error
-##' message makes more sense only, sorry
-##'
-##' @title Supported distributions
-##' @name dsl-distributions
-NULL

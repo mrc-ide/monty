@@ -1,4 +1,4 @@
-url: https://mrc-ide.github.io/orderly2
+url: https://mrc-ide.github.io/mcstate2
 
 template:
   bootstrap: 5
@@ -10,13 +10,21 @@ reference:
     - mcstate_model_combine
     - mcstate_model_properties
 
+  - subtitle: Functions for working with models
+    contents:
+    - mcstate_model_density
+    - mcstate_model_gradient
+    - mcstate_model_direct_sample
+
   - title: Domain specific language
     contents:
       - mcstate_dsl
-      - dsl-distributions
+      - mcstate_dsl_error_explain
+      - mcstate_differentiation
 
   - subtitle: Advanced
     contents:
+      - mcstate_dsl_distributions
       - mcstate_dsl_parse_distribution
 
   - title: Draw samples from a model

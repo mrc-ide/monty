@@ -59,9 +59,9 @@ test_that("can sample from exponential distribution", {
   r1 <- mcstate_rng$new(1)
   r2 <- mcstate_rng$new(1)
   expect_equal(distr_exponential_rate$sample(r1, 0.4),
-               r2$exponential(1, 0.4))
+               r2$exponential_rate(1, 0.4))
   expect_equal(distr_exponential_mean$sample(r1, 0.4),
-               r2$exponential(1, 1 / 0.4))
+               r2$exponential_mean(1, 0.4))
 })
 
 
@@ -98,7 +98,8 @@ test_that("can sample from uniform distribution", {
 test_that("can create a distribution object", {
   density <- function(x, a, b) NULL
   sample <- function(rng, a, b) NULL
-  d <- distribution("Foo", density, c(1,2), NULL, sample)
+  d <- distribution("Foo", density, c(1,2), cpp = NULL, expr = NULL,
+                    sample = sample)
   expect_equal(
     d,
     list(name = "Foo",
@@ -107,6 +108,7 @@ test_that("can create a distribution object", {
          density = density,
          domain = c(1, 2),
          sample = sample,
+         expr = NULL,
          cpp = NULL))
 })
 
@@ -121,6 +123,7 @@ test_that("can parse a simple distribution call", {
                       density = dsl_distributions$Normal[[1]]$density,
                       domain = c(-Inf, Inf),
                       sample = dsl_distributions$Normal[[1]]$sample,
+                      expr = dsl_distributions$Normal[[1]]$expr,
                       cpp = list(density = "normal", sample = "normal"))))
 
   expect_equal(
@@ -137,8 +140,8 @@ test_that("report back on failure to match distribution", {
   expect_false(res$success)
   expect_length(res$error, 3)
   expect_equal(res$error[[1]], "Unknown distribution 'Norm'")
-  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
-               fixed = TRUE)
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
   expect_match(res$error[[3]], "Did you mean: 'Normal'?",
                fixed = TRUE)
 })
@@ -149,8 +152,8 @@ test_that("report back on failure to match distribution without suggestion", {
   expect_false(res$success)
   expect_length(res$error, 2)
   expect_equal(res$error[[1]], "Unknown distribution 'Banana'")
-  expect_match(res$error[[2]], "See ?'dsl-distributions' for details",
-               fixed = TRUE)
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
 })
 
 
@@ -164,4 +167,9 @@ test_that("report back on failure to match arguments", {
                fixed = TRUE)
   expect_match(res$error[[3]], "Call should match:")
   expect_match(res$error[[4]], "mean, sd")
+})
+
+
+test_that("can get information about distributions", {
+  expect_identical(mcstate_dsl_distributions(), dsl_distribution_summary)
 })

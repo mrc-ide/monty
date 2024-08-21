@@ -173,6 +173,7 @@ mcstate_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
   }
 
   mcstate_sampler("Hamiltonian Monte Carlo",
+                  "mcstate_sampler_hmc",
                   initialise,
                   step,
                   finalise,

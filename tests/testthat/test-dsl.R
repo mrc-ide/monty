@@ -3,6 +3,7 @@ test_that("Can run high level dsl function", {
   expect_s3_class(m, "mcstate_model")
   expect_equal(m$density(0), dnorm(0, 0, 1, log = TRUE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
+  expect_equal(m$gradient(0), 0)
 })
 
 
@@ -15,6 +16,8 @@ test_that("can generate model with simple assignment", {
   expect_s3_class(m, "mcstate_model")
   expect_equal(m$density(0), dnorm(0, 5, 1, log = TRUE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
+  expect_equal(m$gradient(0), 5)
+  expect_equal(m$gradient(2), 3)
 })
 
 
@@ -77,4 +80,65 @@ test_that("give up on bounds if they come from a stochastic process", {
                      c = c(5, Inf),
                      d = c(-Inf, 10),
                      e = c(-Inf, Inf)))
+})
+
+
+test_that("can prevent creation of gradient function", {
+  code <- "a ~ Normal(0, 1)"
+  m1 <- mcstate_dsl(code, gradient = FALSE)
+  expect_false(m1$properties$has_gradient)
+  expect_null(m1$gradient)
+
+  m2 <- mcstate_dsl(code, gradient = TRUE)
+  expect_true(m2$properties$has_gradient)
+  expect_true(is.function(m2$gradient))
+
+  m3 <- mcstate_dsl(code, gradient = NULL)
+  expect_true(m3$properties$has_gradient)
+  expect_true(is.function(m3$gradient))
+})
+
+
+test_that("handle failure to create gradient function", {
+  code <- "a ~ Normal(0, 1)\nb ~ Normal(trigamma(a), 1)"
+  expect_no_warning(m1 <- mcstate_dsl(code, gradient = FALSE))
+  expect_false(m1$properties$has_gradient)
+  expect_null(m1$gradient)
+
+  err <- expect_error(
+    mcstate_dsl(code, gradient = TRUE),
+    "Failed to differentiate this model")
+  expect_s3_class(err$parent, "mcstate_differentiation_failure")
+
+  w <- expect_warning(
+    m3 <- mcstate_dsl(code, gradient = NULL),
+    "Not creating a gradient function for this model")
+  expect_s3_class(w$parent, "mcstate2_parse_error")
+  expect_s3_class(w$parent$parent, "mcstate_differentiation_failure")
+  expect_false(m3$properties$has_gradient)
+  expect_null(m3$gradient)
+})
+
+
+test_that("can compute gradients of complicated models", {
+  m <- mcstate_dsl({
+    a ~ Normal(0, 1)
+    x <- a^2
+    b ~ Exponential(2)
+    c ~ Normal(x, b)
+  })
+
+  expect_equal(m$parameters, c("a", "b", "c"))
+  expect_true(m$properties$has_gradient)
+
+  p <- c(-.8, 0.03, 0.7)
+
+  ## Silly density:
+  expect_equal(
+    m$density(p),
+    dnorm(p[[1]], 0, 1, log = TRUE) +
+    dexp(p[[2]], 2, log = TRUE) +
+    dnorm(p[[3]], p[[1]]^2, p[[2]], log = TRUE))
+
+  expect_equal(m$gradient(p), numDeriv::grad(m$density, p))
 })

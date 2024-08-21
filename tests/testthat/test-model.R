@@ -207,3 +207,18 @@ test_that("If parameter groups are present, then density requires arg", {
     "Expected 'model$density' to have an argument 'by_group'",
     fixed = TRUE)
 })
+
+
+test_that("can print information about simple models", {
+  m <- ex_simple_gamma1()
+  res <- evaluate_promise(withVisible(print(m)))
+  expect_mapequal(res$result, list(value = m, visible = FALSE))
+  expect_match(res$messages, "<mcstate_model>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "Model has 1 parameter: 'gamma'",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "can compute gradients",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "can be directly sampled from",
+               fixed = TRUE, all = FALSE)
+})

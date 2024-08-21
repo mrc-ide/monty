@@ -37,7 +37,7 @@
 ##'
 ##' So here we might have a vector of length 7, where the first three
 ##' elements will represent be the scalar values `a`, `b` and `c` but
-##' ther next four will be a vector `d`.
+##' the next four will be a vector `d`.
 ##'
 ##' Unpacked, this might be written as:
 ##'
@@ -80,6 +80,44 @@
 ##'
 ##' which creates the symmetric 2x2 matrix `b` from `b_raw`.
 ##'
+##' # Unpacking matrices
+##'
+##' If you do not use `fixed` or `process` when defining your packer,
+##' then you can use `$unpack()` with a matrix or higher-dimensional
+##' output.  There are two ways that you might like to unpack this
+##' sort of output.  Assume you have a matrix `m` with 3 rows and 2
+##' columns; this means that we have two sets of parameters or state
+##' (one per column) and 3 states within each; this is the format that
+##' mcmc parameters will be in for example.
+##'
+##' The first would to be return a list where the `i`th element is the
+##' result of unpacking the `i`th parameter/state vector.  You can do
+##' this by running
+##'
+##' ```
+##' apply(m, 2, p$unpack)
+##' ```
+##'
+##' The second would be to return a named list with three elements
+##' where the `ith` element is the unpacked version of the `i`th
+##' state.  In this case you can pass the matrix directly in to the
+##' unpacker:
+##'
+##' ```
+##' p$unpack(m)
+##' ```
+##'
+##' When you do this, the elements of `m` will acquire an additional
+##' dimension; scalars become vectors (one per set), vectors become
+##' matrices (one column per set) and so on.
+##'
+##' This approach generalises to higher dimensional input, though we
+##' suspect you'll spend a bit of time headscratching if you use it.
+##'
+##' We do not currently offer the ability to pack this sort of output
+##' back up, though it's not hard.  Please let us know if you would
+##' use this.
+##'
 ##' @title Build a parameter packer
 ##'
 ##' @param scalar Names of scalar parameters.  This is similar for
@@ -91,9 +129,12 @@
 ##' @param array A list, where names correspond to the names of array
 ##'   parameters and values correspond to the lengths of parameters.
 ##'   Multiple dimensions are allowed (so if you provide an element
-##'   with two entries these represent dimensions of a matrix).  In
-##'   future, you may be able to use *strings* as values for the
-##'   lengths, in which case these will be looked for within `fixed`.
+##'   with two entries these represent dimensions of a matrix).
+##'   Zero-length integer vectors or `NULL` values are counted as
+##'   scalars, which allows you to put scalars at positions other than
+##'   the front of the packing vector. In future, you may be able to
+##'   use *strings* as values for the lengths, in which case these
+##'   will be looked for within `fixed`.
 ##'
 ##' @param fixed A named list of fixed parameters; these will be added
 ##'   into the final list directly.  These typically represent
@@ -121,6 +162,10 @@
 ##'   parameters back into a numeric vector suitable for the
 ##'   statistical model.  This ignores values created by a
 ##'   `preprocess` function.
+##' * `index`: a function which produces a named list where each
+##'   element has the name of a value in `parameters` and each value
+##'   has the indices within an unstructured vector where these values
+##'   can be found.
 ##'
 ##' @export
 mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
@@ -190,46 +235,11 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
   }
 
   unpack <- function(x) {
-    if (!is.null(names(x))) {
-      if (!identical(names(x), parameters)) {
-        ## Here, we could do better I think with this message; we
-        ## might pass thropuigh empty names, and produce some summary
-        ## of different names.  Something for later though.
-        cli::cli_abort("Incorrect names in input")
-      }
-      names(x) <- NULL
+    if (is.null(dim(x))) {
+      unpack_vector(x, parameters, len, idx, shape, fixed, process)
+    } else {
+      unpack_array(x, parameters, len, idx, shape, fixed, process)
     }
-    if (length(x) != len) {
-      cli::cli_abort(
-        "Incorrect length input; expected {len} but given {length(x)}")
-    }
-    res <- lapply(idx, function(i) x[i])
-    for (nm in names(shape)) {
-      dim2(res[[nm]]) <- shape[[nm]]
-    }
-    if (!is.null(fixed)) {
-      res <- c(res, fixed)
-    }
-    if (!is.null(process)) {
-      extra <- process(res)
-      err <- intersect(names(extra), names(res))
-      if (length(err) > 0) {
-        cli::cli_abort(
-          c("'process()' is trying to overwrite entries in parameters",
-            i = paste("The 'process()' function should only create elemements",
-                      "that are not already present in 'scalar', 'array'",
-                      "or 'fixed', as this lets us reverse the transformation",
-                      "process"),
-            x = "{?Entry/Entries} already present: {squote(err)}"))
-      }
-      ## TODO: check names?
-      ##
-      ## TODO: this fails the multi-region use - but I think that we
-      ## might want a different interface there anyway as we'll
-      ## struggle to hold all the options here.
-      res <- c(res, extra)
-    }
-    res
   }
 
   pack <- function(p) {
@@ -245,7 +255,8 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
 
   ret <- list(parameters = parameters,
               unpack = unpack,
-              pack = pack)
+              pack = pack,
+              index = function() idx)
   class(ret) <- "mcstate_packer"
   ret
 }
@@ -254,17 +265,17 @@ mcstate_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
 ## Helper function to create array bookkeeping for the
 ## unpacking/packing process.
 prepare_pack_array <- function(name, shape, call = NULL) {
-  if (length(shape) == 0) {
-    cli::cli_abort(
-      paste("Elements of 'array' must have at least one element, but",
-            "'{name}' has none"),
-      arg = "array", call = call)
+  if (is.null(shape)) {
+    shape <- integer()
   }
   if (!rlang::is_integerish(shape)) {
     cli::cli_abort(
       paste("Elements of 'array' must be integer-like vectors, but",
             "'{name}' is not"),
       arg = "array", call = call)
+  }
+  if (length(shape) == 0) {
+    return(list(names = name, shape = 1, n = 1L))
   }
   if (any(shape <= 0)) {
     cli::cli_abort(
@@ -292,4 +303,99 @@ prepare_pack_array <- function(name, shape, call = NULL) {
 
 array_indices <- function(shape) {
   unname(as.matrix(do.call(expand.grid, lapply(shape, seq_len))))
+}
+
+
+##' @export
+print.mcstate_packer <- function(x, ...) {
+  cli::cli_h1("<mcstate_packer>")
+  cli::cli_alert_info(
+    "Packing {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
+  cli::cli_alert_info(
+    "Use '$pack()' to convert from a list to a vector")
+  cli::cli_alert_info(
+    "Use '$unpack()' to convert from a vector to a list")
+  cli::cli_alert_info("See {.help mcstate_packer} for more information")
+  invisible(x)
+}
+
+
+unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
+  call <- parent.frame()
+  if (!is.null(names(x))) {
+    if (!identical(names(x), parameters)) {
+      ## Here, we could do better I think with this message; we
+      ## might pass thropuigh empty names, and produce some summary
+      ## of different names.  Something for later though.
+      cli::cli_abort("Incorrect names in input")
+    }
+    names(x) <- NULL
+  }
+  if (length(x) != len) {
+    cli::cli_abort(
+      "Incorrect length input; expected {len} but given {length(x)}",
+      call = call)
+  }
+  res <- lapply(idx, function(i) x[i])
+  for (nm in names(shape)) {
+    dim2(res[[nm]]) <- shape[[nm]]
+  }
+  if (!is.null(fixed)) {
+    res <- c(res, fixed)
+  }
+  if (!is.null(process)) {
+    extra <- process(res)
+    err <- intersect(names(extra), names(res))
+    if (length(err) > 0) {
+      cli::cli_abort(
+        c("'process()' is trying to overwrite entries in parameters",
+          i = paste("The 'process()' function should only create elements",
+                    "that are not already present in 'scalar', 'array'",
+                    "or 'fixed', as this lets us reverse the transformation",
+                    "process"),
+          x = "{?Entry/Entries} already present: {squote(err)}"))
+    }
+    ## TODO: check names?
+    ##
+    ## TODO: this fails the multi-region use - but I think that we
+    ## might want a different interface there anyway as we'll
+    ## struggle to hold all the options here.
+    res <- c(res, extra)
+  }
+  res
+}
+
+
+unpack_array <- function(x, parameters, len, idx, shape, fixed, process) {
+  call <- parent.frame()
+  dn <- dimnames(x)
+  if (!is.null(dn) && !is.null(dn[[1]]) && !identical(dn[[1]], parameters)) {
+    ## See comment above about reporting on this better
+    cli::cli_abort("Incorrect rownames in input")
+  }
+
+  if (nrow(x) != len) {
+    cli::cli_abort(
+      paste("Incorrect length of first dimension of input;",
+            "expected {len} but given {nrow(x)}"),
+      call = call)
+  }
+
+  shape_x <- dim(x)[-1]
+  dim(x) <- c(dim(x)[[1]], prod(shape_x))
+
+  res <- lapply(idx, function(i) x[i, ])
+  for (nm in names(shape)) {
+    dim2(res[[nm]]) <- c(shape[[nm]], shape_x)
+  }
+  if (!is.null(fixed)) {
+    cli::cli_abort("Can't unpack a matrix where the unpacker uses 'fixed'",
+                   call = call)
+  }
+  if (!is.null(process)) {
+    cli::cli_abort("Can't unpack a matrix where the unpacker uses 'process'",
+                   call = call)
+  }
+
+  res
 }

@@ -68,8 +68,8 @@
 mcstate_model_combine <- function(a, b, properties = NULL,
                                   name_a = "a", name_b = "b") {
   call <- environment()
-  assert_is(a, "mcstate_model", name = name_a, call = call)
-  assert_is(b, "mcstate_model", name = name_b, call = call)
+  require_mcstate_model(a)
+  require_mcstate_model(b)
   properties <- validate_model_properties(properties, call)
 
   parameters <- union(a$parameters, b$parameters)
