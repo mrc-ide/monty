@@ -61,7 +61,7 @@ dsl_generate_density_expr <- function(expr, env, density) {
          stochastic = dsl_generate_density_stochastic(expr, env, density),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
-           "this is an monty bug")))
+           "this is a monty bug")))
 }
 
 
@@ -71,7 +71,7 @@ dsl_generate_sample_expr <- function(expr, env, result) {
          stochastic = dsl_generate_sample_stochastic(expr, env),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
-           "this is an monty bug")))
+           "this is a monty bug")))
 }
 
 

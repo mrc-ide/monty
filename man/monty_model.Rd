@@ -73,7 +73,7 @@ parameters.  If named, then you can provide a subset, with
 parameters that are not included assumed to have a domain of
 \verb{(-Inf, Inf)}.
 \item \code{direct_sample}: A function to sample directly from the
-parameter space, given an \link{monty_rng} object to sample from.
+parameter space, given a \link{monty_rng} object to sample from.
 In the case where a model returns a posterior (e.g., in Bayesian
 inference), this is assumed to be sampling from the prior.
 We'll use this for generating initial conditions for MCMC where

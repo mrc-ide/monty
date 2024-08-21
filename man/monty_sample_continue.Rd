@@ -22,7 +22,7 @@ chains via \link{monty_sample} (or on the previous restart with
 this function).  You can use this argument to change the runner,
 which might be useful if transferring a pilot run from a
 high-resource environment to a lower-resource environment.  If
-given, must be an \code{monty_runner} object such as
+given, must be a \code{monty_runner} object such as
 \link{monty_runner_serial} or \link{monty_runner_parallel}.  You can
 use this argument to change the configuration of a runner, as
 well as the type of runner (e.g., changing the number of

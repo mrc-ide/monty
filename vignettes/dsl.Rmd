@@ -48,7 +48,7 @@ We can compute the domain for your model:
 prior$domain
 ```
 
-We can draw samples from the model if we provide an [monty_rng] object
+We can draw samples from the model if we provide a `monty_rng` object
 
 ```{r}
 rng <- monty_rng$new()

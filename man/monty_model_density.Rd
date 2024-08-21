@@ -7,7 +7,7 @@
 monty_model_density(model, parameters)
 }
 \arguments{
-\item{model}{An \link{monty_model} object}
+\item{model}{A \link{monty_model} object}
 
 \item{parameters}{A vector or matrix of parameters}
 }
@@ -16,7 +16,7 @@ A log-density value, or vector of log-density values
 }
 \description{
 Compute log density for a model.  This is a wrapper around the
-\verb{$density} property within an \link{monty_model} object.
+\verb{$density} property within a \link{monty_model} object.
 }
 \seealso{
 \link{monty_model_gradient} for computing gradients and

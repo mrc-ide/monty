@@ -99,7 +99,7 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   `(-Inf, Inf)`.
 ##'
 ##' * `direct_sample`: A function to sample directly from the
-##'   parameter space, given an [monty_rng] object to sample from.
+##'   parameter space, given a [monty_rng] object to sample from.
 ##'   In the case where a model returns a posterior (e.g., in Bayesian
 ##'   inference), this is assumed to be sampling from the prior.
 ##'   We'll use this for generating initial conditions for MCMC where
@@ -198,11 +198,11 @@ monty_model <- function(model, properties = NULL) {
 
 
 ##' Compute log density for a model.  This is a wrapper around the
-##' `$density` property within an [monty_model] object.
+##' `$density` property within a [monty_model] object.
 ##'
 ##' @title Compute log density
 ##'
-##' @param model An [monty_model] object
+##' @param model A [monty_model] object
 ##'
 ##' @param parameters A vector or matrix of parameters
 ##'
@@ -469,7 +469,7 @@ validate_model_parameter_groups <- function(model, properties, call) {
 require_monty_model <- function(model, arg = deparse(substitute(model)),
                                 call = parent.frame()) {
   if (!inherits(model, "monty_model")) {
-    cli::cli_abort("Expected '{arg}' to be an 'monty_model'",
+    cli::cli_abort("Expected '{arg}' to be a 'monty_model'",
                    arg = arg, call = call)
   }
 }

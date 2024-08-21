@@ -51,7 +51,7 @@
 ##'
 ##' @param b The second model
 ##'
-##' @param properties An [monty_model_properties] object, used to
+##' @param properties A [monty_model_properties] object, used to
 ##'   control (or enforce) properties of the combined model.
 ##'
 ##' @param name_a Name of the first model (defaulting to 'a'); you can
@@ -62,7 +62,7 @@
 ##'   use this to make error messages nicer to read, but it has no
 ##'   other practical effect.
 ##'
-##' @return An [monty_model] object
+##' @return A [monty_model] object
 ##'
 ##' @export
 monty_model_combine <- function(a, b, properties = NULL,

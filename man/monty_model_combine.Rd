@@ -11,7 +11,7 @@ monty_model_combine(a, b, properties = NULL, name_a = "a", name_b = "b")
 
 \item{b}{The second model}
 
-\item{properties}{An \link{monty_model_properties} object, used to
+\item{properties}{A \link{monty_model_properties} object, used to
 control (or enforce) properties of the combined model.}
 
 \item{name_a}{Name of the first model (defaulting to 'a'); you can
@@ -23,7 +23,7 @@ use this to make error messages nicer to read, but it has no
 other practical effect.}
 }
 \value{
-An \link{monty_model} object
+A \link{monty_model} object
 }
 \description{
 Combine two models by multiplication.  We'll need a better name

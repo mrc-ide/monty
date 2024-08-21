@@ -128,7 +128,7 @@ SEXP rng_pointer_init(int n_streams, cpp11::sexp r_seed, int long_jump) {
 ///
 /// @tparam rng_state_type The random number state type to use
 ///
-/// @param obj An `monty_rng_pointer` object, created in R with
+/// @param obj A `monty_rng_pointer` object, created in R with
 /// ``monty::monty_rng_pointer``
 ///
 /// @param n_streams The number of required streams. Set this to 0 to

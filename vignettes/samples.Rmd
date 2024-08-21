@@ -23,7 +23,7 @@ library(monty)
 
 # The structure of monty samples
 
-All samplers and runners produce samples with the same basic structure.  This structure is documented (here) so you are free to use this structure if you want to just dive in and manipulate things.  Please treat output as read-only; extract data all you want, but make a copy and don't change any value within the samples structure if you are going to pass it back into an `monty` function, as we assume that they have not been modified.
+All samplers and runners produce samples with the same basic structure.  This structure is documented (here) so you are free to use this structure if you want to just dive in and manipulate things.  Please treat output as read-only; extract data all you want, but make a copy and don't change any value within the samples structure if you are going to pass it back into a `monty` function, as we assume that they have not been modified.
 
 ```{r, include = FALSE}
 # This is the example from before samplers.Rmd; at some point we will

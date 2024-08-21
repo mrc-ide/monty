@@ -70,18 +70,18 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          restartable = FALSE) {
   require_monty_model(model)
   if (!inherits(sampler, "monty_sampler")) {
-    cli::cli_abort("Expected 'sampler' to be an 'monty_sampler'",
+    cli::cli_abort("Expected 'sampler' to be a 'monty_sampler'",
                    arg = "sampler")
   }
   if (is.null(runner)) {
     runner <- monty_runner_serial()
   }
   if (!is.null(observer) && !inherits(observer, "monty_observer")) {
-    cli::cli_abort("Expected 'observer' to be an 'monty_observer'",
+    cli::cli_abort("Expected 'observer' to be a 'monty_observer'",
                    arg = "observer")
   }
   if (!inherits(runner, "monty_runner")) {
-    cli::cli_abort("Expected 'runner' to be an 'monty_runner'",
+    cli::cli_abort("Expected 'runner' to be a 'monty_runner'",
                    arg = "runner")
   }
 
@@ -116,7 +116,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 ##'   this function).  You can use this argument to change the runner,
 ##'   which might be useful if transferring a pilot run from a
 ##'   high-resource environment to a lower-resource environment.  If
-##'   given, must be an `monty_runner` object such as
+##'   given, must be a `monty_runner` object such as
 ##'   [monty_runner_serial] or [monty_runner_parallel].  You can
 ##'   use this argument to change the configuration of a runner, as
 ##'   well as the type of runner (e.g., changing the number of
@@ -129,7 +129,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
                                   runner = NULL) {
   if (!inherits(samples, "monty_samples")) {
-    cli::cli_abort("Expected 'samples' to be an 'monty_samples' object")
+    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object")
   }
   if (is.null(samples$restart)) {
     cli::cli_abort(

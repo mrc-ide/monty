@@ -2,13 +2,13 @@ test_that("can validate sample inputs", {
   model <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   expect_error(monty_sample(NULL, NULL, 100),
-               "Expected 'model' to be an 'monty_model'")
+               "Expected 'model' to be a 'monty_model'")
   expect_error(monty_sample(model, NULL, 100),
-               "Expected 'sampler' to be an 'monty_sampler'")
+               "Expected 'sampler' to be a 'monty_sampler'")
   expect_error(monty_sample(model, sampler, 100, runner = TRUE),
-               "Expected 'runner' to be an 'monty_runner'")
+               "Expected 'runner' to be a 'monty_runner'")
   expect_error(monty_sample(model, sampler, 100, observer = TRUE),
-               "Expected 'observer' to be an 'monty_observer'")
+               "Expected 'observer' to be a 'monty_observer'")
   expect_error(monty_sample(model, sampler, 100, c(1, 2)),
                "Unexpected length for vector 'initial' (given 2, expected 1)",
                fixed = TRUE)
@@ -197,7 +197,7 @@ test_that("can't restart chains that don't have restart information", {
 test_that("continuing requires that we have a samples object", {
   model <- ex_simple_gamma1()
   expect_error(monty_sample_continue(model, 50),
-               "Expected 'samples' to be an 'monty_samples' object")
+               "Expected 'samples' to be a 'monty_samples' object")
 })
 
 

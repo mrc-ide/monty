@@ -7,7 +7,7 @@
 monty_model_gradient(model, parameters, named = FALSE)
 }
 \arguments{
-\item{model}{An \link{monty_model} object}
+\item{model}{A \link{monty_model} object}
 
 \item{parameters}{A vector or matrix of parameters}
 

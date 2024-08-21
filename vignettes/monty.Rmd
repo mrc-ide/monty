@@ -26,7 +26,7 @@ library(monty)
 
 Draw samples from a model using Markov Chain Monte Carlo methods.  To do this you will need:
 
-* A **model**: this is an `monty_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
+* A **model**: this is a `monty_model()` object and minimally knows about the names of its parameter vector (which is an unstructured real-valued vector) and can compute a log probability density.  It may also be able to compute a gradient of this log density, or sample directly from parameter space (e.g., if it represents a prior distribution).
 * A **sampler**: this is some method of drawing samples from the model's distribution in a sequence.  We define several different sampler types, with the simplest one being `monty_sampler_random_walk()`, which implements a simple Metropolis algorithm random walk.
 * A **runner**: this controls how the chains will be run (e.g., one after another or in parallel).
 
