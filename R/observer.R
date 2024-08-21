@@ -67,6 +67,15 @@ mcstate_observer <- function(observe,
 }
 
 
+##' @export
+print.mcstate_observer <- function(x, ...) {
+  cli::cli_h1("<mcstate_observer>")
+  cli::cli_alert_info("Use {.help mcstate_sample} to use this observer")
+  cli::cli_alert_info("See {.help mcstate_observer} for more information")
+  invisible(x)
+}
+
+
 observer_finalise_auto <- function(observations) {
   nms <- names(observations[[1]])
   ineligible <- is.null(nms) || anyDuplicated(nms) ||

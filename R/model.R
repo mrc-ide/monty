@@ -25,6 +25,17 @@
 ##'   we may also support this in `gradient`).  Use `NULL` (the
 ##'   default) to detect this from the model.
 ##'
+##' @param allow_multiple_parameters Logical, indicating if the
+##'   density calculation can support being passed a matrix of
+##'   parameters (with each column corresponding to a different
+##'   parameter set) and return a vector of densities.  If `FALSE`, we
+##'   will support some different approaches to sort this out for you
+##'   if this feature is needed.  This cannot be detected from the
+##'   model, and the default is `FALSE` because it's not always
+##'   straightforward to implement.  However, where it is possible it
+##'   may be much more efficient (via vectorisation or
+##'   parallelisation) to do this yourself.
+##'
 ##' @return A list of class `mcstate_model_properties` which should
 ##'   not be modified.
 ##'
@@ -32,11 +43,16 @@
 mcstate_model_properties <- function(has_gradient = NULL,
                                      has_direct_sample = NULL,
                                      is_stochastic = NULL,
-                                     has_parameter_groups = NULL) {
+                                     has_parameter_groups = NULL,
+                                     allow_multiple_parameters = FALSE) {
+  ## TODO: What name do we want for this property, really?
+  assert_scalar_logical(allow_multiple_parameters)
   ret <- list(has_gradient = has_gradient,
               has_direct_sample = has_direct_sample,
               is_stochastic = is_stochastic,
-              has_parameter_groups = has_parameter_groups)
+              has_parameter_groups = has_parameter_groups,
+              ## TODO: I am not convinced on this name
+              allow_multiple_parameters = allow_multiple_parameters)
   class(ret) <- "mcstate_model_properties"
   ret
 }
@@ -57,7 +73,10 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   the posterior probability density in Bayesian inference, but it
 ##'   could be anything really.  Models can return `-Inf` if things
 ##'   are impossible, and we'll try and cope gracefully with that
-##'   wherever possible.
+##'   wherever possible.  If the property `allow_multiple_parameters`
+##'   is `TRUE`, then this function must be able to handle the 
+##'   argument parameter being a matrix,  and return a vector 
+##'   of densities.
 ##'
 ##' * `parameters`: A character vector of parameter names.  This
 ##'   vector is the source of truth for the length of the parameter
@@ -70,9 +89,14 @@ mcstate_model_properties <- function(has_gradient = NULL,
 ##'   `Inf`) should be used where the parameter has infinite domain up
 ##'   or down.  Currently used to translate from a bounded to
 ##'   unbounded space for HMC, but we might also use this for
-##'   reflecting proposals in MCMC too.  If not present we assume that
-##'   the model is valid everywhere (i.e., that all parameters are
-##'   valid from `-Inf` to `Inf`.
+##'   reflecting proposals in MCMC too, as well as a fast way of
+##'   avoiding calculating densities where proposals fall out of
+##'   bounds.  If not present we assume that the model is valid
+##'   everywhere (i.e., that all parameters are valid from `-Inf` to
+##'   `Inf`.  If unnamed, you must provide a domain for all
+##'   parameters.  If named, then you can provide a subset, with
+##'   parameters that are not included assumed to have a domain of
+##'   `(-Inf, Inf)`.
 ##'
 ##' * `direct_sample`: A function to sample directly from the
 ##'   parameter space, given an [mcstate_rng] object to sample from.
@@ -173,6 +197,93 @@ mcstate_model <- function(model, properties = NULL) {
 }
 
 
+##' Compute log density for a model.  This is a wrapper around the
+##' `$density` property within an [mcstate_model] object.
+##'
+##' @title Compute log density
+##'
+##' @param model An [mcstate_model] object
+##'
+##' @param parameters A vector or matrix of parameters
+##'
+##' @return A log-density value, or vector of log-density values
+##'
+##' @seealso [mcstate_model_gradient] for computing gradients and
+##'   [mcstate_model_direct_sample] for sampling from a model.
+##'
+##' @export
+mcstate_model_density <- function(model, parameters) {
+  require_mcstate_model(model)
+  check_model_parameters(model, parameters)
+  model$density(parameters)
+}
+
+
+##' Compute the gradient of log density (which is returned by
+##' [mcstate_model_density]) with respect to parameters.  Not all models
+##' support this, and an error will be thrown if it is not possible.
+##'
+##' @title Compute gradient of log density
+##'
+##' @inheritParams mcstate_model_density
+##'
+##' @param named Logical, indicating if the output should be named
+##'   using the parameter names.
+##'
+##' @return A vector or matrix of gradients
+##'
+##' @seealso [mcstate_model_density] for log density, and
+##'   [mcstate_model_direct_sample] to sample from a model
+##'
+##' @export
+mcstate_model_gradient <- function(model, parameters, named = FALSE) {
+  require_mcstate_model(model)
+  require_gradient(
+    model,
+    "Can't compute gradient, as this model does not support it",
+    call = environment())
+  check_model_parameters(model, parameters)
+  assert_scalar_logical(named, call = environment())
+  ret <- model$gradient(parameters)
+  if (named) {
+    if (is.matrix(ret)) {
+      rownames(ret) <- model$parameters
+    } else {
+      names(ret) <- model$parameters
+    }
+  }
+  ret
+}
+
+
+##' Directly sample from a model.  Not all models support this, and an
+##' error will be thrown if it is not possible.
+##'
+##' @title Directly sample from a model
+##'
+##' @inheritParams mcstate_model_gradient
+##'
+##' @param rng Random number state, created by [mcstate_rng].  Use of
+##'   an RNG with more than one stream may or may not work as
+##'   expected; this is something we need to tidy up (mrc-5292)
+##'
+##' @return A vector or matrix of sampled parameters
+##'
+##' @export
+mcstate_model_direct_sample <- function(model, rng, named = FALSE) {
+  require_mcstate_model(model)
+  require_direct_sample(
+    model,
+    "Can't directly sample from this model")
+  assert_scalar_logical(named, call = environment())
+  ret <- model$direct_sample(rng)
+  if (named) {
+    names(ret) <- model$parameters
+  }
+  ret
+}
+
+
 validate_model_properties <- function(properties, call = NULL) {
   if (is.null(properties)) {
     return(mcstate_model_properties())
@@ -192,31 +303,58 @@ validate_model_parameters <- function(model, call = NULL) {
 
 
 validate_model_domain <- function(model, call = NULL) {
+  domain <- model$domain
   n_pars <- length(model$parameters)
-  if (is.null(model$domain)) {
+
+  if (is.null(domain)) {
     domain <- cbind(rep(-Inf, n_pars), rep(Inf, n_pars))
-  } else {
-    domain <- model$domain
-    if (!is.matrix(domain)) {
-      cli::cli_abort("Expected 'model$domain' to be a matrix if non-NULL")
-    }
-    if (nrow(domain) != n_pars) {
-      cli::cli_abort(paste(
-        "Expected 'model$domain' to have {n_pars} row{?s},",
-        "but it had {nrow(domain)}"))
-    }
-    if (ncol(domain) != 2) {
-      cli::cli_abort(paste(
-        "Expected 'model$domain' to have 2 columns,",
-        "but it had {ncol(domain)}"))
-    }
-    if (!is.null(rownames(domain))) {
-      if (!identical(rownames(domain), model$parameters)) {
-        cli::cli_abort("Unexpected rownames on domain")
-      }
-    }
+    rownames(domain) <- model$parameters
+    return(domain)
   }
-  rownames(domain) <- model$parameters
+
+  if (!is.matrix(domain)) {
+    cli::cli_abort("Expected 'model$domain' to be a matrix if non-NULL",
+                   call = call)
+  }
+  if (ncol(domain) != 2) {
+    cli::cli_abort(
+      c(paste("Expected 'model$domain' to have 2 columns,",
+              "but it had {ncol(domain)}"),
+        i = paste("Because your domain is unnamed, if given it must",
+                  "include all parameters in the same order as your model")),
+      call = call)
+  }
+
+  nms <- rownames(domain)
+  if (is.null(nms)) {
+    if (nrow(domain) != n_pars) {
+      cli::cli_abort(
+        paste("Expected 'model$domain' to have {n_pars} row{?s},",
+              "but it had {nrow(domain)}"),
+        call = call)
+    }
+    rownames(domain) <- model$parameters
+  } else {
+    ## We might treat parameters that begin with '[' specially and
+    ## allow these to replicate.  So if the user has a[1], a[2],
+    ## a[3] then a row with 'a' will apply across all of these that
+    ## are not explicitly given.
+    err <- setdiff(nms, model$parameters)
+    if (length(err) > 0) {
+      cli::cli_abort(
+        c("Unexpected parameters found in 'model$domain' rownames",
+          set_names(err, "x")),
+        call = call)
+    }
+    msg <- setdiff(model$parameters, nms)
+    if (length(msg) > 0) {
+      extra <- cbind(rep(-Inf, length(msg)), rep(Inf, length(msg)))
+      rownames(extra) <- msg
+      domain <- rbind(domain, extra)
+    }
+    domain <- domain[model$parameters, , drop = FALSE]
+  }
+
   domain
 }
 
@@ -328,36 +466,120 @@ validate_model_parameter_groups <- function(model, properties, call) {
 }
 
 
-require_direct_sample <- function(model, message, ...) {
+require_mcstate_model <- function(model, arg = deparse(substitute(model)),
+                                  call = parent.frame()) {
+  if (!inherits(model, "mcstate_model")) {
+    cli::cli_abort("Expected '{arg}' to be an 'mcstate_model'",
+                   arg = arg, call = call)
+  }
+}
+
+
+require_direct_sample <- function(model, message, ..., call = parent.frame()) {
   if (!model$properties$has_direct_sample) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide 'direct_sample()', so we",
                   "cannot directly sample from its parameter space")),
-      ...)
+      ..., call = call)
   }
 }
 
 
-require_deterministic <- function(model, message, ...) {
+require_deterministic <- function(model, message, ..., call = parent.frame()) {
   if (model$properties$is_stochastic) {
     cli::cli_abort(
       c(message,
         i = paste("This model is stochastic (its 'is_stochastic' property",
                   "is TRUE) so cannot be used in contexts that require",
                   "a deterministic density")),
-      ...)
+      ..., call = call)
   }
 }
 
 
-require_gradient <- function(model, message, ...) {
+require_gradient <- function(model, message, ..., call = parent.frame()) {
   if (!model$properties$has_gradient) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide a gradient (its 'has_gradient'",
                   "property is FALSE) so cannot be used in contexts that",
                   "require one")),
-      ...)
+      ..., call = call)
+  }
+}
+
+
+require_multiple_parameters <- function(model, message, ...) {
+  if (!model$properties$allow_multiple_parameters) {
+    cli::cli_abort(
+      c(message,
+        i = paste("This functionality requires that we can",
+                  "provide multiple parameters at once to your model",
+                  "and get back a vector of densities, but your model",
+                  "does not support this (or does not advertise that it",
+                  "does), with the property 'allow_multiple_parameters'",
+                  "set to FALSE")),
+        ...)
+  }
+}
+
+
+##' @export
+print.mcstate_model <- function(x, ...) {
+  cli::cli_h1("<mcstate_model>")
+  cli::cli_alert_info(
+    "Model has {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
+  ## TODO: once the interface around multiple parameters stabilises,
+  ## we should reflect information about allow_multiple_parameters and
+  ## has_parameter_groups back here.
+  str <- mcstate_model_properties_str(x$properties)
+  if (length(str) > 0) {
+    cli::cli_alert_info("This model:")
+    cli::cli_bullets(set_names(str, "*"))
+  }
+  cli::cli_alert_info("See {.help mcstate_model} for more information")
+  invisible(x)
+}
+
+
+mcstate_model_properties_str <- function(properties) {
+  c(if (properties$has_gradient) "can compute gradients",
+    if (properties$has_direct_sample) "can be directly sampled from",
+    if (properties$is_stochastic) "is stochastic")
+}
+
+
+check_model_parameters <- function(model, parameters, call = parent.frame()) {
+  n_pars <- length(model$parameters)
+  if (is.matrix(parameters)) {
+    require_multiple_parameters(
+      model,
+      "'parameters' cannot be a matrix",
+      arg = "parameters",
+      call = call)
+    if (nrow(parameters) != n_pars) {
+      cli::cli_abort(
+        paste("Expected 'parameters' to have {n_pars} row{?s}, but it had",
+              "{nrow(parameters)} rows"),
+        arg = "parameters", call = call)
+    }
+    nms <- rownames(parameters)
+  } else {
+    if (length(parameters) != n_pars) {
+      cli::cli_abort(
+        paste("Expected 'parameters' to have length {n_pars}, but it had",
+              "length {length(parameters)}"),
+        arg = "parameters")
+    }
+    nms <- names(parameters)
+  }
+
+  if (!is.null(nms) && !identical(nms, model$parameters)) {
+    where <- if (is.matrix(parameters)) "rownames" else "names"
+    cli::cli_abort(
+      c("'parameters' has {where} but these disagree with 'model$parameters'",
+        i = "If this is intentional, try again with 'unname(parameters)'"),
+      arg = "parameters", call = call)
   }
 }

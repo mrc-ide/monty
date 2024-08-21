@@ -25,7 +25,7 @@ test_that("match against set of candidates", {
   expect_equal(match_call(list(scale = 0, shape = 0), candidates),
                list(success = TRUE, index = 2, args = 2:1))
 
-  error <- c(x = "Failed to match given arguments: .",
+  error <- c(x = "Failed to match given arguments: <1>",
              i = "Call should match one of:",
              "*" = "a, b",
              "*" = "shape, scale")
@@ -59,9 +59,9 @@ test_that("can sample from exponential distribution", {
   r1 <- mcstate_rng$new(1)
   r2 <- mcstate_rng$new(1)
   expect_equal(distr_exponential_rate$sample(r1, 0.4),
-               r2$exponential(1, 0.4))
+               r2$exponential_rate(1, 0.4))
   expect_equal(distr_exponential_mean$sample(r1, 0.4),
-               r2$exponential(1, 1 / 0.4))
+               r2$exponential_mean(1, 0.4))
 })
 
 
@@ -98,8 +98,78 @@ test_that("can sample from uniform distribution", {
 test_that("can create a distribution object", {
   density <- function(x, a, b) NULL
   sample <- function(rng, a, b) NULL
-  d <- distribution("Foo", density, sample)
+  d <- distribution("Foo", density, c(1,2), cpp = NULL, expr = NULL,
+                    sample = sample)
   expect_equal(
     d,
-    list(name = "Foo", args = c("a", "b"), density = density, sample = sample))
+    list(name = "Foo",
+         variant = NULL,
+         args = c("a", "b"),
+         density = density,
+         domain = c(1, 2),
+         sample = sample,
+         expr = NULL,
+         cpp = NULL))
+})
+
+
+test_that("can parse a simple distribution call", {
+  expect_mapequal(
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))),
+    list(success = TRUE,
+         value = list(name = "Normal",
+                      variant = NULL,
+                      args = list(0, 1),
+                      density = dsl_distributions$Normal[[1]]$density,
+                      domain = c(-Inf, Inf),
+                      sample = dsl_distributions$Normal[[1]]$sample,
+                      expr = dsl_distributions$Normal[[1]]$expr,
+                      cpp = list(density = "normal", sample = "normal"))))
+
+  expect_equal(
+    mcstate_dsl_parse_distribution(quote(Normal(mean = 0, sd = 1))),
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+  expect_equal(
+    mcstate_dsl_parse_distribution(quote(Normal(sd = 1, mean = 0))),
+    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+})
+
+
+test_that("report back on failure to match distribution", {
+  res <- mcstate_dsl_parse_distribution(quote(Norm(0, 1)))
+  expect_false(res$success)
+  expect_length(res$error, 3)
+  expect_equal(res$error[[1]], "Unknown distribution 'Norm'")
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
+  expect_match(res$error[[3]], "Did you mean: 'Normal'?",
+               fixed = TRUE)
+})
+
+
+test_that("report back on failure to match distribution without suggestion", {
+  res <- mcstate_dsl_parse_distribution(quote(Banana(0, 1)))
+  expect_false(res$success)
+  expect_length(res$error, 2)
+  expect_equal(res$error[[1]], "Unknown distribution 'Banana'")
+  expect_match(res$error[[2]],
+               "See.*mcstate2::mcstate_dsl_distributions.*for details")
+})
+
+
+test_that("report back on failure to match arguments", {
+  res <- mcstate_dsl_parse_distribution(quote(Normal(0, 1, 2)))
+  expect_false(res$success)
+  expect_length(res$error, 4)
+  expect_match(res$error[[1]], "Invalid call to 'Normal()'",
+               fixed = TRUE)
+  expect_match(res$error[[2]], "Failed to match given arguments: <1>, <2>, <3>",
+               fixed = TRUE)
+  expect_match(res$error[[3]], "Call should match:")
+  expect_match(res$error[[4]], "mean, sd")
+})
+
+
+test_that("can get information about distributions", {
+  expect_identical(mcstate_dsl_distributions(), dsl_distribution_summary)
 })

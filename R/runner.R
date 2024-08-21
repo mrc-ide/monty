@@ -19,7 +19,7 @@
 mcstate_runner_serial <- function(progress = NULL) {
   run <- function(pars, model, sampler, observer, n_steps, rng) {
     n_chains <- length(rng)
-    pb <- progress_bar(n_chains, n_steps, progress, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, TRUE, environment())
     lapply(
       seq_along(rng),
       function(i) {
@@ -30,7 +30,7 @@ mcstate_runner_serial <- function(progress = NULL) {
 
   continue <- function(state, model, sampler, observer, n_steps) {
     n_chains <- length(state)
-    pb <- progress_bar(n_chains, n_steps, progress, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, TRUE, environment())
     lapply(
       seq_along(state),
       function(i) {
@@ -39,8 +39,10 @@ mcstate_runner_serial <- function(progress = NULL) {
       })
   }
 
-  structure(list(run = run, continue = continue),
-            class = "mcstate_runner")
+  mcstate_runner("Serial",
+                 "mcstate_runner_serial",
+                 run,
+                 continue)
 }
 
 
@@ -107,6 +109,9 @@ mcstate_runner_parallel <- function(n_workers) {
                  observer = observer,
                  n_steps = n_steps)
 
+    ## To debug issues in the parallel sampler, it's most efficient to
+    ## replace this call with `Map` and drop the `cl` argument, then
+    ## you get nice stack traces.
     parallel::clusterMap(
       cl,
       mcstate_run_chain_parallel,
@@ -131,8 +136,10 @@ mcstate_runner_parallel <- function(n_workers) {
       MoreArgs = args)
   }
 
-  structure(list(run = run, continue = continue),
-            class = "mcstate_runner")
+  mcstate_runner("Parallel",
+                 "mcstate_runner_parallel",
+                 run,
+                 continue)
 }
 
 
@@ -187,7 +194,6 @@ mcstate_continue_chain <- function(state, model, sampler, observer, n_steps,
 }
 
 
-
 mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
                                progress, rng, r_rng_state) {
   initial <- chain_state$pars
@@ -236,4 +242,23 @@ mcstate_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
        details = details,
        observations = history_observation,
        internal = internal)
+}
+
+
+mcstate_runner <- function(name, help, run, continue) {
+  ret <- list(name = name,
+              help = help,
+              run = run,
+              continue = continue)
+  class(ret) <- "mcstate_runner"
+  ret
+}
+
+
+##' @export
+print.mcstate_runner <- function(x, ...) {
+  cli::cli_h1("<mcstate_runner: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help mcstate_sample} to use this runner")
+  cli::cli_alert_info("See {.help {x$help}} for more information")
+  invisible(x)
 }

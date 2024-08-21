@@ -19,7 +19,8 @@ test_that("can create a more interesting model", {
                mcstate_model_properties(has_gradient = TRUE,
                                         has_direct_sample = TRUE,
                                         is_stochastic = FALSE,
-                                        has_parameter_groups = FALSE))
+                                        has_parameter_groups = FALSE,
+                                        allow_multiple_parameters = TRUE))
   expect_equal(m$domain, rbind(gamma = c(0, Inf)))
   expect_equal(m$parameters, "gamma")
   expect_equal(m$density(1), dgamma(1, 1, 1, log = TRUE))
@@ -86,10 +87,26 @@ test_that("validate domain", {
     mcstate_model(list(density = identity,
                        parameters = "a",
                        domain = rbind(A = c(0, 1)))),
-    "Unexpected rownames on domain",
+    "Unexpected parameters found in 'model$domain' rownames",
     fixed = TRUE)
 })
 
+
+test_that("fill in default domain entries where only some provided", {
+  base <- list(density = sum, parameters = letters[1:3])
+  default <- matrix(c(-Inf, Inf), 3, 2, byrow = TRUE,
+                    dimnames = list(letters[1:3], NULL))
+  expect_equal(
+    mcstate_model(modifyList(base, list(domain = NULL)))$domain,
+    default)
+  expect_equal(
+    mcstate_model(modifyList(base, list(domain = rbind(b = c(0, 1)))))$domain,
+    rbind(a = c(-Inf, Inf), b = c(0, 1), c = c(-Inf, Inf)))
+  change <- rbind(b = c(0, 1), a = c(-1, 2))
+  expect_equal(
+    mcstate_model(modifyList(base, list(domain = change)))$domain,
+    rbind(a = c(-1, 2), b = c(0, 1), c = c(-Inf, Inf)))
+})
 
 test_that("can use properties to guarantee that a property exists", {
   m <- list(density = function(x) dnorm(x, log = TRUE), parameters = "a")
@@ -189,4 +206,19 @@ test_that("If parameter groups are present, then density requires arg", {
       mcstate_model_properties(has_parameter_groups = TRUE)),
     "Expected 'model$density' to have an argument 'by_group'",
     fixed = TRUE)
+})
+
+
+test_that("can print information about simple models", {
+  m <- ex_simple_gamma1()
+  res <- evaluate_promise(withVisible(print(m)))
+  expect_mapequal(res$result, list(value = m, visible = FALSE))
+  expect_match(res$messages, "<mcstate_model>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "Model has 1 parameter: 'gamma'",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "can compute gradients",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "can be directly sampled from",
+               fixed = TRUE, all = FALSE)
 })

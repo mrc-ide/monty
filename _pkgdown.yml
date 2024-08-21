@@ -1,4 +1,4 @@
-url: https://mrc-ide.github.io/orderly2
+url: https://mrc-ide.github.io/mcstate2
 
 template:
   bootstrap: 5
@@ -10,9 +10,22 @@ reference:
     - mcstate_model_combine
     - mcstate_model_properties
 
-  - subtitle: Domain specific language
+  - subtitle: Functions for working with models
+    contents:
+    - mcstate_model_density
+    - mcstate_model_gradient
+    - mcstate_model_direct_sample
+
+  - title: Domain specific language
     contents:
       - mcstate_dsl
+      - mcstate_dsl_error_explain
+      - mcstate_differentiation
+
+  - subtitle: Advanced
+    contents:
+      - mcstate_dsl_distributions
+      - mcstate_dsl_parse_distribution
 
   - title: Draw samples from a model
     contents:
@@ -29,12 +42,16 @@ reference:
 
   - subtitle: Chain runners
     contents:
-    - mcstate_runner_parallel
     - mcstate_runner_serial
+    - mcstate_runner_parallel
+    - mcstate_runner_simultaneous
 
   - subtitle: Tools
     contents:
     - mcstate_observer
+    - mcstate_packer
+    - mcstate_domain_expand
+    - with_trace_random
 
   - title: Random numbers
     desc: >-

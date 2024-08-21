@@ -33,6 +33,9 @@
 ##'   can be avoided by setting `has_direct_gradient = FALSE` in
 ##'   `properties`.
 ##'
+##' * `is_stochastic`: a model is stochastic if *either* component is
+##'   stochastic.
+##'
 ##' The properties of the model will be combined as above, reflecting
 ##' the properties of the joint model.
 ##'
@@ -65,18 +68,21 @@
 mcstate_model_combine <- function(a, b, properties = NULL,
                                   name_a = "a", name_b = "b") {
   call <- environment()
-  assert_is(a, "mcstate_model", name = name_a, call = call)
-  assert_is(b, "mcstate_model", name = name_b, call = call)
+  require_mcstate_model(a)
+  require_mcstate_model(b)
   properties <- validate_model_properties(properties, call)
 
   parameters <- union(a$parameters, b$parameters)
   domain <- model_combine_domain(a, b, parameters)
   density <- model_combine_density(a, b, parameters)
 
+
   gradient <- model_combine_gradient(
     a, b, parameters, properties, call)
   direct_sample <- model_combine_direct_sample(
     a, b, parameters, properties, name_a, name_b, call)
+  stochastic <- model_combine_stochastic(
+    a, b, properties)
 
   mcstate_model(
     list(model = list(a, b),
@@ -84,6 +90,8 @@ mcstate_model_combine <- function(a, b, properties = NULL,
          domain = domain,
          density = density,
          gradient = gradient,
+         get_rng_state = stochastic$get_rng_state,
+         set_rng_state = stochastic$set_rng_state,
          direct_sample = direct_sample),
     properties)
 }
@@ -125,6 +133,60 @@ model_combine_density <- function(a, b, parameters) {
   function(x, ...) {
     a$density(x[i_a], ...) + b$density(x[i_b], ...)
   }
+}
+
+
+model_combine_stochastic <- function(a, b, properties, call = NULL) {
+  a_stochastic <- a$properties$is_stochastic
+  b_stochastic <- b$properties$is_stochastic
+
+  if (!a_stochastic && !b_stochastic) {
+    if (isTRUE(properties$is_stochastic)) {
+      cli::cli_abort(
+        c("Can't create stochastic support functions for these models",
+          i = paste("Neither of your models as stochastic, but you have",
+                    "requested that we create a stochastic model by",
+                    "providing the property 'is_stochastic = TRUE'")),
+        call = call)
+    } else {
+      return(NULL)
+    }
+  }
+
+  if (a_stochastic && b_stochastic) {
+    ## This branch is hard because we need to set the state into
+    ## both models, but that is going to require advancing the state
+    ## or using it directly (which we don't really want people to
+    ## do).  To combine stochastic models, the user will have to do
+    ## more work themselves, or we can work out what that looks like
+    ## in practice and provide a hook to expand the state as
+    ## required.
+    cli::cli_abort(
+      c("Can't combine two stochastic models",
+        i = paste("We can't create stochastic support functions for a",
+                  "model that combines two stochastic models, as we",
+                  "don't correctly spread the random number state across",
+                  "the models.  We would need to know a bit more about",
+                  "how the random numbers are used in the models.",
+                  "Please let us know this is something you",
+                  "would like to do and we'll see what can be done")),
+      call = call)
+  }
+
+  if (isFALSE(properties$is_stochastic)) {
+    cli::cli_abort(
+      c("Refusing to create non-stochastic model from stochastic components",
+        i = paste("One of your models is stochastic, but you have passed",
+                  "the property 'is_stochastic = FALSE'; I can't build a",
+                  "model out of this. Because your component models are",
+                  "stochastic, the combination must be stochastic and you",
+                  "cannot just assert that away")),
+      call = call)
+  }
+
+  m <- if (a_stochastic) a else b
+  list(get_rng_state = m$rng_state$get,
+       set_rng_state = m$rng_state$set)
 }
 
 

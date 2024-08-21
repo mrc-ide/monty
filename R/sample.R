@@ -43,12 +43,14 @@
 ##' @return A list of parameters and densities; we'll write tools for
 ##'   dealing with this later.  Elements include:
 ##'
-##' * `pars`: A matrix with as many columns as you have parameters, and
-##'   as many rows as the total number of samples taken across all
-##'   chains (`n_steps * n_chains`)
+##' * `pars`: An array with three dimensions representing (in turn)
+##'   parameter, sample and chain, so that `pars[i, j, k]` is the
+##'   `i`th parameter from the `j`th sample from the `k`th chain.  The
+##'   rows will be named with the names of the parameters, from your
+##'   model.
 ##'
-##' * `density`: A vector of model log densities, one per step (length
-##'   `n_steps * n_chains`)
+##' * `density`: A matrix of model log densities, with `n_steps` rows
+##'   and `n_chains` columns.
 ##'
 ##' * `initial`: A record of the initial conditions, a matrix with as
 ##'   many rows as you have parameters and `n_chains` columns (this is
@@ -59,17 +61,14 @@
 ##'   be a list of length `n_chains` (or `NULL`) and the details
 ##'   depend on the sampler.  This one is subject to change.
 ##'
-##' * `chain`: An integer vector indicating the chain that the samples
-##'   came from (1, 2, ..., `n_chains`)
+##' * `observations`: Additional details reported by the model.  This
+##'   one is also subject to change.
 ##'
 ##' @export
 mcstate_sample <- function(model, sampler, n_steps, initial = NULL,
                            n_chains = 1L, runner = NULL, observer = NULL,
                            restartable = FALSE) {
-  if (!inherits(model, "mcstate_model")) {
-    cli::cli_abort("Expected 'model' to be an 'mcstate_model'",
-                   arg = "model")
-  }
+  require_mcstate_model(model)
   if (!inherits(sampler, "mcstate_sampler")) {
     cli::cli_abort("Expected 'sampler' to be an 'mcstate_sampler'",
                    arg = "sampler")
@@ -161,9 +160,10 @@ mcstate_sample_continue <- function(samples, n_steps, restartable = FALSE,
 }
 
 
-mcstate_sampler <- function(name, initialise, step, finalise,
+mcstate_sampler <- function(name, help, initialise, step, finalise,
                             get_internal_state, set_internal_state) {
   ret <- list(name = name,
+              help = help,
               initialise = initialise,
               step = step,
               finalise = finalise,
@@ -171,6 +171,15 @@ mcstate_sampler <- function(name, initialise, step, finalise,
               set_internal_state = set_internal_state)
   class(ret) <- "mcstate_sampler"
   ret
+}
+
+
+##' @export
+print.mcstate_sampler <- function(x, ...) {
+  cli::cli_h1("<mcstate_sampler: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help mcstate_sample} to use this sampler")
+  cli::cli_alert_info("See {.help {x$help}} for more information")
+  invisible(x)
 }
 
 
@@ -263,32 +272,45 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 
 
 combine_chains <- function(res, observer = NULL) {
-  pars <- array_bind(arrays = lapply(res, "[[", "pars"), after = 2)
-  density <- array_bind(arrays = lapply(res, "[[", "density"), after = 1)
-  details <- lapply(res, "[[", "details")
-  details <- if (all(vlapply(details, is.null))) NULL else details
+  if (is.null(names(res))) {
+    pars <- array_bind(arrays = lapply(res, "[[", "pars"), after = 2)
+    density <- array_bind(arrays = lapply(res, "[[", "density"), after = 1)
+    details <- lapply(res, "[[", "details")
+    details <- if (all(vlapply(details, is.null))) NULL else details
 
-  n_pars <- nrow(pars)
-  initial <- vapply(res, "[[", numeric(n_pars), "initial")
-  if (n_pars == 1) {
-    initial <- rbind(initial, deparse.level = 0)
+    n_pars <- nrow(pars)
+    initial <- vapply(res, "[[", numeric(n_pars), "initial")
+    if (n_pars == 1) {
+      initial <- rbind(initial, deparse.level = 0)
+    }
+
+    if (is.null(observer)) {
+      observations <- NULL
+    } else {
+      observations <- observer$combine(lapply(res, "[[", "observations"))
+    }
+    used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
+  } else {
+    stopifnot(is.null(observer)) # prevented earlier
+    pars <- res$pars
+    density <- res$density
+    details <- res$details
+    observations <- res$observations
+    used_r_rng <- res$internal$used_r_rng
+    initial <- res$initial
   }
+
   rownames(initial) <- rownames(pars)
 
-  if (is.null(observer)) {
-    observations <- NULL
-  } else {
-    observations <- observer$combine(lapply(res, "[[", "observations"))
-  }
-
-  used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
   if (any(used_r_rng)) {
     cli::cli_warn(c(
       "Detected use of R's random number generators",
       i = paste("Your model has used R's random number generators (e.g.,",
                 "via rnorm, runif, sample, etc).  This means that your",
                 "results will not be reproducible as you change the sample",
-                "runner")))
+                "runner"),
+      i = paste("If you are not using a parallel runner, you can debug",
+                "this with 'with_trace_random()'")))
   }
 
   samples <- list(pars = pars,
@@ -324,7 +346,23 @@ initial_rng <- function(n_chains, seed = NULL) {
 
 
 restart_data <- function(res, model, sampler, observer, runner) {
-  list(state = lapply(res, function(x) x$internal$state),
+  if (is.null(names(res))) {
+    state <- lapply(res, function(x) x$internal$state)
+  } else {
+    ## Prevented elsewhere, requires the filter to be rewritten a bit.
+    stopifnot(is.null(res$internal$state$model_rng))
+    n_chains <- length(res$internal$state$chain$density)
+    state <- lapply(seq_len(n_chains), function(i) {
+      list(chain = list(
+             pars = res$internal$state$chain$pars[, i],
+             density = res$internal$state$chain$density[i],
+             observation = NULL),
+           rng = res$internal$state$rng[[i]],
+           sampler = res$internal$state$sampler[[i]],
+           model_rng = NULL)
+    })
+  }
+  list(state = state,
        model = model,
        sampler = sampler,
        observer = observer,

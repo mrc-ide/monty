@@ -1,6 +1,6 @@
 Package: mcstate2
 Title: Next Generation mcstate
-Version: 0.1.0
+Version: 0.1.7
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"),
              person("Imperial College of Science, Technology and Medicine",
@@ -12,7 +12,7 @@ Description: Experimental sources for the next generation of mcstate,
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 URL: https://mrc-ide.github.io/mcstate2, https://github.com/mrc-ide/mcstate2
 BugReports: https://github.com/mrc-ide/mcstate2/issues
 Imports:
@@ -24,12 +24,15 @@ LinkingTo:
     cpp11
 Suggests:
     cpp11,
+    coda,
     decor,
     knitr,
     dust,
+    mockery,
     mvtnorm,
     numDeriv,
     pkgload,
+    posterior,
     rmarkdown,
     testthat (>= 3.0.0),
     withr

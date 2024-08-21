@@ -4,14 +4,18 @@ ex_simple_gamma1 <- function(shape = 1, rate = 1) {
   e$rate <- rate
   with(
     e,
-    mcstate_model(list(
-      parameters = "gamma",
-      direct_sample = function(rng) {
-        rng$gamma(1, shape = shape, scale = 1 / rate)
-      },
-      density = function(x) dgamma(x, shape = shape, rate = rate, log = TRUE),
-      gradient = function(x) (shape - 1) / x - rate,
-      domain = rbind(c(0, Inf)))))
+    mcstate_model(
+      list(
+        parameters = "gamma",
+        direct_sample = function(rng) {
+          rng$gamma_scale(1, shape = shape, scale = 1 / rate)
+        },
+        density = function(x) {
+          drop(dgamma(x, shape = shape, rate = rate, log = TRUE))
+        },
+        gradient = function(x) drop((shape - 1) / x - rate),
+        domain = rbind(c(0, Inf))),
+      mcstate_model_properties(allow_multiple_parameters = TRUE)))
 }
 
 
@@ -130,8 +134,8 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
   }
 
   direct_sample <- function(rng) {
-    c(rng$gamma(1, prior_beta_shape, 1 / prior_beta_rate),
-      rng$gamma(1, prior_gamma_shape, 1 / prior_gamma_rate))
+    c(rng$gamma_scale(1, prior_beta_shape, 1 / prior_beta_rate),
+      rng$gamma_scale(1, prior_gamma_shape, 1 / prior_gamma_rate))
   }
 
   set_rng_state <- function(rng_state) {
@@ -173,20 +177,38 @@ ex_simple_gaussian <- function(vcv) {
 
 
 ex_banana <- function(sd = 0.5) {
-  mcstate_model(list(
-    parameters = c("theta1", "theta2"),
-    direct_sample = function(rng) {
-      theta <- rng$random_normal(1)
-      cbind(rng$normal(1, theta^2, sd), theta)
-    },
-    density = function(x) {
-      dnorm(x[2], log = TRUE) + dnorm((x[1] - x[2]^2) / sd, log = TRUE)
-    },
-    gradient = function(x){
-      c((x[2]^2 - x[1])/sd^2,
-        -x[2] + 2 * x[2] * (x[1] - x[2]^2) / sd^2)
-    },
-    domain = cbind(rep(-Inf, 2), rep(Inf, 2))))
+  mcstate_model(
+    list(parameters = c("a", "b"),
+         direct_sample = function(rng) {
+           b <- rng$random_normal(1)
+           a <- rng$normal(1, b^2, sd)
+           c(a, b)
+         },
+         density = function(x) {
+           if (length(dim2(x)) == 1) {
+             a <- x[1]
+             b <- x[2]
+           } else {
+             a <- x[1, ]
+             b <- x[2, ]
+           }
+           dnorm(b, log = TRUE) + dnorm((a - b^2) / sd, log = TRUE)
+         },
+         gradient = function(x) {
+           if (length(dim2(x)) == 1) {
+             a <- x[1]
+             b <- x[2]
+             c((b^2 - a) / sd^2,
+               -b + 2 * b * (a - b^2) / sd^2)
+           } else {
+             a <- x[1, ]
+             b <- x[2, ]
+             rbind((b^2 - a) / sd^2,
+                   -b + 2 * b * (a - b^2) / sd^2)
+           }
+         },
+         domain = cbind(rep(-Inf, 2), rep(Inf, 2))),
+    mcstate_model_properties(allow_multiple_parameters = TRUE))
 }
 
 
@@ -199,4 +221,81 @@ random_array <- function(dim, named = FALSE) {
     dn <- NULL
   }
   array(runif(prod(dim)), dim, dimnames = dn)
+}
+
+
+ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
+                                   deterministic = FALSE,
+                                   save_trajectories = FALSE) {
+  testthat::skip_if_not_installed("dust")
+  sir <- dust::dust_example("sir")
+
+  np <- 10
+  end <- 150 * 4
+  times <- seq(0, end, by = 4)
+  ans <- sir$new(list(), 0, np, seed = 1L)$simulate(times)
+  dat <- data.frame(time = times[-1], incidence = ans[5, 1, -1])
+
+  ## TODO: an upshot here is that our dust models are always going to
+  ## need to be initialisable; we might need to sample from the
+  ## statistical parameters, or set things up to allow two-phases of
+  ## initialsation (which is I think where we are heading, so that's
+  ## fine).
+  model <- sir$new(list(), 0, n_particles, seed = 1L, n_threads = n_threads,
+                   deterministic = deterministic)
+  model$set_data(dust::dust_data(dat))
+  model$set_index(c(2, 4))
+
+  trajectories <- NULL
+
+  ## In the new dust wrapper we'll need to make this nicer; I think
+  ## that this is pretty painful atm because we wrap via the particle
+  ## filter method in mcstate1.  This version replicates most of what
+  ## we need though, which is some subset of the model
+  details <- function(idx_particle) {
+    if (save_trajectories) {
+      traj <- trajectories[, idx_particle, , drop = FALSE]
+      dim(traj) <- dim(traj)[-2]
+    } else {
+      traj <- NULL
+    }
+    list(trajectories = traj, state = model$state()[, idx_particle])
+  }
+
+  density <- function(x) {
+    beta <- x[[1]]
+    gamma <- x[[2]]
+    model$update_state(
+      pars = list(beta = x[[1]], gamma = x[[2]]),
+      time = 0,
+      set_initial_state = TRUE)
+    res <- model$filter(save_trajectories = save_trajectories)
+    if (save_trajectories) {
+      trajectories <<- res$trajectories
+    }
+    res$log_likelihood
+  }
+
+  set_rng_state <- function(rng_state) {
+    n_streams <- n_particles + 1
+    if (length(rng_state) != 32 * n_streams) {
+      ## Expand the state by short jumps; we'll make this nicer once
+      ## we refactor the RNG interface and dust.
+      rng_state <- mcstate_rng$new(rng_state, n_streams)$state()
+    }
+    model$set_rng_state(rng_state)
+  }
+
+  get_rng_state <- function() {
+    model$rng_state()
+  }
+
+  mcstate_model(
+    list(model = model,
+         details = details,
+         density = density,
+         parameters = c("beta", "gamma"),
+         set_rng_state = set_rng_state,
+         get_rng_state = get_rng_state),
+    mcstate_model_properties(is_stochastic = !deterministic))
 }

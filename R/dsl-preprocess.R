@@ -6,16 +6,17 @@
 ## able to point at individual errors _within_ the tree (so specific
 ## arguments etc) but that's quite hard so for now we will just hold a
 ## deparsed expression as an attribute of each expression.
-dsl_preprocess <- function(x, type = NULL) {
+dsl_preprocess <- function(x, type = NULL, call = NULL) {
   if (rlang::is_call(x, "quote")) {
     given <- rlang::expr_deparse(x)
     alt <- rlang::expr_deparse(x[[2]])
     cli::cli_abort(
       c("You have an extra layer of quote() around 'x'",
-        i = "You passed '{given}' but probably meant to pass '{alt}'"))
+        i = "You passed '{given}' but probably meant to pass '{alt}'"),
+      call = call)
   }
 
-  type <- preprocess_detect(x, type)
+  type <- preprocess_detect(x, type, call)
   if (type == "expression") {
     if (inherits(x, "{")) {
       exprs <- as.list(x[-1L])
@@ -81,7 +82,7 @@ preprocess_detect <- function(x, type, call = NULL) {
                      call = call)
     }
   } else {
-    cli::cli_abort("Invalid input for 'x'")
+    cli::cli_abort("Invalid input for 'x'", call = call)
   }
   as
 }

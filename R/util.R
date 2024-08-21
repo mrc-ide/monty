@@ -3,11 +3,35 @@
 }
 
 
-check_vcv <- function(vcv, name = deparse(substitute(vcv)), call = NULL) {
-  if (!is.matrix(vcv)) {
-    cli::cli_abort("Expected '{name}' to be a matrix",
-                   arg = name, call = call)
+check_vcv <- function(vcv, allow_3d = FALSE, name = deparse(substitute(vcv)),
+                      call = NULL) {
+  if (allow_3d && length(dim(vcv)) == 3) {
+    check_vcv_array(vcv, name, call = environment())
+  } else if (is.matrix(vcv)) {
+    check_vcv_matrix(vcv, name, call = environment())
+  } else {
+    what <- if (allow_3d) "matrix or 3d array" else "matrix"
+    cli::cli_abort("Expected a {what} for '{name}'", call = call)
   }
+}
+
+
+check_vcv_array <- function(vcv, name, call) {
+  len <- dim(vcv)[[3]]
+  n <- nrow(vcv)
+  if (len == 0) {
+    cli::cli_abort(
+      "At least one vcv required within a vcv array",
+      call = call)
+  }
+  for (i in seq_len(len)) {
+    m <- array(vcv[, , i, drop = FALSE], dim(vcv)[1:2])
+    check_vcv_matrix(m, name = sprintf("%s[, , %d]", name, i), call = call)
+  }
+}
+
+
+check_vcv_matrix <- function(vcv, name, call) {
   if (!isSymmetric(vcv)) {
     cli::cli_abort("Expected '{name}' to be symmetric",
                    arg = name, call = call)
@@ -77,6 +101,14 @@ dim2 <- function(x) {
 }
 
 
+"dim2<-" <- function(x, value) {
+  if (length(value) != 1) {
+    dim(x) <- value
+  }
+  x
+}
+
+
 dimnames2 <- function(x) {
   if (!is.null(dim(x))) {
     dimnames(x)
@@ -121,4 +153,33 @@ near_match <- function(x, possibilities, threshold = 2, max_matches = 5) {
                    possibilities)
     utils::head(names(sort(d[d <= threshold])), max_matches)
   }
+}
+
+
+duplicate_values <- function(x) {
+  if (!anyDuplicated(x)) {
+    return(x[integer(0)])
+  }
+  unique(x[duplicated(x)])
+}
+
+
+collapseq <- function(x) {
+  paste(squote(x), collapse = ", ")
+}
+
+
+## This is definitely possible with rlang, but I am not sure how.
+substitute_ <- function(expr, env) {
+  eval(substitute(substitute(y, env), list(y = expr)))
+}
+
+
+suggested_package_status <- function(pkg) {
+  status <- ifelse(pkg %in% loadedNamespaces(), "loaded", "missing")
+  i <- status == "missing"
+  if (any(i)) {
+    status[i] <- ifelse(pkg[i] %in% .packages(TRUE), "installed", "missing")
+  }
+  set_names(status, pkg)
 }
