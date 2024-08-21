@@ -113,7 +113,7 @@ test_that("handle failure to create gradient function", {
   w <- expect_warning(
     m3 <- mcstate_dsl(code, gradient = NULL),
     "Not creating a gradient function for this model")
-  expect_s3_class(w$parent, "mcstate2_parse_error")
+  expect_s3_class(w$parent, "monty_parse_error")
   expect_s3_class(w$parent$parent, "mcstate_differentiation_failure")
   expect_false(m3$properties$has_gradient)
   expect_null(m3$gradient)

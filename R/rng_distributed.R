@@ -7,7 +7,7 @@
 ##'
 ##' @title Create a set of distributed seeds
 ##'
-##' @param seed Initial seed to use. As for [mcstate2::mcstate_rng], this can
+##' @param seed Initial seed to use. As for [monty::mcstate_rng], this can
 ##'   be `NULL` (create a seed using R's generators), an integer or a
 ##'   raw vector of appropriate length.
 ##'
@@ -19,14 +19,14 @@
 ##' @param algorithm The name of an algorithm to use.
 ##'
 ##' @return A list of either raw vectors (for
-##'   `mcstate_rng_distributed_state`) or of [mcstate2::mcstate_rng_pointer]
+##'   `mcstate_rng_distributed_state`) or of [monty::mcstate_rng_pointer]
 ##'   objects (for `mcstate_rng_distributed_pointer`)
 ##'
 ##' @export
 ##' @rdname mcstate_rng_distributed
 ##' @examples
-##' mcstate2::mcstate_rng_distributed_state(n_nodes = 2)
-##' mcstate2::mcstate_rng_distributed_pointer(n_nodes = 2)
+##' monty::mcstate_rng_distributed_state(n_nodes = 2)
+##' monty::mcstate_rng_distributed_pointer(n_nodes = 2)
 mcstate_rng_distributed_state <- function(seed = NULL,
                                           n_streams = 1L,
                                           n_nodes = 1L,

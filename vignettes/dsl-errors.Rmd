@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette outlines errors that might be generated when parsing mcstate2 DSL code, with more explanation about the error and how they can be avoided.  Don't read this top to bottom as it's quite boring!  However, if we get errors that benefit from more explanation about why they've been thrown then we'll expand on the contents here and arrange for these to be linked from the thrown error directly.
+This vignette outlines errors that might be generated when parsing monty DSL code, with more explanation about the error and how they can be avoided.  Don't read this top to bottom as it's quite boring!  However, if we get errors that benefit from more explanation about why they've been thrown then we'll expand on the contents here and arrange for these to be linked from the thrown error directly.
 
 The error numbers are arbitrary after the first digit.  The first digit will correspond to different phases of the parsing:
 
@@ -46,7 +46,7 @@ f(x) <- g(y)
 
 # `E103`
 
-Your distribution call failed to parse.  This can fail for many reasons, and the details of the failure come from `mcstate2::mcstate_dsl_parse_distribution`
+Your distribution call failed to parse.  This can fail for many reasons, and the details of the failure come from `monty::mcstate_dsl_parse_distribution`
 
 Example reasons for failure include the rhs being:
 
@@ -124,4 +124,4 @@ Variables are used out of order.  If you are using odin this is a big departure 
 
 # `E206`
 
-Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the dsl can currently be differentiated by mcstate2; if you think that yours should be, please let us know.
+Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the dsl can currently be differentiated by monty; if you think that yours should be, please let us know.

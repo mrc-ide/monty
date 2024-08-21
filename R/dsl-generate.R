@@ -1,5 +1,5 @@
 dsl_generate <- function(dat) {
-  env <- new.env(parent = asNamespace("mcstate2"))
+  env <- new.env(parent = asNamespace("monty"))
   env$packer <- mcstate_packer(dat$parameters)
 
   density <- dsl_generate_density(dat, env)
@@ -61,7 +61,7 @@ dsl_generate_density_expr <- function(expr, env, density) {
          stochastic = dsl_generate_density_stochastic(expr, env, density),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
-           "this is an mcstate2 bug")))
+           "this is an monty bug")))
 }
 
 
@@ -71,7 +71,7 @@ dsl_generate_sample_expr <- function(expr, env, result) {
          stochastic = dsl_generate_sample_stochastic(expr, env),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
-           "this is an mcstate2 bug")))
+           "this is an monty bug")))
 }
 
 

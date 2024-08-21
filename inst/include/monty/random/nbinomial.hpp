@@ -39,4 +39,3 @@ real_type nbinomial(rng_state_type& rng_state, real_type size, real_type prob) {
 
 }
 }
-

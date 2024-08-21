@@ -1,8 +1,8 @@
 ---
-title: "Introduction to mcstate2"
+title: "Introduction to monty"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to mcstate2}
+  %\VignetteIndexEntry{Introduction to monty}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,12 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette is an introduction to some of the ideas in `mcstate2`.  As the package is not ready for users to use it, this is more a place for us to jot down ideas about what it will do.
+This vignette is an introduction to some of the ideas in `monty`.  As the package is not ready for users to use it, this is more a place for us to jot down ideas about what it will do.
 
 We're going to change the package name in the future (dropping the `2` at least, but possibly also changing it entirely).  It's not yet clear to us if this will be a package that users will use or something that the rest of our stack will target.
 
 ```{r setup}
-library(mcstate2)
+library(monty)
 ```
 
 # The basic idea
@@ -32,7 +32,7 @@ Draw samples from a model using Markov Chain Monte Carlo methods.  To do this yo
 
 The system is designed to be composable; you can work in a Bayesian way by defining a model representing a likelihood and another model representing a prior and then pick a sampler based on the capabilities of the model, and pick a runner based on the capabilities your computer.
 
-The `mcstate_model()` interface is designed to be very flexible but not user-friendly.  We expect to write a higher-level interface to help work with this, and describe how to write wrappers for models implemented in other packages (so you might write a model in [dust](https://mrc-ide.github.io/dust) or [odin](https://mrc-ide.github.io/odin) and an adaptor would make it easy to work with the tools provided by `mcstate2` to start making inferences with your model).
+The `mcstate_model()` interface is designed to be very flexible but not user-friendly.  We expect to write a higher-level interface to help work with this, and describe how to write wrappers for models implemented in other packages (so you might write a model in [dust](https://mrc-ide.github.io/dust) or [odin](https://mrc-ide.github.io/odin) and an adaptor would make it easy to work with the tools provided by `monty` to start making inferences with your model).
 
 # An example
 

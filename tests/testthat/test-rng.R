@@ -1009,7 +1009,7 @@ test_that("We can load the example rng package", {
   skip_for_compilation()
   skip_on_os("windows")
 
-  path_src <- mcstate_file("random/package")
+  path_src <- monty_file("random/package")
   tmp <- tempfile()
   copy_directory(path_src, tmp)
   cpp11::cpp_register(tmp, quiet = TRUE)
@@ -1028,11 +1028,11 @@ test_that("We can compile the standalone program", {
   skip_for_compilation()
   skip_on_os("windows")
 
-  path_src <- mcstate_file("random/openmp")
+  path_src <- monty_file("random/openmp")
   tmp <- tempfile()
   copy_directory(path_src, tmp)
 
-  args <- c(dirname(mcstate_file("include")), "--no-openmp")
+  args <- c(dirname(monty_file("include")), "--no-openmp")
 
   code <- with_dir(
     tmp,

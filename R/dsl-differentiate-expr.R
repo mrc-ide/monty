@@ -50,7 +50,7 @@ mcstate_differentiation <- function() {
 }
 
 
-## Differentiation support for expressions in the mcstate2 and odin
+## Differentiation support for expressions in the monty and odin
 ## DSLs (and not for R generally). This will handle the same array and
 ## summation semantics as used in odin, as well as differentiation of
 ## stochastic processes made deterministic.

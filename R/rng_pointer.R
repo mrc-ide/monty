@@ -6,7 +6,7 @@
 ##'
 ##' @export
 ##' @examples
-##' mcstate2::mcstate_rng_pointer$new()
+##' monty::mcstate_rng_pointer$new()
 mcstate_rng_pointer <- R6::R6Class(
   "mcstate_rng_pointer",
   cloneable = FALSE,
@@ -27,7 +27,7 @@ mcstate_rng_pointer <- R6::R6Class(
 
     ##' @description Create a new `mcstate_rng_pointer` object
     ##'
-    ##' @param seed The random number seed to use (see [mcstate2::mcstate_rng]
+    ##' @param seed The random number seed to use (see [monty::mcstate_rng]
     ##'   for details)
     ##'
     ##' @param n_streams The number of independent random number streams to
@@ -36,7 +36,7 @@ mcstate_rng_pointer <- R6::R6Class(
     ##' @param long_jump Optionally an integer indicating how many
     ##'   "long jumps" should be carried out immediately on creation.
     ##'   This can be used to create a distributed parallel random number
-    ##'   generator (see [mcstate2::mcstate_rng_distributed_state])
+    ##'   generator (see [monty::mcstate_rng_distributed_state])
     ##'
     ##' @param algorithm The random number algorithm to use. The default is
     ##'   `xoshiro256plus` which is a good general choice

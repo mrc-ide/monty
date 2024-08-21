@@ -46,7 +46,7 @@
 ##' ```
 ##'
 ##' The machinery here is designed to make these transformations
-##' simple and standardised within mcstate2, and should be flexible
+##' simple and standardised within monty, and should be flexible
 ##' enough for many situations.  We will also use these from within
 ##' `dust2` and `odin2` for transformations in and out of vectors of
 ##' ODE state.

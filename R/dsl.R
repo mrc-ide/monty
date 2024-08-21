@@ -1,4 +1,4 @@
-##' Create a model using the mcstate2 DSL; this function will likely
+##' Create a model using the monty DSL; this function will likely
 ##' change name in future, as will its interface.
 ##'
 ##' @title Domain Specific Language for mcstate
@@ -67,12 +67,12 @@ mcstate_dsl_parse <- function(x, type = NULL, gradient = NULL) {
 }
 
 
-##' Parse an expression as if it were a call to one of mcstate2's
+##' Parse an expression as if it were a call to one of monty's
 ##' distribution functions (e.g., `Normal`, `Poisson`).  This will
 ##' fill in any defaults, disambiguate where mulitple
 ##' parameterisations of the distribution are available, and provide
 ##' links through to the C++ API.  This function is designed for use
-##' from other packages that use mcstate2, and is unlikely to be
+##' from other packages that use monty, and is unlikely to be
 ##' useful to most users.
 ##'
 ##' @title Parse distribution expression
@@ -124,7 +124,7 @@ mcstate_dsl_parse_distribution <- function(expr, name = NULL) {
     distr_name <- as.character(expr[[1]])
     error <- c(
       cli::format_inline("Unknown distribution '{distr_name}'"),
-      i = paste("See {.run mcstate2::mcstate_dsl_distributions} for details on",
+      i = paste("See {.run monty::mcstate_dsl_distributions} for details on",
                 "supported distributions"))
     dym <- near_match(distr_name, names(dsl_distributions))
     if (length(dym) > 0) {

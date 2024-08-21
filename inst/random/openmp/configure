@@ -19,7 +19,7 @@ else
 fi
 
 if [[ -z "$1" || "$1" == "--find-mcstate" ]]; then
-    PATH_MCSTATE=$(Rscript -e 'cat(find.package("mcstate2"))')
+    PATH_MCSTATE=$(Rscript -e 'cat(find.package("monty"))')
     echo "Found mcstate at '$PATH_MCSTATE'"
 else
     PATH_MCSTATE=$1

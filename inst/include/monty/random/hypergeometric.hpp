@@ -249,7 +249,7 @@ h2pe_test_result<real_type> h2pe_test_squeeze(real_type n1, real_type n2, real_t
   const real_type av_critical = a -
     utils::lfactorial<real_type>(y) -
     utils::lfactorial<real_type>(n1 - y) -
-    utils::lfactorial<real_type>(k - y) - 
+    utils::lfactorial<real_type>(k - y) -
     utils::lfactorial<real_type>((n2 - k) + y);
   if (log(v) <= av_critical) {
     return h2pe_test_result<real_type>{true, y};

@@ -5,7 +5,7 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
   exprs <- adjoint_rewrite_stochastic(parameters, exprs)
   rlang::try_fetch(
     adjoint_create(parameters, exprs),
-    mcstate2_parse_error = function(e) {
+    monty_parse_error = function(e) {
       if (is.null(required)) {
         ## TODO: this might change as #52 is merged, to print slightly
         ## more nicely.  At present we need one extra parent on this

@@ -208,7 +208,7 @@ test_that("can explain an error", {
   mockery::expect_called(mock_browse, 1)
   expect_equal(
     mockery::mock_args(mock_browse)[[1]],
-    list("https://mrc-ide.github.io/mcstate2/articles/dsl-errors.html#e101"))
+    list("https://mrc-ide.github.io/monty/articles/dsl-errors.html#e101"))
 })
 
 

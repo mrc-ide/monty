@@ -15,10 +15,10 @@ knitr::opts_chunk$set(
 set.seed(1)
 ```
 
-This vignette will describe the samplers available in mcstate2.
+This vignette will describe the samplers available in monty.
 
 ```{r}
-library(mcstate2)
+library(monty)
 ```
 
 # Comparisons

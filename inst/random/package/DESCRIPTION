@@ -7,4 +7,4 @@ Description: Simple example package showing how to use mcstate's random
     number library from your R package's C++ code.
 License: CC0
 Encoding: UTF-8
-LinkingTo: cpp11, mcstate2
+LinkingTo: cpp11, monty

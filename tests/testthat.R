@@ -1,4 +1,4 @@
 library(testthat)
-library(mcstate2)
+library(monty)
 
-test_check("mcstate2")
+test_check("monty")

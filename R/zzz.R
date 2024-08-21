@@ -1,3 +1,3 @@
 ##' @importFrom R6 R6Class
-##' @useDynLib mcstate2, .registration = TRUE
+##' @useDynLib monty, .registration = TRUE
 NULL
