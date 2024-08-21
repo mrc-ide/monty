@@ -43,21 +43,7 @@
 ##'   to be a list with elements `base` and `groups` corresponding to
 ##'   the covariance matrix for base parameters (if any) and groups.
 ##'   
-##' @param boundaries Control the behaviour of proposals that are
-##'   outside the model domain.  The supported options are:
-##'
-##'   * "reflect" (the default): we reflect proposed parameters that
-##'     lie outside the domain back into the domain (as many times as
-##'     needed)
-##'
-##'   * "reject": we do not evaluate the density function, and return
-##'     `-Inf` for its density instead.
-##'
-##'   * "ignore": evaluate the point anyway, even if it lies outside
-##'     the domain.
-##'
-##' The initial point selected will lie within the domain, as this is
-##' enforced by [mcstate_sample].
+##" @inheritParams mcstate_sampler_random_walk
 ##'
 ##' @return A `mcstate_sampler` object, which can be used with
 ##'   [mcstate_sample]
