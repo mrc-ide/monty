@@ -69,7 +69,7 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
 
 ##' Parse an expression as if it were a call to one of monty's
 ##' distribution functions (e.g., `Normal`, `Poisson`).  This will
-##' fill in any defaults, disambiguate where mulitple
+##' fill in any defaults, disambiguate where multiple
 ##' parameterisations of the distribution are available, and provide
 ##' links through to the C++ API.  This function is designed for use
 ##' from other packages that use monty, and is unlikely to be

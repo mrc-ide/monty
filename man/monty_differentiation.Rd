@@ -11,7 +11,7 @@ A list of related objects:
 \itemize{
 \item \code{differentiate}: A function that can differentiate an expression
 with respect to a variable (as a string).
-\item \code{maths}: Some mathmatical utilities for constructing
+\item \code{maths}: Some mathematical utilities for constructing
 expressions.  This will be documented later, but the most useful
 bits on here are the function elements \code{times}, \code{plus} and
 \code{plus_fold}.
@@ -21,7 +21,7 @@ We will expand this soon to advertise what functions we are able
 to differentiate to allow programs to fail fast.
 }
 \description{
-Differentiate expressions in the monty dsl.  This function is
+Differentiate expressions in the monty DSL.  This function is
 exported for advanced use, and really so that we can use it from
 odin.  But it has the potential to be generally useful, so while
 we'll tweak the interface quite a lot over the next while it is
@@ -30,9 +30,9 @@ fine to use if you can handle some disruption.
 \details{
 R already has support for differentiating expressions using \link{D},
 which is useful for creating derivatives of simple functions to
-pass into nonlinear optimisation.  We need something a bit more
-flexible for differentiating models in the monty dsl
-(\link{monty_dsl}) and also in the related odin dsl.
+pass into non-linear optimisation.  We need something a bit more
+flexible for differentiating models in the monty DSL
+(\link{monty_dsl}) and also in the related odin DSL.
 }
 \section{Differences to \code{\link[=D]{D()}}}{
 \itemize{

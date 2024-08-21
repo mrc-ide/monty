@@ -10,7 +10,7 @@
 
 See the [package vignette](https://mrc-ide.github.io/monty/articles/monty.html) for a basic introduction.
 
-The package is in an early, though rapid, stage of development and we cannot guarantee that interfaces will not change (in fact, we can guarantee that the **will** really).  However the core contepts have now solidified.
+The package is in an early, though rapid, stage of development and we cannot guarantee that interfaces will not change (in fact, we can guarantee that the **will** really).  However the core concepts have now solidified.
 
 The core of the package is build around some basic ideas:
 
@@ -23,7 +23,7 @@ The core of the package is build around some basic ideas:
 
 `monty` is a complete rewrite of some of the ideas in [`mcstate`](https://mrc-ide.github.io/mcstate/), though other bits of `mcstate` have moved into [`dust2`](https://mrc-ide.github.io/dust2/).
 
-The [`dust2`](https://mrc-ide.github.io/dust2/) package provides machinery to run particle filters for sequential Monte Carlo methods using the random number suopport in `monty` and can create statistical models that can be used with `monty`'s samplers
+The [`dust2`](https://mrc-ide.github.io/dust2/) package provides machinery to run particle filters for sequential Monte Carlo methods using the random number support in `monty` and can create statistical models that can be used with `monty`'s samplers
 
 The [`odin2`](https://mrc-ide.github.io/odin2/) package can generate dynamical models that use `monty`'s random number generators and can be used as part of `dust2` particle filter.  The `odin2` DSL and `monty` DSL are closely related.
 

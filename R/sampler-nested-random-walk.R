@@ -23,13 +23,13 @@
 ##'
 ##' We expect that this approach will be beneficial in limited
 ##' situations, but where it is beneficial it is likely to result in
-##' fairly large speedups:
+##' fairly large speed-ups:
 ##'
 ##' * You probably need more than three regions; as the number of
 ##'   regions increases the benefit independently accepting or
 ##'   rejecting densities increases (with 1000 separate regions your
 ##'   chains will mix very slowly for example).
-##' * Your model is fairly comutationally heavy so that the density
+##' * Your model is fairly computationally heavy so that the density
 ##'   calculation completely dominates the sampling process.
 ##' * You do not have access to gradient information for your model;
 ##'   we suspect that HMC will outperform this approach by some margin

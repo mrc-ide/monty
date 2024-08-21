@@ -138,7 +138,7 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   (especially if we explore more complex nestings) but at present
 ##'   parameters with group 0 affect everything (so are accepted or
 ##'   rejected as a whole), while parameters in groups 1 to `n` are
-##'   indepenent (for example, changing the parameters in group 2 does
+##'   independent (for example, changing the parameters in group 2 does
 ##'   not affect the density of parameters proposed in group 3).
 ##'
 ##' @title Create basic model
@@ -265,7 +265,7 @@ monty_model_gradient <- function(model, parameters, named = FALSE) {
 ##'
 ##' @param rng Random number state, created by [monty_rng].  Use of
 ##'   an RNG with more than one stream may or may not work as
-##'   expected; this is something we need to tidy up (mrc-5292)
+##'   expected; this is something we need to tidy up (`mrc-5292`)
 ##'
 ##' @return A vector or matrix of sampled parameters
 ##'
