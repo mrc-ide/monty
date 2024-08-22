@@ -175,7 +175,7 @@ test_that("Can print a packer", {
 
 
 test_that("unpack a matrix", {
-  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # > 1 + 5 + 6 = 12
   m <- matrix(seq_len(12 * 3), 12)
 
   res <- p$unpack(m)
@@ -186,7 +186,7 @@ test_that("unpack a matrix", {
 
 
 test_that("error if given the wrong size input to unpack", {
-  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # > 1 + 5 + 6 = 12
   m <- matrix(seq_len(12 * 3), 9)
   expect_error(
     p$unpack(m),
@@ -195,7 +195,7 @@ test_that("error if given the wrong size input to unpack", {
 
 
 test_that("error if given the wrong size input to unpack", {
-  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # 1 + 5 + 6 = 12
+  p <- monty_packer("x", list(y = 5, z = c(2, 3))) # > 1 + 5 + 6 = 12
   m <- matrix(seq_len(12 * 3), 12)
   rownames(m) <- letters[1:12]
   expect_error(

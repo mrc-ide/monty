@@ -93,7 +93,7 @@ test_that("can build nested proposal functions", {
               groups = list(v, v / 100))
   g <- c(1, 1, 2, 2)
   domain <- t(array(c(-Inf, Inf), c(2, 4)))
-  
+
   f <- nested_proposal(vcv, g, rep(0, 4), domain)
 
   expect_null(f$base)
@@ -118,7 +118,7 @@ test_that("can build nested proposal functions with base components", {
   f <- nested_proposal(vcv, c(0, 0, 1, 1, 2, 2), 1:6, domain)
   g <- nested_proposal(list(base = NULL, groups = vcv$groups), c(1, 1, 2, 2),
                        3:6, domain[3:6, ])
-  
+
 
   expect_true(is.function(f$base))
   expect_true(is.function(f$groups))
@@ -200,11 +200,11 @@ test_that("can run an observer during a nested fit", {
   expect_equal(
     dim(res$observations$n),
     c(1, 100, 1))
-  
+
   pars <- cbind(res$initial[, 1], res$pars[, , 1])
   pars_update <- apply(pars, 1, diff) != 0
-  ## n_update: 1 for initial + num of base updates + num of >0 group updates 
-  n_update <- 1 + sum(pars_update[, "sigma"]) + 
+  ## n_update: 1 for initial + num of base updates + num of >0 group updates
+  n_update <- 1 + sum(pars_update[, "sigma"]) +
     sum(rowSums(pars_update[, paste0("mu_", seq_len(5))]) > 0)
   expect_equal(max(res$observations$n), n_update)
 })
@@ -216,10 +216,10 @@ test_that("can run nested random walk sampler simultaneously", {
   m <- ex_simple_nested_with_base(ng)
   sampler <- monty_sampler_nested_random_walk(
     list(base = diag(1), groups = rep(list(diag(1)), ng)))
-  
+
   set.seed(1)
   res1 <- monty_sample(m, sampler, 100, n_chains = 3)
-  
+
   set.seed(1)
   runner <- monty_runner_simultaneous()
   res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
@@ -237,10 +237,10 @@ test_that("can run nested random walk sampler with rejecting boundaries
   sampler <- monty_sampler_nested_random_walk(
     list(base = diag(1), groups = rep(list(diag(1)), ng)),
     boundaries = "reject")
-  
+
   set.seed(1)
   res1 <- monty_sample(m, sampler, 100, n_chains = 3)
-  
+
   set.seed(1)
   runner <- monty_runner_simultaneous()
   res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)

@@ -67,7 +67,7 @@ preprocess_detect <- function(x, type, call = NULL) {
     } else if (length(x) != 1L || grepl("([\n;=]|<-| ~ )", x)) {
       ## Our heuristic above is a little fragile; it will think that
       ##
-      ## a~f(1)
+      ## > a~f(1)
       ##
       ## is a filename, but we need the spaces there to avoid windows
       ## short paths getting considered to be code.  Parentheses would

@@ -147,7 +147,7 @@ derivative <- list(
     maths$times(differentiate(a, name), call("exp", a))
   },
   log1p = function(expr, name) {
-    ## log(1 + x)
+    ## > log(1 + x)
     a <- maths$rewrite(expr[[2]])
     maths$divide(differentiate(a, name), maths$plus(1, a))
   },
@@ -223,8 +223,8 @@ derivative <- list(
     ## 'k' the way that the density is defined in R.
     ##
     ## We can consider this as:
-    ## lfactorial(n) - lfactorial(k) - lfactorial(n - k)
-    ## ^--a            ^--b            ^--c
+    ## > lfactorial(n) - lfactorial(k) - lfactorial(n - k)
+    ## > ^--a            ^--b            ^--c
     ##
     ## and then apply the chain rule as:
     n <- maths$rewrite(expr[[2]])
