@@ -126,13 +126,13 @@ test_that("can run sampler with reflecting boundaries", {
          direct_sample = function(rng) {
            rng$uniform(1, -1, 1)
          }))
-  
+
   s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore")
   s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reflect")
   s3 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
-  
+
   expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
-  
+
   ## Seems to be a bit of a problem here - since the density is flat, the
   ## acceptance probability is always 1. The effect on the scaling then is that
   ## it just keeps increasing! When it gets large enough, it causes problems
@@ -143,13 +143,13 @@ test_that("can run sampler with reflecting boundaries", {
   expect_gt(diff(r2), 0.75)
   expect_gt(r2[[1]], -1)
   expect_lt(r2[[2]], 1)
-  
+
   res3 <- monty_sample(model, s3, 100)
   r3 <- range(drop(res3$pars))
   expect_gt(diff(r3), 0.75)
   expect_gt(r3[[1]], -1)
   expect_lt(r3[[2]], 1)
-  
+
   ## Different with rejection than reflection, and more step
   ## rejections when rejection used.
   expect_true(!all(res2$pars == res3$pars))
@@ -171,10 +171,10 @@ test_that("can run sampler with rejecting boundaries", {
          direct_sample = function(rng) {
            rng$uniform(1, -1, 1)
          }))
-  
+
   s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore")
   s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
-  
+
   expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
   res <- monty_sample(model, s2, 100)
   r <- range(drop(res$pars))
@@ -195,16 +195,16 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
            rng$uniform(1, -1, 1)
          }),
     monty_model_properties(allow_multiple_parameters = TRUE))
-  
+
   s <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
   runner <- monty_runner_simultaneous()
-  
+
   n_steps <- 30
-  
+
   set.seed(1)
   res <- monty_sample(m, s, n_steps, n_chains = 4, runner = runner)
   set.seed(1)
   cmp <- monty_sample(m, s, n_steps, n_chains = 4)
-  
+
   expect_equal(res, cmp)
 })

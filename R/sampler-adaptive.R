@@ -129,7 +129,7 @@ monty_sampler_adaptive <- function(initial_vcv,
   ## scaling factor, weight and autocorrelations.
   check_vcv(initial_vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
-  
+
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
@@ -141,12 +141,12 @@ monty_sampler_adaptive <- function(initial_vcv,
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
-    
+
     initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
-    
+
     if (internal$multiple_parameters) {
       d <- dim(initial_vcv)
-      internal$adaptive <- 
+      internal$adaptive <-
         lapply(seq_len(d[3]),
                function(i) initialise_adaptive(
                  pars[, i],
@@ -164,7 +164,7 @@ monty_sampler_adaptive <- function(initial_vcv,
                  pre_diminish
                ))
     } else {
-      internal$adaptive <- 
+      internal$adaptive <-
         initialise_adaptive(pars,
                             initial_vcv,
                             initial_vcv_weight,
@@ -186,12 +186,12 @@ monty_sampler_adaptive <- function(initial_vcv,
   step <- function(state, model, observer, rng) {
     if (internal$multiple_parameters) {
       d <- dim(state$pars)
-      proposal_vcv <- 
+      proposal_vcv <-
         vapply(seq_len(d[2]),
-               function (i) 
-                 calc_proposal_vcv(internal$adaptive[[i]]$scaling, 
+               function (i)
+                 calc_proposal_vcv(internal$adaptive[[i]]$scaling,
                                    internal$adaptive[[i]]$vcv,
-                                   internal$adaptive[[i]]$weight, 
+                                   internal$adaptive[[i]]$weight,
                                    internal$adaptive[[i]]$initial_vcv,
                                    internal$adaptive[[i]]$initial_vcv_weight),
                array(0, c(d[1], d[1])))
@@ -200,12 +200,12 @@ monty_sampler_adaptive <- function(initial_vcv,
       proposal_vcv <-
         calc_proposal_vcv(internal$adaptive$scaling,
                           internal$adaptive$vcv,
-                          internal$adaptive$weight, 
+                          internal$adaptive$weight,
                           internal$adaptive$initial_vcv,
                           internal$adaptive$initial_vcv_weight)
     }
 
-    proposal <- 
+    proposal <-
       make_random_walk_proposal(proposal_vcv, model$domain, boundaries)
     pars_next <- proposal(state$pars, rng)
 
@@ -228,7 +228,7 @@ monty_sampler_adaptive <- function(initial_vcv,
                           model, observer, rng)
 
     if (internal$multiple_parameters) {
-      internal$adaptive <- 
+      internal$adaptive <-
         lapply(seq_len(dim(state$pars)[2]),
                function (i) update_adaptive(internal$adaptive[[i]],
                                             state$pars[, i],
@@ -237,22 +237,22 @@ monty_sampler_adaptive <- function(initial_vcv,
       internal$adaptive <-
         update_adaptive(internal$adaptive, state$pars, accept_prob)
     }
-    
+
     state
   }
 
   finalise <- function(state, model, rng) {
     out <- internal$adaptive
-    
+
     keep_adaptive <- c("autocorrelation", "mean", "vcv", "weight", "included",
                        "scaling_history", "scaling_weight", "scaling_increment")
-    
+
     if (internal$multiple_parameters) {
       out <- lapply(out, function(x) x[keep_adaptive])
     } else {
       out <- out[keep_adaptive]
     }
-    
+
     out
   }
 
@@ -341,7 +341,7 @@ update_adaptive <- function(adaptive, pars, accept_prob) {
     adaptive$scaling_weight <- adaptive$scaling_weight + 1
   }
 
-  is_replacement <- check_replacement(adaptive$iteration, adaptive$forget_rate, 
+  is_replacement <- check_replacement(adaptive$iteration, adaptive$forget_rate,
                                       adaptive$forget_end)
   if (is_replacement) {
     pars_remove <- adaptive$history_pars[adaptive$included[1L], ]
