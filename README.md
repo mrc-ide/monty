@@ -39,7 +39,15 @@ The basic functionality of this package is in place, but we plan to do work on:
 
 ## Installation
 
-To install `monty`:
+Please install from our [r-universe](https://mrc-ide.r-universe.dev/):
+
+```r
+install.packages(
+  "monty",
+  repos = c("https://mrc-ide.r-universe.dev", "https://cloud.r-project.org"))
+```
+
+If you prefer, you can install from GitHub with `remotes`:
 
 ```r
 remotes::install_github("mrc-ide/monty", upgrade = FALSE)
