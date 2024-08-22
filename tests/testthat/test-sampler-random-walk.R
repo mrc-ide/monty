@@ -69,7 +69,8 @@ test_that("can continue observed models", {
 
   observer <- monty_observer(
     function(model, rng) {
-      # i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
+      ## ideally we get a random sample here, but that's not easy with
+      ## current dust
       model$details(4)
     })
 

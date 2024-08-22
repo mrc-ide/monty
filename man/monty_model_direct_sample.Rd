@@ -11,7 +11,7 @@ monty_model_direct_sample(model, rng, named = FALSE)
 
 \item{rng}{Random number state, created by \link{monty_rng}.  Use of
 an RNG with more than one stream may or may not work as
-expected; this is something we need to tidy up (mrc-5292)}
+expected; this is something we need to tidy up (\code{mrc-5292})}
 
 \item{named}{Logical, indicating if the output should be named
 using the parameter names.}

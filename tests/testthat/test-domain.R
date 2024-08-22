@@ -42,7 +42,7 @@ test_that("can expand parameters", {
   expect_equal(
     monty_domain_expand(rbind(x = 0:1, y = 2:3), packer),
     rbind("x[1]" = 0:1, "x[2]" = 0:1, "x[3]" = 0:1,
-          "y[1,1]" = 2:3, "y[2,1]" = 2:3 , "y[1,2]" = 2:3, "y[2,2]" = 2:3))
+          "y[1,1]" = 2:3, "y[2,1]" = 2:3, "y[1,2]" = 2:3, "y[2,2]" = 2:3))
   expect_equal(
     monty_domain_expand(rbind(x = 0:1, b = 2:3, a = 4:5), packer),
     rbind(a = 4:5, b = 2:3, "x[1]" = 0:1, "x[2]" = 0:1, "x[3]" = 0:1))

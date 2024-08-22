@@ -72,11 +72,11 @@ b ~ Uniform(0, 1)
 a ~ Exponential(1) # <= error here
 ```
 
-Relationships must be unique becaue each represents a parameter, and a parameter can't be represented by two different distributions.
+Relationships must be unique because each represents a parameter, and a parameter can't be represented by two different distributions.
 
 # `E202`
 
-Duplicated assigments (with `<-`).  This is similar to `E201`
+Duplicated assignments (with `<-`).  This is similar to `E201`
 
 Example:
 
@@ -86,7 +86,7 @@ b <- 2
 a <- 3 # <= error here
 ```
 
-Assignments must be unique within the dsl code because this makes it straightforward to trace usage through the dependency graph and from this create a gradient function using automatic differentation.
+Assignments must be unique within the DSL code because this makes it straightforward to trace usage through the dependency graph and from this create a gradient function using automatic differentiation.
 
 This restriction means that you cannot reassign a value either, so this is an error:
 
@@ -124,4 +124,4 @@ Variables are used out of order.  If you are using odin this is a big departure 
 
 # `E206`
 
-Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the dsl can currently be differentiated by monty; if you think that yours should be, please let us know.
+Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the DSL can currently be differentiated by monty; if you think that yours should be, please let us know.

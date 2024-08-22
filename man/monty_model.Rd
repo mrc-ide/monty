@@ -108,7 +108,7 @@ parameter group membership.  The format here may change
 (especially if we explore more complex nestings) but at present
 parameters with group 0 affect everything (so are accepted or
 rejected as a whole), while parameters in groups 1 to \code{n} are
-indepenent (for example, changing the parameters in group 2 does
+independent (for example, changing the parameters in group 2 does
 not affect the density of parameters proposed in group 3).
 }
 }

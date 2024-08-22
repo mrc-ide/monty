@@ -23,13 +23,13 @@
 ##'
 ##' We expect that this approach will be beneficial in limited
 ##' situations, but where it is beneficial it is likely to result in
-##' fairly large speedups:
+##' fairly large speed-ups:
 ##'
 ##' * You probably need more than three regions; as the number of
-##'   regions increases the benefit independently accepting or
+##'   regions increases the benefit of independently accepting or
 ##'   rejecting densities increases (with 1000 separate regions your
 ##'   chains will mix very slowly for example).
-##' * Your model is fairly comutationally heavy so that the density
+##' * Your model is fairly computationally heavy so that the density
 ##'   calculation completely dominates the sampling process.
 ##' * You do not have access to gradient information for your model;
 ##'   we suspect that HMC will outperform this approach by some margin
@@ -42,7 +42,7 @@
 ##' @param vcv A list of variance covariance matrices.  We expect this
 ##'   to be a list with elements `base` and `groups` corresponding to
 ##'   the covariance matrix for base parameters (if any) and groups.
-##'   
+##'
 ##' @inheritParams monty_sampler_random_walk
 ##'
 ##' @return A `monty_sampler` object, which can be used with
@@ -53,7 +53,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
   if (!is.list(vcv)) {
     cli::cli_abort(
       "Expected a list for 'vcv'",
-      arg = 'vcv')
+      arg = "vcv")
   }
 
   if (!setequal(names(vcv), c("base", "groups"))) {
@@ -77,18 +77,18 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
   internal <- new.env(parent = emptyenv())
 
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
-  
+
   initialise <- function(pars, model, observer, rng) {
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
-    
+
     internal$multiple_parameters <- length(dim2(pars)) > 1
     if (internal$multiple_parameters) {
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
-    
+
     internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars,
                                          model$domain, boundaries)
 
@@ -132,7 +132,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
   step <- function(state, model, observer, rng) {
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
-      
+
       reject_some <- boundaries == "reject" &&
         !all(i <- is_parameters_in_domain(pars_next, model$domain))
       if (reject_some) {
@@ -148,7 +148,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
         density_next <- model$density(pars_next, by_group = TRUE)
         density_by_group_next <- attr(density_next, "by_group")
       }
-      
+
       accept <- density_next - state$density > log(rng$random_real(1))
       if (any(accept)) {
         if (!all(accept)) {
@@ -168,11 +168,11 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
     }
 
     pars_next <- internal$proposal$groups(state$pars, rng)
-    
+
     reject_some <- boundaries == "reject" &&
-      !all(i <- is_parameters_in_domain_groups(pars_next, model$domain, 
+      !all(i <- is_parameters_in_domain_groups(pars_next, model$domain,
                                                model$parameter_groups))
-    
+
     ## This bit is potentially inefficient - for any proposed parameters out of
     ## bounds I substitute in the current parameters, so that we can run the
     ## density on all groups. Ideally we would want to only run the density on
@@ -200,7 +200,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
       density_next <- model$density(pars_next, by_group = TRUE)
       density_by_group_next <- attr(density_next, "by_group")
     }
-      
+
     accept <- density_by_group_next - internal$density_by_group >
       log(rng$random_real(dim2(density_by_group_next)[1]))
 
@@ -340,25 +340,26 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
         x
       }
     }
-    
+
   } else {
     proposal_base <- NULL
   }
 
   for (i in seq_len(n_groups)) {
     if (is.matrix(pars)) {
-      vcv$groups[[i]] <- 
+      vcv$groups[[i]] <-
         sampler_validate_vcv(vcv$groups[[i]],
                              pars[i_group[[i]], , drop = FALSE])
     } else {
-      vcv$groups[[i]] <- 
+      vcv$groups[[i]] <-
         sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
     }
   }
-  mvn_groups <- lapply(seq_len(n_groups), function (i) 
-    make_random_walk_proposal(vcv$groups[[i]], 
+  mvn_groups <- lapply(seq_len(n_groups), function(i) {
+    make_random_walk_proposal(vcv$groups[[i]],
                               domain[i_group[[i]], , drop = FALSE],
-                              boundaries))
+                              boundaries)
+  })
   proposal_groups <- function(x, rng) {
     for (i in seq_len(n_groups)) {
       if (is.matrix(x)) {
@@ -381,7 +382,7 @@ is_parameters_in_domain_groups <- function(x, domain, parameter_groups) {
   n_groups <- max(parameter_groups)
   i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
   if (is.matrix(x)) {
-    t(vapply(i_group, function(j) apply(i[j, , drop = FALSE], 2, all), 
+    t(vapply(i_group, function(j) apply(i[j, , drop = FALSE], 2, all),
              logical(ncol(x))))
   } else {
     vapply(i_group, function(j) all(i[j]), logical(1L))

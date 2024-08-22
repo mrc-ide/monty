@@ -98,13 +98,19 @@ test_that("require input is file, when type given", {
 
 test_that("detect expression inputs", {
   expect_equal(preprocess_detect(quote(a), NULL), "expression")
-  expect_equal(preprocess_detect(quote({a}), NULL), "expression")
-  expect_equal(preprocess_detect(quote({a}), "expression"), "expression")
+  expect_equal(preprocess_detect(quote({
+    a
+  }), NULL), "expression")
+  expect_equal(preprocess_detect(quote({
+    a
+  }), "expression"), "expression")
 })
 
 
 test_that("require input is expressions, when type given", {
-  expect_equal(preprocess_detect(quote({a}), "expression"), "expression")
+  expect_equal(preprocess_detect(quote({
+    a
+  }), "expression"), "expression")
   expect_error(preprocess_detect("a", "expression"),
                "Invalid input for 'x': expected expression")
 })
