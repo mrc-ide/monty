@@ -26,7 +26,7 @@
 ##' fairly large speed-ups:
 ##'
 ##' * You probably need more than three regions; as the number of
-##'   regions increases the benefit independently accepting or
+##'   regions increases the benefit of independently accepting or
 ##'   rejecting densities increases (with 1000 separate regions your
 ##'   chains will mix very slowly for example).
 ##' * Your model is fairly computationally heavy so that the density
