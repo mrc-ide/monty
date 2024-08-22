@@ -21,13 +21,13 @@
 ##'     the domain.
 ##'
 ##' The initial point selected will lie within the domain, as this is
-##' enforced by [mcstate_sample].
+##' enforced by [monty_sample].
 ##'
-##' @return A `mcstate_sampler` object, which can be used with
-##'   [mcstate_sample]
+##' @return A `monty_sampler` object, which can be used with
+##'   [monty_sample]
 ##'
 ##' @export
-mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
+monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
 
@@ -78,13 +78,13 @@ mcstate_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
   set_internal_state <- function(state) {
   }
 
-  mcstate_sampler("Random walk",
-                  "mcstate_random_walk",
-                  initialise,
-                  step,
-                  finalise,
-                  get_internal_state,
-                  set_internal_state)
+  monty_sampler("Random walk",
+                "monty_random_walk",
+                initialise,
+                step,
+                finalise,
+                get_internal_state,
+                set_internal_state)
 }
 
 

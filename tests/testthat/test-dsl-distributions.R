@@ -56,8 +56,8 @@ test_that("can compute density for exponential distribution", {
 
 
 test_that("can sample from exponential distribution", {
-  r1 <- mcstate_rng$new(1)
-  r2 <- mcstate_rng$new(1)
+  r1 <- monty_rng$new(1)
+  r2 <- monty_rng$new(1)
   expect_equal(distr_exponential_rate$sample(r1, 0.4),
                r2$exponential_rate(1, 0.4))
   expect_equal(distr_exponential_mean$sample(r1, 0.4),
@@ -72,8 +72,8 @@ test_that("can compute density for normal distribution", {
 
 
 test_that("can sample from normal distribution", {
-  r1 <- mcstate_rng$new(1)
-  r2 <- mcstate_rng$new(1)
+  r1 <- monty_rng$new(1)
+  r2 <- monty_rng$new(1)
   expect_equal(distr_normal$sample(r1, 1, 2),
                r2$normal(1, 1, 2))
 })
@@ -86,8 +86,8 @@ test_that("can compute density for uniform distribution", {
 
 
 test_that("can sample from uniform distribution", {
-  r1 <- mcstate_rng$new(1)
-  r2 <- mcstate_rng$new(1)
+  r1 <- monty_rng$new(1)
+  r2 <- monty_rng$new(1)
   expect_equal(distr_uniform$sample(r1, 2, 3),
                r2$uniform(1, 2, 3))
 })
@@ -115,7 +115,7 @@ test_that("can create a distribution object", {
 
 test_that("can parse a simple distribution call", {
   expect_mapequal(
-    mcstate_dsl_parse_distribution(quote(Normal(0, 1))),
+    monty_dsl_parse_distribution(quote(Normal(0, 1))),
     list(success = TRUE,
          value = list(name = "Normal",
                       variant = NULL,
@@ -127,38 +127,38 @@ test_that("can parse a simple distribution call", {
                       cpp = list(density = "normal", sample = "normal"))))
 
   expect_equal(
-    mcstate_dsl_parse_distribution(quote(Normal(mean = 0, sd = 1))),
-    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+    monty_dsl_parse_distribution(quote(Normal(mean = 0, sd = 1))),
+    monty_dsl_parse_distribution(quote(Normal(0, 1))))
   expect_equal(
-    mcstate_dsl_parse_distribution(quote(Normal(sd = 1, mean = 0))),
-    mcstate_dsl_parse_distribution(quote(Normal(0, 1))))
+    monty_dsl_parse_distribution(quote(Normal(sd = 1, mean = 0))),
+    monty_dsl_parse_distribution(quote(Normal(0, 1))))
 })
 
 
 test_that("report back on failure to match distribution", {
-  res <- mcstate_dsl_parse_distribution(quote(Norm(0, 1)))
+  res <- monty_dsl_parse_distribution(quote(Norm(0, 1)))
   expect_false(res$success)
   expect_length(res$error, 3)
   expect_equal(res$error[[1]], "Unknown distribution 'Norm'")
   expect_match(res$error[[2]],
-               "See.*mcstate2::mcstate_dsl_distributions.*for details")
+               "See.*monty::monty_dsl_distributions.*for details")
   expect_match(res$error[[3]], "Did you mean: 'Normal'?",
                fixed = TRUE)
 })
 
 
 test_that("report back on failure to match distribution without suggestion", {
-  res <- mcstate_dsl_parse_distribution(quote(Banana(0, 1)))
+  res <- monty_dsl_parse_distribution(quote(Banana(0, 1)))
   expect_false(res$success)
   expect_length(res$error, 2)
   expect_equal(res$error[[1]], "Unknown distribution 'Banana'")
   expect_match(res$error[[2]],
-               "See.*mcstate2::mcstate_dsl_distributions.*for details")
+               "See.*monty::monty_dsl_distributions.*for details")
 })
 
 
 test_that("report back on failure to match arguments", {
-  res <- mcstate_dsl_parse_distribution(quote(Normal(0, 1, 2)))
+  res <- monty_dsl_parse_distribution(quote(Normal(0, 1, 2)))
   expect_false(res$success)
   expect_length(res$error, 4)
   expect_match(res$error[[1]], "Invalid call to 'Normal()'",
@@ -171,5 +171,5 @@ test_that("report back on failure to match arguments", {
 
 
 test_that("can get information about distributions", {
-  expect_identical(mcstate_dsl_distributions(), dsl_distribution_summary)
+  expect_identical(monty_dsl_distributions(), dsl_distribution_summary)
 })

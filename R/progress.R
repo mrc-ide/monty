@@ -11,7 +11,7 @@ progress_bar <- function(n_chains, n_steps, progress, show_overall,
 
 show_progress_bar <- function(progress, call = NULL) {
   if (is.null(progress)) {
-    progress <- getOption("mcstate2.progress", TRUE)
+    progress <- getOption("monty.progress", TRUE)
   }
   ## Error here is not great if we get this from an option; but need
   ## to disable quoting there in some cases.

@@ -1,8 +1,8 @@
 test_that("can run hmc", {
   m <- ex_simple_gaussian(diag(2))
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   set.seed(1)
-  res <- mcstate_sample(m, sampler, 2000)
+  res <- monty_sample(m, sampler, 2000)
   ## We'll need some long tests here at some point!
   pars <- t(array_drop(res$pars, 3))
   expect_equal(cov(unname(pars)), diag(2), tolerance = 0.2)
@@ -11,9 +11,9 @@ test_that("can run hmc", {
 
 test_that("can run hmc on banana shaped model", {
   m <- ex_banana()
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   set.seed(1)
-  res <- mcstate_sample(m, sampler, 2000)
+  res <- monty_sample(m, sampler, 2000)
   ## We'll need some long tests here at some point!
   pars <- t(array_drop(res$pars, 3))
   expect_equal(abs(mean(pars[, 2])) < 0.2, TRUE)
@@ -26,13 +26,13 @@ test_that("can output debug traces", {
   m <- ex_simple_gaussian(diag(2))
 
   set.seed(1)
-  sampler1 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  res1 <- mcstate_sample(m, sampler1, 30)
+  sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  res1 <- monty_sample(m, sampler1, 30)
 
   set.seed(1)
-  sampler2 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler2 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                   debug = TRUE)
-  res2 <- mcstate_sample(m, sampler2, 30)
+  res2 <- monty_sample(m, sampler2, 30)
 
   expect_null(res1$details)
   expect_length(res2$details, 1)
@@ -51,19 +51,19 @@ test_that("can output debug traces", {
 test_that("can use custom vcv", {
   m <- ex_simple_gaussian(diag(2))
   set.seed(1)
-  sampler1 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  res1 <- mcstate_sample(m, sampler1, 30)
+  sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  res1 <- monty_sample(m, sampler1, 30)
 
   set.seed(1)
-  sampler2 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler2 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                   vcv = diag(2))
-  res2 <- mcstate_sample(m, sampler2, 30)
+  res2 <- monty_sample(m, sampler2, 30)
   expect_identical(res2, res1)
 
   set.seed(1)
-  sampler3 <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler3 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                   vcv = diag(2) * 0.5)
-  res3 <- mcstate_sample(m, sampler3, 30)
+  res3 <- monty_sample(m, sampler3, 30)
   expect_false(identical(res3, res1))
 })
 
@@ -71,10 +71,10 @@ test_that("can use custom vcv", {
 test_that("given vcv and parameters must be compatible", {
   m <- ex_simple_gaussian(diag(2))
   set.seed(1)
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  vcv = diag(3))
   expect_error(
-    mcstate_sample(m, sampler, 30),
+    monty_sample(m, sampler, 30),
     "Incompatible length parameters (2) and vcv (3)",
     fixed = TRUE)
 })
@@ -177,12 +177,12 @@ test_that("can continue hmc without debug", {
   m <- ex_simple_gaussian(diag(2))
 
   set.seed(1)
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  res1 <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
 
   set.seed(1)
-  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
-  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20, restartable = TRUE)
 
   expect_equal(res2b, res1)
 })
@@ -192,24 +192,24 @@ test_that("can continue hmc with debug", {
   m <- ex_simple_gaussian(diag(2))
 
   set.seed(1)
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  debug = TRUE)
-  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+  res1 <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
 
   set.seed(1)
-  res2a <- mcstate_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
-  res2b <- mcstate_sample_continue(res2a, 20, restartable = TRUE)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20, restartable = TRUE)
 
   expect_equal(res2b, res1)
 })
 
 
 test_that("can't use hmc with models that lack gradients", {
-  m <- mcstate_model(list(density = function(x) dnorm(x, log = TRUE),
+  m <- monty_model(list(density = function(x) dnorm(x, log = TRUE),
                           parameters = "a"))
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   expect_error(
-    mcstate_sample(m, sampler, 30, 1, n_chains = 3),
+    monty_sample(m, sampler, 30, 1, n_chains = 3),
     "Can't use HMC without a gradient")
 })
 
@@ -217,57 +217,57 @@ test_that("can't use hmc with models that lack gradients", {
 test_that("can't use hmc with stochastic models", {
   set.seed(1)
   m <- ex_dust_sir()
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   expect_error(
-    mcstate_sample(m, sampler, 30, n_chains = 3),
+    monty_sample(m, sampler, 30, n_chains = 3),
     "Can't use HMC with stochastic models")
 })
 
 
 test_that("can run hmc model simultaneously", {
   m <- ex_banana()
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  runner <- mcstate_runner_simultaneous()
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+  runner <- monty_runner_simultaneous()
   set.seed(1)
-  res1 <- mcstate_sample(m, sampler, 200, n_chains = 3)
+  res1 <- monty_sample(m, sampler, 200, n_chains = 3)
   set.seed(1)
-  res2 <- mcstate_sample(m, sampler, 200, n_chains = 3, runner = runner)
+  res2 <- monty_sample(m, sampler, 200, n_chains = 3, runner = runner)
   expect_equal(res1, res2)
 })
 
 
 test_that("can run hmc model simultaneously, with debug", {
   m <- ex_banana()
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  debug = TRUE)
-  runner <- mcstate_runner_simultaneous()
+  runner <- monty_runner_simultaneous()
   set.seed(1)
-  res1 <- mcstate_sample(m, sampler, 30, n_chains = 3)
+  res1 <- monty_sample(m, sampler, 30, n_chains = 3)
   ## We don't yet do a good job of auto squashing the details.  I'll
   ## make this change in a future PR so it's more obvious (mrc-5293)
   res1$details <- observer_finalise_auto(res1$details)
   set.seed(1)
-  res2 <- mcstate_sample(m, sampler, 30, n_chains = 3, runner = runner)
+  res2 <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner)
   expect_equal(res1, res2)
 })
 
 
 test_that("can continue a hmc model simultaneously, with debug", {
   m <- ex_banana()
-  sampler <- mcstate_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
+  sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  debug = TRUE)
-  runner <- mcstate_runner_simultaneous()
+  runner <- monty_runner_simultaneous()
   set.seed(1)
-  res1a <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
-  res1b <- mcstate_sample_continue(res1a, 70)
+  res1a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+  res1b <- monty_sample_continue(res1a, 70)
   ## We don't yet do a good job of auto squashing the details.  I'll
   ## make this change in a future PR so it's more obvious (mrc-5293)
   res1b$details <- observer_finalise_auto(res1b$details)
 
   set.seed(1)
-  res2a <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE,
+  res2a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE,
                           runner = runner)
-  res2b <- mcstate_sample_continue(res2a, 70)
+  res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res1a$restart$state, res2a$restart$state)
   expect_equal(res1b, res2b)

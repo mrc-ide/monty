@@ -4,16 +4,16 @@
 #include <cmath>
 #include <limits>
 
-#include "mcstate/random/cuda_compatibility.hpp"
+#include "monty/random/cuda_compatibility.hpp"
 
 // https://docs.nvidia.com/cuda/cuda-math-api/group__CUDA__MATH__SINGLE.html
 // https://stackoverflow.com/a/39409957
 
-namespace mcstate {
+namespace monty {
 namespace math {
 
-// Automatically generated functions; see scripts/update_mcstate_math in
-// the mcstate source repo
+// Automatically generated functions; see scripts/update_monty_math in
+// the monty source repo
 {{functions}}
 
 // Functions written by hand because they don't generalise usefully
@@ -122,7 +122,7 @@ inline float fmodr(float x, float y) {
 
 template <typename real_type>
 real_type fintdiv(real_type x, real_type y) {
-  return mcstate::math::floor(x / y);
+  return monty::math::floor(x / y);
 }
 
 }

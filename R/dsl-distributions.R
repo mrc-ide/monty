@@ -1,6 +1,6 @@
 ##' Report information about supported distributions in the dsl.  This
 ##' is primarily intended for use in packages which use
-##' [mcstate_dsl_parse_distribution], as this function reports
+##' [monty_dsl_parse_distribution], as this function reports
 ##' information about which distributions and arguments would succeed
 ##' there.
 ##'
@@ -20,7 +20,7 @@
 ##'   supporting everything this way soon.
 ##'
 ##' @export
-mcstate_dsl_distributions <- function() {
+monty_dsl_distributions <- function() {
   dsl_distribution_summary
 }
 

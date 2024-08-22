@@ -1,7 +1,7 @@
-##' @title Mcstate Random Number Generator
+##' @title Monty Random Number Generator
 ##'
 ##' @description Create an object that can be used to generate random
-##'   numbers with the same RNG as mcstate uses internally.  This is
+##'   numbers with the same RNG as monty uses internally.  This is
 ##'   primarily meant for debugging and testing the underlying C++
 ##'   rather than a source of random numbers from R.
 ##'
@@ -73,12 +73,12 @@
 ##' The output will not differ based on the number of threads used,
 ##'   only on the number of streams.
 ##'
-##' @return A `mcstate_rng` object, which can be used to drawn random
-##'   numbers from mcstate's distributions.
+##' @return A `monty_rng` object, which can be used to drawn random
+##'   numbers from monty's distributions.
 ##'
 ##' @export
 ##' @examples
-##' rng <- mcstate2::mcstate_rng$new(42)
+##' rng <- monty::monty_rng$new(42)
 ##'
 ##' # Shorthand for Uniform(0, 1)
 ##' rng$random_real(5)
@@ -119,8 +119,8 @@
 ##' # Multinomial distributed random numbers with size and vector of
 ##' # probabiltiies prob
 ##' rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
-mcstate_rng <- R6::R6Class(
-  "mcstate_rng",
+monty_rng <- R6::R6Class(
+  "monty_rng",
   cloneable = FALSE,
 
   private = list(
@@ -133,7 +133,7 @@ mcstate_rng <- R6::R6Class(
     ##' @field info Information about the generator (read-only)
     info = NULL,
 
-    ##' @description Create a `mcstate_rng` object
+    ##' @description Create a `monty_rng` object
     ##'
     ##' @param seed The seed, as an integer, a raw vector or `NULL`.
     ##'   If an integer we will create a suitable seed via the "splitmix64"
@@ -158,8 +158,8 @@ mcstate_rng <- R6::R6Class(
         stop("Invalid value for 'real_type': must be 'double' or 'float'")
       }
       private$float <- real_type == "float"
-      private$ptr <- mcstate_rng_alloc(seed, n_streams, deterministic,
-                                       private$float)
+      private$ptr <- monty_rng_alloc(seed, n_streams, deterministic,
+                                     private$float)
       private$n_streams <- n_streams
 
       if (real_type == "float") {
@@ -193,14 +193,14 @@ mcstate_rng <- R6::R6Class(
     ##'   each stream by advancing it to a state equivalent to
     ##'   2^128 numbers drawn from each stream.
     jump = function() {
-      mcstate_rng_jump(private$ptr, private$float)
+      monty_rng_jump(private$ptr, private$float)
       invisible(self)
     },
 
     ##' @description Longer than `$jump`, the `$long_jump` method is
     ##'   equivalent to 2^192 numbers drawn from each stream.
     long_jump = function() {
-      mcstate_rng_long_jump(private$ptr, private$float)
+      monty_rng_long_jump(private$ptr, private$float)
       invisible(self)
     },
 
@@ -210,7 +210,7 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     random_real = function(n, n_threads = 1L) {
-      mcstate_rng_random_real(private$ptr, n, n_threads, private$float)
+      monty_rng_random_real(private$ptr, n, n_threads, private$float)
     },
 
     ##' @description Generate `n` numbers from a standard normal distribution
@@ -223,8 +223,8 @@ mcstate_rng <- R6::R6Class(
     ##'   and `ziggurat` are supported, with the latter being considerably
     ##'   faster.
     random_normal = function(n, n_threads = 1L, algorithm = "box_muller") {
-      mcstate_rng_random_normal(private$ptr, n, n_threads, algorithm,
-                                private$float)
+      monty_rng_random_normal(private$ptr, n, n_threads, algorithm,
+                              private$float)
     },
 
     ##' @description Generate `n` numbers from a uniform distribution
@@ -237,7 +237,7 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     uniform = function(n, min, max, n_threads = 1L) {
-      mcstate_rng_uniform(private$ptr, n, min, max, n_threads, private$float)
+      monty_rng_uniform(private$ptr, n, min, max, n_threads, private$float)
     },
 
     ##' @description Generate `n` numbers from a normal distribution
@@ -254,8 +254,8 @@ mcstate_rng <- R6::R6Class(
     ##'   and `ziggurat` are supported, with the latter being considerably
     ##'   faster.
     normal = function(n, mean, sd, n_threads = 1L, algorithm = "box_muller") {
-      mcstate_rng_normal(private$ptr, n, mean, sd, n_threads, algorithm,
-                         private$float)
+      monty_rng_normal(private$ptr, n, mean, sd, n_threads, algorithm,
+                       private$float)
     },
 
     ##' @description Generate `n` numbers from a binomial distribution
@@ -269,7 +269,7 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     binomial = function(n, size, prob, n_threads = 1L) {
-      mcstate_rng_binomial(private$ptr, n, size, prob, n_threads, private$float)
+      monty_rng_binomial(private$ptr, n, size, prob, n_threads, private$float)
     },
 
     ##' @description Generate `n` numbers from a negative binomial distribution
@@ -284,8 +284,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     nbinomial = function(n, size, prob, n_threads = 1L) {
-      mcstate_rng_nbinomial(private$ptr, n, size, prob, n_threads,
-                            private$float)
+      monty_rng_nbinomial(private$ptr, n, size, prob, n_threads,
+                          private$float)
     },
 
     ##' @description Generate `n` numbers from a hypergeometric distribution
@@ -302,8 +302,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     hypergeometric = function(n, n1, n2, k, n_threads = 1L) {
-      mcstate_rng_hypergeometric(private$ptr, n, n1, n2, k, n_threads,
-                                 private$float)
+      monty_rng_hypergeometric(private$ptr, n, n1, n2, k, n_threads,
+                               private$float)
     },
 
     ##' @description Generate `n` numbers from a gamma distribution
@@ -316,8 +316,8 @@ mcstate_rng <- R6::R6Class(
     ##''
     ##' @param n_threads Number of threads to use; see Details
     gamma_scale = function(n, shape, scale, n_threads = 1L) {
-      mcstate_rng_gamma_scale(private$ptr, n, shape, scale, n_threads,
-                              private$float)
+      monty_rng_gamma_scale(private$ptr, n, shape, scale, n_threads,
+                            private$float)
     },
 
     ##' @description Generate `n` numbers from a gamma distribution
@@ -330,8 +330,8 @@ mcstate_rng <- R6::R6Class(
     ##''
     ##' @param n_threads Number of threads to use; see Details
     gamma_rate = function(n, shape, rate, n_threads = 1L) {
-      mcstate_rng_gamma_rate(private$ptr, n, shape, rate, n_threads,
-                             private$float)
+      monty_rng_gamma_rate(private$ptr, n, shape, rate, n_threads,
+                           private$float)
     },
 
     ##' @description Generate `n` numbers from a Poisson distribution
@@ -343,7 +343,7 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     poisson = function(n, lambda, n_threads = 1L) {
-      mcstate_rng_poisson(private$ptr, n, lambda, n_threads, private$float)
+      monty_rng_poisson(private$ptr, n, lambda, n_threads, private$float)
     },
 
     ##' @description Generate `n` numbers from a exponential distribution
@@ -354,8 +354,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     exponential_rate = function(n, rate, n_threads = 1L) {
-      mcstate_rng_exponential_rate(private$ptr, n, rate, n_threads,
-                                   private$float)
+      monty_rng_exponential_rate(private$ptr, n, rate, n_threads,
+                                 private$float)
     },
 
     ##' @description Generate `n` numbers from a exponential distribution
@@ -366,8 +366,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     exponential_mean = function(n, mean, n_threads = 1L) {
-      mcstate_rng_exponential_mean(private$ptr, n, mean, n_threads,
-                                   private$float)
+      monty_rng_exponential_mean(private$ptr, n, mean, n_threads,
+                                 private$float)
     },
 
     ##' @description Generate `n` draws from a Cauchy distribution.
@@ -382,8 +382,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     cauchy = function(n, location, scale, n_threads = 1L) {
-      mcstate_rng_cauchy(private$ptr, n, location, scale, n_threads,
-                         private$float)
+      monty_rng_cauchy(private$ptr, n, location, scale, n_threads,
+                       private$float)
     },
 
     ##' @description Generate `n` draws from a multinomial distribution.
@@ -401,8 +401,8 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     multinomial = function(n, size, prob, n_threads = 1L) {
-      mcstate_rng_multinomial(private$ptr, n, size, prob, n_threads,
-                              private$float)
+      monty_rng_multinomial(private$ptr, n, size, prob, n_threads,
+                            private$float)
     },
 
     ##' @description Generate `n` numbers from a beta distribution
@@ -415,15 +415,15 @@ mcstate_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     beta = function(n, a, b, n_threads = 1L) {
-      mcstate_rng_beta(private$ptr, n, a, b, n_threads, private$float)
+      monty_rng_beta(private$ptr, n, a, b, n_threads, private$float)
     },
 
     ##' @description
     ##' Returns the state of the random number stream. This returns a
     ##' raw vector of length 32 * n_streams. It is primarily intended for
-    ##' debugging as one cannot (yet) initialise a mcstate_rng object with this
+    ##' debugging as one cannot (yet) initialise a monty_rng object with this
     ##' state.
     state = function() {
-      mcstate_rng_state(private$ptr, private$float)
+      monty_rng_state(private$ptr, private$float)
     }
   ))

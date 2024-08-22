@@ -31,7 +31,7 @@ update_state <- function(state, pars, density, accept, model, observer, rng) {
 
 initialise_rng_state <- function(model, rng) {
   if (isTRUE(model$properties$is_stochastic)) {
-    model$rng_state$set(mcstate_rng$new(rng$state())$jump()$state())
+    model$rng_state$set(monty_rng$new(rng$state())$jump()$state())
   }
 }
 

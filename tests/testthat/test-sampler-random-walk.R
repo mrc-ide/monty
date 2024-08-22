@@ -1,7 +1,7 @@
 test_that("can draw samples from a trivial model", {
   m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
-  res <- mcstate_sample(m, sampler, 100)
+  sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
+  res <- monty_sample(m, sampler, 100)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
   expect_equal(dim(res$pars), c(1, 100, 1))
@@ -12,9 +12,9 @@ test_that("validate sampler against model on initialisation", {
   m <- ex_simple_gamma1()
 
   state <- list(pars = 1, density = -Inf)
-  sampler1 <- mcstate_sampler_random_walk(vcv = diag(1) * 0.01)
-  sampler2 <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
-  r <- mcstate_rng$new()
+  sampler1 <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+  r <- monty_rng$new()
 
   expect_no_error(sampler1$initialise(1, m, NULL, r))
   expect_error(
@@ -28,8 +28,8 @@ test_that("can draw samples from a random model", {
   set.seed(1)
   m <- ex_dust_sir()
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
-  sampler <- mcstate_sampler_random_walk(vcv = vcv)
-  res <- mcstate_sample(m, sampler, 20)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
+  res <- monty_sample(m, sampler, 20)
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details", "observations"))
 })
@@ -38,9 +38,9 @@ test_that("can draw samples from a random model", {
 test_that("can observe a model", {
   m <- ex_dust_sir(save_trajectories = TRUE)
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
-  sampler <- mcstate_sampler_random_walk(vcv = vcv)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
 
-  observer <- mcstate_observer(
+  observer <- monty_observer(
     function(model, rng) {
       i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
       model$details(i)
@@ -48,7 +48,7 @@ test_that("can observe a model", {
 
   ## This takes quite a while, and that seems mostly to be the time
   ## taken to call the filter in dust.
-  res <- mcstate_sample(m, sampler, 20, n_chains = 3, observer = observer)
+  res <- monty_sample(m, sampler, 20, n_chains = 3, observer = observer)
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details", "observations"))
   expect_equal(names(res$observations),
@@ -65,21 +65,21 @@ test_that("can observe a model", {
 test_that("can continue observed models", {
   m <- ex_dust_sir(save_trajectories = TRUE)
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
-  sampler <- mcstate_sampler_random_walk(vcv = vcv)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
 
-  observer <- mcstate_observer(
+  observer <- monty_observer(
     function(model, rng) {
       # i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
       model$details(4)
     })
 
   set.seed(1)
-  res1 <- mcstate_sample(m, sampler, 15, n_chains = 3, observer = observer)
+  res1 <- monty_sample(m, sampler, 15, n_chains = 3, observer = observer)
 
   set.seed(1)
-  res2a <- mcstate_sample(m, sampler, 5, n_chains = 3, observer = observer,
+  res2a <- monty_sample(m, sampler, 5, n_chains = 3, observer = observer,
                           restartable = TRUE)
-  res2b <- mcstate_sample_continue(res2a, 10)
+  res2b <- monty_sample_continue(res2a, 10)
 
   expect_equal(res1$observations, res2b$observations)
 })
@@ -87,11 +87,11 @@ test_that("can continue observed models", {
 
 test_that("can run multiple samples at once", {
   m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
+  sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   p <- matrix(runif(5), 1)
   ## TODO: we need a much better rng support here; we'll need to make
   ## a tweak to the rng code to to a long jump between each chain.
-  r <- mcstate_rng$new(n_streams = 5)
+  r <- monty_rng$new(n_streams = 5)
   state0 <- sampler$initialise(p, m, NULL, r)
   state1 <- sampler$step(state0, m, NULL, r)
 
@@ -104,33 +104,33 @@ test_that("can run multiple samples at once", {
 
 test_that("can run random walk sampler simultaneously", {
   m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
+  sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
 
   set.seed(1)
-  res1 <- mcstate_sample(m, sampler, 100, n_chains = 3)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
 
   set.seed(1)
-  runner <- mcstate_runner_simultaneous()
-  res2 <- mcstate_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  runner <- monty_runner_simultaneous()
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
   expect_equal(res1, res2)
 })
 
 
 test_that("can continue a simultaneous random walk sampler", {
   m <- ex_simple_gamma1()
-  sampler <- mcstate_sampler_random_walk(vcv = matrix(0.01, 1, 1))
+  sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
 
   set.seed(1)
-  res1a <- mcstate_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
-  res1b <- mcstate_sample_continue(res1a, 70)
+  res1a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+  res1b <- monty_sample_continue(res1a, 70)
 
   set.seed(1)
-  runner <- mcstate_runner_simultaneous()
-  res2a <- mcstate_sample(m, sampler, 30, n_chains = 3, runner = runner,
+  runner <- monty_runner_simultaneous()
+  res2a <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner,
                           restartable = TRUE)
   expect_equal(res2a$restart$state, res1a$restart$state)
 
-  res2b <- mcstate_sample_continue(res2a, 70)
+  res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res2b, res1b)
 })
@@ -139,14 +139,14 @@ test_that("can continue a simultaneous random walk sampler", {
 test_that("validate number of parameter sets", {
   m <- ex_simple_gamma1()
   vcv <- array(1 * 10^c(-4, -3, -2, -1, 0), c(1, 1, 5))
-  sampler <- mcstate_sampler_random_walk(vcv = vcv)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
   expect_error(
-    mcstate_sample(m, sampler, 200, n_chains = 5),
+    monty_sample(m, sampler, 200, n_chains = 5),
     "Incompatible number of parameter sets (1) and slices in vcv (5)",
     fixed = TRUE)
-  runner <- mcstate_runner_simultaneous()
+  runner <- monty_runner_simultaneous()
   expect_error(
-    mcstate_sample(m, sampler, 200, n_chains = 3, runner = runner),
+    monty_sample(m, sampler, 200, n_chains = 3, runner = runner),
     "Incompatible number of parameter sets (3) and slices in vcv (5)",
     fixed = TRUE)
 })
@@ -207,7 +207,7 @@ test_that("can reflect parameters in matrix form", {
 
 
   mvn <- make_rmvnorm(diag(3) * c(4, 8, 16), centred = TRUE)
-  r <- mcstate_rng$new(seed = 42)
+  r <- monty_rng$new(seed = 42)
   x <- replicate(10, mvn(r))
   x_min <- c(-2, -Inf, -1)
   x_max <- c(2, Inf, 1)
@@ -227,9 +227,9 @@ test_that("Can create a reflected random walk proposal", {
 
   expect_equal(body(p2), body(p1))
 
-  r1 <- mcstate_rng$new(seed = 42)
-  r2 <- mcstate_rng$new(seed = 42)
-  r3 <- mcstate_rng$new(seed = 42)
+  r1 <- monty_rng$new(seed = 42)
+  r2 <- monty_rng$new(seed = 42)
+  r3 <- monty_rng$new(seed = 42)
 
   x1 <- replicate(10, p1(x, r1))
   x2 <- replicate(10, p2(x, r2))
@@ -241,7 +241,7 @@ test_that("Can create a reflected random walk proposal", {
 
 
 test_that("can run sampler with reflecting boundaries", {
-  model <- mcstate_model(
+  model <- monty_model(
     list(parameters = "x",
          domain = cbind(-1, 1),
          density = function(x) {
@@ -254,19 +254,19 @@ test_that("can run sampler with reflecting boundaries", {
            rng$uniform(1, -1, 1)
          }))
 
-  s1 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
-  s2 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reflect")
-  s3 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
+  s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
+  s2 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reflect")
+  s3 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
 
-  expect_error(mcstate_sample(model, s1, 100), "parameter out of bounds")
+  expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
 
-  res2 <- mcstate_sample(model, s2, 100)
+  res2 <- monty_sample(model, s2, 100)
   r2 <- range(drop(res2$pars))
   expect_gt(diff(r2), 0.75)
   expect_gt(r2[[1]], -1)
   expect_lt(r2[[2]], 1)
 
-  res3 <- mcstate_sample(model, s3, 100)
+  res3 <- monty_sample(model, s3, 100)
   r3 <- range(drop(res3$pars))
   expect_gt(diff(r3), 0.75)
   expect_gt(r3[[1]], -1)
@@ -281,7 +281,7 @@ test_that("can run sampler with reflecting boundaries", {
 
 
 test_that("can run sampler with rejecting boundaries", {
-  model <- mcstate_model(
+  model <- monty_model(
     list(parameters = "x",
          domain = cbind(-1, 1),
          density = function(x) {
@@ -294,11 +294,11 @@ test_that("can run sampler with rejecting boundaries", {
            rng$uniform(1, -1, 1)
          }))
 
-  s1 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
-  s2 <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
+  s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
+  s2 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
 
-  expect_error(mcstate_sample(model, s1, 100), "parameter out of bounds")
-  res <- mcstate_sample(model, s2, 100)
+  expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
+  res <- monty_sample(model, s2, 100)
   r <- range(drop(res$pars))
   expect_gt(diff(r), 0.75)
   expect_gt(r[[1]], -1)
@@ -307,7 +307,7 @@ test_that("can run sampler with rejecting boundaries", {
 
 
 test_that("can run sampler with rejecting boundaries simultaneously", {
-  m <- mcstate_model(
+  m <- monty_model(
     list(parameters = "x",
          domain = cbind(-1, 1),
          density = function(x) {
@@ -316,28 +316,28 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
          direct_sample = function(rng) {
            rng$uniform(1, -1, 1)
          }),
-    mcstate_model_properties(allow_multiple_parameters = TRUE))
+    monty_model_properties(allow_multiple_parameters = TRUE))
 
-  s <- mcstate_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
-  runner <- mcstate_runner_simultaneous()
+  s <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "reject")
+  runner <- monty_runner_simultaneous()
 
   n_steps <- 30
 
   set.seed(1)
-  res <- mcstate_sample(m, s, n_steps, n_chains = 4, runner = runner)
+  res <- monty_sample(m, s, n_steps, n_chains = 4, runner = runner)
   set.seed(1)
-  cmp <- mcstate_sample(m, s, n_steps, n_chains = 4)
+  cmp <- monty_sample(m, s, n_steps, n_chains = 4)
 
   expect_equal(res, cmp)
 })
 
 
 test_that("can print a sampler object", {
-  s <- mcstate_sampler_random_walk(diag(1))
+  s <- monty_sampler_random_walk(diag(1))
   res <- evaluate_promise(withVisible(print(s)))
   expect_mapequal(res$result, list(value = s, visible = FALSE))
   expect_match(
     res$messages,
-    "<mcstate_sampler: Random walk (mcstate_random_walk)>",
+    "<monty_sampler: Random walk (monty_random_walk)>",
     fixed = TRUE, all = FALSE)
 })

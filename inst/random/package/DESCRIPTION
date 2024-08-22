@@ -1,10 +1,10 @@
 Package: rnguse
-Title: Use 'mcstate' RNG From Elsewhere
+Title: Use 'monty' RNG From Elsewhere
 Version: 0.1.0
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"))
-Description: Simple example package showing how to use mcstate's random
+Description: Simple example package showing how to use monty's random
     number library from your R package's C++ code.
 License: CC0
 Encoding: UTF-8
-LinkingTo: cpp11, mcstate2
+LinkingTo: cpp11, monty

@@ -1,6 +1,6 @@
 ##' Create an adaptive Metropolis-Hastings sampler, which will tune
 ##' its variance covariance matrix (vs the simple random walk
-##' sampler [mcstate_sampler_random_walk]).
+##' sampler [monty_sampler_random_walk]).
 ##'
 ##' Efficient exploration of the parameter space during an MCMC might
 ##' be difficult when the target distribution is of high
@@ -61,7 +61,7 @@
 ##'
 ##' @param acceptance_target The target for the fraction of proposals
 ##'   that should be accepted (optimally) for the adaptive part of the
-##'   mixture model.
+##'   chain.
 ##'
 ##' @param forget_rate The rate of forgetting early parameter sets from the
 ##'   empirical variance-covariance matrix in the MCMC chains. For example,
@@ -105,25 +105,25 @@
 ##'     the domain.
 ##'
 ##' The initial point selected will lie within the domain, as this is
-##' enforced by [mcstate_sample].
+##' enforced by [monty_sample].
 ##'
-##' @return A `mcstate_sampler` object, which can be used with
-##'   [mcstate_sample]
+##' @return A `monty_sampler` object, which can be used with
+##'   [monty_sample]
 ##'
 ##' @export
-mcstate_sampler_adaptive <- function(initial_vcv,
-                                     initial_vcv_weight = 1000,
-                                     initial_scaling = 1,
-                                     initial_scaling_weight = NULL,
-                                     min_scaling = 0,
-                                     scaling_increment = NULL,
-                                     log_scaling_update = TRUE,
-                                     acceptance_target = 0.234,
-                                     forget_rate = 0.2,
-                                     forget_end = Inf,
-                                     adapt_end = Inf,
-                                     pre_diminish = 0,
-                                     boundaries = "reflect") {
+monty_sampler_adaptive <- function(initial_vcv,
+                                   initial_vcv_weight = 1000,
+                                   initial_scaling = 1,
+                                   initial_scaling_weight = NULL,
+                                   min_scaling = 0,
+                                   scaling_increment = NULL,
+                                   log_scaling_update = TRUE,
+                                   acceptance_target = 0.234,
+                                   forget_rate = 0.2,
+                                   forget_end = Inf,
+                                   adapt_end = Inf,
+                                   pre_diminish = 0,
+                                   boundaries = "reflect") {
   ## This sampler is stateful; we will be updating our estimate of the
   ## mean and vcv of the target distribution, along with the our
   ## scaling factor, weight and autocorrelations.
@@ -264,13 +264,13 @@ mcstate_sampler_adaptive <- function(initial_vcv,
     list2env(state, internal)
   }
 
-  mcstate_sampler("Adaptive Metropolis-Hastings",
-                  "mcstate_sampler_adaptive",
-                  initialise,
-                  step,
-                  finalise,
-                  get_internal_state,
-                  set_internal_state)
+  monty_sampler("Adaptive Metropolis-Hastings",
+                "monty_sampler_adaptive",
+                initialise,
+                step,
+                finalise,
+                get_internal_state,
+                set_internal_state)
 }
 
 

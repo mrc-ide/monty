@@ -15,21 +15,21 @@ knitr::opts_chunk$set(
 set.seed(1)
 ```
 
-This vignette outlines some ways of working with samples generated from running an MCMC with `mcstate_sample`.  We'll flesh this out as we develop nicer ways of working with samples, and mostly exists so that we can point to it from other documentation, including from other packages (e.g., from [`odin2`](https://mrc-ide.github.io/odin2)).
+This vignette outlines some ways of working with samples generated from running an MCMC with `monty_sample`.  We'll flesh this out as we develop nicer ways of working with samples, and mostly exists so that we can point to it from other documentation, including from other packages (e.g., from [`odin2`](https://mrc-ide.github.io/odin2)).
 
 ```{r}
-library(mcstate2)
+library(monty)
 ```
 
-# The structure of mcstate samples
+# The structure of monty samples
 
-All samplers and runners produce samples with the same basic structure.  This structure is documented (here) so you are free to use this structure if you want to just dive in and manipulate things.  Please treat output as read-only; extract data all you want, but make a copy and don't change any value within the samples structure if you are going to pass it back into an `mcstate2` function, as we assume that they have not been modified.
+All samplers and runners produce samples with the same basic structure.  This structure is documented (here) so you are free to use this structure if you want to just dive in and manipulate things.  Please treat output as read-only; extract data all you want, but make a copy and don't change any value within the samples structure if you are going to pass it back into a `monty` function, as we assume that they have not been modified.
 
 ```{r, include = FALSE}
 # This is the example from before samplers.Rmd; at some point we will
 # need some easy-to-use examples in the package.
 banana <- function(sd = 0.5) {
-  mcstate_model(list(
+  monty_model(list(
     parameters = c("alpha", "beta"),
     direct_sample = function(rng) {
       beta <- rng$random_normal(1)
@@ -51,17 +51,17 @@ banana <- function(sd = 0.5) {
 }
 
 set.seed(1)
-sampler <- mcstate_sampler_random_walk(vcv = diag(2) * 0.01)
-samples <- mcstate_sample(banana(0.5), sampler, 2000, n_chains = 4)
+sampler <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+samples <- monty_sample(banana(0.5), sampler, 2000, n_chains = 4)
 ```
 
-Below, `samples` is a poorly mixed result of samples with 2 parameters, 2000 samples, and 4 chains.  It was the result of running `mcstate_sample()` on the banana model from `vignette("samplers")`, and has class `mcstate_samples`.
+Below, `samples` is a poorly mixed result of samples with 2 parameters, 2000 samples, and 4 chains.  It was the result of running `monty_sample()` on the banana model from `vignette("samplers")`, and has class `monty_samples`.
 
 ```{r}
 samples
 ```
 
-Each `mcstate_samples` object contains an element `pars` which contains sampled parameters
+Each `monty_samples` object contains an element `pars` which contains sampled parameters
 
 ```{r}
 dim(samples$pars)

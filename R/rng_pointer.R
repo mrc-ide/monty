@@ -1,14 +1,14 @@
 ##' @title Create pointer to random number generator stream
 ##'
 ##' @description This function exists to support use from other
-##'   packages that wish to use mcstate's random number support, and
+##'   packages that wish to use monty's random number support, and
 ##'   creates an opaque pointer to a set of random number streams.
 ##'
 ##' @export
 ##' @examples
-##' mcstate2::mcstate_rng_pointer$new()
-mcstate_rng_pointer <- R6::R6Class(
-  "mcstate_rng_pointer",
+##' monty::monty_rng_pointer$new()
+monty_rng_pointer <- R6::R6Class(
+  "monty_rng_pointer",
   cloneable = FALSE,
 
   private = list(
@@ -25,9 +25,9 @@ mcstate_rng_pointer <- R6::R6Class(
     ##'   (read-only)
     n_streams = NULL,
 
-    ##' @description Create a new `mcstate_rng_pointer` object
+    ##' @description Create a new `monty_rng_pointer` object
     ##'
-    ##' @param seed The random number seed to use (see [mcstate2::mcstate_rng]
+    ##' @param seed The random number seed to use (see [monty::monty_rng]
     ##'   for details)
     ##'
     ##' @param n_streams The number of independent random number streams to
@@ -36,13 +36,13 @@ mcstate_rng_pointer <- R6::R6Class(
     ##' @param long_jump Optionally an integer indicating how many
     ##'   "long jumps" should be carried out immediately on creation.
     ##'   This can be used to create a distributed parallel random number
-    ##'   generator (see [mcstate2::mcstate_rng_distributed_state])
+    ##'   generator (see [monty::monty_rng_distributed_state])
     ##'
     ##' @param algorithm The random number algorithm to use. The default is
     ##'   `xoshiro256plus` which is a good general choice
     initialize = function(seed = NULL, n_streams = 1L, long_jump = 0L,
                           algorithm = "xoshiro256plus") {
-      dat <- mcstate_rng_pointer_init(n_streams, seed, long_jump, algorithm)
+      dat <- monty_rng_pointer_init(n_streams, seed, long_jump, algorithm)
       private$ptr_ <- dat[[1L]]
       private$state_ <- dat[[2L]]
       private$is_current_ <- TRUE
@@ -57,7 +57,7 @@ mcstate_rng_pointer <- R6::R6Class(
     ##' Typically this is only needed before serialisation if you have
     ##' ever used the object.
     sync = function() {
-      mcstate_rng_pointer_sync(private, self$algorithm)
+      monty_rng_pointer_sync(private, self$algorithm)
       invisible(self)
     },
 

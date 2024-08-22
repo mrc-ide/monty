@@ -14,25 +14,25 @@ knitr::opts_chunk$set(
 )
 ```
 
-`mcstate2` includes a simple probabilistic domain-specific language (DSL) that is inspired by `stan` and [Statistical Rethinking](https://xcelab.net/rm/).  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in the future.  In particular we do not expect the DSL to be useful in writing likelihood functions for comparison to data; we expect that if your model is simple enough for this you would be better off using `stan` or some similarly flexible system.
+`monty` includes a simple probabilistic domain-specific language (DSL) that is inspired by `stan` and [Statistical Rethinking](https://xcelab.net/rm/).  It is designed to make some tasks a bit easier, particularly when defining priors for your model.  We expect that this DSL is not sufficiently advanced to represent most interesting models but it may get more clever and flexible in the future.  In particular we do not expect the DSL to be useful in writing likelihood functions for comparison to data; we expect that if your model is simple enough for this you would be better off using `stan` or some similarly flexible system.
 
 ```{r}
-library(mcstate2)
+library(monty)
 ```
 
 # Some simple examples
 
-In chapter 4 of Statistical Rethinking, we build a regression model of height with parameters $\alpha$, $\beta$ and $\sigma$.  We can define the model for the prior probability of this model in mcstate by running
+In chapter 4 of Statistical Rethinking, we build a regression model of height with parameters $\alpha$, $\beta$ and $\sigma$.  We can define the model for the prior probability of this model in monty by running
 
 ```{r}
-prior <- mcstate_dsl({
+prior <- monty_dsl({
   alpha ~ Normal(178, 20)
   beta ~ Normal(0, 10)
   sigma ~ Uniform(0, 50)
 })
 ```
 
-This will define a new `mcstate_model()` object that represents the prior, but with all the bits that we might need depending on how we want to use it:
+This will define a new `monty_model()` object that represents the prior, but with all the bits that we might need depending on how we want to use it:
 
 We have model parameters
 
@@ -48,10 +48,10 @@ We can compute the domain for your model:
 prior$domain
 ```
 
-We can draw samples from the model if we provide an [mcstate_rng] object
+We can draw samples from the model if we provide a `monty_rng` object
 
 ```{r}
-rng <- mcstate_rng$new()
+rng <- monty_rng$new()
 theta <- prior$direct_sample(rng)
 theta
 ```

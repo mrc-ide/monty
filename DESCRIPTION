@@ -1,20 +1,20 @@
-Package: mcstate2
-Title: Next Generation mcstate
-Version: 0.1.7
+Package: monty
+Title: Monte Carlo Models
+Version: 0.2.0
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"),
              person("Imperial College of Science, Technology and Medicine",
                     role = "cph"))
 Description: Experimental sources for the next generation of mcstate,
-    which will support much of the old mcstate functionality but new
-    things like better parameter interfaces, Hamiltonian Monte Carlo,
-    and other features.
+    now called 'monty', which will support much of the old mcstate
+    functionality but new things like better parameter interfaces,
+    Hamiltonian Monte Carlo, and other features.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-URL: https://mrc-ide.github.io/mcstate2, https://github.com/mrc-ide/mcstate2
-BugReports: https://github.com/mrc-ide/mcstate2/issues
+URL: https://mrc-ide.github.io/monty, https://github.com/mrc-ide/monty
+BugReports: https://github.com/mrc-ide/monty/issues
 Imports:
     R6,
     cli,

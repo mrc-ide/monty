@@ -1,9 +1,9 @@
 #pragma once
 {{header}}
 
-#include "mcstate/random/cuda_compatibility.hpp"
+#include "monty/random/cuda_compatibility.hpp"
 
-namespace mcstate {
+namespace monty {
 namespace random {
 
 CONSTANT int k_tail_values_max_f = {{k_max_f}};

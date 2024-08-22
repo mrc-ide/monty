@@ -4,8 +4,8 @@
 
 #include <cpp11.hpp>
 
-#include <mcstate/random/generator.hpp>
-#include <mcstate/r/random.hpp>
+#include <monty/random/generator.hpp>
+#include <monty/r/random.hpp>
 template <typename T>
 std::string to_string(const T& t) {
   std::ostringstream ss;
@@ -15,7 +15,7 @@ std::string to_string(const T& t) {
 
 template <typename T>
 std::vector<std::string> test_xoshiro_run1(cpp11::environment ptr) {
-  auto rng = mcstate::random::r::rng_pointer_get<T>(ptr, 1);
+  auto rng = monty::random::r::rng_pointer_get<T>(ptr, 1);
   auto& state = rng->state(0);
 
   constexpr int n = 10;
@@ -23,11 +23,11 @@ std::vector<std::string> test_xoshiro_run1(cpp11::environment ptr) {
   std::vector<std::string> ret;
   for (int i = 0; i < 3 * n; ++i) {
     if (i == n - 1) {
-      mcstate::random::jump(state);
+      monty::random::jump(state);
     } else if (i == 2 * n - 1) {
-      mcstate::random::long_jump(state);
+      monty::random::long_jump(state);
     }
-    auto x = mcstate::random::next(state);
+    auto x = monty::random::next(state);
     ret.push_back(to_string(x));
   }
 
@@ -39,29 +39,29 @@ std::vector<std::string> test_xoshiro_run(cpp11::environment obj) {
   const auto algorithm = cpp11::as_cpp<std::string>(obj["algorithm"]);
   std::vector<std::string> ret;
   if (algorithm == "xoshiro256starstar") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro256starstar>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro256starstar>(obj);
   } else if (algorithm == "xoshiro256plusplus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro256plusplus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro256plusplus>(obj);
   } else if (algorithm == "xoshiro256plus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro256plus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro256plus>(obj);
   } else if (algorithm == "xoshiro128starstar") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro128starstar>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro128starstar>(obj);
   } else if (algorithm == "xoshiro128plusplus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro128plusplus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro128plusplus>(obj);
   } else if (algorithm == "xoshiro128plus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro128plus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro128plus>(obj);
   } else if (algorithm == "xoroshiro128starstar") {
-    ret = test_xoshiro_run1<mcstate::random::xoroshiro128starstar>(obj);
+    ret = test_xoshiro_run1<monty::random::xoroshiro128starstar>(obj);
   } else if (algorithm == "xoroshiro128plusplus") {
-    ret = test_xoshiro_run1<mcstate::random::xoroshiro128plusplus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoroshiro128plusplus>(obj);
   } else if (algorithm == "xoroshiro128plus") {
-    ret = test_xoshiro_run1<mcstate::random::xoroshiro128plus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoroshiro128plus>(obj);
   } else if (algorithm == "xoshiro512starstar") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro512starstar>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro512starstar>(obj);
   } else if (algorithm == "xoshiro512plusplus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro512plusplus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro512plusplus>(obj);
   } else if (algorithm == "xoshiro512plus") {
-    ret = test_xoshiro_run1<mcstate::random::xoshiro512plus>(obj);
+    ret = test_xoshiro_run1<monty::random::xoshiro512plus>(obj);
   }
 
   return ret;

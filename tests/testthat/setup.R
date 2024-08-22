@@ -1,4 +1,4 @@
 withr::local_options(
-  mcstate.progress = FALSE,
+  monty.progress = FALSE,
   .local_envir = teardown_env()
 )

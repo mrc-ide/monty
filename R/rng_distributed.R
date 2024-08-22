@@ -7,7 +7,7 @@
 ##'
 ##' @title Create a set of distributed seeds
 ##'
-##' @param seed Initial seed to use. As for [mcstate2::mcstate_rng], this can
+##' @param seed Initial seed to use. As for [monty::monty_rng], this can
 ##'   be `NULL` (create a seed using R's generators), an integer or a
 ##'   raw vector of appropriate length.
 ##'
@@ -19,26 +19,26 @@
 ##' @param algorithm The name of an algorithm to use.
 ##'
 ##' @return A list of either raw vectors (for
-##'   `mcstate_rng_distributed_state`) or of [mcstate2::mcstate_rng_pointer]
-##'   objects (for `mcstate_rng_distributed_pointer`)
+##'   `monty_rng_distributed_state`) or of [monty::monty_rng_pointer]
+##'   objects (for `monty_rng_distributed_pointer`)
 ##'
 ##' @export
-##' @rdname mcstate_rng_distributed
+##' @rdname monty_rng_distributed
 ##' @examples
-##' mcstate2::mcstate_rng_distributed_state(n_nodes = 2)
-##' mcstate2::mcstate_rng_distributed_pointer(n_nodes = 2)
-mcstate_rng_distributed_state <- function(seed = NULL,
-                                          n_streams = 1L,
-                                          n_nodes = 1L,
-                                          algorithm = "xoshiro256plus") {
-  p <- mcstate_rng_pointer$new(seed, n_streams, algorithm = algorithm)
+##' monty::monty_rng_distributed_state(n_nodes = 2)
+##' monty::monty_rng_distributed_pointer(n_nodes = 2)
+monty_rng_distributed_state <- function(seed = NULL,
+                                        n_streams = 1L,
+                                        n_nodes = 1L,
+                                        algorithm = "xoshiro256plus") {
+  p <- monty_rng_pointer$new(seed, n_streams, algorithm = algorithm)
 
   ret <- vector("list", n_nodes)
   for (i in seq_len(n_nodes)) {
     s <- p$state()
     ret[[i]] <- s
     if (i < n_nodes) {
-      p <- mcstate_rng_pointer$new(s, n_streams, 1L, algorithm = algorithm)
+      p <- monty_rng_pointer$new(s, n_streams, 1L, algorithm = algorithm)
     }
   }
 
@@ -47,12 +47,12 @@ mcstate_rng_distributed_state <- function(seed = NULL,
 
 
 ##' @export
-##' @rdname mcstate_rng_distributed
-mcstate_rng_distributed_pointer <- function(seed = NULL,
-                                            n_streams = 1L,
-                                            n_nodes = 1L,
-                                            algorithm = "xoshiro256plus") {
-  state <- mcstate_rng_distributed_state(seed, n_streams, n_nodes, algorithm)
-  lapply(state, mcstate_rng_pointer$new,
+##' @rdname monty_rng_distributed
+monty_rng_distributed_pointer <- function(seed = NULL,
+                                          n_streams = 1L,
+                                          n_nodes = 1L,
+                                          algorithm = "xoshiro256plus") {
+  state <- monty_rng_distributed_state(seed, n_streams, n_nodes, algorithm)
+  lapply(state, monty_rng_pointer$new,
          n_streams = n_streams, algorithm = algorithm)
 }

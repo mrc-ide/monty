@@ -19,7 +19,7 @@
 ##' @title Create observer
 ##'
 ##' @param observe A function that will run with arguments `model`
-##'   (the model that you passed in to [mcstate_model]) and `rng` (an
+##'   (the model that you passed in to [monty_model]) and `rng` (an
 ##'   rng object).  This function should return a list.  It is best if
 ##'   the list returned is named, with no duplicated names, and with
 ##'   return values that have the same exact dimensions for every
@@ -37,18 +37,18 @@
 ##'   which is the list with one set of observations per chain.
 ##'
 ##' @param append A function that runs after a continuation of chain
-##'   has run (via [mcstate_sample_continue].  Takes two arguments
+##'   has run (via [monty_sample_continue].  Takes two arguments
 ##'   representing the fully simplified observations from the first
 ##'   and second chains.
 ##'
-##' @return An object with class `mcstate_observer` which can be
-##'   passed in to `mcstate_sample`.
+##' @return An object with class `monty_observer` which can be
+##'   passed in to `monty_sample`.
 ##'
 ##' @export
-mcstate_observer <- function(observe,
-                             finalise = NULL,
-                             combine = NULL,
-                             append = NULL) {
+monty_observer <- function(observe,
+                           finalise = NULL,
+                           combine = NULL,
+                           append = NULL) {
   if (is.null(finalise)) {
     finalise <- observer_finalise_auto
   }
@@ -62,16 +62,16 @@ mcstate_observer <- function(observe,
               finalise = finalise,
               combine = combine,
               append = append)
-  class(ret) <- "mcstate_observer"
+  class(ret) <- "monty_observer"
   ret
 }
 
 
 ##' @export
-print.mcstate_observer <- function(x, ...) {
-  cli::cli_h1("<mcstate_observer>")
-  cli::cli_alert_info("Use {.help mcstate_sample} to use this observer")
-  cli::cli_alert_info("See {.help mcstate_observer} for more information")
+print.monty_observer <- function(x, ...) {
+  cli::cli_h1("<monty_observer>")
+  cli::cli_alert_info("Use {.help monty_sample} to use this observer")
+  cli::cli_alert_info("See {.help monty_observer} for more information")
   invisible(x)
 }
 

@@ -1,4 +1,4 @@
-## Standalone use of mcstate's RNG
+## Standalone use of monty's RNG
 
 Configure with
 
@@ -6,7 +6,7 @@ Configure with
 ./configure
 ```
 
-which will write out a `Makefile` with the path to your copy of mcstate's random library, then
+which will write out a `Makefile` with the path to your copy of monty's random library, then
 
 ```
 make
