@@ -10,9 +10,9 @@
 
 See the [package vignette](https://mrc-ide.github.io/monty/articles/monty.html) for a basic introduction.
 
-The package is in an early, though rapid, stage of development and we cannot guarantee that interfaces will not change (in fact, we can guarantee that the **will** really).  However the core concepts have now solidified.
+The package is in an early, though rapid, stage of development and we cannot guarantee that interfaces will not change (in fact, we can guarantee that they **will** really).  However the core concepts have now solidified.
 
-The core of the package is build around some basic ideas:
+The core of the package is built around some basic ideas:
 
 * you have some [statistical model](https://mrc-ide.github.io/monty/reference/monty_model.html) from which you would like to draw samples using MCMC ([`monty::monty_sample`](https://mrc-ide.github.io/monty/reference/monty_sample.html))
 * you can choose between different [samplers](https://mrc-ide.github.io/monty/articles/samplers.html) depending on the [properties of your model](https://mrc-ide.github.io/monty/reference/monty_model_properties.html)
