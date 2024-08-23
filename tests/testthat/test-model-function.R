@@ -37,3 +37,18 @@ test_that("packer must be a monty_packer if provided", {
     monty_model_function(fn, TRUE),
     "Expected 'packer' to be a 'monty_packer' object")
 })
+
+
+test_that("can fix some data", {
+  p <- monty_packer(c("a", "b"))
+  fn <- function(a, b, x) {
+    dnorm(x, b, a)
+  }
+  m <- monty_model_function(fn, fixed = list(x = 10))
+  expect_equal(m$parameters, c("a", "b"))
+  expect_equal(monty_model_density(m, c(1, 2)),
+               dnorm(10, 2, 1))
+  expect_error(
+    monty_model_function(fn, p, fixed = list(x = 10)),
+    "Can't provide both 'packer' and 'fixed'")
+})

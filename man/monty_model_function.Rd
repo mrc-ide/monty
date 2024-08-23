@@ -4,7 +4,7 @@
 \alias{monty_model_function}
 \title{Create \code{monty_model} from a function computing density}
 \usage{
-monty_model_function(density, packer = NULL)
+monty_model_function(density, packer = NULL, fixed = NULL)
 }
 \arguments{
 \item{density}{A function to compute log density.  It can take any
@@ -14,6 +14,11 @@ number of parameters}
 your function parameters are packed into a numeric vector.  You
 can typically omit this if all the arguments to your functions
 are present in your numeric vector and if they are all scalars.}
+
+\item{fixed}{Optionally, a named list of fixed values to
+substitute into the call to \code{density}.  This cannot be used in
+conjunction with \code{packer} (you should use the \code{fixed} argument
+to \code{monty_packer} instead).}
 }
 \value{
 A \link{monty_model} object that computes log density with the
