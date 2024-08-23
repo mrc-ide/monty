@@ -63,7 +63,7 @@ fn <- function(a, b, sigma, data) {
 
 We can wrap this density function in a `monty_model`.  The `data` argument is "fixed" - it's not part of the statistical model, so we'll pass that in as the `fixed` argument:
 
-```
+```{r}
 likelihood <- monty_model_function(fn, fixed = list(data = data))
 likelihood
 ```
