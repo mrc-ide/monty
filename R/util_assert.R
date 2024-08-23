@@ -1,4 +1,5 @@
-assert_is <- function(x, what, name = deparse(substitute(x)), call = NULL) {
+assert_is <- function(x, what, name = deparse(substitute(x)),
+                      call = parent.frame()) {
   if (!inherits(x, what)) {
     cli::cli_abort("Expected '{name}' to be a '{what}' object",
                    arg = name, call = call)

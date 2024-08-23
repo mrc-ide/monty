@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette is an introduction to some of the ideas in `monty`.  As the package is not ready for users to use it, this is more a place for us to jot down ideas about what it will do.
+This vignette is an introduction to some of the ideas in `monty`.  Please note that the interface is not yet stable and some function names, arguments and ideas will change before the first generally usable version.
 
 ```{r setup}
 library(monty)
