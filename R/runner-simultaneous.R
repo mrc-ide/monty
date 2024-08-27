@@ -40,10 +40,10 @@ monty_runner_simultaneous <- function(progress = NULL) {
     rng_state <- lapply(rng, function(r) r$state())
     ## TODO: get the rng state back into 'rng' here, or (better) look
     ## at if we should just be using seed instead here perhaps?
-    ## rng_state <- matrix(res$internal$state$rng, ncol = n_chains)
-    ## for (i in seq_len(n_chains)) {
-    ##   rng[[i]]$set_state(rng_state[, i]) # not supported!
-    ## }
+    ## > rng_state <- matrix(res$internal$state$rng, ncol = n_chains)
+    ## > for (i in seq_len(n_chains)) {
+    ## >   rng[[i]]$set_state(rng_state[, i]) # not supported!
+    ## > }
     monty_run_chains_simultaneous(pars, model, sampler, observer,
                                   n_steps, progress, rng_state)
   }

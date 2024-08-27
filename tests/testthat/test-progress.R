@@ -61,3 +61,38 @@ test_that("overall progress is empty if disabled", {
   expect_equal(overall(50), "")
   expect_equal(overall(100), "")
 })
+
+
+test_that("can format detail", {
+  f <- progress_bar_detail(4, 100, TRUE)
+  g <- f(1)
+  id <- environment(f)$id
+  e <- environment(f)$e
+
+  mock_update <- mockery::mock()
+  mockery::stub(g, "cli::cli_progress_update", mock_update)
+  g(5)
+  mockery::expect_called(mock_update, 1)
+  expect_equal(mockery::mock_args(mock_update)[[1]],
+               list(id = id, set = 5))
+  expect_equal(e$n, c(5, 0, 0, 0))
+})
+
+
+test_that("can create pb", {
+  mock_null <- mockery::mock()
+  mock_detail <- mockery::mock()
+  mockery::stub(progress_bar, "progress_bar_null", mock_null)
+  mockery::stub(progress_bar, "progress_bar_detail", mock_detail)
+
+  progress_bar(4, 100, FALSE, TRUE)
+  mockery::expect_called(mock_null, 1)
+  mockery::expect_called(mock_detail, 0)
+  expect_equal(mockery::mock_args(mock_null)[[1]], list())
+
+  progress_bar(4, 100, TRUE, TRUE)
+  mockery::expect_called(mock_null, 1)
+  mockery::expect_called(mock_detail, 1)
+  expect_equal(mockery::mock_args(mock_detail)[[1]],
+               list(4, 100, TRUE))
+})

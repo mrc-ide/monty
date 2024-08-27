@@ -412,10 +412,10 @@ test_that("can differentiate log1p", {
 test_that("can differentiate log2, log10", {
   expect_identical(
     differentiate(quote(log2(x)), "x"),
-    bquote(1/(.(log(2)) * x)))
+    bquote(1 / (.(log(2)) * x)))
   expect_identical(
     differentiate(quote(log10(x)), "x"),
-    bquote(1/(.(log(10)) * x)))
+    bquote(1 / (.(log(10)) * x)))
   expect_identical(
     differentiate(quote(log10(sin(x))), "x"),
     bquote(cos(x) / (.(log(10)) * sin(x))))

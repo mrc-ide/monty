@@ -22,7 +22,7 @@ if distributions have support in C++, but we might end up
 supporting everything this way soon.
 }
 \description{
-Report information about supported distributions in the dsl.  This
+Report information about supported distributions in the DSL.  This
 is primarily intended for use in packages which use
 \link{monty_dsl_parse_distribution}, as this function reports
 information about which distributions and arguments would succeed

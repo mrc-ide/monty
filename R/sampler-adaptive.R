@@ -371,7 +371,7 @@ update_adaptive <- function(adaptive, pars, accept_prob) {
 calc_scaling_increment <- function(n_pars, acceptance_target,
                                    log_scaling_update) {
   if (log_scaling_update) {
-    A <- -stats::qnorm(acceptance_target / 2)
+    A <- -stats::qnorm(acceptance_target / 2) # nolint
 
     scaling_increment <-
       (1 - 1 / n_pars) * (sqrt(2 * pi) * exp(A^2 / 2)) / (2 * A) +

@@ -143,7 +143,7 @@ output.  There are two ways that you might like to unpack this
 sort of output.  Assume you have a matrix \code{m} with 3 rows and 2
 columns; this means that we have two sets of parameters or state
 (one per column) and 3 states within each; this is the format that
-mcmc parameters will be in for example.
+MCMC parameters will be in for example.
 
 The first would to be return a list where the \code{i}th element is the
 result of unpacking the \code{i}th parameter/state vector.  You can do
@@ -165,7 +165,7 @@ dimension; scalars become vectors (one per set), vectors become
 matrices (one column per set) and so on.
 
 This approach generalises to higher dimensional input, though we
-suspect you'll spend a bit of time headscratching if you use it.
+suspect you'll spend a bit of time head-scratching if you use it.
 
 We do not currently offer the ability to pack this sort of output
 back up, though it's not hard.  Please let us know if you would

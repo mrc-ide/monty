@@ -1,4 +1,4 @@
-##' Report information about supported distributions in the dsl.  This
+##' Report information about supported distributions in the DSL.  This
 ##' is primarily intended for use in packages which use
 ##' [monty_dsl_parse_distribution], as this function reports
 ##' information about which distributions and arguments would succeed

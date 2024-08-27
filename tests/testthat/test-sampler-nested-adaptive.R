@@ -134,11 +134,11 @@ test_that("can run an observer during a nested fit", {
   expect_equal(
     dim(res$observations$n),
     c(1, 100, 1))
-  
+
   pars <- cbind(res$initial[, 1], res$pars[, , 1])
   pars_update <- apply(pars, 1, diff) != 0
-  ## n_update: 1 for initial + num of base updates + num of >0 group updates 
-  n_update <- 1 + sum(pars_update[, "sigma"]) + 
+  ## n_update: 1 for initial + num of base updates + num of >0 group updates
+  n_update <- 1 + sum(pars_update[, "sigma"]) +
     sum(rowSums(pars_update[, paste0("mu_", seq_len(5))]) > 0)
   expect_equal(max(res$observations$n), n_update)
 })
@@ -155,7 +155,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
   res <- monty_sample(m, s, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
-  
+
   ## forget_rate = 0 so full chain should be included in VCV
   expect_equal(res$details[[1]]$weight, 1000)
   expect_equal(res$details[[1]]$included, seq_len(1000))
@@ -178,7 +178,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
   res <- monty_sample(m, s, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
-  
+
   ## forget_rate = 0.1 so VCV should exclude first 100 parameter sets
   expect_equal(res$details[[1]]$weight, 900)
   expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
@@ -203,7 +203,7 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
   res <- monty_sample(m, s, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
-  
+
   ## forget_rate = 0.5 and forget_end = 200 so VCV should exclude first
   ## 100 parameter sets
   expect_equal(res$details[[1]]$weight, 900)
@@ -229,7 +229,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   res <- monty_sample(m, s, 1000)
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
-  
+
   ## forget_rate = 0.25, forget_end = 500 and adapt_end = 300 so VCV should
   ## only include parameter sets 26 to 300
   expect_equal(res$details[[1]]$weight, 275)
@@ -244,86 +244,86 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
 
 
 test_that("check nested adaptive inputs correctly", {
-  input <- list(base = 100, groups = list(25, 50 , 75))
+  input <- list(base = 100, groups = list(25, 50, 75))
   expect_equal(check_nested_adaptive(input, 3, TRUE), input)
-  
-  input <- list(base = NULL, groups = list(25, 50 , 75))
+
+  input <- list(base = NULL, groups = list(25, 50, 75))
   expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), input)
-  
+
   input <- list(base = 100, groups = 50)
   expect_equal(check_nested_adaptive(input, 3, TRUE),
                list(base = 100, groups = rep(list(50), 3)))
-  
+
   input <- list(base = 100, groups = NULL)
   expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE),
                list(base = 100, groups = rep(list(NULL), 3)))
-  
+
   input <- list(base = NULL, groups = list(25, 50, 75))
   expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), input)
-  
+
   input <- 100
-  expect_equal(check_nested_adaptive(input, 3, TRUE), 
+  expect_equal(check_nested_adaptive(input, 3, TRUE),
                list(base = 100, groups = rep(list(100), 3)))
-  
+
   input <- 100
-  expect_equal(check_nested_adaptive(input, 3, FALSE), 
+  expect_equal(check_nested_adaptive(input, 3, FALSE),
                list(base = NULL, groups = rep(list(100), 3)))
-  
+
   input <- NULL
-  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE), 
+  expect_equal(check_nested_adaptive(input, 3, TRUE, TRUE),
                list(base = NULL, groups = rep(list(NULL), 3)))
-  
+
   input <- NULL
-  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE), 
+  expect_equal(check_nested_adaptive(input, 3, FALSE, TRUE),
                list(base = NULL, groups = rep(list(NULL), 3)))
-  
+
   input <- c(25, 50, 75)
   expect_error(check_nested_adaptive(input, 3, TRUE, TRUE),
                "Expected a list, single value or NULL for input", fixed = TRUE)
-  
+
   input <- c(25, 50, 75)
   expect_error(check_nested_adaptive(input, 3, TRUE),
                "Expected a list or single value for input", fixed = TRUE)
-  
+
   input <- list(25, 50, 75)
   expect_error(
     check_nested_adaptive(input, 3, TRUE),
     "Expected input input as list to have elements 'base' and 'groups'",
     fixed = TRUE)
-  
+
   input <- list(base = 100, groups = 50)
   expect_error(
     check_nested_adaptive(input, 3, FALSE),
     "Expected input$base to be NULL as there are no base parameters",
     fixed = TRUE)
-  
-  input <- list(base = NULL, groups = list(25, 50 , 75))
+
+  input <- list(base = NULL, groups = list(25, 50, 75))
   expect_error(check_nested_adaptive(input, 3, TRUE),
                "Expected single value for input$base", fixed = TRUE)
-  
+
   input <- list(base = 100, groups = NULL)
   expect_error(check_nested_adaptive(input, 3, TRUE),
                "Expected a list or single value for input$groups", fixed = TRUE)
-  
-  input <- list(base = c(50, 100), groups = list(25, 50 , 75))
+
+  input <- list(base = c(50, 100), groups = list(25, 50, 75))
   expect_error(check_nested_adaptive(input, 3, TRUE, TRUE),
                "Expected single value or NULL for input$base", fixed = TRUE)
-  
-  input <- list(base = 100, groups = c(25, 50 , 75))
+
+  input <- list(base = 100, groups = c(25, 50, 75))
   expect_error(
     check_nested_adaptive(input, 3, TRUE, TRUE),
     "Expected a list, single value or NULL for input$groups", fixed = TRUE)
-  
+
   input <- list(base = 100, groups = list(25, 50))
   expect_error(
     check_nested_adaptive(input, 3, TRUE),
     "Expected input$groups specified as list to have length 3", fixed = TRUE)
-  
+
   input <- list(base = 100, groups = list(25, NULL, 75))
   expect_error(
     check_nested_adaptive(input, 3, TRUE),
     "Expected a single value for input$groups[[2]]", fixed = TRUE)
-  
+
   input <- list(base = 100, groups = list(25, 50, c(75, 100)))
   expect_error(
     check_nested_adaptive(input, 3, TRUE, TRUE),
