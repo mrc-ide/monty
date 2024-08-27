@@ -384,8 +384,8 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
 
     ## Update proposal
     proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
-    internal$proposal <- nested_proposal_adaptive(proposal_vcv,
-                                                  model$parameter_groups)
+    internal$proposal <- nested_proposal(proposal_vcv, model$parameter_groups,
+                                         state$pars, model$domain, boundaries)
 
     state
   }
