@@ -164,8 +164,8 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
       list(base = autocorrelation_base, groups = autocorrelation_groups)
     internal$vcv <- list(base = vcv_base, groups = vcv_groups)
     proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
-    internal$proposal <- nested_proposal_adaptive(proposal_vcv,
-                                                  model$parameter_groups)
+    internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars,
+                                         model$domain, boundaries)
 
     internal$history_pars <- numeric()
     internal$included <- integer()
@@ -190,12 +190,35 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   step <- function(state, model, observer, rng) {
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
-      density_next <- model$density(pars_next, by_group = TRUE)
-      density_by_group_next <- attr(density_next, "by_group")
+      
+      reject_some <- boundaries == "reject" &&
+        !all(i <- is_parameters_in_domain(pars_next, model$domain))
+      if (reject_some) {
+        density_next <- rep(-Inf, length(state$density))
+        density_by_group_next <- array(-Inf, dim2(internal$density_by_group))
+        if (any(i)) {
+          density_next_i <- model$density(pars_next[, i, drop = FALSE],
+                                          by_group = TRUE)
+          density_next[i] <- density_next_i
+          density_by_group_next[, i] <- attr(density_next_i, "by_group")
+        }
+      } else {
+        density_next <- model$density(pars_next, by_group = TRUE)
+        density_by_group_next <- attr(density_next, "by_group")
+      }
+      
       u <- rng$random_real(1)
-      accept_prob_base <- min(1, exp(density_next - state$density))
+      accept_prob_base <- pmin(1, exp(density_next - state$density))
       accept <- u < accept_prob_base
-      if (accept) {
+      
+      if (any(accept)) {
+        if (!all(accept)) {
+          ## Retain some older parameters
+          i <- which(!accept)
+          pars_next[, i] <- state$pars[, i]
+          density_next <- model$density(pars_next, by_group = TRUE)
+          density_by_group_next <- attr(density_next, "by_group")
+        }
         state$pars <- pars_next
         state$density <- density_next
         internal$density_by_group <- density_by_group_next
@@ -204,19 +227,63 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
         }
       }
     }
-
+    
     pars_next <- internal$proposal$groups(state$pars, rng)
-    density_next <- model$density(pars_next, by_group = TRUE)
-    density_by_group_next <- attr(density_next, "by_group")
+    
+    reject_some <- boundaries == "reject" &&
+      !all(i <- is_parameters_in_domain_groups(pars_next, model$domain,
+                                               model$parameter_groups))
+    
+    ## This bit is potentially inefficient - for any proposed parameters out of
+    ## bounds I substitute in the current parameters, so that we can run the
+    ## density on all groups. Ideally we would want to only run the density on
+    ## groups with all parameters in bounds. A bit fiddly to do that in a nice
+    ## way when doing simultaneous sampling
+    if (reject_some) {
+      density_next <- rep(-Inf, length(state$density))
+      density_by_group_next <- array(-Inf, dim2(internal$density_by_group))
+      if (any(i)) {
+        if (internal$multiple_parameters) {
+          for (j in seq_len(ncol(i))) {
+            if (!all(i[, j])) {
+              i_group <- model$parameter_groups %in% which(!i[, j])
+              pars_next[i_group, j] <- state$pars[i_group, j]
+            }
+          }
+        } else {
+          i_group <- model$parameter_groups %in% which(!i)
+          pars_next[i_group] <- state$pars[i_group]
+        }
+        density_next <- model$density(pars_next, by_group = TRUE)
+        density_by_group_next <- attr(density_next, "by_group")
+      }
+    } else {
+      density_next <- model$density(pars_next, by_group = TRUE)
+      density_by_group_next <- attr(density_next, "by_group")
+    }
+    
     u <- rng$random_real(length(density_by_group_next))
     accept_prob_groups <-
       pmin(1, exp(density_by_group_next - internal$density_by_group))
     accept <- u < accept_prob_groups
+    
     if (any(accept)) {
       if (!all(accept)) {
         ## Retain some older parameters
-        i <- model$parameter_groups %in% which(!accept)
-        pars_next[i] <- state$pars[i]
+        if (internal$multiple_parameters) {
+          for (j in seq_len(ncol(accept))) {
+            if (!all(accept[, j])) {
+              i <- model$parameter_groups %in% which(!accept[, j])
+              pars_next[i, j] <- state$pars[i, j]
+            }
+          }
+        } else {
+          i <- model$parameter_groups %in% which(!accept)
+          pars_next[i] <- state$pars[i]
+        }
+        ## If e.g. density is provided by a particle filter, would this bit
+        ## mean rerunning it? Increases time cost if so, and would result in
+        ## new value of density (different to that which was accepted)
         density_next <- model$density(pars_next, by_group = TRUE)
         density_by_group_next <- attr(density_next, "by_group")
       }
