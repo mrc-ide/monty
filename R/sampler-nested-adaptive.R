@@ -37,7 +37,8 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
                                           forget_rate = 0.2,
                                           forget_end = Inf,
                                           adapt_end = Inf,
-                                          pre_diminish = 0) {
+                                          pre_diminish = 0,
+                                          boundaries = "reflect") {
   if (!is.list(initial_vcv)) {
     cli::cli_abort(
       "Expected a list for 'initial_vcv'",
@@ -66,6 +67,8 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   }
 
   internal <- new.env(parent = emptyenv())
+  
+  boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
     require_deterministic(model,
