@@ -145,24 +145,22 @@ monty_sampler_adaptive <- function(initial_vcv,
     initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
 
     if (internal$multiple_parameters) {
-      d <- dim(initial_vcv)
       internal$adaptive <-
-        lapply(seq_len(d[3]),
-               function(i) initialise_adaptive(
-                 pars[, i],
-                 array(initial_vcv[, , i], d[c(1, 2)]),
-                 initial_vcv_weight,
-                 initial_scaling,
-                 initial_scaling_weight,
-                 min_scaling,
-                 scaling_increment,
-                 log_scaling_update,
-                 acceptance_target,
-                 forget_rate,
-                 forget_end,
-                 adapt_end,
-                 pre_diminish
-               ))
+        Map(initialise_adaptive, 
+               lapply(asplit(pars, 2), c),
+               asplit(initial_vcv, 3),
+               MoreArgs = list(initial_vcv_weight = initial_vcv_weight,
+                               initial_scaling = initial_scaling,
+                               initial_scaling_weight = initial_scaling_weight,
+                               min_scaling = min_scaling,
+                               scaling_increment = scaling_increment,
+                               log_scaling_update = log_scaling_update,
+                               acceptance_target = acceptance_target,
+                               forget_rate = forget_rate,
+                               forget_end = forget_end,
+                               adapt_end = adapt_end,
+                               pre_diminish = pre_diminish)
+        )
     } else {
       internal$adaptive <-
         initialise_adaptive(pars,
