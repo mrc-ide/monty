@@ -51,7 +51,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
       arg = "initial_vcv")
   }
   if (!is.null(initial_vcv$base)) {
-    check_vcv(initial_vcv$base, call = environment())
+    check_vcv(initial_vcv$base, allow_3d = TRUE, call = environment())
   }
   if (!is.list(initial_vcv$groups)) {
     cli::cli_abort("Expected 'initial_vcv$groups' to be a list")
@@ -61,7 +61,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
       "Expected 'initial_vcv$groups' to have at least one element")
   }
   for (i in seq_along(initial_vcv$groups)) {
-    check_vcv(initial_vcv$groups[[i]],
+    check_vcv(initial_vcv$groups[[i]], allow_3d = TRUE,
               name = sprintf("initial_vcv$groups[%d]", i),
               call = environment())
   }
@@ -71,22 +71,24 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
   initialise <- function(pars, model, observer, rng) {
+    browser()
     require_deterministic(model,
                           "Can't use adaptive sampler with stochastic models")
 
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
+    
+    internal$multiple_parameters <- length(dim2(pars)) > 1
+    if (internal$multiple_parameters) {
+      ## this is enforced elsewhere
+      stopifnot(model$properties$allow_multiple_parameters)
+    }
 
     initialise_rng_state(model, rng)
     density <- model$density(pars, by_group = TRUE)
     density_by_group <- attr(density, "by_group")
-    i_base <- model$parameter_groups == 0
-    n_base <- sum(i_base)
-    has_base <- n_base != 0
     n_groups <- max(model$parameter_groups)
-    i_group <-
-      lapply(seq_len(n_groups), function(i) which(model$parameter_groups == i))
 
     if (is.null(density_by_group)) {
       cli::cli_abort(
@@ -96,7 +98,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
                     "elements corresponding to parameter groups to be",
                     "included with your density")))
     }
-    if (length(density_by_group) != n_groups) {
+    if (dim2(density_by_group)[1] != n_groups) {
       cli::cli_abort(
         paste("model$density(x, by_group = TRUE) produced a 'by_group'",
               "attribute with incorrect length {length(density_by_group)}",
@@ -104,72 +106,50 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
     }
 
     internal$density_by_group <- density_by_group
-
-    internal$weight <- 0
-    internal$iteration <- 0
-
-    internal$initial_vcv_weight <-
-      check_nested_adaptive(initial_vcv_weight, n_groups, has_base)
-    internal$scaling <-
-      check_nested_adaptive(initial_scaling, n_groups, has_base)
-    internal$scaling_weight <-
-      check_nested_adaptive(initial_scaling_weight, n_groups, has_base, TRUE)
-    internal$scaling_increment <-
-      check_nested_adaptive(scaling_increment, n_groups, has_base, TRUE)
-    internal$min_scaling <-
-      check_nested_adaptive(min_scaling, n_groups, has_base)
-
-
-    if (!has_base) {
-      mean_base <- NULL
-      autocorrelation_base <- NULL
-      vcv_base <- NULL
-      proposal_vcv_base <- NULL
+    
+    initial_vcv <- 
+      sampler_validate_nested_vcv(initial_vcv, model$parameter_groups, pars)
+    
+    if (internal$multiple_parameters) {
+      internal$adaptive <-
+        Map(initialise_nested_adaptive, 
+            lapply(asplit(pars, 2), c),
+            split_nested_vcv(initial_vcv, pars),
+            MoreArgs = list(initial_vcv_weight = initial_vcv_weight,
+                            initial_scaling = initial_scaling,
+                            initial_scaling_weight = initial_scaling_weight,
+                            min_scaling = min_scaling,
+                            scaling_increment = scaling_increment,
+                            log_scaling_update = log_scaling_update,
+                            acceptance_target = acceptance_target,
+                            forget_rate = forget_rate,
+                            forget_end = forget_end,
+                            adapt_end = adapt_end,
+                            pre_diminish = pre_diminish,
+                            parameter_groups = model$parameter_groups)
+        )
     } else {
-      mean_base <- pars[i_base]
-      autocorrelation_base <- matrix(0, n_base, n_base)
-      vcv_base <- update_vcv(mean_base, autocorrelation_base, internal$weight)
-      proposal_vcv_base <-
-        calc_proposal_vcv(internal$scaling$base, vcv_base, internal$weight,
-                          initial_vcv$base, internal$initial_vcv_weight$base)
-      internal$scaling_increment$base <- internal$scaling_increment$base %||%
-        calc_scaling_increment(n_base, acceptance_target, log_scaling_update)
-      internal$scaling_weight$base <- internal$scaling_weight$base %||%
-        5 / (acceptance_target * (1 - acceptance_target))
+      internal$adaptive <-
+        initialise_nested_adaptive(pars,
+                            initial_vcv,
+                            initial_vcv_weight,
+                            initial_scaling,
+                            initial_scaling_weight,
+                            min_scaling,
+                            scaling_increment,
+                            log_scaling_update,
+                            acceptance_target,
+                            forget_rate,
+                            forget_end,
+                            adapt_end,
+                            pre_diminish,
+                            model$parameter_groups)
     }
-
-    mean_groups <- lapply(i_group, function(i) pars[i])
-    autocorrelation_groups <-
-      lapply(lengths(i_group), function(x) matrix(0, x, x))
-    vcv_groups <- Map(update_vcv, mean_groups, autocorrelation_groups,
-                      internal$weight)
-    proposal_vcv_groups <-
-      Map(calc_proposal_vcv, internal$scaling$groups, vcv_groups,
-          internal$weight, initial_vcv$groups,
-          internal$initial_vcv_weight$groups)
-
-    internal$scaling_increment$groups <-
-      Map(function(x, n) {
-        x %||%
-          calc_scaling_increment(n, acceptance_target, log_scaling_update)
-      },
-      internal$scaling_increment$groups, lengths(i_group))
-    internal$scaling_weight$groups <-
-      lapply(internal$scaling_weight$groups,
-             function(x) {
-               x %||%  5 / (acceptance_target * (1 - acceptance_target))})
-
-    internal$mean <- list(base = mean_base, groups = mean_groups)
-    internal$autocorrelation <-
-      list(base = autocorrelation_base, groups = autocorrelation_groups)
-    internal$vcv <- list(base = vcv_base, groups = vcv_groups)
-    proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
-    internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars,
-                                         model$domain, boundaries)
-
-    internal$history_pars <- numeric()
-    internal$included <- integer()
-    internal$scaling_history <- internal$scaling
+    
+    internal$proposal <- 
+      nested_proposal_adaptive(internal$adaptive, internal$multiple_parameters,
+                               model$parameter_groups, pars, model$domain,
+                               boundaries)
 
     state <- list(pars = pars, density = c(density))
     if (!is.null(observer)) {
@@ -188,6 +168,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
   step <- function(state, model, observer, rng) {
+    browser()
     if (!is.null(internal$proposal$base)) {
       pars_next <- internal$proposal$base(state$pars, rng)
       
@@ -501,64 +482,175 @@ check_nested_adaptive <- function(x, n_groups, has_base, null_allowed = FALSE,
 }
 
 
-## TODO: this is a simpler version of nested_proposal that does not
-## cope with boundaries etc - that's being looked at in #46 for now.
-## nocov start
-nested_proposal_adaptive <- function(vcv, parameter_groups, call = NULL) {
+split_nested_vcv <- function(vcv, pars) {
+  n_groups <- length(vcv$groups)
+  
+  if (!is.null(vcv$base)) {
+    vcv$base <- asplit(vcv$base, 3)
+  } else {
+    vcv$base <- rep(list(NULL), ncol(pars))
+  }
+  vcv$groups <- lapply(vcv$groups, function(x) asplit(x, 3))
+  
+  f <- function(i) {
+    list(base = vcv$base[[i]],
+         groups = lapply(seq_len(n_groups), function (j) vcv$groups[[j]][[i]])
+    )
+  }
+  
+  lapply(seq_len(ncol(pars)), f)
+}
+
+
+initialise_nested_adaptive <- function(pars,
+                                       initial_vcv,
+                                       initial_vcv_weight,
+                                       initial_scaling,
+                                       initial_scaling_weight,
+                                       min_scaling,
+                                       scaling_increment,
+                                       log_scaling_update,
+                                       acceptance_target,
+                                       forget_rate,
+                                       forget_end,
+                                       adapt_end,
+                                       pre_diminish,
+                                       parameter_groups) {
+  
   i_base <- parameter_groups == 0
   n_base <- sum(i_base)
+  has_base <- n_base != 0
   n_groups <- max(parameter_groups)
   i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
-  if (NROW(vcv$base) != n_base) {
-    cli::cli_abort(
-      c("Incompatible number of base parameters in your model and sampler",
-        i = paste("Your model has {n_base} base parameters, but 'vcv$base'",
-                  "implies {NROW(vcv$base)} parameters")),
-      call = call)
-  }
-  if (length(vcv$groups) != n_groups) {
-    cli::cli_abort(
-      c("Incompatible number of parameter groups in your model and sampler",
-        i = paste("Your model has {n_groups} parameter groups, but",
-                  "'vcv$groups' has {length(vcv$groups)} groups")),
-      call = call)
-  }
-  n_pars_by_group <- lengths(i_group)
-  n_pars_by_group_vcv <- vnapply(vcv$groups, nrow)
-  err <- n_pars_by_group_vcv != n_pars_by_group
-  if (any(err)) {
-    detail <- sprintf(
-      "Group %d has %d parameters but 'vcv$groups[[%d]]' has %d",
-      which(err), n_pars_by_group[err],
-      which(err), n_pars_by_group_vcv[err])
-    cli::cli_abort(
-      c("Incompatible number of parameters within parameter group",
-        set_names(detail, "i")),
-      call = call)
-  }
-
-  has_base <- n_base > 0
-  if (has_base) {
-    mvn_base <- make_rmvnorm(vcv$base)
-    proposal_base <- function(x, rng) {
-      ## This approach is likely to be a bit fragile, so we'll
-      ## probably want some naming related verification here soon too.
-      x[i_base] <- mvn_base(x[i_base], rng)
-      x
-    }
+  
+  weight <- 0
+  iteration <- 0
+  
+  initial_vcv_weight <-
+    check_nested_adaptive(initial_vcv_weight, n_groups, has_base)
+  scaling <-
+    check_nested_adaptive(initial_scaling, n_groups, has_base)
+  scaling_weight <-
+    check_nested_adaptive(initial_scaling_weight, n_groups, has_base, TRUE)
+  scaling_increment <-
+    check_nested_adaptive(scaling_increment, n_groups, has_base, TRUE)
+  min_scaling <-
+    check_nested_adaptive(min_scaling, n_groups, has_base)
+  
+  
+  if (!has_base) {
+    mean_base <- NULL
+    autocorrelation_base <- NULL
+    vcv_base <- NULL
+    proposal_vcv_base <- NULL
   } else {
-    proposal_base <- NULL
+    mean_base <- pars[i_base]
+    autocorrelation_base <- matrix(0, n_base, n_base)
+    vcv_base <- update_vcv(mean_base, autocorrelation_base, weight)
+    proposal_vcv_base <-
+      calc_proposal_vcv(scaling$base, vcv_base, weight,
+                        initial_vcv$base, initial_vcv_weight$base)
+    scaling_increment$base <- scaling_increment$base %||%
+      calc_scaling_increment(n_base, acceptance_target, log_scaling_update)
+    scaling_weight$base <- scaling_weight$base %||%
+      5 / (acceptance_target * (1 - acceptance_target))
   }
-
-  mvn_groups <- lapply(vcv$groups, make_rmvnorm)
-  proposal_groups <- function(x, rng) {
-    for (i in seq_len(n_groups)) {
-      x[i_group[[i]]] <- mvn_groups[[i]](x[i_group[[i]]], rng)
-    }
-    x
-  }
-
-  list(base = proposal_base,
-       groups = proposal_groups)
+  
+  mean_groups <- lapply(i_group, function(i) pars[i])
+  autocorrelation_groups <-
+    lapply(lengths(i_group), function(x) matrix(0, x, x))
+  vcv_groups <- Map(update_vcv, mean_groups, autocorrelation_groups,
+                    weight)
+  proposal_vcv_groups <-
+    Map(calc_proposal_vcv, scaling$groups, vcv_groups,
+        weight, initial_vcv$groups,
+        initial_vcv_weight$groups)
+  
+  scaling_increment$groups <-
+    Map(function(x, n) {
+      x %||%
+        calc_scaling_increment(n, acceptance_target, log_scaling_update)
+    },
+    scaling_increment$groups, lengths(i_group))
+  scaling_weight$groups <-
+    lapply(scaling_weight$groups,
+           function(x) {
+             x %||%  5 / (acceptance_target * (1 - acceptance_target))})
+  
+  mean <- list(base = mean_base, groups = mean_groups)
+  autocorrelation <-
+    list(base = autocorrelation_base, groups = autocorrelation_groups)
+  vcv <- list(base = vcv_base, groups = vcv_groups)
+  proposal_vcv <- list(base = proposal_vcv_base, groups = proposal_vcv_groups)
+  
+  history_pars <- numeric()
+  included <- integer()
+  scaling_history <- scaling
+  
+  list(initial_vcv = initial_vcv,
+       initial_vcv_weight = initial_vcv_weight,
+       weight = weight,
+       iteration = iteration,
+       mean = mean,
+       autocorrelation = autocorrelation,
+       vcv = vcv,
+       proposal_vcv = proposal_vcv,
+       scaling = scaling,
+       scaling_increment = scaling_increment,
+       scaling_weight = scaling_weight,
+       min_scaling = min_scaling,
+       log_scaling_update = log_scaling_update,
+       acceptance_target = acceptance_target,
+       forget_rate = forget_rate,
+       forget_end = forget_end,
+       adapt_end = adapt_end,
+       pre_diminish = pre_diminish,
+       history_pars = history_pars,
+       included = included,
+       scaling_history = scaling_history
+  )
 }
-## nocov end
+
+
+nested_proposal_adaptive <- function(adaptive, multiple_parameters,
+                                     parameter_groups, pars, domain,
+                                     boundaries = "reflect") {
+  
+  i_base <- parameter_groups == 0
+  n_base <- sum(i_base)
+  has_base <- n_base != 0
+  n_groups <- max(parameter_groups)
+  i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
+  n_pars_by_group <- lengths(i_group)
+  
+  if (multiple_parameters) {
+    if (has_base) {
+      proposal_vcv_base <- vapply(adaptive, function (x) x$proposal_vcv$base,
+                                  array(0, c(n_base, n_base)))
+      proposal_vcv_base <- array(proposal_vcv_base,
+                                 c(n_base, n_base, ncol(pars)))
+    } else {
+      proposal_vcv_base <- NULL
+    }
+    
+    proposal_vcv_groups <- list()
+    for (i in seq_len(n_groups)) {
+      proposal_vcv_groups[[i]] <- 
+        vapply(adaptive, function (x) x$proposal_vcv$groups[[i]], 
+               array(0, c(n_pars_by_group[i], n_pars_by_group[i])))
+      proposal_vcv_groups[[i]] <-
+        array(proposal_vcv_groups[[i]],
+              c(n_pars_by_group[i], n_pars_by_group[i], ncol(pars)))
+    }
+    
+    proposal_vcv <- list(base = proposal_vcv_base,
+                         groups = proposal_vcv_groups)
+    proposal <- nested_proposal(proposal_vcv, parameter_groups, pars,
+                                domain, boundaries)
+  } else {
+    proposal <- nested_proposal(adaptive$proposal_vcv, parameter_groups, pars,
+                                domain, boundaries)
+  }
+  
+  proposal
+}
