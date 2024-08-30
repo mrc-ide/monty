@@ -146,6 +146,16 @@ assert_is <- function(x, what, name = deparse(substitute(x)), arg = name,
 }
 
 
+assert_list <- function(x, name = deparse(substitute(x)), arg = name,
+                        call = parent.frame()) {
+  if (!is.list(x)) {
+    cli::cli_abort("Expected '{name}' to be a list",
+                   arg = arg, call = call)
+  }
+  invisible(x)
+}
+
+
 assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
                          arg = name, call = parent.frame()) {
   nms <- names(x)
