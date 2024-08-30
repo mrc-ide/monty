@@ -1,7 +1,7 @@
 ##' Create a [monty_model] from a function that computes density.
 ##' This allows use of any R function as a simple monty model.  If you
 ##' need advanced model features, then this interface may not suit you
-##' and you may prefer to to use [monty_model] directly.
+##' and you may prefer to use [monty_model] directly.
 ##'
 ##' This interface will expand in future versions of monty to support
 ##' gradients, stochastic models, parameter groups and simultaneous
