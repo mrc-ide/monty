@@ -25,7 +25,7 @@ test_that("validate vcv inputs on construction of sampler", {
     "Expected 'initial_vcv' to have elements 'base' and 'groups'")
   expect_error(
     monty_sampler_nested_adaptive(list(base = TRUE, groups = TRUE)),
-    "Expected a matrix for 'initial_vcv$base'",
+    "Expected a matrix or 3d array for 'initial_vcv$base'",
     fixed = TRUE)
   expect_error(
     monty_sampler_nested_adaptive(list(base = NULL, groups = TRUE)),
@@ -37,7 +37,7 @@ test_that("validate vcv inputs on construction of sampler", {
     fixed = TRUE)
   expect_error(
     monty_sampler_nested_adaptive(list(base = NULL, groups = list(TRUE))),
-    "Expected a matrix for 'initial_vcv$groups[1]'",
+    "Expected a matrix or 3d array for 'initial_vcv$groups[1]'",
     fixed = TRUE)
 
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
