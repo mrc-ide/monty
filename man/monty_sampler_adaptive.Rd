@@ -102,7 +102,7 @@ the domain.
 }
 
 The initial point selected will lie within the domain, as this is
-enforced by \link{mcstate_sample}.}
+enforced by \link{monty_sample}.}
 }
 \value{
 A \code{monty_sampler} object, which can be used with
