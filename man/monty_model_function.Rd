@@ -29,7 +29,7 @@ representing all parameters.
 Create a \link{monty_model} from a function that computes density.
 This allows use of any R function as a simple monty model.  If you
 need advanced model features, then this interface may not suit you
-and you may prefer to to use \link{monty_model} directly.
+and you may prefer to use \link{monty_model} directly.
 }
 \details{
 This interface will expand in future versions of monty to support
