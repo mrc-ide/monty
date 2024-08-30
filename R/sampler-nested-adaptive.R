@@ -248,6 +248,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
     accept_prob_groups <- 
       pmin(array(1, dim2(density_by_group_next)),
            exp(density_by_group_next - internal$density_by_group))
+    accept_prob_groups[!i] <- 0
     accept <- u < accept_prob_groups
     
     if (any(accept)) {

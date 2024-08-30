@@ -329,3 +329,40 @@ test_that("check nested adaptive inputs correctly", {
     check_nested_adaptive(input, 3, TRUE, TRUE),
     "Expected a single value or NULL for input$groups[[3]]", fixed = TRUE)
 })
+
+test_that("can run nested adaptive sampler simultaneously", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  sampler <- monty_sampler_nested_adaptive(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)))
+  
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
+  
+  set.seed(1)
+  runner <- monty_runner_simultaneous()
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
+})
+
+
+test_that("can run nested adaptive sampler with rejecting boundaries
+          simultaneously", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  m$domain[, 1] <- -3
+  m$domain[, 2] <- 3
+  sampler <- monty_sampler_nested_adaptive(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    boundaries = "reject")
+  
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
+  
+  set.seed(1)
+  runner <- monty_runner_simultaneous()
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
+})
