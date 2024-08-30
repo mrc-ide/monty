@@ -1,4 +1,5 @@
-assert_is <- function(x, what, name = deparse(substitute(x)), call = NULL) {
+assert_is <- function(x, what, name = deparse(substitute(x)),
+                      call = parent.frame()) {
   if (!inherits(x, what)) {
     cli::cli_abort("Expected '{name}' to be a '{what}' object",
                    arg = name, call = call)
@@ -63,7 +64,7 @@ assert_scalar_character <- function(x, name = deparse(substitute(x)),
 
 
 assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
-                         arg = name, call = NULL) {
+                         arg = name, call = parent.frame()) {
   if (is.null(names(x))) {
     cli::cli_abort("'{name}' must be named", call = call, arg = arg)
   }
@@ -79,7 +80,7 @@ assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
 
 
 assert_list <- function(x, name = deparse(substitute(x)), arg = name,
-                        call = NULL) {
+                        call = parent.frame()) {
   if (!is.list(x)) {
     cli::cli_abort("Expected '{name}' to be a list",
                    arg = arg, call = call)

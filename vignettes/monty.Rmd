@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette is an introduction to some of the ideas in `monty`.  As the package is not ready for users to use it, this is more a place for us to jot down ideas about what it will do.
+This vignette is an introduction to some of the ideas in `monty`.  Please note that the interface is not yet stable and some function names, arguments and ideas will change before the first generally usable version.
 
 ```{r setup}
 library(monty)
@@ -55,53 +55,35 @@ plot(height ~ weight, data)
 A simple likelihood, following the model formulation in "Statistical Rethinking" chapter 3; height is modelled as normally distributed departures from a linear relationship with weight.
 
 ```{r}
-likelihood <- monty_model(
-  list(
-    parameters = c("a", "b", "sigma"),
-    density = function(x) {
-      a <- x[[1]]
-      b <- x[[2]]
-      sigma <- x[[3]]
-      mu <- a + b * data$weight
-      sum(dnorm(data$height, mu, sigma, log = TRUE))
-    }))
+fn <- function(a, b, sigma, data) {
+  mu <- a + b * data$weight
+  sum(dnorm(data$height, mu, sigma, log = TRUE))
+}
 ```
 
-The prior we'll make much nicer to work with in the future, but here we construct the density by hand as a sum of normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.  We provide a `direct_sample` function here so that we can draw samples from the prior distribution directly.
+We can wrap this density function in a `monty_model`.  The `data` argument is "fixed" - it's not part of the statistical model, so we'll pass that in as the `fixed` argument:
 
 ```{r}
-prior <- local({
-  a_mu <- 178
-  a_sd <- 100
-  b_mu <- 0
-  b_sd <- 10
-  sigma_min <- 0
-  sigma_max <- 50
-  monty_model(
-    list(
-      parameters = c("a", "b", "sigma"),
-      density = function(x) {
-        a <- x[[1]]
-        b <- x[[2]]
-        sigma <- x[[3]]
-        dnorm(a, a_mu, a_sd, log = TRUE) +
-        dnorm(b, b_mu, b_sd, log = TRUE) +
-        dunif(sigma, sigma_min, sigma_max, log = TRUE)
-      },
-      direct_sample = function(rng) {
-        c(rng$normal(1, a_mu, a_sd),
-          rng$normal(1, b_mu, b_sd),
-          rng$uniform(1, sigma_min, sigma_max))
-      },
-      domain = rbind(c(-Inf, Inf), c(-Inf, Inf), c(0, Inf))
-  ))
+likelihood <- monty_model_function(fn, fixed = list(data = data))
+likelihood
+```
+
+The prior we'll make much nicer to work with in the future, but here we construct the density by hand as a sum of normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.
+
+```{r}
+prior <- monty_dsl({
+  a ~ Normal(178, 100)
+  b ~ Normal(0, 10)
+  sigma ~ Uniform(0, 50)
 })
+prior
 ```
 
 The posterior distribution is the combination of these two models (indicated with a `+` because we're adding on a log-scale, or because we are using `prior` *and* `posterior`; you can use `monty_model_combine()` if you prefer).
 
 ```{r}
 posterior <- likelihood + prior
+posterior
 ```
 
 Constructing a sensible initial variance-covariance matrix is a bit of a trick, and using an adaptive sampler reduces the pain here.  These values are chosen to be reasonable starting points.
@@ -116,14 +98,14 @@ sampler <- monty_sampler_random_walk(vcv = vcv)
 Now run the sampler.  We've started from a good starting point to make this simple sampler converge quickly:
 
 ```{r}
-samples <- monty_sample(posterior, sampler, 5000, initial = c(114, 0.9, 3),
+samples <- monty_sample(posterior, sampler, 2000, initial = c(114, 0.9, 3),
                         n_chains = 4)
 ```
 
-We don't yet have tools for working with the samples objects, but we can see the density over time easily enough:
+We don't aim to directly provide tools for visualising and working with samples, as this is well trodden ground in other packages.  However, we can directly plot density over time:
 
 ```{r}
-matplot(t(samples$density), type = "l", lty = 1,
+matplot(samples$density, type = "l", lty = 1,
         xlab = "log posterior density", ylab = "sample", col = "#00000055")
 ```
 
@@ -138,3 +120,7 @@ abline(v = 0.9, col = "red")
 plot(density(samples$pars["sigma", , ]), main = "sigma")
 abline(v = 3, col = "red")
 ```
+
+If you have `coda` installed you can convert these samples into a `coda` `mcmc.list` using `coda::as.mcmc.list()`, and if you have `posterior` installed you can convert into a `draws_df` using `posterior::as_draws_df()`, from which you can probably use your favourite plotting tools.
+
+See `vignette("samplers")` for more information.
