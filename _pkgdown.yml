@@ -8,6 +8,7 @@ reference:
     contents:
     - monty_model
     - monty_model_combine
+    - monty_model_function
     - monty_model_properties
 
   - subtitle: Functions for working with models
