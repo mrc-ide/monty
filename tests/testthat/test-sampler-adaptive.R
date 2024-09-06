@@ -127,17 +127,19 @@ test_that("can run sampler with reflecting boundaries", {
            rng$uniform(1, -1, 1)
          }))
 
-  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore")
-  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reflect")
-  s3 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
+  ## We set the scaling_increment to 0 to force the scaling to stay at 1,
+  ## as this flat density example can lead to the scaling blowing up.
+  ## However this example is useful for testing boundaries, which are
+  ## largely unrelated to the adaptive scaling part of the algorithm
+  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore",
+                               scaling_increment = 0)
+  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reflect",
+                               scaling_increment = 0)
+  s3 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                               scaling_increment = 0)
 
   expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
 
-  ## Seems to be a bit of a problem here - since the density is flat, the
-  ## acceptance probability is always 1. The effect on the scaling then is that
-  ## it just keeps increasing! When it gets large enough, it causes problems
-  ## with the reflecting, which throws some warnings about probable complete
-  ## loss of accuracy in modulus, and results in values lying on the boundary
   res2 <- monty_sample(model, s2, 100)
   r2 <- range(drop(res2$pars))
   expect_gt(diff(r2), 0.75)
@@ -172,8 +174,10 @@ test_that("can run sampler with rejecting boundaries", {
            rng$uniform(1, -1, 1)
          }))
 
-  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore")
-  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
+  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore",
+                               scaling_increment = 0)
+  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                               scaling_increment = 0)
 
   expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
   res <- monty_sample(model, s2, 100)
@@ -196,7 +200,8 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
          }),
     monty_model_properties(allow_multiple_parameters = TRUE))
 
-  s <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject")
+  s <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                              scaling_increment = 0)
   runner <- monty_runner_simultaneous()
 
   n_steps <- 30
