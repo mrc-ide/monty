@@ -26,7 +26,7 @@
 ##' @param rerun_every Optional integer giving the frequency at which
 ##'   we should rerun the model on the current "accepted" parameters to 
 ##'   obtain a new density for stochastic models.  The default for this 
-##'   (`Inf`) will never rerun this point, but if you set to 100, then
+##'   (`Inf`) will never trigger a rerun, but if you set to 100, then
 ##'   every 100 steps we run the model on both the proposed *and* previously
 ##'   accepted parameters before doing the comparison.  This may help "unstick"
 ##'   chains, at the cost of some bias in the results.
