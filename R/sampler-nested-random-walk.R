@@ -49,7 +49,9 @@
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
+monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
+                                             rerun_every = Inf,
+                                             rerun_random = FALSE) {
   if (!is.list(vcv)) {
     cli::cli_abort(
       "Expected a list for 'vcv'",
