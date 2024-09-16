@@ -11,32 +11,15 @@
 ##' @param code The error code, as a string, in the form `Exxx` (a
 ##'   capital "E" followed by three numbers)
 ##'
+##' @param how How to explain the error. Options are `pretty` (render
+##'   pretty text in the console), `plain` (display plain text in the
+##'   console) and `link` (browse to the online help).
+##'
 ##' @return Nothing, this is called for its side effect only
 ##'
 ##' @export
-monty_dsl_error_explain <- function(code) {
-  ## See odin2 for the canonical implementation of this, we're just
-  ## shadowing it here really as our dsl is much simpler.  Note that
-  ## error codes from monty are three numbers long, whereas they are
-  ## four long in odin so that it's easy (for us) to tell who the
-  ## error belongs to.
-  assert_scalar_character(code)
-  if (!grepl("^E[0-9]{3}$", code)) {
-    cli::cli_abort("Invalid code '{code}', should match 'Exxx'",
-                   arg = "code")
-  }
-  txt <- dsl_errors[[code]]
-  if (is.null(txt)) {
-    cli::cli_abort(
-      c("Error '{code}' is undocumented",
-        i = paste("If you were directed here from an error message, please",
-                  "let us know (e.g., file an issue or send us a message)")),
-      arg = "code")
-  }
-  url <- sprintf(
-    "https://mrc-ide.github.io/monty/articles/dsl-errors.html#%s",
-    tolower(code))
-  utils::browseURL(url)
+monty_dsl_error_explain <- function(code, how = "pretty") {
+  error_explain(dsl_errors, code, how)
 }
 
 
@@ -69,7 +52,6 @@ cnd_footer.monty_parse_error <- function(cnd, ...) {
   ## "nonbreaking space" which does ok.  We should also convert tabs
   ## to some number of spaces, probably.
   detail <- gsub(" ", "\u00a0", detail)
-
 
   code <- cnd$code
   ## See https://cli.r-lib.org/reference/links.html#click-to-run-code
