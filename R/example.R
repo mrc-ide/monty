@@ -18,6 +18,12 @@
 ##'
 ##' You can vary `sigma` for this model on creation, the default is 0.5
 ##'
+##' ## Gaussian
+##'
+##' A multivariate Gaussian centred at the origin.  Takes a
+##' variance-covariance-matrix as its argument.  Parameters are
+##' letters a, b, ... up to the number of dimensions.
+##'
 ##' @title Example models
 ##'
 ##' @param name Name of the example, as a string.  See Details for
@@ -33,6 +39,7 @@
 ##'
 ##' @examples
 ##' monty_example("banana")
+##' monty_example("gaussian", diag(2))
 monty_example <- function(name, ...) {
   examples <- list(banana = monty_example_banana,
                    gaussian = monty_example_gaussian)

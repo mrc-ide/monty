@@ -38,8 +38,16 @@ successive draws, one conditional on the other:
 
 You can vary \code{sigma} for this model on creation, the default is 0.5
 }
+
+\subsection{Gaussian}{
+
+A multivariate Gaussian centred at the origin.  Takes a
+variance-covariance-matrix as its argument.  Parameters are
+letters a, b, ... up to the number of dimensions.
+}
 }
 
 \examples{
 monty_example("banana")
+monty_example("gaussian", diag(2))
 }
