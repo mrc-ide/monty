@@ -30,12 +30,11 @@ these for anything other than exploring the package.
 The banana model is a two-dimensional banana-shaped function,
 picked because it is quite annoying to sample from directly.  The
 model has two parameters \code{alpha} and \code{beta} and is based on two
-successive draws, one condiional on the other:
+successive draws, one conditional on the other:
 
-[
-\beta \sim Normal(1, 0) \\
-\alpha \sim Normal(\beta^2, \sigma)
-]
+\deqn{\beta \sim Normal(1, 0)}
+
+\deqn{\alpha \sim Normal(\beta^2, \sigma)}
 
 You can vary \code{sigma} for this model on creation, the default is 0.5
 }

@@ -29,7 +29,7 @@
 ##' # Warning
 ##'
 ##' The way of accessing distribution support here is peculiar and the
-##' retuirn type unusual.  This is intentional, and we expect a more
+##' return type unusual.  This is intentional, and we expect a more
 ##' conventional interface in the future once this package settles
 ##' down.
 ##'
