@@ -4,11 +4,15 @@
 \alias{monty_dsl_error_explain}
 \title{Explain monty error}
 \usage{
-monty_dsl_error_explain(code)
+monty_dsl_error_explain(code, how = "pretty")
 }
 \arguments{
 \item{code}{The error code, as a string, in the form \code{Exxx} (a
 capital "E" followed by three numbers)}
+
+\item{how}{How to explain the error. Options are \code{pretty} (render
+pretty text in the console), \code{plain} (display plain text in the
+console) and \code{link} (browse to the online help).}
 }
 \value{
 Nothing, this is called for its side effect only
