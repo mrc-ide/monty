@@ -132,9 +132,9 @@ plot(drop(res_adapt$density), type = "l", col = 4)
 lines(drop(res_rw$density), type = "l", col = 2)
 
 # Estimated vcv from the sampler at the end of the simulation
-samples$details[[1]]$vcv
+s_adapt$details[[1]]$vcv
 
-\dontshow{if (coda) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("coda")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 coda::effectiveSize(coda::as.mcmc.list(res_rw))
 coda::effectiveSize(coda::as.mcmc.list(res_adapt))
 \dontshow{\}) # examplesIf}

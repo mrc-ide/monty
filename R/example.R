@@ -68,7 +68,8 @@ monty_example_banana <- function(sigma = 0.5) {
           alpha <- x[[1]]
           beta <- x[[2]]
         }
-        dnorm(beta, log = TRUE) + dnorm((alpha - beta^2) / sigma, log = TRUE)
+        stats::dnorm(beta, log = TRUE) +
+          stats::dnorm((alpha - beta^2) / sigma, log = TRUE)
       },
       gradient = function(x) {
         if (is.matrix(x)) {

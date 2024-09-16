@@ -1,5 +1,5 @@
 test_that("can run hmc", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   set.seed(1)
   res <- monty_sample(m, sampler, 2000)
@@ -10,7 +10,7 @@ test_that("can run hmc", {
 
 
 test_that("can run hmc on banana shaped model", {
-  m <- ex_banana()
+  m <- monty_example("banana")
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   set.seed(1)
   res <- monty_sample(m, sampler, 2000)
@@ -23,7 +23,7 @@ test_that("can run hmc on banana shaped model", {
 
 
 test_that("can output debug traces", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
 
   set.seed(1)
   sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
@@ -49,7 +49,7 @@ test_that("can output debug traces", {
 
 
 test_that("can use custom vcv", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
   set.seed(1)
   sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   res1 <- monty_sample(m, sampler1, 30)
@@ -69,7 +69,7 @@ test_that("can use custom vcv", {
 
 
 test_that("given vcv and parameters must be compatible", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
   set.seed(1)
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  vcv = diag(3))
@@ -174,7 +174,7 @@ test_that("prevent weird distributions", {
 
 
 test_that("can continue hmc without debug", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
 
   set.seed(1)
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
@@ -189,7 +189,7 @@ test_that("can continue hmc without debug", {
 
 
 test_that("can continue hmc with debug", {
-  m <- ex_simple_gaussian(diag(2))
+  m <- monty_example("gaussian", diag(2))
 
   set.seed(1)
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
@@ -225,7 +225,7 @@ test_that("can't use hmc with stochastic models", {
 
 
 test_that("can run hmc model simultaneously", {
-  m <- ex_banana()
+  m <- monty_example("banana")
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   runner <- monty_runner_simultaneous()
   set.seed(1)
@@ -237,7 +237,7 @@ test_that("can run hmc model simultaneously", {
 
 
 test_that("can run hmc model simultaneously, with debug", {
-  m <- ex_banana()
+  m <- monty_example("banana")
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  debug = TRUE)
   runner <- monty_runner_simultaneous()
@@ -253,7 +253,7 @@ test_that("can run hmc model simultaneously, with debug", {
 
 
 test_that("can continue a hmc model simultaneously, with debug", {
-  m <- ex_banana()
+  m <- monty_example("banana")
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                  debug = TRUE)
   runner <- monty_runner_simultaneous()

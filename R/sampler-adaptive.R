@@ -111,9 +111,9 @@
 ##' lines(drop(res_rw$density), type = "l", col = 2)
 ##'
 ##' # Estimated vcv from the sampler at the end of the simulation
-##' samples$details[[1]]$vcv
+##' s_adapt$details[[1]]$vcv
 ##'
-##' @examplesIf coda
+##' @examplesIf requireNamespace("coda")
 ##' coda::effectiveSize(coda::as.mcmc.list(res_rw))
 ##' coda::effectiveSize(coda::as.mcmc.list(res_adapt))
 monty_sampler_adaptive <- function(initial_vcv,

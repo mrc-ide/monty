@@ -73,7 +73,7 @@ test_that("can directly sample from a model", {
 
 
 test_that("can compute multiple gradients", {
-  m <- ex_banana()
+  m <- monty_example("banana")
   expect_equal(monty_model_gradient(m, c(0, 0)), c(0, 0))
   expect_equal(monty_model_gradient(m, c(0, 0), named = TRUE),
                c(a = 0, b = 0))
