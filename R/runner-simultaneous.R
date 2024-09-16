@@ -14,6 +14,11 @@
 ##'   [monty_sample()]
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' s <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+##' r <- monty_runner_simultaneous()
+##' samples <- monty_sample(m, s, 200, runner = r)
 monty_runner_simultaneous <- function(progress = NULL) {
   validate_suitable <- function(model, observer) {
     require_multiple_parameters(

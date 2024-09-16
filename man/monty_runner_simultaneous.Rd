@@ -28,3 +28,9 @@ be faster than running in parallel, but primarily this exists so
 that we can see that samplers can work with multiple samples at
 once.
 }
+\examples{
+m <- monty_example("banana")
+s <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+r <- monty_runner_simultaneous()
+samples <- monty_sample(m, s, 200, runner = r)
+}

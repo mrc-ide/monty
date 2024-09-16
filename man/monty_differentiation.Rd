@@ -50,3 +50,15 @@ We may need to make this slightly extensible in future, but for
 now the set of functions that can be differentiated is closed.
 }
 
+\section{Warning}{
+The way of accessing distribution support here is peculiar and the
+retuirn type unusual.  This is intentional, and we expect a more
+conventional interface in the future once this package settles
+down.
+}
+
+\examples{
+d <- monty_differentiation()
+d$differentiate(quote(sqrt(sin(x))), "x")
+D(quote(sqrt(sin(x))), "x")
+}

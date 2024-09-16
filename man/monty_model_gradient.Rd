@@ -22,6 +22,15 @@ Compute the gradient of log density (which is returned by
 \link{monty_model_density}) with respect to parameters.  Not all models
 support this, and an error will be thrown if it is not possible.
 }
+\examples{
+m <- monty_example("banana")
+# Global maximum at (0, 0), and gradient is zero there:
+monty_model_density(m, c(0, 0))
+monty_model_gradient(m, c(0, 0))
+
+# Nonzero gradient away from the origin:
+monty_model_gradient(m, c(0.4, 0.2))
+}
 \seealso{
 \link{monty_model_density} for log density, and
 \link{monty_model_direct_sample} to sample from a model

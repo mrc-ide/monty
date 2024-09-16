@@ -70,3 +70,21 @@ two elements corresponding to the first and second model (not the
 only part that makes a distinction between the two models here;
 for all components above they are equivalent.
 }
+\examples{
+# A simple example; a model that conains something of interest,
+# and a simple prior from monty_dsl
+likelihood <- monty_example("banana")
+prior <- monty_dsl({
+  alpha ~ Normal(0, 1)
+  beta ~ Normal(0, 10)
+})
+posterior <- likelihood + prior
+posterior
+
+# The same thing, more explicitly:
+monty_model_combine(likelihood, prior)
+
+# Control properties of the combined model:
+monty_model_combine(likelihood, prior,
+                    monty_model_properties(has_gradient = FALSE))
+}

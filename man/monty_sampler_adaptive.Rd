@@ -117,3 +117,25 @@ Spencer SEF (2021) Accelerating adaptation in the adaptive
 Metropolis–Hastings random walk algorithm. Australian & New Zealand Journal
 of Statistics 63:468-484.
 }
+\examples{
+m <- monty_example("gaussian", matrix(c(1, 0.5, 0.5, 2), 2, 2))
+vcv <- diag(2) * 0.1
+
+# Sampling with a random walk
+s_rw <- monty_sampler_random_walk(vcv)
+res_rw <- monty_sample(m, s_rw, 1000)
+
+s_adapt <- monty_sampler_adaptive(vcv)
+res_adapt <- monty_sample(m, s_adapt, 1000)
+
+plot(drop(res_adapt$density), type = "l", col = 4)
+lines(drop(res_rw$density), type = "l", col = 2)
+
+# Estimated vcv from the sampler at the end of the simulation
+samples$details[[1]]$vcv
+
+\dontshow{if (coda) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+coda::effectiveSize(coda::as.mcmc.list(res_rw))
+coda::effectiveSize(coda::as.mcmc.list(res_adapt))
+\dontshow{\}) # examplesIf}
+}

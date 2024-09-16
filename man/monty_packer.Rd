@@ -172,3 +172,31 @@ back up, though it's not hard.  Please let us know if you would
 use this.
 }
 
+\examples{
+# Here's a really simple example
+p <- monty_packer(c("a", "b", "c"))
+p
+
+p$pack(list(a = 1, b = 2, c = 3))
+p$unpack(1:3)
+
+# Sometimes we have a vector embedded in our parameters:
+p <- monty_packer(c("a", "b"), list(v = 4))
+p$pack(list(a = 1, b = 2, v = c(6, 7, 8, 9)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# Or a higher dimensional structure such as a matrix:
+p <- monty_packer(c("a", "b"), list(m = c(2, 2)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# You can use a packer to set "fixed" parameters that do not vary
+# with the underlying model being fit, but are required by your model.
+# This is simpler than the "closure" approach used previously in our
+# mcstate package and also easier to accomodate with differentiable
+# models:
+p <- monty_packer(
+  c("a", "b"),
+  fixed = list(d = data.frame(n = 1:3, m = runif(3))))
+p$unpack(1:2)
+p$pack(p$unpack(1:2))
+}
