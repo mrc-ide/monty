@@ -196,6 +196,21 @@
 ##'   fixed = list(d = data.frame(n = 1:3, m = runif(3))))
 ##' p$unpack(1:2)
 ##' p$pack(p$unpack(1:2))
+##'
+##' # The example from above, where we create a symmetric 2 x 2 matrix
+##' # from a 3-element vector, alongside a scalar:
+##' p <- monty_packer(
+##'   scalar = "a",
+##'   array = list(b_flat = 3),
+##'   process = function(p) list(b = matrix(p$b_flat[c(1, 2, 2, 3)], 2, 2)))
+##'
+##' # Unpacking we see "b_flat" is still in the list, but "b" is our
+##' # symmetric matrix:
+##' p$unpack(1:4)
+##'
+##' # The processed elements are ignored on the return pack:
+##' p$pack(list(a = 1, b_flat = 2:4, b = matrix(c(2, 3, 3, 4), 2, 2)))
+##' p$pack(list(a = 1, b_flat = 2:4))
 monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
                          process = NULL) {
   call <- environment()
