@@ -125,8 +125,8 @@ vector in order to use within an MCMC or optimisation algorithm.
 Ultimately, our unpacked vector will need to hold four elements
 (\code{b11}, \code{b12}, \code{b21}, \code{b22}), but there are only three distinct
 values as the two off-diagonal elements will be the same (i.e.,
-\verb{b12 == b21``).  So we might write this passing in }b_raw = 3\code{to}array\verb{, so that our unpacked list holds }b_raw = c(b11, b12,
-b22)\verb{.  We would then write }process` as something like:
+\code{b12 == b21}).  So we might write this passing in \code{b_raw = 3} to
+\code{array}, so that our unpacked list holds \code{b_raw = c(b11, b12, b22)}.  We would then write \code{process} as something like:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{process <- function(x) \{
   list(b = matrix(x$b_raw[c(1, 2, 2, 3)], 2, 2))

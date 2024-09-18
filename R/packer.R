@@ -68,7 +68,7 @@
 ##' Ultimately, our unpacked vector will need to hold four elements
 ##' (`b11`, `b12`, `b21`, `b22`), but there are only three distinct
 ##' values as the two off-diagonal elements will be the same (i.e.,
-##' `b12 == b21``).  So we might write this passing in `b_raw = 3` to
+##' `b12 == b21`).  So we might write this passing in `b_raw = 3` to
 ##' `array`, so that our unpacked list holds `b_raw = c(b11, b12,
 ##' b22)`.  We would then write `process` as something like:
 ##'
