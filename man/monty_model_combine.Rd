@@ -71,7 +71,7 @@ only part that makes a distinction between the two models here;
 for all components above they are equivalent.
 }
 \examples{
-# A simple example; a model that conains something of interest,
+# A simple example; a model that contains something of interest,
 # and a simple prior from monty_dsl
 likelihood <- monty_example("banana")
 prior <- monty_dsl({
