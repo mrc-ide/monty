@@ -66,7 +66,7 @@
 ##'
 ##' @export
 ##' @examples
-##' # A simple example; a model that conains something of interest,
+##' # A simple example; a model that contains something of interest,
 ##' # and a simple prior from monty_dsl
 ##' likelihood <- monty_example("banana")
 ##' prior <- monty_dsl({
