@@ -189,7 +189,7 @@
 ##' # You can use a packer to set "fixed" parameters that do not vary
 ##' # with the underlying model being fit, but are required by your model.
 ##' # This is simpler than the "closure" approach used previously in our
-##' # mcstate package and also easier to accomodate with differentiable
+##' # mcstate package and also easier to accommodate with differentiable
 ##' # models:
 ##' p <- monty_packer(
 ##'   c("a", "b"),
