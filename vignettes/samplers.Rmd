@@ -37,24 +37,24 @@ with $\sigma$ the standard deviation of the conditional draw.
 We'll use R's `dnorm` for the likelihood calculations and then differentiate the density by hand (using the formula of the gaussian density) to derive the gradient by hand.  We skip the details here as this will be automated in an upcoming version of the package.
 
 ```{r}
-banana_model <- function(sd = 0.5) {
+banana_model <- function(sigma = 0.5) {
   monty_model(list(
     parameters = c("alpha", "beta"),
     direct_sample = function(rng) {
       beta <- rng$random_normal(1)
-      alpha <- rng$normal(1, beta^2, sd)
+      alpha <- rng$normal(1, beta^2, sigma)
       c(alpha, beta)
     },
     density = function(x) {
       alpha <- x[[1]]
       beta <- x[[2]]
-      dnorm(beta, log = TRUE) + dnorm((alpha - beta^2) / sd, log = TRUE)
+      dnorm(beta, log = TRUE) + dnorm((alpha - beta^2) / sigma, log = TRUE)
     },
     gradient = function(x) {
       alpha <- x[[1]]
       beta <- x[[2]]
-      c((beta^2 - alpha) / sd^2,
-        -beta + 2 * beta * (alpha - beta^2) / sd^2)
+      c((beta^2 - alpha) / sigma^2,
+        -beta + 2 * beta * (alpha - beta^2) / sigma^2)
     },
     domain = rbind(c(-Inf, Inf), c(-Inf, Inf))))
 }
@@ -89,11 +89,11 @@ It is also possible to compute the 95% confidence interval of the distribution u
 ```{r}
 theta <- seq(0, 2 * pi, length.out = 10000)
 z95 <- local({
-  sd <- 0.5
+  sigma <- 0.5
   r <- sqrt(qchisq(.95, df = 2))
   x <- r * cos(theta)
   y <- r * sin(theta)
-  cbind(x^2 + y * sd, x)
+  cbind(x^2 + y * sigma, x)
 })
 image(a, b, z, xlab = "alpha", ylab = "beta")
 lines(z95[, 1], z95[, 2])

@@ -18,6 +18,8 @@
 ##' @return Nothing, this is called for its side effect only
 ##'
 ##' @export
+##' @examples
+##' monty_dsl_error_explain("E201")
 monty_dsl_error_explain <- function(code, how = "pretty") {
   error_explain(dsl_errors, code, how)
 }

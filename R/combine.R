@@ -65,6 +65,23 @@
 ##' @return A [monty_model] object
 ##'
 ##' @export
+##' @examples
+##' # A simple example; a model that contains something of interest,
+##' # and a simple prior from monty_dsl
+##' likelihood <- monty_example("banana")
+##' prior <- monty_dsl({
+##'   alpha ~ Normal(0, 1)
+##'   beta ~ Normal(0, 10)
+##' })
+##' posterior <- likelihood + prior
+##' posterior
+##'
+##' # The same thing, more explicitly:
+##' monty_model_combine(likelihood, prior)
+##'
+##' # Control properties of the combined model:
+##' monty_model_combine(likelihood, prior,
+##'                     monty_model_properties(has_gradient = FALSE))
 monty_model_combine <- function(a, b, properties = NULL,
                                 name_a = "a", name_b = "b") {
   call <- environment()

@@ -176,53 +176,6 @@ ex_dust_sir <- function(n_particles = 100, n_threads = 1,
 }
 
 
-ex_simple_gaussian <- function(vcv) {
-  n <- nrow(vcv)
-  monty_model(list(
-    parameters = letters[seq_len(n)],
-    direct_sample = make_rmvnorm(vcv, centred = TRUE),
-    density = make_ldmvnorm(vcv),
-    gradient = make_deriv_ldmvnorm(vcv),
-    domain = cbind(rep(-Inf, n), rep(Inf, n))))
-}
-
-
-ex_banana <- function(sd = 0.5) {
-  monty_model(
-    list(parameters = c("a", "b"),
-         direct_sample = function(rng) {
-           b <- rng$random_normal(1)
-           a <- rng$normal(1, b^2, sd)
-           c(a, b)
-         },
-         density = function(x) {
-           if (length(dim2(x)) == 1) {
-             a <- x[1]
-             b <- x[2]
-           } else {
-             a <- x[1, ]
-             b <- x[2, ]
-           }
-           dnorm(b, log = TRUE) + dnorm((a - b^2) / sd, log = TRUE)
-         },
-         gradient = function(x) {
-           if (length(dim2(x)) == 1) {
-             a <- x[1]
-             b <- x[2]
-             c((b^2 - a) / sd^2,
-               -b + 2 * b * (a - b^2) / sd^2)
-           } else {
-             a <- x[1, ]
-             b <- x[2, ]
-             rbind((b^2 - a) / sd^2,
-                   -b + 2 * b * (a - b^2) / sd^2)
-           }
-         },
-         domain = cbind(rep(-Inf, 2), rep(Inf, 2))),
-    monty_model_properties(allow_multiple_parameters = TRUE))
-}
-
-
 random_array <- function(dim, named = FALSE) {
   if (named) {
     dn <- lapply(seq_along(dim), function(i) {

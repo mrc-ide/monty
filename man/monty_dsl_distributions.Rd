@@ -28,3 +28,6 @@ is primarily intended for use in packages which use
 information about which distributions and arguments would succeed
 there.
 }
+\examples{
+monty_dsl_distributions()
+}

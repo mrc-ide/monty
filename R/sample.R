@@ -40,8 +40,12 @@
 ##'   restartable.  This will add additional data to the chains
 ##'   object.
 ##'
-##' @return A list of parameters and densities; we'll write tools for
-##'   dealing with this later.  Elements include:
+##' @return A list of parameters and densities.  We provide conversion
+##'   to formats used by other packages, notably
+##'   [posterior::as_draws_array], [posterior::as_draws_df] and
+##'   [coda::as.mcmc.list]; please let us know if you need conversion
+##'   to something else.  If you want to work directly with the
+##'   output, the elements in the list include:
 ##'
 ##' * `pars`: An array with three dimensions representing (in turn)
 ##'   parameter, sample and chain, so that `pars[i, j, k]` is the
@@ -65,6 +69,23 @@
 ##'   one is also subject to change.
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' s <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+##' samples <- monty_sample(m, s, 2000)
+##'
+##' # Quick conversion of parameters into something plottable:
+##' pars <- t(drop(samples$pars))
+##' plot(pars, pch = 19, cex = 0.75, col = "#0000ff55")
+##'
+##' # If you have the posterior package you might prefer converting to
+##' # its format for performing diagnoses:
+##' @examplesIf requireNamespace("posterior")
+##' res <- posterior::as_draws_df(samples)
+##' posterior::summarise_draws(res)
+##'
+##' # At this point you could also use the 'bayesplot' package to plot
+##' # diagnostics.
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL, observer = NULL,
                          restartable = FALSE) {

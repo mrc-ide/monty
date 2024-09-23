@@ -26,3 +26,6 @@ current implementation of this will send you to the rendered
 vignettes, but in the future we will arrange for offline rendering
 too.
 }
+\examples{
+monty_dsl_error_explain("E201")
+}

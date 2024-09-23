@@ -54,3 +54,10 @@ but you can pass the return value of this as the \code{properties}
 argument of monty_model to enforce that your model does actually
 have these properties.
 }
+\examples{
+# Default properties:
+monty_model_properties()
+
+# Set some properties:
+monty_model_properties(has_gradient = TRUE, is_stochastic = FALSE)
+}
