@@ -183,3 +183,18 @@ suggested_package_status <- function(pkg) {
   }
   set_names(status, pkg)
 }
+
+
+dir_create <- function(path) {
+  dir.create(path, FALSE, TRUE)
+}
+
+
+is_directory <- function(path) {
+  file.info(path, extra_cols = FALSE)$isdir
+}
+
+
+is_empty_directory <- function(path) {
+  is_directory(path) && length(dir(path, all.files = TRUE, no.. = TRUE)) == 0
+}

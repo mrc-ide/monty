@@ -89,22 +89,17 @@
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL, observer = NULL,
                          restartable = FALSE) {
-  require_monty_model(model)
-  if (!inherits(sampler, "monty_sampler")) {
-    cli::cli_abort("Expected 'sampler' to be a 'monty_sampler'",
-                   arg = "sampler")
+  assert_is(model, "monty_model")
+  assert_is(sampler, "monty_sampler")
+  if (!is.null(observer)) {
+    assert_is(observer, "monty_observer")
   }
   if (is.null(runner)) {
     runner <- monty_runner_serial()
+  } else {
+    assert_is(runner, "monty_runner")
   }
-  if (!is.null(observer) && !inherits(observer, "monty_observer")) {
-    cli::cli_abort("Expected 'observer' to be a 'monty_observer'",
-                   arg = "observer")
-  }
-  if (!inherits(runner, "monty_runner")) {
-    cli::cli_abort("Expected 'runner' to be a 'monty_runner'",
-                   arg = "runner")
-  }
+  assert_scalar_logical(restartable)
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
@@ -149,16 +144,8 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 ##' @export
 monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
                                   runner = NULL) {
-  if (!inherits(samples, "monty_samples")) {
-    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object")
-  }
-  if (is.null(samples$restart)) {
-    cli::cli_abort(
-      c("Your chains are not restartable",
-        i = paste("To work with 'monty_sample_continue', you must",
-                  "use the argument 'restartable = TRUE' when calling",
-                  "monty_sample()")))
-  }
+  check_can_continue_samples(samples)
+  assert_scalar_logical(restartable)
 
   if (is.null(runner)) {
     runner <- samples$restart$runner
@@ -178,6 +165,22 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
     samples$restart <- restart_data(res, model, sampler, observer, runner)
   }
   samples
+}
+
+
+check_can_continue_samples <- function(samples, call = parent.frame()) {
+  if (!inherits(samples, "monty_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object",
+                   call = call)
+  }
+  if (is.null(samples$restart)) {
+    cli::cli_abort(
+      c("Your chains are not restartable",
+        i = paste("To work with 'monty_sample_continue', you must",
+                  "use the argument 'restartable = TRUE' when calling",
+                  "monty_sample()")),
+      call = call)
+  }
 }
 
 

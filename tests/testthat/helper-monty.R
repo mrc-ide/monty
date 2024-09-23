@@ -264,3 +264,14 @@ ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
          get_rng_state = get_rng_state),
     monty_model_properties(is_stochastic = !deterministic))
 }
+
+
+scrub_manual_info <- function(x) {
+  x <- sub("Manual monty sampling at '.+' -+",
+           "Manual monty sampling at '<PATH>' ------",
+           x)
+  x <- sub("Created .*[0-9]{4}.*",
+           "Created <DATE>",
+           x)
+  x
+}
