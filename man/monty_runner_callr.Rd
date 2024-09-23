@@ -38,7 +38,7 @@ the \code{callr} package to distribute your chains over a number of
 worker processes on the same machine.  If you have used \code{mcstate},
 this is the same as "worker" processes.  Unless your chains take a
 few seconds to run, this will be slower than running with the
-default serial runner (\link{mcstate_runner_serial}), however for long
+default serial runner (\link{monty_runner_serial}), however for long
 running chains, the speedup will typically scale with workers
 added, so long as your chains divide neatly over workers.
 }

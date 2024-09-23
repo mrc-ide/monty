@@ -3,7 +3,7 @@
 ##' worker processes on the same machine.  If you have used `mcstate`,
 ##' this is the same as "worker" processes.  Unless your chains take a
 ##' few seconds to run, this will be slower than running with the
-##' default serial runner ([mcstate_runner_serial]), however for long
+##' default serial runner ([monty_runner_serial]), however for long
 ##' running chains, the speedup will typically scale with workers
 ##' added, so long as your chains divide neatly over workers.
 ##'
@@ -42,13 +42,13 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     env$status[[chain_id]] <- "running"
   }
 
-  ## processx::poll will poll, with a timeout, all our processes.
+  ## callr::poll will poll, with a timeout, all our processes.
   ## There's not much downside to a long poll because if they *are*
   ## ready then they will return instantly. However, the process
   ## will only be interruptable each time the timeout triggers, so
   ## use 1000 here (1s).
   step <- function(timeout = 1000) {
-    res <- processx::poll(env$sessions, timeout)
+    res <- callr::poll(env$sessions, timeout)
     is_done <- vcapply(res, "[[", "process") == "ready"
     if (any(is_done)) {
       for (session_id in which(is_done)) {
