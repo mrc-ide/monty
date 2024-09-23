@@ -50,6 +50,7 @@ reference:
     - monty_runner_serial
     - monty_runner_parallel
     - monty_runner_simultaneous
+    - monty_runner_callr
 
   - subtitle: Manually run chains
     contents:

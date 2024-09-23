@@ -26,6 +26,7 @@ Imports:
 LinkingTo:
     cpp11
 Suggests:
+    callr,
     cpp11,
     coda,
     decor,

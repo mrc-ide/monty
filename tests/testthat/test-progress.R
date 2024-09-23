@@ -1,20 +1,23 @@
 test_that("can select sensible values for progress", {
   withr::with_options(list(monty.progress = TRUE), {
-    expect_false(show_progress_bar(FALSE))
-    expect_true(show_progress_bar(TRUE))
-    expect_true(show_progress_bar(NULL))
+    expect_equal(show_progress_bar(FALSE), "none")
+    expect_equal(show_progress_bar(TRUE), "fancy")
+    expect_equal(show_progress_bar(NULL), "fancy")
+    expect_equal(show_progress_bar("none"), "none")
+    expect_equal(show_progress_bar("fancy"), "fancy")
+    expect_equal(show_progress_bar("simple"), "simple")
   })
 
   withr::with_options(list(monty.progress = FALSE), {
-    expect_false(show_progress_bar(FALSE))
-    expect_true(show_progress_bar(TRUE))
-    expect_false(show_progress_bar(NULL))
+    expect_equal(show_progress_bar(FALSE), "none")
+    expect_equal(show_progress_bar(TRUE), "fancy")
+    expect_equal(show_progress_bar(NULL), "none")
   })
 
   withr::with_options(list(monty.progress = NULL), {
-    expect_false(show_progress_bar(FALSE))
-    expect_true(show_progress_bar(TRUE))
-    expect_true(show_progress_bar(NULL))
+    expect_equal(show_progress_bar(FALSE), "none")
+    expect_equal(show_progress_bar(TRUE), "fancy")
+    expect_equal(show_progress_bar(NULL), "fancy")
   })
 })
 
@@ -63,8 +66,8 @@ test_that("overall progress is empty if disabled", {
 })
 
 
-test_that("can format detail", {
-  f <- progress_bar_detail(4, 100, TRUE, FALSE)
+test_that("can format fancy", {
+  f <- progress_bar_fancy(4, 100, TRUE)
   g <- f(1)
   id <- environment(f)$id
   e <- environment(f)$e
@@ -81,18 +84,48 @@ test_that("can format detail", {
 
 test_that("can create pb", {
   mock_null <- mockery::mock()
-  mock_detail <- mockery::mock()
-  mockery::stub(progress_bar, "progress_bar_null", mock_null)
-  mockery::stub(progress_bar, "progress_bar_detail", mock_detail)
+  mock_fancy <- mockery::mock()
+  mockery::stub(progress_bar, "progress_bar_none", mock_null)
+  mockery::stub(progress_bar, "progress_bar_fancy", mock_fancy)
 
   progress_bar(4, 100, FALSE, TRUE)
   mockery::expect_called(mock_null, 1)
-  mockery::expect_called(mock_detail, 0)
+  mockery::expect_called(mock_fancy, 0)
   expect_equal(mockery::mock_args(mock_null)[[1]], list())
 
   progress_bar(4, 100, TRUE, TRUE)
   mockery::expect_called(mock_null, 1)
-  mockery::expect_called(mock_detail, 1)
-  expect_equal(mockery::mock_args(mock_detail)[[1]],
+  mockery::expect_called(mock_fancy, 1)
+  expect_equal(mockery::mock_args(mock_fancy)[[1]],
                list(4, 100, TRUE, FALSE))
+})
+
+
+test_that("can create a simple progress bar", {
+  pb <- progress_bar_simple(104, 5)
+  p <- pb(1)
+  expect_message(p(10), "MONTY-PROGRESS: chain: 1, step: 10")
+  expect_no_message(p(11))
+  expect_message(p(36), "MONTY-PROGRESS: chain: 1, step: 36")
+  expect_message(p(102), "MONTY-PROGRESS: chain: 1, step: 102")
+  expect_no_message(p(103))
+  expect_message(p(104), "MONTY-PROGRESS: chain: 1, step: 104")
+})
+
+
+test_that("can parse messages produced by simple progress bar", {
+  expect_equal(
+    parse_progress_bar_simple("MONTY-PROGRESS: chain: 2, step: 36"),
+    list(chain_id = 2, step = 36))
+
+  expect_equal(
+    parse_progress_bar_simple(c("MONTY-PROGRESS: chain: 2, step: 36",
+                                "other text",
+                                "MONTY-PROGRESS: chain: 2, step: 243",
+                                "chain: 2, step: 200")),
+    list(chain_id = 2, step = 243))
+
+  expect_null(parse_progress_bar_simple(NULL))
+  expect_null(parse_progress_bar_simple(character()))
+  expect_null(parse_progress_bar_simple("other text"))
 })
