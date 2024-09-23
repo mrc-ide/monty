@@ -19,7 +19,7 @@
 monty_runner_serial <- function(progress = NULL) {
   run <- function(pars, model, sampler, observer, n_steps, rng) {
     n_chains <- length(rng)
-    pb <- progress_bar(n_chains, n_steps, progress, TRUE, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
     lapply(
       seq_along(rng),
       function(i) {
@@ -30,7 +30,7 @@ monty_runner_serial <- function(progress = NULL) {
 
   continue <- function(state, model, sampler, observer, n_steps) {
     n_chains <- length(state)
-    pb <- progress_bar(n_chains, n_steps, progress, TRUE, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
     lapply(
       seq_along(state),
       function(i) {
