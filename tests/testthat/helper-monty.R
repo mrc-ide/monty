@@ -267,8 +267,8 @@ ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
 
 
 scrub_manual_info <- function(x) {
-  x <- sub("Manual monty sampling at '.+' -+",
-           "Manual monty sampling at '<PATH>' ------",
+  x <- sub("Manual monty sampling at '.+",
+           "Manual monty sampling at '<PATH>'",
            x)
   x <- sub("Created .*[0-9]{4}.*",
            "Created <DATE>",

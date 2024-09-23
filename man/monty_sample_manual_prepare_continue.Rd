@@ -15,6 +15,9 @@ monty_sample_manual_prepare_continue(
 )
 }
 \arguments{
+\item{samples}{A \code{monty_samples} object created by
+\code{\link[=monty_sample]{monty_sample()}}}
+
 \item{n_steps}{The number of steps to run the sampler for.}
 
 \item{path}{The path to write inputs and outputs to.  This should

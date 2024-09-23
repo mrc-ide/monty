@@ -282,6 +282,7 @@ sample_manual_info_chain <- function(complete) {
 ##'   right.
 ##'
 ##' @inheritParams monty_sample_manual_prepare
+##' @inheritParams monty_sample_continue
 ##'
 ##' @export
 ##' @inherit monty_sample_manual_prepare return
