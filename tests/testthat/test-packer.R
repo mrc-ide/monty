@@ -220,3 +220,15 @@ test_that("can't used process with array unpacking", {
     p$unpack(matrix(1:6, 2)),
     "Can't unpack a matrix where the unpacker uses 'process'")
 })
+
+
+test_that("Properly unpack scalars stored as zero-length arrays", {
+  p <- monty_packer(array = list(a = integer(0), b = 1L))
+  expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$unpack(matrix(1:10, 2, 5)),
+               list(a = seq(1, 9, by = 2),
+                    b = matrix(seq(2, 10, by = 2), 1, 5)))
+  expect_equal(p$unpack(array(1:30, c(2, 3, 5))),
+               list(a = matrix(seq(1, 29, by = 2), c(3, 5)),
+                    b = array(seq(2, 30, by = 2), c(1, 3, 5))))
+})

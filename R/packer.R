@@ -318,7 +318,7 @@ prepare_pack_array <- function(name, shape, call = NULL) {
       arg = "array", call = call)
   }
   if (length(shape) == 0) {
-    return(list(names = name, shape = 1, n = 1L))
+    return(list(names = name, shape = integer(0), n = 1L))
   }
   if (any(shape <= 0)) {
     cli::cli_abort(
