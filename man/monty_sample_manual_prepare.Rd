@@ -65,7 +65,7 @@ generally be wanting to run \link{monty_sample_manual_run} and
 }
 \details{
 In contrast to \link{monty_sample} there is no \code{runner} argument
-here, because by usng this function directly you are taking
+here, because by using this function directly you are taking
 responsibility for being your own runner.
 
 As with the ways of running a set of chains in monty, it is
