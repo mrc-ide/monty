@@ -299,7 +299,7 @@ monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
               n_chains = length(restart$state),
               n_steps = n_steps,
               samples = samples)
-  sample_manual_path_create(path, dat, call = call)
+  sample_manual_path_create(path, dat)
 }
 
 
