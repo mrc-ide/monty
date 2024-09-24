@@ -34,10 +34,9 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
       return()
     }
     chain_id <- pending[[1]]
-    r_env <- c(callr::rcmd_safe_env(), MONTY_PROGRESS_SIMPLE = "TRUE")
     env$sessions[[session_id]] <- callr::r_bg(
       function(id, path) monty::monty_sample_manual_run(id, path, "simple"),
-      list(chain_id, env$path), env = r_env)
+      list(chain_id, env$path))
     env$target[[session_id]] <- chain_id
     env$status[[chain_id]] <- "running"
   }
