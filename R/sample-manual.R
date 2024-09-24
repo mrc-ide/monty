@@ -7,7 +7,7 @@
 ##' [monty_sample_manual_collect].
 ##'
 ##' In contrast to [monty_sample] there is no `runner` argument
-##' here, because by usng this function directly you are taking
+##' here, because by using this function directly you are taking
 ##' responsibility for being your own runner.
 ##'
 ##' As with the ways of running a set of chains in monty, it is
