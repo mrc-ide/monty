@@ -51,6 +51,15 @@ reference:
     - monty_runner_parallel
     - monty_runner_simultaneous
 
+  - subtitle: Manually run chains
+    contents:
+    - monty_sample_manual_prepare
+    - monty_sample_manual_run
+    - monty_sample_manual_info
+    - monty_sample_manual_collect
+    - monty_sample_manual_cleanup
+    - monty_sample_manual_prepare_continue
+
   - subtitle: Tools
     contents:
     - monty_observer
