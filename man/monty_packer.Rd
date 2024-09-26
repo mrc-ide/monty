@@ -166,10 +166,36 @@ matrices (one column per set) and so on.
 
 This approach generalises to higher dimensional input, though we
 suspect you'll spend a bit of time head-scratching if you use it.
+}
 
-We do not currently offer the ability to pack this sort of output
-back up, though it's not hard.  Please let us know if you would
-use this.
+\section{Packing lists into vectors and matrices}{
+The unpacking operation is very common - an MCMC proceeds,
+produces an unstructured vector, and you unpack it into a list in
+order to be able to easily work with it.  The reverse is much less
+common, where we take a list and convert it into a vector (or
+matrix, or multidimensional array).  Use of this direction
+("packing") may be more common where using packers to work with
+the output of state-space models (e.g. in
+\href{https://mrc-ide.github.io/odin2}{odin2} or
+\href{https://mrc-ide.github.io/dust2}{dust2}, which use this
+machinery).
+
+The input to \code{pack()} will be the shape that \code{unpack()} returned;
+a named list of numerical vectors, matrices and arrays.  The names
+must correspond do the names if your packer (i.e., \code{scalar} and
+the names of \code{array}).  Each element has dimensions
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{<...object, ...residual>
+}\if{html}{\out{</div>}}
+
+where \code{...object} is the dimensions of the data itself and
+\code{...residual} is the dimensions of the hypothetical input to
+\code{pack}.
+
+There is an unfortunate ambiguity in R's lack of true scalar types
+that we cannot avoid.  It is hard to tell the difference packing a
+vector vs packing an array where all dimensions are 1.  See the
+examples, and please let us know if the behaviour needs changing.
 }
 
 \examples{
@@ -214,4 +240,19 @@ p$unpack(1:4)
 # The processed elements are ignored on the return pack:
 p$pack(list(a = 1, b_flat = 2:4, b = matrix(c(2, 3, 3, 4), 2, 2)))
 p$pack(list(a = 1, b_flat = 2:4))
+
+# R lacks scalars, which means that some packers will unpack
+# different inputs to the same outputs:
+p <- monty_packer(c("a", "b"))
+p$unpack(1:2)
+p$unpack(cbind(1:2))
+
+# This means that we can't reliably pack these inputs in a way
+# that guarantees round-tripping is possible.  We have chosen to
+# prioritise the case where a *single vector* is round-trippable:
+p$pack(list(a = 1, b = 2))
+
+# This ambiguity goes away if unpacking matices with more than one
+# column:
+p$unpack(matrix(1:6, 2, 3))
 }

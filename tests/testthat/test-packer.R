@@ -14,9 +14,11 @@ test_that("trivial packer", {
   expect_error(xp$unpack(1:2),
                "Incorrect length input; expected 1 but given 2")
   expect_equal(xp$pack(list(a = 1)), 1)
-  expect_error(xp$pack(list(a = 1:2)),
-               "Invalid structure to 'pack()'",
-               fixed = TRUE)
+  expect_equal(xp$pack(list(a = 1:2)),
+               1:2)
+  expect_equal(xp$pack(list(a = 1:2, b = 2)),
+               1:2)
+
   expect_equal(xp$index(), list(a = 1))
 })
 
@@ -225,10 +227,128 @@ test_that("can't used process with array unpacking", {
 test_that("Properly unpack scalars stored as zero-length arrays", {
   p <- monty_packer(array = list(a = integer(0), b = 1L))
   expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$unpack(cbind(1:2)), list(a = 1, b = matrix(2)))
   expect_equal(p$unpack(matrix(1:10, 2, 5)),
                list(a = seq(1, 9, by = 2),
                     b = matrix(seq(2, 10, by = 2), 1, 5)))
   expect_equal(p$unpack(array(1:30, c(2, 3, 5))),
                list(a = matrix(seq(1, 29, by = 2), c(3, 5)),
                     b = array(seq(2, 30, by = 2), c(1, 3, 5))))
+})
+
+
+## These tests are the inverse of the tests abvove.
+test_that("Roundtrip scalars stored as zero-length arrays", {
+  p <- monty_packer(array = list(a = integer(0), b = 1L))
+  p$pack(list(a = 1, b = 2))
+
+  ## expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
+  expect_equal(p$pack(list(a = 1, b = matrix(2))), cbind(c(1, 2)))
+
+  ## expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
+  expect_equal(p$pack(list(a = seq(1, 9, by = 2),
+                           b = matrix(seq(2, 10, by = 2), 1, 5))),
+               matrix(1:10, 2, 5))
+  expect_equal(p$pack(list(a = matrix(seq(1, 29, by = 2), c(3, 5)),
+                           b = array(seq(2, 30, by = 2), c(1, 3, 5)))),
+               array(1:30, c(2, 3, 5)))
+})
+
+
+test_that("all-scalar corner case", {
+  p1 <- monty_packer(c("a", "b"))
+  p2 <- monty_packer(array = list(a = integer(0), b = integer(0)))
+
+  ## These inputs both map to the same output, for both ways of
+  ## writing the packer:
+  expect_equal(p1$unpack(1:2),
+               list(a = 1, b = 2))
+  expect_equal(p1$unpack(cbind(1:2)),
+               list(a = 1, b = 2))
+  expect_equal(p2$unpack(1:2),
+               list(a = 1, b = 2))
+  expect_equal(p2$unpack(cbind(1:2)),
+               list(a = 1, b = 2))
+
+  ## Which means that we can't work out how to pack this output, with
+  ## either packer:
+  expect_equal(p1$pack(list(a = 1, b = 2)),
+               1:2)
+  expect_equal(p2$pack(list(a = 1, b = 2)),
+               1:2)
+})
+
+
+test_that("validate that we can consistently unpack things", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  i <- p$unpack(1:15)
+  p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4)))
+
+  expect_equal(
+    p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4))),
+    1:15)
+
+  p$unpack(matrix(1:45, 15, 3))
+})
+
+
+test_that("give errors when input is the wrong shape, from scalar input", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  ## Check the happy path first:
+  expect_equal(
+    p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4))),
+    1:15)
+  v <- p$unpack(matrix(1:45, 15, 3))
+  expect_equal(p$pack(v), matrix(1:45, 15, 3))
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = 1:3, c = matrix(4:15, 3, 4))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  err <- expect_error(
+    p$pack(list(a = numeric(3),
+                b = matrix(0, 3, 3),
+                c = array(0, c(3, 4, 3)))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = 1:3, c = matrix(4:15, 4, 3))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  expect_match(err$body[[2]], "c: expected <3, 4>, given <4, 3>")
+  err <- expect_error(
+    p$pack(list(a = 1,
+                b = matrix(0, 3, 3),
+                c = array(0, c(4, 3, 3)))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  expect_match(err$body[[2]], "c: expected <3, 4>, given <4, 3>")
+})
+
+
+test_that("give errors when input has incorect residual dimension", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = matrix(2:3, 2, 3), c = matrix(4:15, 3, 4))),
+    "Inconsistent residual dimension in inputs")
+  expect_equal(
+    err$body,
+    c(x = "'a', 'c': <...1>",
+      x = "'b': <...3>"))
+
+  err <- expect_error(
+    p$pack(list(a = numeric(4),
+                b = matrix(0, 2, 3),
+                c = array(0, c(3, 4, 5)))),
+    "Inconsistent residual dimension in inputs")
+  expect_equal(
+    err$body,
+    c(x = "'a': <...4>",
+      x = "'b': <...3>",
+      x = "'c': <...5>"))
 })
