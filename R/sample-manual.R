@@ -159,6 +159,8 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##' [monty_sample_manual_prepare] and [monty_sample_manual_run].  If
 ##' any chain has not completed, we will error.
 ##'
+##' @title Collect manually run samples
+##'
 ##' @inheritParams monty_sample_manual_run
 ##'
 ##' @param samples Samples from the parent run.  You need to provide
@@ -272,6 +274,8 @@ sample_manual_info_chain <- function(complete) {
 ##' orchestration.  This function is to [monty_sample_continue] what
 ##' [monty_sample_manual_prepare] is to [monty_sample].  The original
 ##' set of samples do not need to have been run manually.
+##'
+##' @title Prepare to continue sampling with manual scheduling
 ##'
 ##' @param save_samples Control over saving samples into the inputs.
 ##'   The choices here are `hash` (the default) where we save a hash
