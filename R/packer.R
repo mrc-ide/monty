@@ -335,8 +335,8 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     ## anything else.
     shp <- pack_check_dimensions(p, scalar, shape, names(fixed), process)
     ret <- matrix(NA_real_, len, prod(shp))
-    for (i in seq_along(p)) {
-      ret[idx[[i]], ] <- p[[i]]
+    for (nm in c(scalar, names(shape))) {
+      ret[idx[[nm]], ] <- p[[nm]]
     }
 
     drop <- length(shp) == 0 ||
@@ -420,7 +420,6 @@ print.monty_packer <- function(x, ...) {
 unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
   call <- parent.frame()
   if (!is.null(names(x))) {
-    browser()
     if (!identical(names(x), parameters)) {
       ## Here, we could do better I think with this message; we
       ## might pass thropuigh empty names, and produce some summary
@@ -513,7 +512,7 @@ pack_check_dimensions <- function(p, scalar, shape, fixed, process,
 
   err <- setdiff(names(shape), names(p))
   if (length(err) > 0) {
-    cli::cli_abort("Name{?s} missing from input to pack: {squote(err)}",
+    cli::cli_abort("Missing element{?s} from input to pack: {squote(err)}",
                    call = call)
   }
   if (length(extra) > 0) {

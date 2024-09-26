@@ -16,8 +16,6 @@ test_that("trivial packer", {
   expect_equal(xp$pack(list(a = 1)), 1)
   expect_equal(xp$pack(list(a = 1:2)),
                1:2)
-  expect_equal(xp$pack(list(a = 1:2, b = 2)),
-               1:2)
 
   expect_equal(xp$index(), list(a = 1))
 })
@@ -283,14 +281,20 @@ test_that("all-scalar corner case", {
 test_that("validate that we can consistently unpack things", {
   p <- monty_packer("a", list(b = 2, c = 3:4))
 
-  i <- p$unpack(1:15)
-  p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4)))
-
   expect_equal(
     p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4))),
     1:15)
 
-  p$unpack(matrix(1:45, 15, 3))
+  ## Order does not matter:
+  expect_equal(
+    p$pack(rev(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4)))),
+    1:15)
+
+  v <- p$unpack(matrix(1:45, 15, 3))
+  expect_equal(names(v), c("a", "b", "c"))
+  expect_equal(v$a, c(1, 16, 31))
+  expect_equal(v$b, cbind(2:3, 17:18, 32:33))
+  expect_equal(v$c, array(c(4:15, 19:30, 34:45), c(3, 4, 3)))
 })
 
 
@@ -351,4 +355,30 @@ test_that("give errors when input has incorect residual dimension", {
     c(x = "'a': <...4>",
       x = "'b': <...3>",
       x = "'c': <...5>"))
+})
+
+
+test_that("validate names to pack", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+  expect_error(
+    p$pack(list(a = 1, b = 2, c = 3, d = 4)),
+    "Unexpected element present in input to pack: 'd'")
+  expect_error(
+    p$pack(list(a = 1, d = 4)),
+    "Missing elements from input to pack: 'b' and 'c'")
+})
+
+
+test_that("fixed inputs can be present or absent", {
+  p <- monty_packer(c("a", "b"), fixed = list(c = 10, d = 12))
+  expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
+  expect_equal(p$pack(list(a = 1, b = 2, c = NA)), 1:2)
+})
+
+
+test_that("if process is present ignore extra names", {
+  p <- monty_packer(c("a", "b"), process = identity)
+  expect_equal(
+    p$pack(list(a = 1, b = 2)),
+    1:2)
 })
