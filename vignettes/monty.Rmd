@@ -68,7 +68,7 @@ likelihood <- monty_model_function(fn, fixed = list(data = data))
 likelihood
 ```
 
-The prior we'll make much nicer to work with in the future, but here we construct the density by hand as a sum of normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.
+We construct a prior for this model using the monty DSL (`vignette("dsl")`), using normally distributed priors on `a` and `b`, and a weak uniform prior on `sigma`.
 
 ```{r}
 prior <- monty_dsl({
