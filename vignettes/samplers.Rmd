@@ -27,7 +27,7 @@ library(monty)
 
 This example shows HMC outperforming a random walk on a two dimensional banana-shaped function.  Our model takes two parameters `alpha` and `beta`, and is based on two successive simple draws, with the one conditional on the other, so $\beta \sim Normal(1,0)$ and $\alpha \sim Normal(\beta^2, \sigma)$, with $\sigma$ the standard deviation of the conditional draw.
 
-We include this example withn the package; here we create a model with $\sigma = 0.5$
+We include this example within the package; here we create a model with $\sigma = 0.5$
 
 ```{r}
 m <- monty_example("banana", sigma = 0.5)
