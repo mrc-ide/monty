@@ -23,3 +23,14 @@ A vector or matrix of sampled parameters
 Directly sample from a model.  Not all models support this, and an
 error will be thrown if it is not possible.
 }
+\examples{
+m <- monty_example("banana")
+
+r <- monty_rng$new()
+monty_model_direct_sample(m, r)
+monty_model_direct_sample(m, r, named = TRUE)
+
+r <- monty_rng$new(n_streams = 3)
+monty_model_direct_sample(m, r)
+monty_model_direct_sample(m, r, named = TRUE)
+}

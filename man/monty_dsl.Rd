@@ -37,8 +37,7 @@ change name in future, as will its interface.
 }
 \examples{
 
-# Expressions that correspond to models can be passed in with no
-# quoting
+# Expressions that define models can be passed in with no quoting
 monty_dsl(a ~ Normal(0, 1))
 monty_dsl({
   a ~ Normal(0, 1)

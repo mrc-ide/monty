@@ -72,7 +72,7 @@ assert_logical <- function(x, name = deparse(substitute(x)),
 
 
 assert_nonmissing <- function(x, name = deparse(substitute(x)),
-                          arg = name, call = parent.frame()) {
+                              arg = name, call = parent.frame()) {
   if (anyNA(x)) {
     cli::cli_abort("Expected '{name}' to be non-NA", arg = arg, call = call)
   }
@@ -81,7 +81,11 @@ assert_nonmissing <- function(x, name = deparse(substitute(x)),
 
 
 assert_scalar_character <- function(x, name = deparse(substitute(x)),
-                                  arg = name, call = parent.frame()) {
+                                    allow_null = FALSE,
+                                    arg = name, call = parent.frame()) {
+  if (allow_null && is.null(x)) {
+    return(invisible(x))
+  }
   assert_scalar(x, name, arg = arg, call = call)
   assert_character(x, name, arg = arg, call = call)
   assert_nonmissing(x, name, arg = arg, call = call)
@@ -89,7 +93,11 @@ assert_scalar_character <- function(x, name = deparse(substitute(x)),
 
 
 assert_scalar_numeric <- function(x, name = deparse(substitute(x)),
+                                  allow_null = FALSE,
                                   arg = name, call = parent.frame()) {
+  if (allow_null && is.null(x)) {
+    return(invisible(x))
+  }
   assert_scalar(x, name, arg = arg, call = call)
   assert_numeric(x, name, arg = arg, call = call)
   assert_nonmissing(x, name, arg = arg, call = call)
@@ -97,7 +105,11 @@ assert_scalar_numeric <- function(x, name = deparse(substitute(x)),
 
 
 assert_scalar_integer <- function(x, name = deparse(substitute(x)),
-                                  tolerance = NULL, arg = name, call = parent.frame()) {
+                                  tolerance = NULL, allow_null = FALSE,
+                                  arg = name, call = parent.frame()) {
+  if (allow_null && is.null(x)) {
+    return(invisible(x))
+  }
   assert_scalar(x, name, arg = arg, call = call)
   assert_integer(x, name, tolerance = tolerance, arg = arg, call = call)
   assert_nonmissing(x, name, arg = arg, call = call)
@@ -105,16 +117,23 @@ assert_scalar_integer <- function(x, name = deparse(substitute(x)),
 
 
 assert_scalar_logical <- function(x, name = deparse(substitute(x)),
+                                  allow_null = FALSE,
                                   arg = name, call = parent.frame()) {
+  if (allow_null && is.null(x)) {
+    return(invisible(x))
+  }
   assert_scalar(x, name, arg = arg, call = call)
   assert_logical(x, name, arg = arg, call = call)
   assert_nonmissing(x, name, arg = arg, call = call)
 }
 
 
-assert_scalar_size <- function(x, allow_zero = TRUE,
+assert_scalar_size <- function(x, allow_zero = TRUE, allow_null = FALSE,
                                name = deparse(substitute(x)),
                                arg = name, call = parent.frame()) {
+  if (allow_null && is.null(x)) {
+    return(invisible(x))
+  }
   assert_scalar_integer(x, name = name, arg = arg, call = call)
   assert_nonmissing(x, name, arg = arg, call = call)
   min <- if (allow_zero) 0 else 1
@@ -221,7 +240,7 @@ assert_named <- function(x, unique = FALSE, name = deparse(substitute(x)),
 
 match_value <- function(x, choices, name = deparse(substitute(x)), arg = name,
                         call = parent.frame()) {
-  assert_scalar_character(x, call = call, arg = arg)
+  assert_scalar_character(x, call = call, name = name, arg = arg)
   if (!(x %in% choices)) {
     choices_str <- paste(sprintf("'%s'", choices), collapse = ", ")
     cli::cli_abort(c("'{name}' must be one of {choices_str}",

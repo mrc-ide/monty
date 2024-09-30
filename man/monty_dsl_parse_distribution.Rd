@@ -46,3 +46,10 @@ links through to the C++ API.  This function is designed for use
 from other packages that use monty, and is unlikely to be
 useful to most users.
 }
+\examples{
+# A successful match
+monty_dsl_parse_distribution(quote(Normal(0, 1)))
+
+# An unsuccessful match
+monty_dsl_parse_distribution(quote(Normal()))
+}

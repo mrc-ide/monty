@@ -125,8 +125,8 @@ vector in order to use within an MCMC or optimisation algorithm.
 Ultimately, our unpacked vector will need to hold four elements
 (\code{b11}, \code{b12}, \code{b21}, \code{b22}), but there are only three distinct
 values as the two off-diagonal elements will be the same (i.e.,
-\verb{b12 == b21``).  So we might write this passing in }b_raw = 3\code{to}array\verb{, so that our unpacked list holds }b_raw = c(b11, b12,
-b22)\verb{.  We would then write }process` as something like:
+\code{b12 == b21}).  So we might write this passing in \code{b_raw = 3} to
+\code{array}, so that our unpacked list holds \code{b_raw = c(b11, b12, b22)}.  We would then write \code{process} as something like:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{process <- function(x) \{
   list(b = matrix(x$b_raw[c(1, 2, 2, 3)], 2, 2))
@@ -172,3 +172,46 @@ back up, though it's not hard.  Please let us know if you would
 use this.
 }
 
+\examples{
+# Here's a really simple example
+p <- monty_packer(c("a", "b", "c"))
+p
+
+p$pack(list(a = 1, b = 2, c = 3))
+p$unpack(1:3)
+
+# Sometimes we have a vector embedded in our parameters:
+p <- monty_packer(c("a", "b"), list(v = 4))
+p$pack(list(a = 1, b = 2, v = c(6, 7, 8, 9)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# Or a higher dimensional structure such as a matrix:
+p <- monty_packer(c("a", "b"), list(m = c(2, 2)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# You can use a packer to set "fixed" parameters that do not vary
+# with the underlying model being fit, but are required by your model.
+# This is simpler than the "closure" approach used previously in our
+# mcstate package and also easier to accommodate with differentiable
+# models:
+p <- monty_packer(
+  c("a", "b"),
+  fixed = list(d = data.frame(n = 1:3, m = runif(3))))
+p$unpack(1:2)
+p$pack(p$unpack(1:2))
+
+# The example from above, where we create a symmetric 2 x 2 matrix
+# from a 3-element vector, alongside a scalar:
+p <- monty_packer(
+  scalar = "a",
+  array = list(b_flat = 3),
+  process = function(p) list(b = matrix(p$b_flat[c(1, 2, 2, 3)], 2, 2)))
+
+# Unpacking we see "b_flat" is still in the list, but "b" is our
+# symmetric matrix:
+p$unpack(1:4)
+
+# The processed elements are ignored on the return pack:
+p$pack(list(a = 1, b_flat = 2:4, b = matrix(c(2, 3, 3, 4), 2, 2)))
+p$pack(list(a = 1, b_flat = 2:4))
+}

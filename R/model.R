@@ -40,6 +40,13 @@
 ##'   not be modified.
 ##'
 ##' @export
+##'
+##' @examples
+##' # Default properties:
+##' monty_model_properties()
+##'
+##' # Set some properties:
+##' monty_model_properties(has_gradient = TRUE, is_stochastic = FALSE)
 monty_model_properties <- function(has_gradient = NULL,
                                    has_direct_sample = NULL,
                                    is_stochastic = NULL,
@@ -165,6 +172,9 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'     * `has_parameter_groups`: The model has separable parameter groups
 ##'
 ##' @export
+##'
+##' @seealso [monty_model_function], which provides a simple interface
+##'   for creating models from functions.
 monty_model <- function(model, properties = NULL) {
   call <- environment() # for nicer stack traces
   parameters <- validate_model_parameters(model, call)
@@ -212,6 +222,10 @@ monty_model <- function(model, properties = NULL) {
 ##'   [monty_model_direct_sample] for sampling from a model.
 ##'
 ##' @export
+##' @examples
+##' m <- monty_model_function(function(a, b) dnorm(0, a, b, log = TRUE))
+##' monty_model_density(m, c(0, 1))
+##' monty_model_density(m, c(0, 10))
 monty_model_density <- function(model, parameters) {
   require_monty_model(model)
   check_model_parameters(model, parameters)
@@ -236,6 +250,14 @@ monty_model_density <- function(model, parameters) {
 ##'   [monty_model_direct_sample] to sample from a model
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' # Global maximum at (0, 0), and gradient is zero there:
+##' monty_model_density(m, c(0, 0))
+##' monty_model_gradient(m, c(0, 0))
+##'
+##' # Nonzero gradient away from the origin:
+##' monty_model_gradient(m, c(0.4, 0.2))
 monty_model_gradient <- function(model, parameters, named = FALSE) {
   require_monty_model(model)
   require_gradient(
@@ -270,6 +292,16 @@ monty_model_gradient <- function(model, parameters, named = FALSE) {
 ##' @return A vector or matrix of sampled parameters
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##'
+##' r <- monty_rng$new()
+##' monty_model_direct_sample(m, r)
+##' monty_model_direct_sample(m, r, named = TRUE)
+##'
+##' r <- monty_rng$new(n_streams = 3)
+##' monty_model_direct_sample(m, r)
+##' monty_model_direct_sample(m, r, named = TRUE)
 monty_model_direct_sample <- function(model, rng, named = FALSE) {
   require_monty_model(model)
   require_direct_sample(
@@ -278,7 +310,11 @@ monty_model_direct_sample <- function(model, rng, named = FALSE) {
   assert_scalar_logical(named, call = environment())
   ret <- model$direct_sample(rng)
   if (named) {
-    names(ret) <- model$parameters
+    if (is.matrix(ret)) {
+      rownames(ret) <- model$parameters
+    } else {
+      names(ret) <- model$parameters
+    }
   }
   ret
 }
@@ -581,5 +617,22 @@ check_model_parameters <- function(model, parameters, call = parent.frame()) {
       c("'parameters' has {where} but these disagree with 'model$parameters'",
         i = "If this is intentional, try again with 'unname(parameters)'"),
       arg = "parameters", call = call)
+  }
+}
+
+
+##' @export
+print.monty_model_properties <- function(x, ...) {
+  cli::cli_h1("<monty_model_properties>")
+  unset <- vlapply(x, is.null)
+  is_set <- !unset
+  if (any(is_set)) {
+    cli::cli_bullets(
+      set_names(sprintf("%s: {.code %s}",
+                        names(x)[is_set], vcapply(x[is_set], as.character)),
+                "*"))
+  }
+  if (any(unset)) {
+    cli::cli_alert_info("Unset: {squote(names(x)[unset])}")
   }
 }

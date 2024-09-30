@@ -112,3 +112,7 @@ independent (for example, changing the parameters in group 2 does
 not affect the density of parameters proposed in group 3).
 }
 }
+\seealso{
+\link{monty_model_function}, which provides a simple interface
+for creating models from functions.
+}

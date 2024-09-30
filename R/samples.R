@@ -14,8 +14,11 @@ print.monty_samples <- function(x, ...) {
                   c("coda", "as.mcmc.list"))
   status <- suggested_package_status(target[, 1])
   status_cls <- c(missing = "danger", installed = "warning", loaded = "success")
-  target_str <- sprintf("{.alert-%s %s::%s() {cli::col_grey('[package %s]')}}",
-                        status_cls[status], target[, 1], target[, 2], status)
+  status_str <- status
+  status_str[status == "installed"] <- "installed, but not loaded"
+  target_str <- sprintf(
+    "{.alert-%s %s::%s() {cli::col_grey('[package %s]')}}",
+    status_cls[status], target[, 1], target[, 2], status_str)
   cli::cli_alert_info(
     "Conversion to other types is possible:")
   cli::cli_bullets(set_names(target_str, ">"))

@@ -27,7 +27,7 @@ test_that("null progress bar does nothing", {
 
 test_that("can format overall progress", {
   withr::local_options(cli.num_colors = 1)
-  overall <- progress_overall(4, 100, TRUE)
+  overall <- progress_overall(4, 100, TRUE, FALSE)
   expect_equal(
     overall(c(100, 30, 10, 0)),
     paste0("[",
@@ -48,7 +48,7 @@ test_that("can format overall progress", {
 
 
 test_that("overall progress is empty with one chain", {
-  overall <- progress_overall(1, 100, TRUE)
+  overall <- progress_overall(1, 100, TRUE, FALSE)
   expect_equal(overall(0), "")
   expect_equal(overall(50), "")
   expect_equal(overall(100), "")
@@ -56,7 +56,7 @@ test_that("overall progress is empty with one chain", {
 
 
 test_that("overall progress is empty if disabled", {
-  overall <- progress_overall(4, 100, FALSE)
+  overall <- progress_overall(4, 100, FALSE, FALSE)
   expect_equal(overall(0), "")
   expect_equal(overall(50), "")
   expect_equal(overall(100), "")
@@ -64,7 +64,7 @@ test_that("overall progress is empty if disabled", {
 
 
 test_that("can format detail", {
-  f <- progress_bar_detail(4, 100, TRUE)
+  f <- progress_bar_detail(4, 100, TRUE, FALSE)
   g <- f(1)
   id <- environment(f)$id
   e <- environment(f)$e
@@ -94,5 +94,5 @@ test_that("can create pb", {
   mockery::expect_called(mock_null, 1)
   mockery::expect_called(mock_detail, 1)
   expect_equal(mockery::mock_args(mock_detail)[[1]],
-               list(4, 100, TRUE))
+               list(4, 100, TRUE, FALSE))
 })

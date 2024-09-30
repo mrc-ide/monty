@@ -29,8 +29,7 @@
 ##' @export
 ##' @examples
 ##'
-##' # Expressions that correspond to models can be passed in with no
-##' # quoting
+##' # Expressions that define models can be passed in with no quoting
 ##' monty_dsl(a ~ Normal(0, 1))
 ##' monty_dsl({
 ##'   a ~ Normal(0, 1)
@@ -109,6 +108,12 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
 ##'   a first argument) a rng object (see [monty_rng])
 ##'
 ##' @export
+##' @examples
+##' # A successful match
+##' monty_dsl_parse_distribution(quote(Normal(0, 1)))
+##'
+##' # An unsuccessful match
+##' monty_dsl_parse_distribution(quote(Normal()))
 monty_dsl_parse_distribution <- function(expr, name = NULL) {
   ## Here, the user has not provided a call to anything, or a call to
   ## something that is not recognised as a distribution.  We throw the

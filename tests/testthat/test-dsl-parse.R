@@ -202,31 +202,11 @@ test_that("report back invalid distribution calls", {
 
 test_that("can explain an error", {
   skip_if_not_installed("mockery")
-  mock_browse <- mockery::mock()
-  mockery::stub(monty_dsl_error_explain, "utils::browseURL", mock_browse)
+  mock_explain <- mockery::mock()
+  mockery::stub(monty_dsl_error_explain, "error_explain", mock_explain)
   monty_dsl_error_explain("E101")
-  mockery::expect_called(mock_browse, 1)
+  mockery::expect_called(mock_explain, 1)
   expect_equal(
-    mockery::mock_args(mock_browse)[[1]],
-    list("https://mrc-ide.github.io/monty/articles/dsl-errors.html#e101"))
-})
-
-
-test_that("error if given invalid code", {
-  msg <- "Invalid code 'E01', should match 'Exxx'"
-  expect_error(monty_dsl_error_explain("E01"),
-               "Invalid code 'E01', should match 'Exxx'")
-  expect_error(monty_dsl_error_explain("e0001"),
-               "Invalid code 'e0001', should match 'Exxx'")
-  expect_error(monty_dsl_error_explain("E0001"),
-               "Invalid code 'E0001', should match 'Exxx'")
-  expect_error(monty_dsl_error_explain("anything"),
-               "Invalid code 'anything', should match 'Exxx'")
-})
-
-
-test_that("error if given unknown code", {
-  expect_error(
-    monty_dsl_error_explain("E999"),
-    "Error 'E999' is undocumented")
+    mockery::mock_args(mock_explain)[[1]],
+    list(dsl_errors, "E101", "pretty"))
 })

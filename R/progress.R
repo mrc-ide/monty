@@ -1,8 +1,8 @@
 progress_bar <- function(n_chains, n_steps, progress, show_overall,
-                         call = NULL) {
+                         single_chain = FALSE, call = parent.frame()) {
   progress <- show_progress_bar(progress, call)
   if (progress) {
-    progress_bar_detail(n_chains, n_steps, show_overall)
+    progress_bar_detail(n_chains, n_steps, show_overall, single_chain)
   } else {
     progress_bar_null()
   }
@@ -26,21 +26,28 @@ show_progress_bar <- function(progress, call = NULL) {
 ## might be the best we can do for some of the other parallel
 ## backends, but we'll see how packages that implement progress bars
 ## there cope.
-progress_bar_detail <- function(n_chains, n_steps, show_overall) {
+progress_bar_detail <- function(n_chains, n_steps, show_overall, single_chain) {
   e <- new.env()
   e$n <- rep(0, n_chains)
-  overall <- progress_overall(n_chains, n_steps, show_overall)
+  overall <- progress_overall(n_chains, n_steps, show_overall, single_chain)
   fmt <- paste("Sampling {overall(e$n)} {cli::pb_bar} |",
                "{cli::pb_percent} ETA: {cli::pb_eta}")
+  n_steps_total <- if (single_chain) n_steps else n_chains * n_steps
   id <- cli::cli_progress_bar(
-    total = n_chains * n_steps,
+    total = n_steps_total,
     format = fmt,
     .auto_close = FALSE)
 
   function(chain_index) {
     function(at) {
-      e$n[chain_index] <- at
-      cli::cli_progress_update(id = id, set = sum(e$n))
+      ## Avoid writing into a closed progress bar, it will cause an
+      ## error.  We do this by checking to see if progress has changed
+      ## from last time we tried updating.
+      changed <- any(e$n[chain_index] != at, na.rm = TRUE)
+      if (changed) {
+        e$n[chain_index] <- at
+        cli::cli_progress_update(id = id, set = sum(e$n))
+      }
     }
   }
 }
@@ -55,8 +62,8 @@ progress_bar_null <- function(...) {
 }
 
 
-progress_overall <- function(n_chains, n_steps, show_overall) {
-  if (n_chains == 1 || !show_overall) {
+progress_overall <- function(n_chains, n_steps, show_overall, single_chain) {
+  if (n_chains == 1 || !show_overall || single_chain) {
     return(function(n) "")
   }
   sym <- unlist(cli::symbol[paste0("lower_block_", 1:8)], use.names = FALSE)
