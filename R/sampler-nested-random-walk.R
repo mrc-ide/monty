@@ -100,6 +100,8 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
       make_rerun(rerun_every, rerun_random, model$properties$is_stochastic)
     internal$step <- 0
 
+    vcv <- sampler_validate_nested_vcv(vcv, model$parameter_groups, pars)
+
     internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars,
                                          model$domain, boundaries)
 
@@ -308,12 +310,14 @@ check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
 }
 
 
-nested_proposal <- function(vcv, parameter_groups, pars, domain,
-                            boundaries = "reflect", call = NULL) {
+sampler_validate_nested_vcv <- function(vcv, parameter_groups, pars, 
+                                        call = NULL) {
   i_base <- parameter_groups == 0
   n_base <- sum(i_base)
+  has_base <- n_base != 0
   n_groups <- max(parameter_groups)
   i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
+  
   if (NROW(vcv$base) != n_base) {
     cli::cli_abort(
       c("Incompatible number of base parameters in your model and sampler",
@@ -341,11 +345,40 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
         set_names(detail, "i")),
       call = call)
   }
-
-  has_base <- n_base > 0
+  
   if (has_base) {
     if (is.matrix(pars)) {
       vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base, , drop = FALSE])
+    } else {
+      vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base])
+    }
+  }
+  
+  for (i in seq_len(n_groups)) {
+    if (is.matrix(pars)) {
+      vcv$groups[[i]] <- 
+        sampler_validate_vcv(vcv$groups[[i]],
+                             pars[i_group[[i]], , drop = FALSE])
+    } else {
+      vcv$groups[[i]] <- 
+        sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
+    }
+  }
+  
+  vcv
+}
+
+
+nested_proposal <- function(vcv, parameter_groups, pars, domain,
+                            boundaries = "reflect") {
+  i_base <- parameter_groups == 0
+  n_base <- sum(i_base)
+  has_base <- n_base != 0
+  n_groups <- max(parameter_groups)
+  i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
+  
+  if (has_base) {
+    if (is.matrix(pars)) {
       mvn_base <- make_random_walk_proposal(
         vcv$base, domain[i_base, , drop = FALSE], boundaries)
       proposal_base <- function(x, rng) {
@@ -355,7 +388,6 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
         x
       }
     } else {
-      vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base])
       mvn_base <- make_random_walk_proposal(
         vcv$base, domain[i_base, , drop = FALSE], boundaries)
       proposal_base <- function(x, rng) {
@@ -370,16 +402,6 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
     proposal_base <- NULL
   }
 
-  for (i in seq_len(n_groups)) {
-    if (is.matrix(pars)) {
-      vcv$groups[[i]] <-
-        sampler_validate_vcv(vcv$groups[[i]],
-                             pars[i_group[[i]], , drop = FALSE])
-    } else {
-      vcv$groups[[i]] <-
-        sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
-    }
-  }
   mvn_groups <- lapply(seq_len(n_groups), function(i) {
     make_random_walk_proposal(vcv$groups[[i]],
                               domain[i_group[[i]], , drop = FALSE],
@@ -399,6 +421,7 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
   list(base = proposal_base,
        groups = proposal_groups)
 }
+
 
 is_parameters_in_domain_groups <- function(x, domain, parameter_groups) {
   x_min <- domain[, 1]
