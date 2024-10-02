@@ -129,7 +129,7 @@
 ##'
 ##' The input to `pack()` will be the shape that `unpack()` returned;
 ##' a named list of numerical vectors, matrices and arrays.  The names
-##' must correspond do the names if your packer (i.e., `scalar` and
+##' must correspond to the names in your packer (i.e., `scalar` and
 ##' the names of `array`).  Each element has dimensions
 ##'
 ##' ```
