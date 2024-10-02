@@ -18,6 +18,11 @@ A log-density value, or vector of log-density values
 Compute log density for a model.  This is a wrapper around the
 \verb{$density} property within a \link{monty_model} object.
 }
+\examples{
+m <- monty_model_function(function(a, b) dnorm(0, a, b, log = TRUE))
+monty_model_density(m, c(0, 1))
+monty_model_density(m, c(0, 10))
+}
 \seealso{
 \link{monty_model_gradient} for computing gradients and
 \link{monty_model_direct_sample} for sampling from a model.

@@ -46,7 +46,7 @@ test_that("validate vcv inputs on construction of sampler", {
 
 
 test_that("can't use nested sampler with models that are not nested", {
-  m <- ex_simple_gaussian(diag(3))
+  m <- monty_example("gaussian", diag(3))
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
   s <- monty_sampler_nested_adaptive(vcv)
   expect_error(

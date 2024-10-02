@@ -27,6 +27,20 @@
 ##'   representing all parameters.
 ##'
 ##' @export
+##' @examples
+##' banana <- function(a, b, sd) {
+##'   dnorm(b, log = TRUE) + dnorm((a - b^2) / sd, log = TRUE)
+##' }
+##' m <- monty_model_function(banana, fixed = list(sd = 0.25))
+##' m
+##'
+##' # Density from our new model. Note that this computes density
+##' # using an unstructured parameter vector, which is mapped to 'a'
+##' # and 'b':
+##' monty_model_density(m, c(0, 0))
+##'
+##' # Same as the built-in banana example:
+##' monty_model_density(monty_example("banana"), c(0, 0))
 monty_model_function <- function(density, packer = NULL, fixed = NULL) {
   if (!is.function(density)) {
     cli::cli_abort("Expected 'density' to be a function", arg = "density")

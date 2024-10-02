@@ -26,6 +26,13 @@
 ##' We may need to make this slightly extensible in future, but for
 ##' now the set of functions that can be differentiated is closed.
 ##'
+##' # Warning
+##'
+##' The way of accessing distribution support here is peculiar and the
+##' return type unusual.  This is intentional, and we expect a more
+##' conventional interface in the future once this package settles
+##' down.
+##'
 ##' @title Differentiate expressions
 ##'
 ##' @return A list of related objects:
@@ -42,6 +49,10 @@
 ##' to differentiate to allow programs to fail fast.
 ##'
 ##' @export
+##' @examples
+##' d <- monty_differentiation()
+##' d$differentiate(quote(sqrt(sin(x))), "x")
+##' D(quote(sqrt(sin(x))), "x")
 monty_differentiation <- function() {
   ## TODO: we might want to export a stripped down copy of maths
   ## perhaps.

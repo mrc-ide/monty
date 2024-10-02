@@ -1,5 +1,5 @@
 test_that("Empirical VCV calculated correctly with forget_rate = 0", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0,
@@ -17,7 +17,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 
 
 test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.1)
@@ -35,7 +35,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
 
 
 test_that("Empirical VCV correct using both forget_rate and forget_end", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.5,
@@ -55,7 +55,7 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
 
 
 test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.25,
@@ -76,7 +76,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
 
 
 test_that("can continue adaptive sampler", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
 
   set.seed(1)

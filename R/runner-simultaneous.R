@@ -14,6 +14,11 @@
 ##'   [monty_sample()]
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' s <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+##' r <- monty_runner_simultaneous()
+##' samples <- monty_sample(m, s, 200, runner = r)
 monty_runner_simultaneous <- function(progress = NULL) {
   validate_suitable <- function(model, observer) {
     require_multiple_parameters(
@@ -35,7 +40,7 @@ monty_runner_simultaneous <- function(progress = NULL) {
   run <- function(pars, model, sampler, observer, n_steps, rng) {
     validate_suitable(model, observer)
     n_chains <- length(rng)
-    pb <- progress_bar(n_chains, n_steps, progress, FALSE, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, show_overall = FALSE)
     progress <- pb(seq_len(n_chains))
     rng_state <- lapply(rng, function(r) r$state())
     ## TODO: get the rng state back into 'rng' here, or (better) look
@@ -51,7 +56,7 @@ monty_runner_simultaneous <- function(progress = NULL) {
   continue <- function(state, model, sampler, observer, n_steps) {
     validate_suitable(model, observer)
     n_chains <- length(state)
-    pb <- progress_bar(n_chains, n_steps, progress, FALSE, environment())
+    pb <- progress_bar(n_chains, n_steps, progress, show_overall = FALSE)
     progress <- pb(seq_len(n_chains))
     monty_continue_chains_simultaneous(state, model, sampler, observer,
                                        n_steps, progress)

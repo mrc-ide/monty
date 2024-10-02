@@ -1,34 +1,4 @@
 #!/usr/bin/env Rscript
-
-read_errors <- function() {
-  path_rmd <- "vignettes/dsl-errors.Rmd"
-  txt <- readLines(path_rmd)
-
-  re <- "^# `(E[0-9]{3})`$"
-  i <- grep(re, txt)
-  if (length(setdiff(grep("^# ", txt), i)) > 0) {
-    stop("Some headings don't match expected pattern")
-  }
-
-  f <- function(from, to) {
-    ret <- txt[from:to]
-    while (ret[[1]] == "") {
-      ret <- ret[-1]
-    }
-    while (ret[[length(ret)]] == "") {
-      ret <- ret[-length(ret)]
-    }
-    ret
-  }
-
-  ret <- Map(f, i + 1, c(i[-1] - 1, length(txt)))
-  names(ret) <- sub(re, "\\1", txt[i])
-  ret
-}
-
-
-## We might parse this further, e.g., with commonmark, so that we can
-## render this nicely to the console as cli would make this pretty
-## easy really.
-dsl_errors <- read_errors()
+dsl_errors <- reside.utils::errors_parse(
+  "vignettes/dsl-errors.Rmd", "E[0-9]{3}", "monty::monty_dsl_error_explain")
 save(list = "dsl_errors", file = file.path("R/sysdata.rda"), version = 2)

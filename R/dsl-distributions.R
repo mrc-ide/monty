@@ -20,6 +20,8 @@
 ##'   supporting everything this way soon.
 ##'
 ##' @export
+##' @examples
+##' monty_dsl_distributions()
 monty_dsl_distributions <- function() {
   dsl_distribution_summary
 }

@@ -17,6 +17,10 @@ reference:
     - monty_model_gradient
     - monty_model_direct_sample
 
+  - subtitle: Example
+    contents:
+    - monty_example
+
   - title: Domain specific language
     contents:
       - monty_dsl
@@ -47,6 +51,15 @@ reference:
     - monty_runner_parallel
     - monty_runner_simultaneous
 
+  - subtitle: Manually run chains
+    contents:
+    - monty_sample_manual_prepare
+    - monty_sample_manual_run
+    - monty_sample_manual_info
+    - monty_sample_manual_collect
+    - monty_sample_manual_cleanup
+    - monty_sample_manual_prepare_continue
+
   - subtitle: Tools
     contents:
     - monty_observer
@@ -64,3 +77,15 @@ reference:
     - monty_rng_distributed_pointer
     - monty_rng_distributed_state
     - monty_rng_pointer
+
+articles:
+  - title: Basics
+    navbar: Basics
+    contents:
+    - dsl
+    - samples
+  - title: Details
+    navbar: Details
+    contents:
+    - dsl-errors
+    - samplers
