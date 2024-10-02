@@ -2,9 +2,7 @@
 % Please edit documentation in R/sample-manual.R
 \name{monty_sample_manual_collect}
 \alias{monty_sample_manual_collect}
-\title{Collect samples from chains that have been run with
-\link{monty_sample_manual_prepare} and \link{monty_sample_manual_run}.  If
-any chain has not completed, we will error.}
+\title{Collect manually run samples}
 \usage{
 monty_sample_manual_collect(path, samples = NULL, restartable = FALSE)
 }

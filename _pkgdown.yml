@@ -77,3 +77,15 @@ reference:
     - monty_rng_distributed_pointer
     - monty_rng_distributed_state
     - monty_rng_pointer
+
+articles:
+  - title: Basics
+    navbar: Basics
+    contents:
+    - dsl
+    - samples
+  - title: Details
+    navbar: Details
+    contents:
+    - dsl-errors
+    - samplers
