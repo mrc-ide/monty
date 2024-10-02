@@ -34,7 +34,7 @@ m <- monty_example("banana", sigma = 0.5)
 m
 ```
 
-We can plot a greyscale visualisation of its density by computing the density over a grid.  Normally this is not possible of course:
+We can plot a visualisation of its density by computing the density over a grid.  Normally this is not possible of course:
 
 ```{r}
 a <- seq(-2, 6, length.out = 1000)
@@ -54,7 +54,7 @@ image(a, b, z, xlab = "alpha", ylab = "beta")
 points(s[1, ], s[2, ], pch = 19, col = "#00000055")
 ```
 
-It is also possible to compute the 95% confidence interval of the distribution using the relationship between the standard bivariate normal distribution and the banana shaped distribution as defined above. We can check than roughly 10 samples (out of 200) are out of this 95% CI contour.
+It is also possible to compute the 95% confidence interval of the distribution using the relationship between the standard bivariate normal distribution and the banana shaped distribution as defined above. We can check that roughly 10 samples (out of 200) are out of this 95% CI contour.
 
 ```{r}
 theta <- seq(0, 2 * pi, length.out = 10000)
