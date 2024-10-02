@@ -102,7 +102,7 @@ dim2 <- function(x) {
 
 
 "dim2<-" <- function(x, value) {
-  if (length(value) != 1) {
+  if (length(value) > 1) {
     dim(x) <- value
   }
   x

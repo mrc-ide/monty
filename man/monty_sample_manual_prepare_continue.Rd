@@ -2,10 +2,7 @@
 % Please edit documentation in R/sample-manual.R
 \name{monty_sample_manual_prepare_continue}
 \alias{monty_sample_manual_prepare_continue}
-\title{Prepare to continue sampling from a model, with manual chain
-orchestration.  This function is to \link{monty_sample_continue} what
-\link{monty_sample_manual_prepare} is to \link{monty_sample}.  The original
-set of samples do not need to have been run manually.}
+\title{Prepare to continue sampling with manual scheduling}
 \usage{
 monty_sample_manual_prepare_continue(
   samples,
