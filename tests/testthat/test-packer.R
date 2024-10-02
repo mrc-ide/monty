@@ -238,7 +238,7 @@ test_that("Properly unpack scalars stored as zero-length arrays", {
 ## These tests are the inverse of the tests abvove.
 test_that("Roundtrip scalars stored as zero-length arrays", {
   p <- monty_packer(array = list(a = integer(0), b = 1L))
-  p$pack(list(a = 1, b = 2))
+  expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
 
   ## expect_equal(p$unpack(1:2), list(a = 1, b = 2))
   expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))

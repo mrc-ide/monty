@@ -499,7 +499,7 @@ unpack_array <- function(x, parameters, len, idx, shape, fixed, process) {
 
 
 ## Now, we do some annoying calculations to make sure that what we've
-## been gven has the correct size, etc.
+## been given has the correct size, etc.
 pack_check_dimensions <- function(p, scalar, shape, fixed, process,
                                   call = parent.frame()) {
   if (length(scalar) > 0) {
@@ -525,14 +525,14 @@ pack_check_dimensions <- function(p, scalar, shape, fixed, process,
   ## single pack.  What we expect is if we have an element 'x' with
   ## dimensions <a, b, c, ...> and we expect that the shape 's' of
   ## this is <a, b> we need to validate that the first dimensions of
-  ## 'x' are 's' and thern record the remainder - that's the shape of
+  ## 'x' are 's' and then record the remainder - that's the shape of
   ## the rest of the eventual object (so if there is no dimension left
   ## then it was originally a vector, if there's one element left our
   ## original input was a matrix and so on).  Then we check that this
   ## remainder is consistent across all elements in the list.
   ##
   ## There are a couple of additional wrinkles due to scalar variables
-  ## (these are ones where 's' has length 0).  First, We can't drop
+  ## (these are ones where 's' has length 0).  First, we can't drop
   ## things from 'd' with d[-i] because that will drop everything.
   ## Second, when working out the residual dimensions of the packed
   ## data we might have a situation where there are some scalars for
