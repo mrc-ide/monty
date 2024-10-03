@@ -31,7 +31,6 @@ The [`odin2`](https://mrc-ide.github.io/odin2/) package can generate dynamical m
 
 The basic functionality of this package is in place, but we plan to do work on:
 
-* expanding runners to include parallel chains (a basic parallel runner exists, but we will port over the `callr`-based runner from `mcstate`)
 * improving debugging tools if models fail mid-chain
 * implementing parallel tempering, allowing you to compose with any other supported sampler
 * improving support for nested models
