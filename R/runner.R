@@ -6,11 +6,16 @@
 ##'
 ##' @param progress Optional logical, indicating if we should print a
 ##'   progress bar while running.  If `NULL`, we use the value of the
-##'   option `monty.progress` if set, otherwise we show the
-##'   progress bar (as it is typically wanted).  The progress bar
-##'   itself responds to cli's options; in particular
+##'   option `monty.progress` if set, otherwise we show the progress
+##'   bar (as it is typically wanted).  The progress bar itself
+##'   responds to cli's options; in particular
 ##'   `cli.progress_show_after` and `cli.progress_clear` will affect
-##'   your experience.
+##'   your experience.  Alternatively, you can provide a string
+##'   indicating the progress bar type.  Options are `fancy`
+##'   (equivalent to `TRUE`), `none` (equivalent to `FALSE`) and
+##'   `simple` (a very simple text-mode progress indicator designed
+##'   play nicely with logging; it does not use special codes to clear
+##'   the line).
 ##'
 ##' @return A runner of class `monty_runner` that can be passed to
 ##'   [monty_sample()]
@@ -48,17 +53,17 @@ monty_runner_serial <- function(progress = NULL) {
 
 ##' Run MCMC chains in parallel (at the same time).  This runner uses
 ##' the `parallel` package to distribute your chains over a number of
-##' worker processes on the same machine.  Compared with the "worker"
-##' support in `mcstate` version 1 this is very simple and we'll improve
-##' it over time.  In particular we do not report back any information
-##' about progress while a chain is running on a worker or even across
-##' chains.  There's also no support to warn you if your number of
-##' chains do not neatly divide through by the number of workers.
-##' Mostly this exists as a proof of concept for us to think about the
-##' different interfaces.  Unless your chains are quite slow, the
-##' parallel runner will be slower than the serial runner
-##' ([monty_runner_serial]) due to the overhead cost of starting the
-##' cluster.
+##' worker processes on the same machine.  Compared with
+##' [monty_runner_callr] (Whch is similar to the "worker" support in
+##' `mcstate` version 1), this is very simple.  In particular we do
+##' not report back any information about progress while a chain is
+##' running on a worker or even across chains.  There's also no
+##' support to warn you if your number of chains do not neatly divide
+##' through by the number of workers.  Mostly this exists as a proof
+##' of concept for us to think about the different interfaces.  Unless
+##' your chains are quite slow, the parallel runner will be slower
+##' than the serial runner ([monty_runner_serial]) due to the overhead
+##' cost of starting the cluster.
 ##'
 ##' @title Run MCMC chain in parallel
 ##'

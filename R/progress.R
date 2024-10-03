@@ -1,11 +1,11 @@
 progress_bar <- function(n_chains, n_steps, progress, show_overall,
                          single_chain = FALSE, call = parent.frame()) {
   progress <- show_progress_bar(progress, call)
-  if (progress) {
-    progress_bar_detail(n_chains, n_steps, show_overall, single_chain)
-  } else {
-    progress_bar_null()
-  }
+  switch(
+    progress,
+    none = progress_bar_none(),
+    simple = progress_bar_simple(n_steps),
+    fancy = progress_bar_fancy(n_chains, n_steps, show_overall, single_chain))
 }
 
 
@@ -13,20 +13,45 @@ show_progress_bar <- function(progress, call = NULL) {
   if (is.null(progress)) {
     progress <- getOption("monty.progress", TRUE)
   }
-  ## Error here is not great if we get this from an option; but need
-  ## to disable quoting there in some cases.
-  assert_scalar_logical(progress, call = call)
+  ## Errors here are not great if we get this from an option, probably
+  ## needs its own error path.
+  if (is.logical(progress)) {
+    assert_scalar_logical(progress, call = call)
+    if (progress) "fancy" else "none"
+  } else {
+    match_value(progress, c("fancy", "simple", "none"))
+  }
 }
 
 
-## This will be the case to use where we can report back in detail
-## about what is running (for each chain we can report about the
-## progress within that chain).  The other likely option will be a
-## very coarse detail which is the state of each chain only; that
-## might be the best we can do for some of the other parallel
-## backends, but we'll see how packages that implement progress bars
-## there cope.
-progress_bar_detail <- function(n_chains, n_steps, show_overall, single_chain) {
+## A "progress bar" that we can pass through that will produce text
+## that we can easily scan for in the logs of a process from callr.
+##
+## Arguments here allow some tuning to get this "appropriately
+## responsive"; default is print every second, or at least 20 "ticks"
+## within a run.
+##
+## These are currently not tuneable from user-facing code.
+progress_bar_simple <- function(n_steps, every_s = 1, min_updates = 20) {
+  function(chain_index) {
+    env <- new.env(parent = emptyenv())
+    env$t_next <- Sys.time()
+    freq <- ceiling(n_steps / min_updates)
+    function(at) {
+      now <- Sys.time()
+      show_progress <- at == n_steps || at %% freq == 0 || now > env$t_next
+      if (show_progress) {
+        env$t_next <- now + every_s
+        message(sprintf("MONTY-PROGRESS: chain: %s, step: %s",
+                        chain_index, at))
+      }
+    }
+  }
+}
+
+
+progress_bar_fancy <- function(n_chains, n_steps, show_overall,
+                               single_chain = FALSE) {
   e <- new.env()
   e$n <- rep(0, n_chains)
   overall <- progress_overall(n_chains, n_steps, show_overall, single_chain)
@@ -53,8 +78,21 @@ progress_bar_detail <- function(n_chains, n_steps, show_overall, single_chain) {
 }
 
 
+parse_progress_bar_simple <- function(txt) {
+  re <- "^MONTY-PROGRESS: chain: ([0-9]+), step: ([0-9]+)$"
+  i <- grep(re, txt)
+  if (length(i) == 0) {
+    NULL
+  } else {
+    x <- txt[[last(i)]]
+    list(chain_id = as.numeric(sub(re, "\\1", x)),
+         step = as.numeric(sub(re, "\\2", x)))
+  }
+}
+
+
 ## Dummy version that can be used where no progress bar is wanted.
-progress_bar_null <- function(...) {
+progress_bar_none <- function(...) {
   function(chain_index) {
     function(at) {
     }
