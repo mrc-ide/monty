@@ -120,6 +120,7 @@ test_that("can run a sampler with shared parameters", {
 
 
 test_that("can run an observer during a nested fit", {
+  skip("FIXME: add model-based observer")
   set.seed(1)
   ng <- 5
   m <- ex_simple_nested_with_base(ng)

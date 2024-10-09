@@ -182,7 +182,7 @@ machinery).
 
 The input to \code{pack()} will be the shape that \code{unpack()} returned;
 a named list of numerical vectors, matrices and arrays.  The names
-must correspond do the names if your packer (i.e., \code{scalar} and
+must correspond to the names in your packer (i.e., \code{scalar} and
 the names of \code{array}).  Each element has dimensions
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{<...object, ...residual>

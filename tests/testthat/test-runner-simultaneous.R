@@ -25,18 +25,6 @@ test_that("require multiple parameter support for simultaneous runner", {
 })
 
 
-test_that("can't provide observer yet with simultaneous runner", {
-  m <- ex_simple_gamma1()
-  observer <- monty_observer(function(model, rng) 1)
-  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
-  runner <- monty_runner_simultaneous()
-  expect_error(
-    monty_sample(m, sampler, 100, runner = runner, observer = observer),
-    "Can't yet use observers with 'monty_runner_simultaneous'",
-    fixed = TRUE)
-})
-
-
 test_that("can use different covariance kernels on different chains", {
   m <- ex_simple_gamma1()
   vcv <- array(1 * 10^c(-4, -3, -2, -1, 0), c(1, 1, 5))

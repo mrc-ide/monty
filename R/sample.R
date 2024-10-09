@@ -31,11 +31,6 @@
 ##'   `parallel` package to run chains in parallel.  If you only run
 ##'   one chain then this argument is best left alone.
 ##'
-##' @param observer An observer, created via [monty_observer], which
-##'   you can use to extract additional information from your model at
-##'   points included in the chain (for example, trajectories from a
-##'   dynamical model).
-##'
 ##' @param restartable Logical, indicating if the chains should be
 ##'   restartable.  This will add additional data to the chains
 ##'   object.
@@ -87,13 +82,10 @@
 ##' # At this point you could also use the 'bayesplot' package to plot
 ##' # diagnostics.
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
-                         n_chains = 1L, runner = NULL, observer = NULL,
+                         n_chains = 1L, runner = NULL,
                          restartable = FALSE) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
-  if (!is.null(observer)) {
-    assert_is(observer, "monty_observer")
-  }
   if (is.null(runner)) {
     runner <- monty_runner_serial()
   } else {
@@ -103,11 +95,12 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, observer, n_steps, rng)
+  res <- runner$run(pars, model, sampler, n_steps, rng)
 
-  samples <- combine_chains(res, observer)
+  observer <- if (model$properties$has_observer) model$observer else NULL
+  samples <- combine_chains(res, model$observer)
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, observer, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
 }
@@ -155,14 +148,14 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   state <- samples$restart$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler
-  observer <- samples$restart$observer
 
-  res <- runner$continue(state, model, sampler, observer, n_steps)
+  res <- runner$continue(state, model, sampler, n_steps)
 
+  observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- append_chains(samples, combine_chains(res, observer), observer)
 
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, observer, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
 }
@@ -369,7 +362,7 @@ initial_rng <- function(n_chains, seed = NULL) {
 }
 
 
-restart_data <- function(res, model, sampler, observer, runner) {
+restart_data <- function(res, model, sampler, runner) {
   if (is.null(names(res))) {
     state <- lapply(res, function(x) x$internal$state)
   } else {
@@ -389,7 +382,6 @@ restart_data <- function(res, model, sampler, observer, runner) {
   list(state = state,
        model = model,
        sampler = sampler,
-       observer = observer,
        runner = runner)
 }
 
