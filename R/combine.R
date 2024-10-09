@@ -296,14 +296,14 @@ model_combine_observer <- function(a, b, parameters, properties,
   }
   if (required && !possible) {
     if (a$properties$has_observer) {
-      hint <- paste("Both models have a 'observer' method so we can't",
+      hint <- paste("Both models have an 'observer' object so we can't",
                     "combine them. Set 'has_observer = FALSE' on one",
                     "of your models and try again")
     } else {
-      hint <- "Neither of your models have 'observer' methods"
+      hint <- "Neither of your models have 'observer' objects"
     }
     cli::cli_abort(
-      c("Can't create a observer from these models",
+      c("Can't create an observer from these models",
         i = hint),
       call = call)
   }

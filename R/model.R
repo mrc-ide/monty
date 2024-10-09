@@ -467,7 +467,7 @@ validate_model_observer <- function(model, properties, call) {
   }
   if (!is.null(value) && !inherits(value, "monty_observer")) {
     cli::cli_abort(
-      "Expected 'model$observer' to be a 'monty_observer' if non-NULL",
+      "Expected 'model$observer' to be a 'monty_observer' object if non-NULL",
       arg = "model", call = call)
   }
   value
