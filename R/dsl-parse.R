@@ -1,16 +1,18 @@
 ## The default of gradient_required = TRUE here helps with tests
-dsl_parse <- function(exprs, gradient_required = TRUE, call = NULL) {
+dsl_parse <- function(exprs, gradient_required = TRUE, data = NULL,
+                      call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
   dsl_parse_check_duplicates(exprs, call)
-  dsl_parse_check_usage(exprs, call)
+  dsl_parse_check_data(exprs, data, call)
+  dsl_parse_check_usage(exprs, data, call)
 
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
   adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
-  list(parameters = parameters, exprs = exprs, adjoint = adjoint)
+  list(parameters = parameters, exprs = exprs, adjoint = adjoint, data = data)
 }
 
 
@@ -109,11 +111,25 @@ dsl_parse_check_duplicates <- function(exprs, call) {
 }
 
 
-dsl_parse_check_usage <- function(exprs, call) {
+dsl_parse_check_data <- function(exprs, data, call) {
+  if (is.null(data)) {
+    return()
+  }
+
   name <- vcapply(exprs, "[[", "name")
+  err <- intersect(name, names(data))
+  if (length(err) > 0) {
+    browser()
+  }
+}
+
+
+dsl_parse_check_usage <- function(exprs, data, call) {
+  name <- vcapply(exprs, "[[", "name")
+  names_data <- names(data)
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
-    err <- setdiff(e$depends, name[seq_len(i - 1)])
+    err <- setdiff(e$depends, c(name[seq_len(i - 1)], names_data))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
@@ -130,6 +146,9 @@ dsl_parse_check_usage <- function(exprs, call) {
       ## the variables 'err' here within the expression; that is
       ## probably something rlang can do for us as it does that with
       ## the 'arg' argument to rlang::abort already?
+      ##
+      ## TODO: Highlight near misses with did-you-mean?  We do that
+      ## somewhere in odin already I think.
       dsl_parse_error("Invalid use of variable{?s} {squote(err)}",
                       "E205", e$expr, call, context = context)
     }
