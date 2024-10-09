@@ -28,7 +28,7 @@ then we will error if it is not possible to create a gradient
 function.}
 
 \item{fixed}{An optional list of values that can be used within
-the dsl code.  Anything you provide here is available for your
+the DSL code.  Anything you provide here is available for your
 calculations.  In the interest of future compatibility, we check
 currently that all elements are scalars.  In future this may
 become more flexible and allow passing environments, etc.  Once
