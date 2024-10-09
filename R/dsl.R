@@ -72,9 +72,9 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
   } else {
     x <- rlang::quo_get_expr(quo)
   }
-  fixed <- check_dsl_fixed(data, call)
+  fixed <- check_dsl_fixed(fixed, call)
   exprs <- dsl_preprocess(x, type, call)
-  dsl_parse(exprs, gradient, call)
+  dsl_parse(exprs, gradient, fixed, call)
 }
 
 
