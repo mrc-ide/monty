@@ -70,7 +70,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
-  initialise <- function(pars, model, observer, rng) {
+  initialise <- function(pars, model, rng) {
     require_deterministic(model,
                           "Can't use adaptive sampler with stochastic models")
 
@@ -146,9 +146,9 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
     }
 
     state <- list(pars = pars, density = c(density))
-    if (!is.null(observer)) {
-      state$observation <- observer$observe(model$model, rng)
-    }
+    ## TODO: we need to fix observation here; it should move into a
+    ## helper as part of a setup I think; see the sampler-helpers for
+    ## the single-parameter case.
     state
   }
 
@@ -161,7 +161,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
   ## handle this by additional arguments to the constructor, then
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
-  step <- function(state, model, observer, rng) {
+  step <- function(state, model, rng) {
     proposal <- 
       nested_proposal_adaptive(internal$adaptive, internal$multiple_parameters,
                                model$parameter_groups, state$pars, model$domain,
@@ -201,9 +201,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
         state$pars <- pars_next
         state$density <- density_next
         internal$density_by_group <- density_by_group_next
-        if (!is.null(observer)) {
-          state$observation <- observer$observe(model$model, rng)
-        }
+        ## TODO: observe here
       }
     } else {
       accept_prob_base <- NULL
@@ -274,9 +272,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
       state$pars <- pars_next
       state$density <- c(density_next)
       internal$density_by_group <- density_by_group_next
-      if (!is.null(observer)) {
-        state$observation <- observer$observe(model$model, rng)
-      }
+      ## TODO: observe here
     }
 
     if (internal$multiple_parameters) {

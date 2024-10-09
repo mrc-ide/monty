@@ -7,8 +7,6 @@ test_that("can validate sample inputs", {
                "Expected 'sampler' to be a 'monty_sampler'")
   expect_error(monty_sample(model, sampler, 100, runner = TRUE),
                "Expected 'runner' to be a 'monty_runner'")
-  expect_error(monty_sample(model, sampler, 100, observer = TRUE),
-               "Expected 'observer' to be a 'monty_observer'")
   expect_error(monty_sample(model, sampler, 100, c(1, 2)),
                "Unexpected length for vector 'initial' (given 2, expected 1)",
                fixed = TRUE)

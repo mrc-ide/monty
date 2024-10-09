@@ -77,7 +77,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     all(env$status == "done")
   }
 
-  loop <- function(path, n_workers, n_chains, n_steps, observer, progress) {
+  loop <- function(path, n_workers, n_chains, n_steps, progress) {
     pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
     n_workers <- min(n_chains, n_workers)
     env$path <- path
@@ -99,27 +99,26 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     res
   }
 
-  run <- function(pars, model, sampler, observer, n_steps, rng) {
+  run <- function(pars, model, sampler, n_steps, rng) {
     seed <- unlist(lapply(rng, function(r) r$state()))
     n_chains <- length(rng)
     path <- tempfile()
     sample_manual_prepare(
       model = model, sampler = sampler, n_steps = n_steps, path = path,
       initial = pars, n_chains = n_chains,
-      observer = observer, seed = seed)
-    loop(path, n_workers, n_chains, n_steps, observer, progress)
+      seed = seed)
+    loop(path, n_workers, n_chains, n_steps, progress)
   }
 
-  continue <- function(state, model, sampler, observer, n_steps) {
+  continue <- function(state, model, sampler, n_steps) {
     restart <- list(state = state,
                     model = model,
-                    sampler = sampler,
-                    observer = observer)
+                    sampler = sampler)
     n_chains <- length(state)
     path <- tempfile()
     monty_sample_manual_prepare_continue(
       list(restart = restart), n_steps, path, "nothing")
-    loop(path, n_workers, n_chains, n_steps, observer, progress)
+    loop(path, n_workers, n_chains, n_steps, progress)
   }
 
   monty_runner("callr",

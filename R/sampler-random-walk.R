@@ -33,7 +33,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
 
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
-  initialise <- function(pars, model, observer, rng) {
+  initialise <- function(pars, model, rng) {
     n_pars <- length(model$parameters)
     internal$multiple_parameters <- length(dim2(pars)) > 1
     if (internal$multiple_parameters) {
@@ -44,10 +44,10 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
     vcv <- sampler_validate_vcv(vcv, pars)
     internal$proposal <-
       make_random_walk_proposal(vcv, model$domain, boundaries)
-    initialise_state(pars, model, observer, rng)
+    initialise_state(pars, model, rng)
   }
 
-  step <- function(state, model, observer, rng) {
+  step <- function(state, model, rng) {
     pars_next <- internal$proposal(state$pars, rng)
     reject_some <- boundaries == "reject" &&
       !all(i <- is_parameters_in_domain(pars_next, model$domain))
@@ -61,7 +61,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect") {
     }
     accept <- density_next - state$density > log(rng$random_real(1))
     state <- update_state(state, pars_next, density_next, accept,
-                          model, observer, rng)
+                          model, rng)
     state
   }
 
