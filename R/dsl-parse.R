@@ -117,9 +117,9 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
   }
 
   name <- vcapply(exprs, "[[", "name")
-  err <- match(name, names(fixed))
-  if (length(err) > 0) {
-    eq <- exprs[[err[[1]]]] # just first is easiest to report on
+  err <- name %in% names(fixed)
+  if (any(err)) {
+    eq <- exprs[[which(err)[[1]]]]
     dsl_parse_error(
       "Value '{eq$name}' in 'fixed' is shadowed by {eq$type}",
       "E207", eq$expr, call)
