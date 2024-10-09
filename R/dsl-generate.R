@@ -1,11 +1,14 @@
 dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
   env$packer <- monty_packer(dat$parameters)
+  env$fixed <- dat$fixed
 
   meta <- list(
     pars = quote(pars),
     data = quote(data),
-    density = quote(density))
+    density = quote(density),
+    fixed = quote(fixed),
+    fixed_contents = names(env$fixed))
 
   density <- dsl_generate_density(dat, env, meta)
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
@@ -110,7 +113,10 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
                        dest, meta)
     as.call(expr)
   } else if (is.name(expr)) {
-    call("[[", meta[[dest]], as.character(expr))
+    if (as.character(expr) %in% meta$fixed_contents) {
+      dest <- meta$fixed
+    }
+    call("[[", meta[[as.character(dest)]], as.character(expr))
   } else {
     expr
   }
