@@ -309,8 +309,5 @@ model_combine_observer <- function(a, b, parameters, properties,
   }
 
   model <- if (a$properties$has_observer) a else b
-
-  function(...) {
-    model$observer(...)
-  }
+  model$observer
 }
