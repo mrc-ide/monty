@@ -1,11 +1,19 @@
 dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
   env$packer <- monty_packer(dat$parameters)
+  env$data <- dat$data
 
-  density <- dsl_generate_density(dat, env)
-  direct_sample <- dsl_generate_direct_sample(dat, env)
-  gradient <- dsl_generate_gradient(dat, env)
-  domain <- dsl_generate_domain(dat)
+  ## I am making the mistake of folding this into the rest of the
+  ## change - try and sort that out somewhat separately...
+  meta <- list(
+    pars = quote(pars),
+    density = quote(density),
+    data = quote(data))
+
+  density <- dsl_generate_density(dat, env, meta)
+  direct_sample <- dsl_generate_direct_sample(dat, env, meta)
+  gradient <- dsl_generate_gradient(dat, env, meta)
+  domain <- dsl_generate_domain(dat, meta)
   monty_model(
     list(parameters = dat$parameters,
          density = density,
@@ -15,18 +23,17 @@ dsl_generate <- function(dat) {
 }
 
 
-dsl_generate_density <- function(dat, env) {
-  exprs <- lapply(dat$exprs, dsl_generate_density_expr,
-                  quote(pars), quote(density))
-  body <- c(quote(pars <- packer$unpack(x)),
-            quote(density <- numeric()),
+dsl_generate_density <- function(dat, env, meta) {
+  exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
+  body <- c(call("<-", meta$pars, quote(packer$unpack(x))),
+            call("<-", meta$density, quote(numeric())),
             exprs,
-            quote(sum(density)))
+            call("sum", meta$density))
   as_function(alist(x = ), body, env)
 }
 
 
-dsl_generate_gradient <- function(dat, env) {
+dsl_generate_gradient <- function(dat, env, meta) {
   if (is.null(dat$adjoint)) {
     return(NULL)
   }
@@ -34,7 +41,7 @@ dsl_generate_gradient <- function(dat, env) {
   i_main <- match(dat$adjoint$exprs_main, vcapply(dat$exprs, "[[", "name"))
   exprs <- c(dat$exprs[i_main], dat$adjoint$exprs)
 
-  eqs <- lapply(exprs, dsl_generate_assignment, quote(data))
+  eqs <- lapply(exprs, dsl_generate_assignment, meta)
   eq_return <- fold_c(
     lapply(dat$adjoint$gradient, function(nm) call("[[", quote(data), nm)))
 
@@ -45,7 +52,7 @@ dsl_generate_gradient <- function(dat, env) {
 }
 
 
-dsl_generate_direct_sample <- function(dat, env) {
+dsl_generate_direct_sample <- function(dat, env, meta) {
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr,
                   quote(pars), quote(result))
   body <- c(quote(pars <- list()),
@@ -55,10 +62,10 @@ dsl_generate_direct_sample <- function(dat, env) {
 }
 
 
-dsl_generate_density_expr <- function(expr, env, density) {
+dsl_generate_density_expr <- function(expr, env, meta) {
   switch(expr$type,
-         assignment = dsl_generate_assignment(expr, env),
-         stochastic = dsl_generate_density_stochastic(expr, env, density),
+         assignment = dsl_generate_assignment(expr, env, meta),
+         stochastic = dsl_generate_density_stochastic(expr, env, meta),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
            "this is a monty bug")))
@@ -67,15 +74,15 @@ dsl_generate_density_expr <- function(expr, env, density) {
 
 dsl_generate_sample_expr <- function(expr, env, result) {
   switch(expr$type,
-         assignment = dsl_generate_assignment(expr, env),
-         stochastic = dsl_generate_sample_stochastic(expr, env),
+         assignment = dsl_generate_assignment(expr, env, meta),
+         stochastic = dsl_generate_sample_stochastic(expr, env, meta),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
            "this is a monty bug")))
 }
 
 
-dsl_generate_assignment <- function(expr, env) {
+dsl_generate_assignment <- function(expr, env, meta) {
   e <- expr$expr
   e[[2]] <- call("[[", env, as.character(e[[2]]))
   e[[3]] <- dsl_generate_density_rewrite_lookup(e[[3]], env)
