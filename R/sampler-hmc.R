@@ -28,7 +28,7 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     check_vcv(vcv, call = environment())
   }
 
-  initialise <- function(pars, model, observer, rng) {
+  initialise <- function(pars, model, rng) {
     require_deterministic(model, "Can't use HMC with stochastic models")
     require_gradient(model, "Can't use HMC without a gradient")
 
@@ -47,10 +47,10 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
       internal$history <- list()
     }
     internal$n_sets <- n_sets
-    initialise_state(pars, model, observer, rng)
+    initialise_state(pars, model, rng)
   }
 
-  step <- function(state, model, observer, rng) {
+  step <- function(state, model, rng) {
     ## Just a helper for now
     compute_gradient <- function(x) {
       internal$transform$deriv(x) * model$gradient(x)
@@ -117,7 +117,7 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     }
 
     state <- update_state(state, pars_next, density_next, accept,
-                          model, observer, rng)
+                          model, rng)
 
     state
   }

@@ -11,7 +11,6 @@ monty_sample(
   initial = NULL,
   n_chains = 1L,
   runner = NULL,
-  observer = NULL,
   restartable = FALSE
 )
 }
@@ -39,11 +38,6 @@ run chains in series (via \link{monty_runner_serial}).  The only
 other current option is \link{monty_runner_parallel} which uses the
 \code{parallel} package to run chains in parallel.  If you only run
 one chain then this argument is best left alone.}
-
-\item{observer}{An observer, created via \link{monty_observer}, which
-you can use to extract additional information from your model at
-points included in the chain (for example, trajectories from a
-dynamical model).}
 
 \item{restartable}{Logical, indicating if the chains should be
 restartable.  This will add additional data to the chains

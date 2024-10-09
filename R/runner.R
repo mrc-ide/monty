@@ -22,25 +22,24 @@
 ##'
 ##' @export
 monty_runner_serial <- function(progress = NULL) {
-  run <- function(pars, model, sampler, observer, n_steps, rng) {
+  run <- function(pars, model, sampler, n_steps, rng) {
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
     lapply(
       seq_along(rng),
       function(i) {
-        monty_run_chain(pars[, i], model, sampler, observer, n_steps,
+        monty_run_chain(pars[, i], model, sampler, n_steps,
                         pb(i), rng[[i]])
       })
   }
 
-  continue <- function(state, model, sampler, observer, n_steps) {
+  continue <- function(state, model, sampler, n_steps) {
     n_chains <- length(state)
     pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
     lapply(
       seq_along(state),
       function(i) {
-        monty_continue_chain(state[[i]], model, sampler, observer, n_steps,
-                             pb(i))
+        monty_continue_chain(state[[i]], model, sampler, n_steps, pb(i))
       })
   }
 
@@ -92,7 +91,7 @@ monty_runner_parallel <- function(n_workers) {
   ## get the advantage that the cluster startup happens asyncronously
   ## and may be ready by the time we actually pass any work onto it.
 
-  run <- function(pars, model, sampler, observer, n_steps, rng) {
+  run <- function(pars, model, sampler, n_steps, rng) {
     n_chains <- length(rng)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
@@ -111,7 +110,6 @@ monty_runner_parallel <- function(n_workers) {
 
     args <- list(model = model,
                  sampler = sampler,
-                 observer = observer,
                  n_steps = n_steps)
 
     ## To debug issues in the parallel sampler, it's most efficient to
@@ -125,13 +123,12 @@ monty_runner_parallel <- function(n_workers) {
       MoreArgs = args)
   }
 
-  continue <- function(state, model, sampler, observer, n_steps) {
+  continue <- function(state, model, sampler, n_steps) {
     n_chains <- length(state)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
     args <- list(model = model,
                  sampler = sampler,
-                 observer = observer,
                  n_steps = n_steps,
                  progress = function(i) NULL)
     parallel::clusterMap(
@@ -148,18 +145,17 @@ monty_runner_parallel <- function(n_workers) {
 }
 
 
-monty_run_chain_parallel <- function(pars, model, sampler, observer,
-                                     n_steps, rng) {
+monty_run_chain_parallel <- function(pars, model, sampler, n_steps, rng) {
   rng <- monty_rng$new(rng)
   progress <- function(i) NULL
-  monty_run_chain(pars, model, sampler, observer, n_steps, progress, rng)
+  monty_run_chain(pars, model, sampler, n_steps, progress, rng)
 }
 
 
-monty_run_chain <- function(pars, model, sampler, observer, n_steps,
+monty_run_chain <- function(pars, model, sampler, n_steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
-  chain_state <- sampler$initialise(pars, model, observer, rng)
+  chain_state <- sampler$initialise(pars, model, rng)
 
   if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -181,12 +177,12 @@ monty_run_chain <- function(pars, model, sampler, observer, n_steps,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  monty_run_chain2(chain_state, model, sampler, observer, n_steps, progress,
+  monty_run_chain2(chain_state, model, sampler, n_steps, progress,
                    rng, r_rng_state)
 }
 
 
-monty_continue_chain <- function(state, model, sampler, observer, n_steps,
+monty_continue_chain <- function(state, model, sampler, n_steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng$new(seed = state$rng)
@@ -194,23 +190,24 @@ monty_continue_chain <- function(state, model, sampler, observer, n_steps,
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
-  monty_run_chain2(state$chain, model, sampler, observer, n_steps, progress,
+  monty_run_chain2(state$chain, model, sampler, n_steps, progress,
                    rng, r_rng_state)
 }
 
 
-monty_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
+monty_run_chain2 <- function(chain_state, model, sampler, n_steps,
                              progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
-  has_observer <- !is.null(observer)
+  ## has_observer <- model$properties$has_observer
+  has_observer <- FALSE
 
   history_pars <- matrix(NA_real_, n_pars, n_steps)
   history_density <- rep(NA_real_, n_steps)
   history_observation <- if (has_observer) vector("list", n_steps) else NULL
 
   for (i in seq_len(n_steps)) {
-    chain_state <- sampler$step(chain_state, model, observer, rng)
+    chain_state <- sampler$step(chain_state, model, rng)
     history_pars[, i] <- chain_state$pars
     history_density[[i]] <- chain_state$density
     if (!is.null(chain_state$observation)) {
@@ -226,7 +223,7 @@ monty_run_chain2 <- function(chain_state, model, sampler, observer, n_steps,
   details <- sampler$finalise(chain_state, model, rng)
 
   if (has_observer) {
-    history_observation <- observer$finalise(history_observation)
+    ## history_observation <- model$observer$finalise(history_observation)
   }
 
   ## This list will hold things that we'll use internally but not

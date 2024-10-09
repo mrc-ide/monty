@@ -1,28 +1,22 @@
-initialise_state <- function(pars, model, observer, rng) {
+initialise_state <- function(pars, model, rng) {
   initialise_rng_state(model, rng)
   density <- model$density(pars)
-  if (is.null(observer)) {
-    observation <- NULL
-  } else {
-    observation <- observer$observe(model$model, rng)
-  }
+  ## TODO: in next PR observe.
+  observation <- NULL
   list(pars = pars, density = density, observation = observation)
 }
 
 
-update_state <- function(state, pars, density, accept, model, observer, rng) {
+update_state <- function(state, pars, density, accept, model, rng) {
   if (any(accept)) {
     if (is.matrix(state$pars)) {
-      stopifnot(is.null(observer)) # Enforced earlier
       state$pars[, accept] <- pars[, accept]
       state$density[accept] <- density[accept]
       state
     } else {
       state$pars <- pars
       state$density <- density
-      if (!is.null(observer)) {
-        state$observation <- observer$observe(model$model, rng)
-      }
+      ## TODO: cope with observation
     }
   }
   state

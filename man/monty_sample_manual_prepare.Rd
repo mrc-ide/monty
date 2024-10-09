@@ -10,8 +10,7 @@ monty_sample_manual_prepare(
   n_steps,
   path,
   initial = NULL,
-  n_chains = 1L,
-  observer = NULL
+  n_chains = 1L
 )
 }
 \arguments{
@@ -44,11 +43,6 @@ sampling.  If not given, we sample from the model (or its prior).}
 
 \item{n_chains}{Number of chains to run.  The default is to run a
 single chain, but you will likely want to run more.}
-
-\item{observer}{An observer, created via \link{monty_observer}, which
-you can use to extract additional information from your model at
-points included in the chain (for example, trajectories from a
-dynamical model).}
 }
 \value{
 Invisibly, the path used to store files (the same as the
