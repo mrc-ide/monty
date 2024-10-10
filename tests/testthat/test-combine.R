@@ -265,4 +265,8 @@ test_that("Can't create observer where both models have them", {
     "Can't create an observer from these models")
   expect_match(conditionMessage(err),
                "Neither of your models have 'observer' objects")
+
+  properties <- monty_model_properties(has_observer = FALSE)
+  res <- monty_model_combine(a, a, properties = properties)
+  expect_false(res$properties$has_observer)
 })

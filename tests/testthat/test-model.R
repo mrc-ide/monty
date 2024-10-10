@@ -72,6 +72,27 @@ test_that("require observer is a monty_observer if given", {
 })
 
 
+test_that("observer must exist if required", {
+  properties <- monty_model_properties(has_observer = TRUE)
+  expect_error(
+    monty_model(list(parameters = "a", density = identity),
+                properties = properties),
+    "Did not find a 'monty_observer' object 'observer' within your model")
+})
+
+
+test_that("Ignore invalid observer if properties say to ignore it", {
+  properties <- monty_model_properties(has_observer = FALSE)
+  res <- monty_model(list(density = identity,
+                          observer = TRUE,
+                          parameters = "a"),
+                     properties = properties)
+  expect_s3_class(res, "monty_model")
+  expect_false(res$properties$has_observer)
+  expect_null(res$observer)
+})
+
+
 test_that("validate domain", {
   expect_error(
     monty_model(list(density = identity, parameters = "a", domain = list())),
