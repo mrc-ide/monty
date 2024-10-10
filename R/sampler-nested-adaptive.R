@@ -148,7 +148,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
     state <- list(pars = pars, density = c(density))
     ## TODO: mrc-5862
     if (model$properties$has_observer) {
-      state$observation <- m$observer$observe()
+      state$observation <- model$observer$observe()
     }
     state
   }
@@ -204,7 +204,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
         internal$density_by_group <- density_by_group_next
         ## TODO: mrc-5862
         if (model$properties$has_observer) {
-          state$observation <- m$observer$observe()
+          state$observation <- model$observer$observe()
         }
       }
     } else {
@@ -278,7 +278,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
       internal$density_by_group <- density_by_group_next
       ## TODO: mrc-5862
       if (model$properties$has_observer) {
-        state$observation <- m$observer$observe()
+        state$observation <- model$observer$observe()
       }
     }
 
