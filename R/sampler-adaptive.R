@@ -152,7 +152,7 @@ monty_sampler_adaptive <- function(initial_vcv,
 
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
 
-  initialise <- function(pars, model, observer, rng) {
+  initialise <- function(pars, model, rng) {
     require_deterministic(model,
                           "Can't use adaptive sampler with stochastic models")
 
@@ -198,10 +198,10 @@ monty_sampler_adaptive <- function(initial_vcv,
                             pre_diminish)
     }
 
-    initialise_state(pars, model, observer, rng)
+    initialise_state(pars, model, rng)
   }
 
-  step <- function(state, model, observer, rng) {
+  step <- function(state, model, rng) {
     if (internal$multiple_parameters) {
       d <- dim(state$pars)
       proposal_vcv <-
@@ -243,7 +243,7 @@ monty_sampler_adaptive <- function(initial_vcv,
 
     accept <- u < accept_prob
     state <- update_state(state, pars_next, density_next, accept,
-                          model, observer, rng)
+                          model, rng)
 
     if (internal$multiple_parameters) {
       internal$adaptive <-

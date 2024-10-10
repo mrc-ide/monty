@@ -85,7 +85,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
   }
   assert_scalar_logical(rerun_random)
 
-  initialise <- function(pars, model, observer, rng) {
+  initialise <- function(pars, model, rng) {
     if (!model$properties$has_parameter_groups) {
       cli::cli_abort("Your model does not have parameter groupings")
     }
@@ -127,9 +127,9 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
 
     internal$density_by_group <- density_by_group
     state <- list(pars = pars, density = c(density))
-    if (!is.null(observer)) {
-      state$observation <- observer$observe(model$model, rng)
-    }
+    ## TODO: we need to fix observation here; it should move into a
+    ## helper as part of a setup I think; see the sampler-helpers for
+    ## the single-parameter case.
     state
   }
 
@@ -142,7 +142,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
   ## handle this by additional arguments to the constructor, then
   ## either changing the behaviour of the step function or swapping in
   ## a different version.
-  step <- function(state, model, observer, rng) {
+  step <- function(state, model, rng) {
     internal$step <- internal$step + 1
     rerun <- internal$rerun(internal$step, rng)
     if (any(rerun)) {
@@ -152,9 +152,6 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
       density <- model$density(state$pars, by_group = TRUE)
       state$density <- c(density)
       internal$density_by_group <- attr(density, "by_group")
-      if (!is.null(observer)) {
-        state$observation <- observer$observe(model$model, rng)
-      }
     }
     
     if (!is.null(internal$proposal$base)) {
@@ -188,9 +185,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
         state$pars <- pars_next
         state$density <- density_next
         internal$density_by_group <- density_by_group_next
-        if (!is.null(observer)) {
-          state$observation <- observer$observe(model$model, rng)
-        }
+        ## TODO: observe here
       }
     }
 
@@ -254,9 +249,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect",
       state$pars <- pars_next
       state$density <- c(density_next)
       internal$density_by_group <- density_by_group_next
-      if (!is.null(observer)) {
-        state$observation <- observer$observe(model$model, rng)
-      }
+      ## TODO: observe here
     }
     state
   }

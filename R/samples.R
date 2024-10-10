@@ -22,6 +22,10 @@ print.monty_samples <- function(x, ...) {
   cli::cli_alert_info(
     "Conversion to other types is possible:")
   cli::cli_bullets(set_names(target_str, ">"))
+  if (!is.null(x$restart)) {
+    cli::cli_alert_info(
+      "These samples can be restared with {.help monty_sample_continue}")
+  }
 
   cli::cli_alert_info(
     paste('See {.help monty_sample} and {.run vignette("samples")} for more',

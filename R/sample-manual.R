@@ -59,23 +59,18 @@
 ##' # Clean up samples
 ##' monty_sample_manual_cleanup(path)
 monty_sample_manual_prepare <- function(model, sampler, n_steps, path,
-                                        initial = NULL, n_chains = 1L,
-                                        observer = NULL) {
+                                        initial = NULL, n_chains = 1L) {
   ## This break exists to hide the 'seed' argument from the public
   ## interface.  We will use this from the callr version though.
-  sample_manual_prepare(model, sampler, n_steps, path, initial, n_chains,
-                        observer)
+  sample_manual_prepare(model, sampler, n_steps, path, initial, n_chains)
 }
 
 
 sample_manual_prepare <- function(model, sampler, n_steps, path, initial,
-                                  n_chains, observer, seed = NULL,
+                                  n_chains, seed = NULL,
                                   call = parent.frame()) {
   assert_is(model, "monty_model", call = call)
   assert_is(sampler, "monty_sampler", call = call)
-  if (!is.null(observer)) {
-    assert_is(observer, "monty_observer", call = call)
-  }
 
   rng <- initial_rng(n_chains, seed = seed)
   pars <- initial_parameters(initial, model, rng, environment())
@@ -84,7 +79,6 @@ sample_manual_prepare <- function(model, sampler, n_steps, path, initial,
   dat <- list(pars = pars,
               model = model,
               sampler = sampler,
-              observer = observer,
               rng_state = rng_state,
               n_chains = n_chains,
               n_steps = n_steps)
@@ -137,17 +131,13 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
     state <- restart$state
     model <- restart$model
     sampler <- restart$sampler
-    observer <- restart$observer
-    res <- monty_continue_chain(state[[chain_id]], model, sampler, observer,
-                                n_steps, pb)
+    res <- monty_continue_chain(state[[chain_id]], model, sampler, n_steps, pb)
   } else {
     pars <- inputs$pars
     model <- inputs$model
     sampler <- inputs$sampler
-    observer <- inputs$observer
     rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
-    res <- monty_run_chain(pars[, chain_id], model, sampler, observer,
-                           n_steps, pb, rng)
+    res <- monty_run_chain(pars[, chain_id], model, sampler, n_steps, pb, rng)
   }
 
   saveRDS(res, path$results)
@@ -187,16 +177,16 @@ monty_sample_manual_collect <- function(path, samples = NULL,
 
   prev <- sample_manual_collect_check_samples(inputs, samples)
 
+  observer <- inputs$model$observer
   res <- lapply(path$results, readRDS)
-  samples <- combine_chains(res, inputs$observer)
+  samples <- combine_chains(res, observer)
   if (!is.null(prev)) {
-    samples <- append_chains(prev, combine_chains(res, inputs$observer),
-                             inputs$observer)
+    samples <- append_chains(prev, combine_chains(res, observer),
+                             observer)
   }
 
   if (restartable) {
-    samples$restart <- restart_data(res, inputs$model, inputs$sampler,
-                                    inputs$observer, NULL)
+    samples$restart <- restart_data(res, inputs$model, inputs$sampler, NULL)
   }
   samples
 }
