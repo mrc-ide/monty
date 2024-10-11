@@ -1,11 +1,19 @@
 dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
   env$packer <- monty_packer(dat$parameters)
+  env$fixed <- dat$fixed
 
-  density <- dsl_generate_density(dat, env)
-  direct_sample <- dsl_generate_direct_sample(dat, env)
-  gradient <- dsl_generate_gradient(dat, env)
-  domain <- dsl_generate_domain(dat)
+  meta <- list(
+    pars = quote(pars),
+    data = quote(data),
+    density = quote(density),
+    fixed = quote(fixed),
+    fixed_contents = names(env$fixed))
+
+  density <- dsl_generate_density(dat, env, meta)
+  direct_sample <- dsl_generate_direct_sample(dat, env, meta)
+  gradient <- dsl_generate_gradient(dat, env, meta)
+  domain <- dsl_generate_domain(dat, meta)
   monty_model(
     list(parameters = dat$parameters,
          density = density,
@@ -15,18 +23,17 @@ dsl_generate <- function(dat) {
 }
 
 
-dsl_generate_density <- function(dat, env) {
-  exprs <- lapply(dat$exprs, dsl_generate_density_expr,
-                  quote(pars), quote(density))
-  body <- c(quote(pars <- packer$unpack(x)),
-            quote(density <- numeric()),
+dsl_generate_density <- function(dat, env, meta) {
+  exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
+  body <- c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
+            call("<-", meta[["density"]], quote(numeric())),
             exprs,
-            quote(sum(density)))
+            call("sum", meta[["density"]]))
   as_function(alist(x = ), body, env)
 }
 
 
-dsl_generate_gradient <- function(dat, env) {
+dsl_generate_gradient <- function(dat, env, meta) {
   if (is.null(dat$adjoint)) {
     return(NULL)
   }
@@ -34,85 +41,89 @@ dsl_generate_gradient <- function(dat, env) {
   i_main <- match(dat$adjoint$exprs_main, vcapply(dat$exprs, "[[", "name"))
   exprs <- c(dat$exprs[i_main], dat$adjoint$exprs)
 
-  eqs <- lapply(exprs, dsl_generate_assignment, quote(data))
+  eqs <- lapply(exprs, dsl_generate_assignment, "data", meta)
   eq_return <- fold_c(
-    lapply(dat$adjoint$gradient, function(nm) call("[[", quote(data), nm)))
+    lapply(dat$adjoint$gradient, function(nm) call("[[", meta[["data"]], nm)))
 
-  body <- c(quote(data <- packer$unpack(x)),
+  body <- c(call("<-", meta[["data"]], quote(packer$unpack(x))),
             unname(eqs),
             eq_return)
   as_function(alist(x = ), body, env)
 }
 
 
-dsl_generate_direct_sample <- function(dat, env) {
-  exprs <- lapply(dat$exprs, dsl_generate_sample_expr,
-                  quote(pars), quote(result))
-  body <- c(quote(pars <- list()),
+dsl_generate_direct_sample <- function(dat, env, meta) {
+  exprs <- lapply(dat$exprs, dsl_generate_sample_expr, meta)
+  body <- c(call("<-", meta[["pars"]], quote(list())),
             exprs,
-            quote(unlist(pars[packer$parameters], FALSE, FALSE)))
+            bquote(unlist(.(meta[["pars"]])[packer$parameters], FALSE, FALSE)))
   as_function(alist(rng = ), body, env)
 }
 
 
-dsl_generate_density_expr <- function(expr, env, density) {
+dsl_generate_density_expr <- function(expr, meta) {
   switch(expr$type,
-         assignment = dsl_generate_assignment(expr, env),
-         stochastic = dsl_generate_density_stochastic(expr, env, density),
+         assignment = dsl_generate_assignment(expr, "pars", meta),
+         stochastic = dsl_generate_density_stochastic(expr, meta),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
            "this is a monty bug")))
 }
 
 
-dsl_generate_sample_expr <- function(expr, env, result) {
+dsl_generate_sample_expr <- function(expr, meta) {
   switch(expr$type,
-         assignment = dsl_generate_assignment(expr, env),
-         stochastic = dsl_generate_sample_stochastic(expr, env),
+         assignment = dsl_generate_assignment(expr, "pars", meta),
+         stochastic = dsl_generate_sample_stochastic(expr, meta),
          cli::cli_abort(paste(
            "Unimplemented expression type '{expr$type}';",
            "this is a monty bug")))
 }
 
 
-dsl_generate_assignment <- function(expr, env) {
+dsl_generate_assignment <- function(expr, dest, meta) {
   e <- expr$expr
-  e[[2]] <- call("[[", env, as.character(e[[2]]))
-  e[[3]] <- dsl_generate_density_rewrite_lookup(e[[3]], env)
+  e[[2]] <- call("[[", meta[[dest]], as.character(e[[2]]))
+  e[[3]] <- dsl_generate_density_rewrite_lookup(e[[3]], dest, meta)
   e
 }
 
 
-dsl_generate_density_stochastic <- function(expr, env, density) {
-  lhs <- bquote(.(density)[[.(expr$name)]])
+dsl_generate_density_stochastic <- function(expr, meta) {
+  lhs <- bquote(.(meta[["density"]])[[.(expr$name)]])
   rhs <- rlang::call2(expr$distribution$density,
                       as.name(expr$name), !!!expr$distribution$args)
-  rlang::call2("<-", lhs, dsl_generate_density_rewrite_lookup(rhs, env))
+  rlang::call2("<-", lhs,
+               dsl_generate_density_rewrite_lookup(rhs, "pars", meta))
 }
 
 
-dsl_generate_sample_stochastic <- function(expr, env) {
-  lhs <- bquote(.(env)[[.(expr$name)]])
+dsl_generate_sample_stochastic <- function(expr, meta) {
+  lhs <- bquote(.(meta[["pars"]])[[.(expr$name)]])
   args <- lapply(expr$distribution$args, dsl_generate_density_rewrite_lookup,
-                 env)
+                 "pars", meta)
   rhs <- rlang::call2(expr$distribution$sample, quote(rng), !!!args)
   rlang::call2("<-", lhs, rhs)
 }
 
 
-dsl_generate_density_rewrite_lookup <- function(expr, env) {
+dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
   if (is.recursive(expr)) {
-    expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup, env)
+    expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
+                       dest, meta)
     as.call(expr)
   } else if (is.name(expr)) {
-    call("[[", env, as.character(expr))
+    if (as.character(expr) %in% meta$fixed_contents) {
+      dest <- meta$fixed
+    }
+    call("[[", meta[[as.character(dest)]], as.character(expr))
   } else {
     expr
   }
 }
 
 
-dsl_generate_domain <- function(dat) {
+dsl_generate_domain <- function(dat, meta) {
   n <- length(dat$parameters)
   domain <- cbind(rep(-Inf, n), rep(Inf, n))
   rownames(domain) <- dat$parameters

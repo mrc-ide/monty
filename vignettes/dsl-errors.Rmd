@@ -125,3 +125,7 @@ Variables are used out of order.  If you are using odin this is a big departure 
 # `E206`
 
 Failed to differentiate the model.  This error will only be seen where it was not possible to differentiate your model but you requested that a gradient be available.  Not all functions supported in the DSL can currently be differentiated by monty; if you think that yours should be, please let us know.
+
+# `E207`
+
+A value in `fixed` is shadowed by an assignment or a relationship.  If you pass in fixed data it may not be used on the left hand side of any expression in your DSL code.
