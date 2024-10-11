@@ -228,7 +228,7 @@ test_that("Can't force creation of stochastic model from deterministic", {
 })
 
 
-test_that("cominining models with observers is possible", {
+test_that("combining models with observers is possible", {
   a <- monty_model(
     list(
       parameters = "x",
