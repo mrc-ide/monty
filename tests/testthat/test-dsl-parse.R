@@ -210,3 +210,32 @@ test_that("can explain an error", {
     mockery::mock_args(mock_explain)[[1]],
     list(dsl_errors, "E101", "pretty"))
 })
+
+
+test_that("empty fixed data is null", {
+  expect_null(check_dsl_fixed(NULL))
+  expect_null(check_dsl_fixed(list()))
+})
+
+
+test_that("validate fixed data for dsl", {
+  expect_error(
+    check_dsl_fixed(c(a = 1, b = 2)),
+    "Expected 'fixed' to be a list")
+  expect_error(
+    check_dsl_fixed(list(a = 1, b = 2, a = 2)),
+    "'fixed' must have unique names")
+  expect_error(
+    check_dsl_fixed(list(a = 1, b = 2:3, c = numeric(10))),
+    "All elements of 'fixed' must currently be scalars")
+  expect_equal(
+    check_dsl_fixed(list(a = 1, b = 2)),
+    list(a = 1, b = 2))
+})
+
+
+test_that("assignments cannot shadow names of fixed variables", {
+  expect_error(
+    dsl_parse(list(quote(a <- 1)), fixed = list(a = 1)),
+    "Value 'a' in 'fixed' is shadowed by assignment")
+})

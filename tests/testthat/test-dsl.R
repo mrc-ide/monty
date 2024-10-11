@@ -142,3 +142,11 @@ test_that("can compute gradients of complicated models", {
 
   expect_equal(m$gradient(p), numDeriv::grad(m$density, p))
 })
+
+
+test_that("can use fixed data in dsl", {
+  m <- monty_dsl({
+    a ~ Normal(mu, sd)
+  }, fixed = list(mu = 1, sd = 2))
+  expect_equal(m$density(0), dnorm(0, 1, 2, log = TRUE))
+})
