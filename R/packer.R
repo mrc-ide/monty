@@ -342,9 +342,10 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     for (nm in names(shape)) {
       ret[idx[[nm]], ] <- p[[nm]]
     }
-
     drop <- length(shp) == 0 ||
-      (length(shp) == 1 && (length(shape) == 0 || all(lengths(shape) == 0)))
+      (length(shp) == 1 &&
+         (length(shape) == 0 || all(lengths(shape) == 0)) &&
+         length(ret) == length(idx))
     if (drop) {
       dim(ret) <- NULL
     } else if (length(shp) > 1) {
