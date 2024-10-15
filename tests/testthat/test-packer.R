@@ -15,7 +15,7 @@ test_that("trivial packer", {
                "Incorrect length input; expected 1 but given 2")
   expect_equal(xp$pack(list(a = 1)), 1)
   expect_equal(xp$pack(list(a = 1:2)),
-               1:2)
+               rbind(1:2))
 
   expect_equal(xp$index(), list(a = 1))
 })
@@ -444,4 +444,11 @@ test_that("don't allow things other than character vectors for now", {
   expect_error(
     p$subset(1),
     "Invalid input for 'keep'; this must currently be a character vector")
+})
+
+
+test_that("can add matrix dimensions when unpacking", {
+  p <- monty_packer(c("a", "b", "c"))
+  m <- matrix(1:12, 3, 4)
+  expect_equal(p$pack(p$unpack(m)), m)
 })
