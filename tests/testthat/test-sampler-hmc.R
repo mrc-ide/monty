@@ -216,7 +216,7 @@ test_that("can't use hmc with models that lack gradients", {
 
 test_that("can't use hmc with stochastic models", {
   set.seed(1)
-  m <- ex_dust_sir()
+  m <- ex_sir_filter_posterior()
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   expect_error(
     monty_sample(m, sampler, 30, n_chains = 3),

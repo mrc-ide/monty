@@ -94,22 +94,21 @@ random_array <- function(dim, named = FALSE) {
 }
 
 
-ex_dust_sir_likelihood <- function(n_particles = 100,
-                                   deterministic = FALSE,
-                                   save_trajectories = FALSE) {
+ex_sir_filter_likelihood <- function(n_particles = 100,
+                                     deterministic = FALSE,
+                                     save_trajectories = FALSE) {
   data <- data.frame(time      = c( 4,  8, 12, 16, 20, 24, 28, 32, 36),
                      incidence = c( 1,  0,  3,  5,  2,  4,  3,  7,  2))
   sir_filter_monty(data, n_particles, deterministic, save_trajectories)
 }
 
 
-ex_dust_sir <- function(...) {
-  testthat::skip_if_not_installed("dust")
+ex_sir_filter_posterior <- function(...) {
   prior <- monty_dsl({
     beta ~ Gamma(shape = 1, rate = 1 / 0.5)
     gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
   })
-  ex_dust_sir_likelihood(...) + prior
+  ex_sir_filter_likelihood(...) + prior
 }
 
 

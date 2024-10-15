@@ -269,7 +269,7 @@ test_that("error if initial conditions do not have finite density", {
 
 test_that("can continue a stochastic model identically", {
   set.seed(1)
-  model <- ex_dust_sir()
+  model <- ex_sir_filter_posterior()
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
   initial <- c(0.2, 0.1)

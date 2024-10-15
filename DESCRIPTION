@@ -31,7 +31,6 @@ Suggests:
     coda,
     decor,
     knitr,
-    dust,
     mockery,
     mvtnorm,
     numDeriv,
@@ -43,5 +42,3 @@ Suggests:
 Config/testthat/edition: 3
 Language: en-GB
 VignetteBuilder: knitr
-Remotes:
-    mrc-ide/dust
