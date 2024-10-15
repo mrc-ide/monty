@@ -31,17 +31,16 @@
 ##'   `parallel` package to run chains in parallel.  If you only run
 ##'   one chain then this argument is best left alone.
 ##'
-##' @param observer An observer, created via [monty_observer], which
-##'   you can use to extract additional information from your model at
-##'   points included in the chain (for example, trajectories from a
-##'   dynamical model).
-##'
 ##' @param restartable Logical, indicating if the chains should be
 ##'   restartable.  This will add additional data to the chains
 ##'   object.
 ##'
-##' @return A list of parameters and densities; we'll write tools for
-##'   dealing with this later.  Elements include:
+##' @return A list of parameters and densities.  We provide conversion
+##'   to formats used by other packages, notably
+##'   [posterior::as_draws_array], [posterior::as_draws_df] and
+##'   [coda::as.mcmc.list]; please let us know if you need conversion
+##'   to something else.  If you want to work directly with the
+##'   output, the elements in the list include:
 ##'
 ##' * `pars`: An array with three dimensions representing (in turn)
 ##'   parameter, sample and chain, so that `pars[i, j, k]` is the
@@ -65,33 +64,43 @@
 ##'   one is also subject to change.
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' s <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+##' samples <- monty_sample(m, s, 2000)
+##'
+##' # Quick conversion of parameters into something plottable:
+##' pars <- t(drop(samples$pars))
+##' plot(pars, pch = 19, cex = 0.75, col = "#0000ff55")
+##'
+##' # If you have the posterior package you might prefer converting to
+##' # its format for performing diagnoses:
+##' @examplesIf requireNamespace("posterior")
+##' res <- posterior::as_draws_df(samples)
+##' posterior::summarise_draws(res)
+##'
+##' # At this point you could also use the 'bayesplot' package to plot
+##' # diagnostics.
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
-                         n_chains = 1L, runner = NULL, observer = NULL,
+                         n_chains = 1L, runner = NULL,
                          restartable = FALSE) {
-  require_monty_model(model)
-  if (!inherits(sampler, "monty_sampler")) {
-    cli::cli_abort("Expected 'sampler' to be a 'monty_sampler'",
-                   arg = "sampler")
-  }
+  assert_is(model, "monty_model")
+  assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
     runner <- monty_runner_serial()
+  } else {
+    assert_is(runner, "monty_runner")
   }
-  if (!is.null(observer) && !inherits(observer, "monty_observer")) {
-    cli::cli_abort("Expected 'observer' to be a 'monty_observer'",
-                   arg = "observer")
-  }
-  if (!inherits(runner, "monty_runner")) {
-    cli::cli_abort("Expected 'runner' to be a 'monty_runner'",
-                   arg = "runner")
-  }
+  assert_scalar_logical(restartable)
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, observer, n_steps, rng)
+  res <- runner$run(pars, model, sampler, n_steps, rng)
 
-  samples <- combine_chains(res, observer)
+  observer <- if (model$properties$has_observer) model$observer else NULL
+  samples <- combine_chains(res, model$observer)
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, observer, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
 }
@@ -128,16 +137,8 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 ##' @export
 monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
                                   runner = NULL) {
-  if (!inherits(samples, "monty_samples")) {
-    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object")
-  }
-  if (is.null(samples$restart)) {
-    cli::cli_abort(
-      c("Your chains are not restartable",
-        i = paste("To work with 'monty_sample_continue', you must",
-                  "use the argument 'restartable = TRUE' when calling",
-                  "monty_sample()")))
-  }
+  check_can_continue_samples(samples)
+  assert_scalar_logical(restartable)
 
   if (is.null(runner)) {
     runner <- samples$restart$runner
@@ -147,16 +148,32 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   state <- samples$restart$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler
-  observer <- samples$restart$observer
 
-  res <- runner$continue(state, model, sampler, observer, n_steps)
+  res <- runner$continue(state, model, sampler, n_steps)
 
+  observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- append_chains(samples, combine_chains(res, observer), observer)
 
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, observer, runner)
+    samples$restart <- restart_data(res, model, sampler, runner)
   }
   samples
+}
+
+
+check_can_continue_samples <- function(samples, call = parent.frame()) {
+  if (!inherits(samples, "monty_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object",
+                   call = call)
+  }
+  if (is.null(samples$restart)) {
+    cli::cli_abort(
+      c("Your chains are not restartable",
+        i = paste("To work with 'monty_sample_continue', you must",
+                  "use the argument 'restartable = TRUE' when calling",
+                  "monty_sample()")),
+      call = call)
+  }
 }
 
 
@@ -345,7 +362,7 @@ initial_rng <- function(n_chains, seed = NULL) {
 }
 
 
-restart_data <- function(res, model, sampler, observer, runner) {
+restart_data <- function(res, model, sampler, runner) {
   if (is.null(names(res))) {
     state <- lapply(res, function(x) x$internal$state)
   } else {
@@ -365,7 +382,6 @@ restart_data <- function(res, model, sampler, observer, runner) {
   list(state = state,
        model = model,
        sampler = sampler,
-       observer = observer,
        runner = runner)
 }
 

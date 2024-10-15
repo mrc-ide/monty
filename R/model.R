@@ -25,6 +25,12 @@
 ##'   we may also support this in `gradient`).  Use `NULL` (the
 ##'   default) to detect this from the model.
 ##'
+##' @param has_observer Logical, indicating if the model has an
+##'   "observation" function, which we will describe more fully soon.
+##'   An observer is a function `observe` which takes no arguments and
+##'   returns arbitrary data about the previously evaluated density.
+##'   Use `NULL` (the default) to detect this from the model.
+##'
 ##' @param allow_multiple_parameters Logical, indicating if the
 ##'   density calculation can support being passed a matrix of
 ##'   parameters (with each column corresponding to a different
@@ -40,17 +46,31 @@
 ##'   not be modified.
 ##'
 ##' @export
+##'
+##' @examples
+##' # Default properties:
+##' monty_model_properties()
+##'
+##' # Set some properties:
+##' monty_model_properties(has_gradient = TRUE, is_stochastic = FALSE)
 monty_model_properties <- function(has_gradient = NULL,
                                    has_direct_sample = NULL,
                                    is_stochastic = NULL,
                                    has_parameter_groups = NULL,
+                                   has_observer = NULL,
                                    allow_multiple_parameters = FALSE) {
-  ## TODO: What name do we want for this property, really?
+  assert_scalar_logical(has_gradient, allow_null = TRUE)
+  assert_scalar_logical(has_direct_sample, allow_null = TRUE)
+  assert_scalar_logical(is_stochastic, allow_null = TRUE)
+  assert_scalar_logical(has_parameter_groups, allow_null = TRUE)
+  assert_scalar_logical(has_observer, allow_null = TRUE)
   assert_scalar_logical(allow_multiple_parameters)
+
   ret <- list(has_gradient = has_gradient,
               has_direct_sample = has_direct_sample,
               is_stochastic = is_stochastic,
               has_parameter_groups = has_parameter_groups,
+              has_observer = has_observer,
               ## TODO: I am not convinced on this name
               allow_multiple_parameters = allow_multiple_parameters)
   class(ret) <- "monty_model_properties"
@@ -165,6 +185,9 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'     * `has_parameter_groups`: The model has separable parameter groups
 ##'
 ##' @export
+##'
+##' @seealso [monty_model_function], which provides a simple interface
+##'   for creating models from functions.
 monty_model <- function(model, properties = NULL) {
   call <- environment() # for nicer stack traces
   parameters <- validate_model_parameters(model, call)
@@ -174,6 +197,7 @@ monty_model <- function(model, properties = NULL) {
   properties <- validate_model_properties(properties, call)
   gradient <- validate_model_gradient(model, properties, call)
   direct_sample <- validate_model_direct_sample(model, properties, call)
+  observer <- validate_model_observer(model, properties, call)
   rng_state <- validate_model_rng_state(model, properties, call)
   parameter_groups <- validate_model_parameter_groups(model, properties, call)
 
@@ -182,6 +206,7 @@ monty_model <- function(model, properties = NULL) {
   properties$has_direct_sample <- !is.null(direct_sample)
   properties$is_stochastic <- !is.null(rng_state$set)
   properties$has_parameter_groups <- !is.null(parameter_groups)
+  properties$has_observer <- !is.null(observer)
 
   ret <- list(model = model,
               parameters = parameters,
@@ -190,6 +215,7 @@ monty_model <- function(model, properties = NULL) {
               density = density,
               gradient = gradient,
               direct_sample = direct_sample,
+              observer = observer,
               rng_state = rng_state,
               properties = properties)
   class(ret) <- "monty_model"
@@ -212,6 +238,10 @@ monty_model <- function(model, properties = NULL) {
 ##'   [monty_model_direct_sample] for sampling from a model.
 ##'
 ##' @export
+##' @examples
+##' m <- monty_model_function(function(a, b) dnorm(0, a, b, log = TRUE))
+##' monty_model_density(m, c(0, 1))
+##' monty_model_density(m, c(0, 10))
 monty_model_density <- function(model, parameters) {
   require_monty_model(model)
   check_model_parameters(model, parameters)
@@ -236,6 +266,14 @@ monty_model_density <- function(model, parameters) {
 ##'   [monty_model_direct_sample] to sample from a model
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##' # Global maximum at (0, 0), and gradient is zero there:
+##' monty_model_density(m, c(0, 0))
+##' monty_model_gradient(m, c(0, 0))
+##'
+##' # Nonzero gradient away from the origin:
+##' monty_model_gradient(m, c(0.4, 0.2))
 monty_model_gradient <- function(model, parameters, named = FALSE) {
   require_monty_model(model)
   require_gradient(
@@ -270,6 +308,16 @@ monty_model_gradient <- function(model, parameters, named = FALSE) {
 ##' @return A vector or matrix of sampled parameters
 ##'
 ##' @export
+##' @examples
+##' m <- monty_example("banana")
+##'
+##' r <- monty_rng$new()
+##' monty_model_direct_sample(m, r)
+##' monty_model_direct_sample(m, r, named = TRUE)
+##'
+##' r <- monty_rng$new(n_streams = 3)
+##' monty_model_direct_sample(m, r)
+##' monty_model_direct_sample(m, r, named = TRUE)
 monty_model_direct_sample <- function(model, rng, named = FALSE) {
   require_monty_model(model)
   require_direct_sample(
@@ -278,7 +326,11 @@ monty_model_direct_sample <- function(model, rng, named = FALSE) {
   assert_scalar_logical(named, call = environment())
   ret <- model$direct_sample(rng)
   if (named) {
-    names(ret) <- model$parameters
+    if (is.matrix(ret)) {
+      rownames(ret) <- model$parameters
+    } else {
+      names(ret) <- model$parameters
+    }
   }
   ret
 }
@@ -399,6 +451,26 @@ validate_model_gradient <- function(model, properties, call) {
 validate_model_direct_sample <- function(model, properties, call) {
   validate_model_optional_method(
     model, properties, "direct_sample", "has_direct_sample", call)
+}
+
+
+validate_model_observer <- function(model, properties, call) {
+  if (isFALSE(properties$has_observer)) {
+    return(NULL)
+  }
+  value <- model$observer
+  if (isTRUE(properties$has_observer) && !inherits(value, "monty_observer")) {
+    cli::cli_abort(
+      paste("Did not find a 'monty_observer' object 'observer' within",
+            "your model, but your properties say that it should exist"),
+      arg = "model", call = call)
+  }
+  if (!is.null(value) && !inherits(value, "monty_observer")) {
+    cli::cli_abort(
+      "Expected 'model$observer' to be a 'monty_observer' object if non-NULL",
+      arg = "model", call = call)
+  }
+  value
 }
 
 
@@ -546,7 +618,8 @@ print.monty_model <- function(x, ...) {
 monty_model_properties_str <- function(properties) {
   c(if (properties$has_gradient) "can compute gradients",
     if (properties$has_direct_sample) "can be directly sampled from",
-    if (properties$is_stochastic) "is stochastic")
+    if (properties$is_stochastic) "is stochastic",
+    if (properties$has_observer) "has an observer")
 }
 
 
@@ -581,5 +654,22 @@ check_model_parameters <- function(model, parameters, call = parent.frame()) {
       c("'parameters' has {where} but these disagree with 'model$parameters'",
         i = "If this is intentional, try again with 'unname(parameters)'"),
       arg = "parameters", call = call)
+  }
+}
+
+
+##' @export
+print.monty_model_properties <- function(x, ...) {
+  cli::cli_h1("<monty_model_properties>")
+  unset <- vlapply(x, is.null)
+  is_set <- !unset
+  if (any(is_set)) {
+    cli::cli_bullets(
+      set_names(sprintf("%s: {.code %s}",
+                        names(x)[is_set], vcapply(x[is_set], as.character)),
+                "*"))
+  }
+  if (any(unset)) {
+    cli::cli_alert_info("Unset: {squote(names(x)[unset])}")
   }
 }

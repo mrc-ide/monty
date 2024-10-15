@@ -155,6 +155,12 @@ test_that("Binomial random numbers prevent bad inputs", {
   expect_error(
     r$binomial(1, -1, 0.5),
     "Invalid call to binomial with n = -1, p = 0.5")
+  expect_error(
+    r$binomial(1, 1, NaN),
+    "Invalid call to binomial with n = 1, p = .+")
+  expect_error(
+    r$binomial(1, NaN, 1),
+    "Invalid call to binomial with n = .+, p = 1")
 })
 
 

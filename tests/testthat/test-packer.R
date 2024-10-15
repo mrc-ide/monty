@@ -14,9 +14,9 @@ test_that("trivial packer", {
   expect_error(xp$unpack(1:2),
                "Incorrect length input; expected 1 but given 2")
   expect_equal(xp$pack(list(a = 1)), 1)
-  expect_error(xp$pack(list(a = 1:2)),
-               "Invalid structure to 'pack()'",
-               fixed = TRUE)
+  expect_equal(xp$pack(list(a = 1:2)),
+               rbind(1:2))
+
   expect_equal(xp$index(), list(a = 1))
 })
 
@@ -219,4 +219,236 @@ test_that("can't used process with array unpacking", {
   expect_error(
     p$unpack(matrix(1:6, 2)),
     "Can't unpack a matrix where the unpacker uses 'process'")
+})
+
+
+test_that("Properly unpack scalars stored as zero-length arrays", {
+  p <- monty_packer(array = list(a = integer(0), b = 1L))
+  expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$unpack(cbind(1:2)), list(a = 1, b = matrix(2)))
+  expect_equal(p$unpack(matrix(1:10, 2, 5)),
+               list(a = seq(1, 9, by = 2),
+                    b = matrix(seq(2, 10, by = 2), 1, 5)))
+  expect_equal(p$unpack(array(1:30, c(2, 3, 5))),
+               list(a = matrix(seq(1, 29, by = 2), c(3, 5)),
+                    b = array(seq(2, 30, by = 2), c(1, 3, 5))))
+})
+
+
+## These tests are the inverse of the tests abvove.
+test_that("Roundtrip scalars stored as zero-length arrays", {
+  p <- monty_packer(array = list(a = integer(0), b = 1L))
+  expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
+
+  ## expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
+  expect_equal(p$pack(list(a = 1, b = matrix(2))), cbind(c(1, 2)))
+
+  ## expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
+  expect_equal(p$pack(list(a = seq(1, 9, by = 2),
+                           b = matrix(seq(2, 10, by = 2), 1, 5))),
+               matrix(1:10, 2, 5))
+  expect_equal(p$pack(list(a = matrix(seq(1, 29, by = 2), c(3, 5)),
+                           b = array(seq(2, 30, by = 2), c(1, 3, 5)))),
+               array(1:30, c(2, 3, 5)))
+})
+
+
+test_that("all-scalar corner case", {
+  p1 <- monty_packer(c("a", "b"))
+  p2 <- monty_packer(array = list(a = integer(0), b = integer(0)))
+
+  ## These inputs both map to the same output, for both ways of
+  ## writing the packer:
+  expect_equal(p1$unpack(1:2),
+               list(a = 1, b = 2))
+  expect_equal(p1$unpack(cbind(1:2)),
+               list(a = 1, b = 2))
+  expect_equal(p2$unpack(1:2),
+               list(a = 1, b = 2))
+  expect_equal(p2$unpack(cbind(1:2)),
+               list(a = 1, b = 2))
+
+  ## Which means that we can't work out how to pack this output, with
+  ## either packer:
+  expect_equal(p1$pack(list(a = 1, b = 2)),
+               1:2)
+  expect_equal(p2$pack(list(a = 1, b = 2)),
+               1:2)
+})
+
+
+test_that("validate that we can consistently unpack things", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  expect_equal(
+    p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4))),
+    1:15)
+
+  ## Order does not matter:
+  expect_equal(
+    p$pack(rev(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4)))),
+    1:15)
+
+  v <- p$unpack(matrix(1:45, 15, 3))
+  expect_equal(names(v), c("a", "b", "c"))
+  expect_equal(v$a, c(1, 16, 31))
+  expect_equal(v$b, cbind(2:3, 17:18, 32:33))
+  expect_equal(v$c, array(c(4:15, 19:30, 34:45), c(3, 4, 3)))
+})
+
+
+test_that("give errors when input is the wrong shape, from scalar input", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  ## Check the happy path first:
+  expect_equal(
+    p$pack(list(a = 1, b = 2:3, c = matrix(4:15, 3, 4))),
+    1:15)
+  v <- p$unpack(matrix(1:45, 15, 3))
+  expect_equal(p$pack(v), matrix(1:45, 15, 3))
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = 1:3, c = matrix(4:15, 3, 4))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  err <- expect_error(
+    p$pack(list(a = numeric(3),
+                b = matrix(0, 3, 3),
+                c = array(0, c(3, 4, 3)))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = 1:3, c = matrix(4:15, 4, 3))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  expect_match(err$body[[2]], "c: expected <3, 4>, given <4, 3>")
+  err <- expect_error(
+    p$pack(list(a = 1,
+                b = matrix(0, 3, 3),
+                c = array(0, c(4, 3, 3)))),
+    "Incompatible dimensions in input for 'b'")
+  expect_match(err$body[[1]], "b: expected <2>, given <3>")
+  expect_match(err$body[[2]], "c: expected <3, 4>, given <4, 3>")
+})
+
+
+test_that("give errors when input has incorect residual dimension", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+
+  err <- expect_error(
+    p$pack(list(a = 1, b = matrix(2:3, 2, 3), c = matrix(4:15, 3, 4))),
+    "Inconsistent residual dimension in inputs")
+  expect_equal(
+    err$body,
+    c(x = "'a', 'c': <...1>",
+      x = "'b': <...3>"))
+
+  err <- expect_error(
+    p$pack(list(a = numeric(4),
+                b = matrix(0, 2, 3),
+                c = array(0, c(3, 4, 5)))),
+    "Inconsistent residual dimension in inputs")
+  expect_equal(
+    err$body,
+    c(x = "'a': <...4>",
+      x = "'b': <...3>",
+      x = "'c': <...5>"))
+})
+
+
+test_that("validate names to pack", {
+  p <- monty_packer("a", list(b = 2, c = 3:4))
+  expect_error(
+    p$pack(list(a = 1, b = 2, c = 3, d = 4)),
+    "Unexpected element present in input to pack: 'd'")
+  expect_error(
+    p$pack(list(a = 1, d = 4)),
+    "Missing elements from input to pack: 'b' and 'c'")
+})
+
+
+test_that("fixed inputs can be present or absent", {
+  p <- monty_packer(c("a", "b"), fixed = list(c = 10, d = 12))
+  expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
+  expect_equal(p$pack(list(a = 1, b = 2, c = NA)), 1:2)
+})
+
+
+test_that("if process is present ignore extra names", {
+  p <- monty_packer(c("a", "b"), process = identity)
+  expect_equal(
+    p$pack(list(a = 1, b = 2)),
+    1:2)
+})
+
+
+test_that("can subset a packer of scalars", {
+  p <- monty_packer(c("a", "b", "c", "d"))
+  res <- p$subset(c("b", "c"))
+  expect_equal(res$index, 2:3)
+  expect_equal(res$packer$parameters, c("b", "c"))
+  expect_equal(res$packer$unpack(1:2), list(b = 1, c = 2))
+})
+
+
+test_that("can subset a packer of arrays", {
+  p <- monty_packer(array = list(a = integer(), b = 2, c = c(3, 3)))
+  res <- p$subset(c("a", "c"))
+  expect_equal(res$index, c(1, 4:12))
+
+  cmp <- monty_packer(array = list(a = integer(), c = c(3, 3)))
+  expect_equal(res$packer$parameters, cmp$parameters)
+  expect_equal(res$packer$index(), cmp$index())
+})
+
+
+test_that("can reorder on subset", {
+  p <- monty_packer(c("a", "b"), list(c = 2, d = integer(), e = 2, f = 3))
+  res <- p$subset(c("d", "a", "c"))
+  cmp <- monty_packer(array = list(d = integer(), a = integer(), c = 2))
+
+  expect_equal(res$index, c(5, 1, 3, 4))
+  expect_equal(res$packer$index(), cmp$index())
+})
+
+
+test_that("prevent duplicates in subset", {
+  p <- monty_packer(c("a", "b"), list(c = 2, d = integer(), e = 2, f = 3))
+  expect_error(
+    p$subset(c("a", "a", "b", "c")),
+    "Duplicated name in 'keep': 'a'")
+  expect_error(
+    p$subset(c("a", "a", "b", "c", "b")),
+    "Duplicated names in 'keep': 'a' and 'b'")
+})
+
+
+test_that("prevent unknown names in subset", {
+  p <- monty_packer(c("a", "b"))
+  expect_error(
+    p$subset(c("a", "b", "c")),
+    "Unknown name in 'keep': 'c'")
+  expect_error(
+    p$subset(c("a", "b", "c", "d")),
+    "Unknown names in 'keep': 'c' and 'd'")
+})
+
+
+test_that("don't allow things other than character vectors for now", {
+  p <- monty_packer(c("a", "b"))
+  expect_error(
+    p$subset(NULL),
+    "Invalid input for 'keep'; this must currently be a character vector")
+  expect_error(
+    p$subset(1),
+    "Invalid input for 'keep'; this must currently be a character vector")
+})
+
+
+test_that("can add matrix dimensions when unpacking", {
+  p <- monty_packer(c("a", "b", "c"))
+  m <- matrix(1:12, 3, 4)
+  expect_equal(p$pack(p$unpack(m)), m)
 })

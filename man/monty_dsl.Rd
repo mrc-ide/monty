@@ -4,7 +4,7 @@
 \alias{monty_dsl}
 \title{Domain Specific Language for monty}
 \usage{
-monty_dsl(x, type = NULL, gradient = NULL)
+monty_dsl(x, type = NULL, gradient = NULL, fixed = NULL)
 }
 \arguments{
 \item{x}{The model as an expression.  This may be given as an
@@ -26,6 +26,16 @@ attempt to construct a gradient function, which prevents a
 warning being generated if this is not possible.  If \code{TRUE},
 then we will error if it is not possible to create a gradient
 function.}
+
+\item{fixed}{An optional list of values that can be used within
+the DSL code.  Anything you provide here is available for your
+calculations.  In the interest of future compatibility, we check
+currently that all elements are scalars.  In future this may
+become more flexible and allow passing environments, etc.  Once
+provided, these values cannot be changed without rebuilding the
+model; they are fixed data.  You might use these for
+hyperparameters that are fixed across a set of model runs, for
+example.}
 }
 \value{
 A \link{monty_model} object derived from the expressions you
@@ -37,8 +47,7 @@ change name in future, as will its interface.
 }
 \examples{
 
-# Expressions that correspond to models can be passed in with no
-# quoting
+# Expressions that define models can be passed in with no quoting
 monty_dsl(a ~ Normal(0, 1))
 monty_dsl({
   a ~ Normal(0, 1)

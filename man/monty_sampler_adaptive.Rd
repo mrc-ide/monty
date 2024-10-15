@@ -16,7 +16,8 @@ monty_sampler_adaptive(
   forget_rate = 0.2,
   forget_end = Inf,
   adapt_end = Inf,
-  pre_diminish = 0
+  pre_diminish = 0,
+  boundaries = "reflect"
 )
 }
 \arguments{
@@ -87,6 +88,21 @@ diminishing adaptation of the scaling parameter from the offset, while
 Diminishing adaptation should help the scaling parameter to converge
 better, but while the chains find the location and scale of the posterior
 mode it might be useful to explore with it switched off.}
+
+\item{boundaries}{Control the behaviour of proposals that are
+outside the model domain.  The supported options are:
+\itemize{
+\item "reflect" (the default): we reflect proposed parameters that
+lie outside the domain back into the domain (as many times as
+needed)
+\item "reject": we do not evaluate the density function, and return
+\code{-Inf} for its density instead.
+\item "ignore": evaluate the point anyway, even if it lies outside
+the domain.
+}
+
+The initial point selected will lie within the domain, as this is
+enforced by \link{monty_sample}.}
 }
 \value{
 A \code{monty_sampler} object, which can be used with
@@ -116,4 +132,26 @@ point.
 Spencer SEF (2021) Accelerating adaptation in the adaptive
 Metropolis–Hastings random walk algorithm. Australian & New Zealand Journal
 of Statistics 63:468-484.
+}
+\examples{
+m <- monty_example("gaussian", matrix(c(1, 0.5, 0.5, 2), 2, 2))
+vcv <- diag(2) * 0.1
+
+# Sampling with a random walk
+s_rw <- monty_sampler_random_walk(vcv)
+res_rw <- monty_sample(m, s_rw, 1000)
+
+s_adapt <- monty_sampler_adaptive(vcv)
+res_adapt <- monty_sample(m, s_adapt, 1000)
+
+plot(drop(res_adapt$density), type = "l", col = 4)
+lines(drop(res_rw$density), type = "l", col = 2)
+
+# Estimated vcv from the sampler at the end of the simulation
+s_adapt$details[[1]]$vcv
+
+\dontshow{if (requireNamespace("coda")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+coda::effectiveSize(coda::as.mcmc.list(res_rw))
+coda::effectiveSize(coda::as.mcmc.list(res_adapt))
+\dontshow{\}) # examplesIf}
 }

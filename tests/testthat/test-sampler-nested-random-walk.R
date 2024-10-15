@@ -46,7 +46,7 @@ test_that("validate vcv inputs on construction of sampler", {
 
 
 test_that("can't use nested sampler with models that are not nested", {
-  m <- ex_simple_gaussian(diag(3))
+  m <- monty_example("gaussian", diag(3))
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
   s <- monty_sampler_nested_random_walk(vcv)
   expect_error(
@@ -139,16 +139,16 @@ test_that("can build nested proposal functions with base components", {
 })
 
 
-test_that("validate that the proposal and model are compatible", {
+test_that("validate that the vcv and model are compatible", {
   vcv <- list(base = diag(2), groups = list(diag(1), diag(2), diag(3)))
   expect_error(
-    nested_proposal(vcv, c(1, 2, 2, 3, 3, 3)),
+    sampler_validate_nested_vcv(vcv, c(1, 2, 2, 3, 3, 3)),
     "Incompatible number of base parameters in your model and sampler")
   expect_error(
-    nested_proposal(vcv, c(0, 0, 1:5)),
+    sampler_validate_nested_vcv(vcv, c(0, 0, 1:5)),
     "Incompatible number of parameter groups in your model and sampler")
   expect_error(
-    nested_proposal(vcv, c(0, 0, 1, 1, 2, 2, 3, 3, 3)),
+    sampler_validate_nested_vcv(vcv, c(0, 0, 1, 1, 2, 2, 3, 3, 3)),
     "Incompatible number of parameters within parameter group")
 })
 
@@ -192,11 +192,14 @@ test_that("can run an observer during a nested fit", {
   s <- monty_sampler_nested_random_walk(
     list(base = diag(1), groups = rep(list(diag(1)), ng)))
   counter <- 0
-  observer <- monty_observer(function(...) {
+  ## Directly wire this in for now; we really just need better
+  ## examples here.
+  m$observer <- monty_observer(function(...) {
     counter <<- counter + 1
     list(n = counter)
   })
-  res <- monty_sample(m, s, 100, observer = observer)
+  m$properties$has_observer <- TRUE
+  res <- monty_sample(m, s, 100)
   expect_equal(
     dim(res$observations$n),
     c(1, 100, 1))

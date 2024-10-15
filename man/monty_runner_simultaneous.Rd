@@ -9,11 +9,16 @@ monty_runner_simultaneous(progress = NULL)
 \arguments{
 \item{progress}{Optional logical, indicating if we should print a
 progress bar while running.  If \code{NULL}, we use the value of the
-option \code{monty.progress} if set, otherwise we show the
-progress bar (as it is typically wanted).  The progress bar
-itself responds to cli's options; in particular
+option \code{monty.progress} if set, otherwise we show the progress
+bar (as it is typically wanted).  The progress bar itself
+responds to cli's options; in particular
 \code{cli.progress_show_after} and \code{cli.progress_clear} will affect
-your experience.}
+your experience.  Alternatively, you can provide a string
+indicating the progress bar type.  Options are \code{fancy}
+(equivalent to \code{TRUE}), \code{none} (equivalent to \code{FALSE}) and
+\code{simple} (a very simple text-mode progress indicator designed
+play nicely with logging; it does not use special codes to clear
+the line).}
 }
 \value{
 A runner of class \code{monty_runner} that can be passed to
@@ -27,4 +32,10 @@ densities at the same time.  There are situations where this might
 be faster than running in parallel, but primarily this exists so
 that we can see that samplers can work with multiple samples at
 once.
+}
+\examples{
+m <- monty_example("banana")
+s <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+r <- monty_runner_simultaneous()
+samples <- monty_sample(m, s, 200, runner = r)
 }

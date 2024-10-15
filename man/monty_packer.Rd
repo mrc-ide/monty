@@ -54,6 +54,9 @@ statistical model.  This ignores values created by a
 element has the name of a value in \code{parameters} and each value
 has the indices within an unstructured vector where these values
 can be found.
+\item \code{subset}: an experimental interface which can be used to subset a
+packer to a packer for a subset of contents. Documentation will
+be provided once the interface settles.
 }
 }
 \description{
@@ -125,8 +128,8 @@ vector in order to use within an MCMC or optimisation algorithm.
 Ultimately, our unpacked vector will need to hold four elements
 (\code{b11}, \code{b12}, \code{b21}, \code{b22}), but there are only three distinct
 values as the two off-diagonal elements will be the same (i.e.,
-\verb{b12 == b21``).  So we might write this passing in }b_raw = 3\code{to}array\verb{, so that our unpacked list holds }b_raw = c(b11, b12,
-b22)\verb{.  We would then write }process` as something like:
+\code{b12 == b21}).  So we might write this passing in \code{b_raw = 3} to
+\code{array}, so that our unpacked list holds \code{b_raw = c(b11, b12, b22)}.  We would then write \code{process} as something like:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{process <- function(x) \{
   list(b = matrix(x$b_raw[c(1, 2, 2, 3)], 2, 2))
@@ -166,9 +169,93 @@ matrices (one column per set) and so on.
 
 This approach generalises to higher dimensional input, though we
 suspect you'll spend a bit of time head-scratching if you use it.
-
-We do not currently offer the ability to pack this sort of output
-back up, though it's not hard.  Please let us know if you would
-use this.
 }
 
+\section{Packing lists into vectors and matrices}{
+The unpacking operation is very common - an MCMC proceeds,
+produces an unstructured vector, and you unpack it into a list in
+order to be able to easily work with it.  The reverse is much less
+common, where we take a list and convert it into a vector (or
+matrix, or multidimensional array).  Use of this direction
+("packing") may be more common where using packers to work with
+the output of state-space models (e.g. in
+\href{https://mrc-ide.github.io/odin2}{odin2} or
+\href{https://mrc-ide.github.io/dust2}{dust2}, which use this
+machinery).
+
+The input to \code{pack()} will be the shape that \code{unpack()} returned;
+a named list of numerical vectors, matrices and arrays.  The names
+must correspond to the names in your packer (i.e., \code{scalar} and
+the names of \code{array}).  Each element has dimensions
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{<...object, ...residual>
+}\if{html}{\out{</div>}}
+
+where \code{...object} is the dimensions of the data itself and
+\code{...residual} is the dimensions of the hypothetical input to
+\code{pack}.
+
+There is an unfortunate ambiguity in R's lack of true scalar types
+that we cannot avoid.  It is hard to tell the difference packing a
+vector vs packing an array where all dimensions are 1.  See the
+examples, and please let us know if the behaviour needs changing.
+}
+
+\examples{
+# Here's a really simple example
+p <- monty_packer(c("a", "b", "c"))
+p
+
+p$pack(list(a = 1, b = 2, c = 3))
+p$unpack(1:3)
+
+# Sometimes we have a vector embedded in our parameters:
+p <- monty_packer(c("a", "b"), list(v = 4))
+p$pack(list(a = 1, b = 2, v = c(6, 7, 8, 9)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# Or a higher dimensional structure such as a matrix:
+p <- monty_packer(c("a", "b"), list(m = c(2, 2)))
+p$unpack(c(1, 2, 6, 7, 8, 9))
+
+# You can use a packer to set "fixed" parameters that do not vary
+# with the underlying model being fit, but are required by your model.
+# This is simpler than the "closure" approach used previously in our
+# mcstate package and also easier to accommodate with differentiable
+# models:
+p <- monty_packer(
+  c("a", "b"),
+  fixed = list(d = data.frame(n = 1:3, m = runif(3))))
+p$unpack(1:2)
+p$pack(p$unpack(1:2))
+
+# The example from above, where we create a symmetric 2 x 2 matrix
+# from a 3-element vector, alongside a scalar:
+p <- monty_packer(
+  scalar = "a",
+  array = list(b_flat = 3),
+  process = function(p) list(b = matrix(p$b_flat[c(1, 2, 2, 3)], 2, 2)))
+
+# Unpacking we see "b_flat" is still in the list, but "b" is our
+# symmetric matrix:
+p$unpack(1:4)
+
+# The processed elements are ignored on the return pack:
+p$pack(list(a = 1, b_flat = 2:4, b = matrix(c(2, 3, 3, 4), 2, 2)))
+p$pack(list(a = 1, b_flat = 2:4))
+
+# R lacks scalars, which means that some packers will unpack
+# different inputs to the same outputs:
+p <- monty_packer(c("a", "b"))
+p$unpack(1:2)
+p$unpack(cbind(1:2))
+
+# This means that we can't reliably pack these inputs in a way
+# that guarantees round-tripping is possible.  We have chosen to
+# prioritise the case where a *single vector* is round-trippable:
+p$pack(list(a = 1, b = 2))
+
+# This ambiguity goes away if unpacking matices with more than one
+# column:
+p$unpack(matrix(1:6, 2, 3))
+}

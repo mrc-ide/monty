@@ -9,6 +9,7 @@ monty_model_properties(
   has_direct_sample = NULL,
   is_stochastic = NULL,
   has_parameter_groups = NULL,
+  has_observer = NULL,
   allow_multiple_parameters = FALSE
 )
 }
@@ -33,6 +34,12 @@ by the presence of a \code{by_group} argument to \code{density} and (later
 we may also support this in \code{gradient}).  Use \code{NULL} (the
 default) to detect this from the model.}
 
+\item{has_observer}{Logical, indicating if the model has an
+"observation" function, which we will describe more fully soon.
+An observer is a function \code{observe} which takes no arguments and
+returns arbitrary data about the previously evaluated density.
+Use \code{NULL} (the default) to detect this from the model.}
+
 \item{allow_multiple_parameters}{Logical, indicating if the
 density calculation can support being passed a matrix of
 parameters (with each column corresponding to a different
@@ -53,4 +60,11 @@ Describe properties of a model.  Use of this function is optional,
 but you can pass the return value of this as the \code{properties}
 argument of monty_model to enforce that your model does actually
 have these properties.
+}
+\examples{
+# Default properties:
+monty_model_properties()
+
+# Set some properties:
+monty_model_properties(has_gradient = TRUE, is_stochastic = FALSE)
 }

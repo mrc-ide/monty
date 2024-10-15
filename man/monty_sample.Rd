@@ -11,7 +11,6 @@ monty_sample(
   initial = NULL,
   n_chains = 1L,
   runner = NULL,
-  observer = NULL,
   restartable = FALSE
 )
 }
@@ -40,18 +39,17 @@ other current option is \link{monty_runner_parallel} which uses the
 \code{parallel} package to run chains in parallel.  If you only run
 one chain then this argument is best left alone.}
 
-\item{observer}{An observer, created via \link{monty_observer}, which
-you can use to extract additional information from your model at
-points included in the chain (for example, trajectories from a
-dynamical model).}
-
 \item{restartable}{Logical, indicating if the chains should be
 restartable.  This will add additional data to the chains
 object.}
 }
 \value{
-A list of parameters and densities; we'll write tools for
-dealing with this later.  Elements include:
+A list of parameters and densities.  We provide conversion
+to formats used by other packages, notably
+\link[posterior:draws_array]{posterior::as_draws_array}, \link[posterior:draws_df]{posterior::as_draws_df} and
+\link[coda:mcmc.list]{coda::as.mcmc.list}; please let us know if you need conversion
+to something else.  If you want to work directly with the
+output, the elements in the list include:
 \itemize{
 \item \code{pars}: An array with three dimensions representing (in turn)
 parameter, sample and chain, so that \code{pars[i, j, k]} is the
@@ -78,4 +76,23 @@ distribution.  This is going to change a lot in future, as we add
 support for distributing over workers, and for things like
 parallel reproducible streams of random numbers.  For now it just
 runs a single chain as a proof of concept.
+}
+\examples{
+m <- monty_example("banana")
+s <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+samples <- monty_sample(m, s, 2000)
+
+# Quick conversion of parameters into something plottable:
+pars <- t(drop(samples$pars))
+plot(pars, pch = 19, cex = 0.75, col = "#0000ff55")
+
+# If you have the posterior package you might prefer converting to
+# its format for performing diagnoses:
+\dontshow{if (requireNamespace("posterior")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+res <- posterior::as_draws_df(samples)
+posterior::summarise_draws(res)
+
+# At this point you could also use the 'bayesplot' package to plot
+# diagnostics.
+\dontshow{\}) # examplesIf}
 }

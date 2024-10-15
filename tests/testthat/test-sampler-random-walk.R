@@ -16,9 +16,9 @@ test_that("validate sampler against model on initialisation", {
   sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
   r <- monty_rng$new()
 
-  expect_no_error(sampler1$initialise(1, m, NULL, r))
+  expect_no_error(sampler1$initialise(1, m, r))
   expect_error(
-    sampler2$initialise(1, m, NULL, r),
+    sampler2$initialise(1, m, r),
     "Incompatible length parameters (1) and vcv (2)",
     fixed = TRUE)
 })
@@ -40,15 +40,9 @@ test_that("can observe a model", {
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
 
-  observer <- monty_observer(
-    function(model, rng) {
-      i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
-      model$details(i)
-    })
-
   ## This takes quite a while, and that seems mostly to be the time
   ## taken to call the filter in dust.
-  res <- monty_sample(m, sampler, 20, n_chains = 3, observer = observer)
+  res <- monty_sample(m, sampler, 20, n_chains = 3)
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details", "observations"))
   expect_equal(names(res$observations),
@@ -67,19 +61,11 @@ test_that("can continue observed models", {
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
 
-  observer <- monty_observer(
-    function(model, rng) {
-      ## ideally we get a random sample here, but that's not easy with
-      ## current dust
-      model$details(4)
-    })
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 15, n_chains = 3)
 
   set.seed(1)
-  res1 <- monty_sample(m, sampler, 15, n_chains = 3, observer = observer)
-
-  set.seed(1)
-  res2a <- monty_sample(m, sampler, 5, n_chains = 3, observer = observer,
-                          restartable = TRUE)
+  res2a <- monty_sample(m, sampler, 5, n_chains = 3, restartable = TRUE)
   res2b <- monty_sample_continue(res2a, 10)
 
   expect_equal(res1$observations, res2b$observations)
@@ -93,8 +79,8 @@ test_that("can run multiple samples at once", {
   ## TODO: we need a much better rng support here; we'll need to make
   ## a tweak to the rng code to to a long jump between each chain.
   r <- monty_rng$new(n_streams = 5)
-  state0 <- sampler$initialise(p, m, NULL, r)
-  state1 <- sampler$step(state0, m, NULL, r)
+  state0 <- sampler$initialise(p, m, r)
+  state1 <- sampler$step(state0, m, r)
 
   expect_equal(dim2(state0$pars), c(1, 5))
   expect_equal(dim2(state1$pars), c(1, 5))

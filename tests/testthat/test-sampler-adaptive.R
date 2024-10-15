@@ -1,5 +1,5 @@
 test_that("Empirical VCV calculated correctly with forget_rate = 0", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0,
@@ -17,7 +17,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 
 
 test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.1)
@@ -35,7 +35,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
 
 
 test_that("Empirical VCV correct using both forget_rate and forget_end", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.5,
@@ -55,7 +55,7 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
 
 
 test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.25,
@@ -76,7 +76,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
 
 
 test_that("can continue adaptive sampler", {
-  m <- ex_simple_gaussian(vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
+  m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
 
   set.seed(1)
@@ -100,14 +100,116 @@ test_that("can't use adaptive sampler with stochastic models", {
 })
 
 
-## This can be done, but it's pretty tedious bookkeeping, and worth
-## doing separately (once Ed has done the nested adaptive case too,
-## which is even worse bookkeeping).
-test_that("can't use adaptive sampler with simultaneous runner", {
+test_that("can run adaptive sampler simultaneously", {
   m <- ex_simple_gamma1()
   sampler <- monty_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
+
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
+
+  set.seed(1)
   runner <- monty_runner_simultaneous()
-  expect_error(
-    monty_sample(m, sampler, 100, n_chains = 3, runner = runner),
-    "Can't use 'monty_sampler_adaptive' with simultaneous chains")
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
+})
+
+test_that("can run sampler with reflecting boundaries", {
+  model <- monty_model(
+    list(parameters = "x",
+         domain = cbind(-1, 1),
+         density = function(x) {
+           if (abs(x) > 1) {
+             stop("parameter out of bounds")
+           }
+           0.5
+         },
+         direct_sample = function(rng) {
+           rng$uniform(1, -1, 1)
+         }))
+
+  ## We set the scaling_increment to 0 to force the scaling to stay at 1,
+  ## as this flat density example can lead to the scaling blowing up.
+  ## However this example is useful for testing boundaries, which are
+  ## largely unrelated to the adaptive scaling part of the algorithm
+  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore",
+                               scaling_increment = 0)
+  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reflect",
+                               scaling_increment = 0)
+  s3 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                               scaling_increment = 0)
+
+  expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
+
+  res2 <- monty_sample(model, s2, 100)
+  r2 <- range(drop(res2$pars))
+  expect_gt(diff(r2), 0.75)
+  expect_gt(r2[[1]], -1)
+  expect_lt(r2[[2]], 1)
+
+  res3 <- monty_sample(model, s3, 100)
+  r3 <- range(drop(res3$pars))
+  expect_gt(diff(r3), 0.75)
+  expect_gt(r3[[1]], -1)
+  expect_lt(r3[[2]], 1)
+
+  ## Different with rejection than reflection, and more step
+  ## rejections when rejection used.
+  expect_true(!all(res2$pars == res3$pars))
+  expect_gt(sum(diff(drop(res3$pars)) == 0),
+            sum(diff(drop(res2$pars)) == 0))
+})
+
+
+test_that("can run sampler with rejecting boundaries", {
+  model <- monty_model(
+    list(parameters = "x",
+         domain = cbind(-1, 1),
+         density = function(x) {
+           if (abs(x) > 1) {
+             stop("parameter out of bounds")
+           }
+           0.5
+         },
+         direct_sample = function(rng) {
+           rng$uniform(1, -1, 1)
+         }))
+
+  s1 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "ignore",
+                               scaling_increment = 0)
+  s2 <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                               scaling_increment = 0)
+
+  expect_error(monty_sample(model, s1, 100), "parameter out of bounds")
+  res <- monty_sample(model, s2, 100)
+  r <- range(drop(res$pars))
+  expect_gt(diff(r), 0.75)
+  expect_gt(r[[1]], -1)
+  expect_lt(r[[2]], 1)
+})
+
+
+test_that("can run sampler with rejecting boundaries simultaneously", {
+  m <- monty_model(
+    list(parameters = "x",
+         domain = cbind(-1, 1),
+         density = function(x) {
+           ifelse(abs(x) > 1, NA_real_, log(0.5))
+         },
+         direct_sample = function(rng) {
+           rng$uniform(1, -1, 1)
+         }),
+    monty_model_properties(allow_multiple_parameters = TRUE))
+
+  s <- monty_sampler_adaptive(matrix(0.5, 1, 1), boundaries = "reject",
+                              scaling_increment = 0)
+  runner <- monty_runner_simultaneous()
+
+  n_steps <- 30
+
+  set.seed(1)
+  res <- monty_sample(m, s, n_steps, n_chains = 4, runner = runner)
+  set.seed(1)
+  cmp <- monty_sample(m, s, n_steps, n_chains = 4)
+
+  expect_equal(res, cmp)
 })

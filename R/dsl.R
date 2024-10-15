@@ -23,14 +23,23 @@
 ##'   then we will error if it is not possible to create a gradient
 ##'   function.
 ##'
+##' @param fixed An optional list of values that can be used within
+##'   the DSL code.  Anything you provide here is available for your
+##'   calculations.  In the interest of future compatibility, we check
+##'   currently that all elements are scalars.  In future this may
+##'   become more flexible and allow passing environments, etc.  Once
+##'   provided, these values cannot be changed without rebuilding the
+##'   model; they are fixed data.  You might use these for
+##'   hyperparameters that are fixed across a set of model runs, for
+##'   example.
+##'
 ##' @return A [monty_model] object derived from the expressions you
 ##'   provide.
 ##'
 ##' @export
 ##' @examples
 ##'
-##' # Expressions that correspond to models can be passed in with no
-##' # quoting
+##' # Expressions that define models can be passed in with no quoting
 ##' monty_dsl(a ~ Normal(0, 1))
 ##' monty_dsl({
 ##'   a ~ Normal(0, 1)
@@ -39,7 +48,7 @@
 ##'
 ##' # You can also pass strings
 ##' monty_dsl("a ~ Normal(0, 1)")
-monty_dsl <- function(x, type = NULL, gradient = NULL) {
+monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
@@ -47,14 +56,15 @@ monty_dsl <- function(x, type = NULL, gradient = NULL) {
     x <- rlang::quo_get_expr(quo)
   }
   call <- environment()
+  fixed <- check_dsl_fixed(fixed)
   exprs <- dsl_preprocess(x, type, call)
-  dat <- dsl_parse(exprs, gradient, call)
+  dat <- dsl_parse(exprs, gradient, fixed, call)
   dsl_generate(dat)
 }
 
 
 
-monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
+monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -62,8 +72,9 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
   } else {
     x <- rlang::quo_get_expr(quo)
   }
+  fixed <- check_dsl_fixed(fixed, call)
   exprs <- dsl_preprocess(x, type, call)
-  dsl_parse(exprs, gradient, call)
+  dsl_parse(exprs, gradient, fixed, call)
 }
 
 
@@ -109,6 +120,12 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL) {
 ##'   a first argument) a rng object (see [monty_rng])
 ##'
 ##' @export
+##' @examples
+##' # A successful match
+##' monty_dsl_parse_distribution(quote(Normal(0, 1)))
+##'
+##' # An unsuccessful match
+##' monty_dsl_parse_distribution(quote(Normal()))
 monty_dsl_parse_distribution <- function(expr, name = NULL) {
   ## Here, the user has not provided a call to anything, or a call to
   ## something that is not recognised as a distribution.  We throw the
@@ -148,4 +165,26 @@ monty_dsl_parse_distribution <- function(expr, name = NULL) {
   value$args <- unname(args[match$args])
   list(success = TRUE,
        value = value)
+}
+
+
+check_dsl_fixed <- function(fixed, call) {
+  if (is.null(fixed)) {
+    return(NULL)
+  }
+  assert_list(fixed, call = call)
+  if (length(fixed) == 0) {
+    return(NULL)
+  }
+  assert_named(fixed, unique = TRUE, call = call)
+  err <- lengths(fixed) != 1
+  if (any(err)) {
+    info <- sprintf("'%s' had length %d",
+                    names(fixed)[err], lengths(fixed[err]))
+    cli::cli_abort(
+      c("All elements of 'fixed' must currently be scalars",
+        set_names(info, "x")),
+      arg = "fixed", call = call)
+  }
+  fixed
 }

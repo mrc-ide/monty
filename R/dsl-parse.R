@@ -1,16 +1,18 @@
 ## The default of gradient_required = TRUE here helps with tests
-dsl_parse <- function(exprs, gradient_required = TRUE, call = NULL) {
+dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
+                      call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
   dsl_parse_check_duplicates(exprs, call)
-  dsl_parse_check_usage(exprs, call)
+  dsl_parse_check_fixed(exprs, fixed, call)
+  dsl_parse_check_usage(exprs, fixed, call)
 
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
   adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
-  list(parameters = parameters, exprs = exprs, adjoint = adjoint)
+  list(parameters = parameters, exprs = exprs, adjoint = adjoint, fixed = fixed)
 }
 
 
@@ -109,11 +111,28 @@ dsl_parse_check_duplicates <- function(exprs, call) {
 }
 
 
-dsl_parse_check_usage <- function(exprs, call) {
+dsl_parse_check_fixed <- function(exprs, fixed, call) {
+  if (is.null(fixed)) {
+    return()
+  }
+
   name <- vcapply(exprs, "[[", "name")
+  err <- name %in% names(fixed)
+  if (any(err)) {
+    eq <- exprs[[which(err)[[1]]]]
+    dsl_parse_error(
+      "Value '{eq$name}' in 'fixed' is shadowed by {eq$type}",
+      "E207", eq$expr, call)
+  }
+}
+
+
+dsl_parse_check_usage <- function(exprs, fixed, call) {
+  name <- vcapply(exprs, "[[", "name")
+  names_fixed <- names(fixed)
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
-    err <- setdiff(e$depends, name[seq_len(i - 1)])
+    err <- setdiff(e$depends, c(name[seq_len(i - 1)], names_fixed))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
@@ -124,6 +143,8 @@ dsl_parse_check_usage <- function(exprs, call) {
         ## Could also tell the user about variables found in the
         ## calling env, but that requires detecting and then passing
         ## through the correct environment.
+        ##
+        ## Could also tell about near misses.
         context <- NULL
       }
       ## TODO: It would be nice to indicate that we want to highlight

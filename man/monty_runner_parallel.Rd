@@ -23,15 +23,15 @@ A runner of class \code{monty_runner} that can be passed to
 \description{
 Run MCMC chains in parallel (at the same time).  This runner uses
 the \code{parallel} package to distribute your chains over a number of
-worker processes on the same machine.  Compared with the "worker"
-support in \code{mcstate} version 1 this is very simple and we'll improve
-it over time.  In particular we do not report back any information
-about progress while a chain is running on a worker or even across
-chains.  There's also no support to warn you if your number of
-chains do not neatly divide through by the number of workers.
-Mostly this exists as a proof of concept for us to think about the
-different interfaces.  Unless your chains are quite slow, the
-parallel runner will be slower than the serial runner
-(\link{monty_runner_serial}) due to the overhead cost of starting the
-cluster.
+worker processes on the same machine.  Compared with
+\link{monty_runner_callr} (Whch is similar to the "worker" support in
+\code{mcstate} version 1), this is very simple.  In particular we do
+not report back any information about progress while a chain is
+running on a worker or even across chains.  There's also no
+support to warn you if your number of chains do not neatly divide
+through by the number of workers.  Mostly this exists as a proof
+of concept for us to think about the different interfaces.  Unless
+your chains are quite slow, the parallel runner will be slower
+than the serial runner (\link{monty_runner_serial}) due to the overhead
+cost of starting the cluster.
 }

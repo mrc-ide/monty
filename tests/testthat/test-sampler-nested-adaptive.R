@@ -25,7 +25,7 @@ test_that("validate vcv inputs on construction of sampler", {
     "Expected 'initial_vcv' to have elements 'base' and 'groups'")
   expect_error(
     monty_sampler_nested_adaptive(list(base = TRUE, groups = TRUE)),
-    "Expected a matrix for 'initial_vcv$base'",
+    "Expected a matrix or 3d array for 'initial_vcv$base'",
     fixed = TRUE)
   expect_error(
     monty_sampler_nested_adaptive(list(base = NULL, groups = TRUE)),
@@ -37,7 +37,7 @@ test_that("validate vcv inputs on construction of sampler", {
     fixed = TRUE)
   expect_error(
     monty_sampler_nested_adaptive(list(base = NULL, groups = list(TRUE))),
-    "Expected a matrix for 'initial_vcv$groups[1]'",
+    "Expected a matrix or 3d array for 'initial_vcv$groups[1]'",
     fixed = TRUE)
 
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
@@ -46,7 +46,7 @@ test_that("validate vcv inputs on construction of sampler", {
 
 
 test_that("can't use nested sampler with models that are not nested", {
-  m <- ex_simple_gaussian(diag(3))
+  m <- monty_example("gaussian", diag(3))
   vcv <- list(base = diag(1), groups = list(diag(2), diag(3)))
   s <- monty_sampler_nested_adaptive(vcv)
   expect_error(
@@ -126,11 +126,14 @@ test_that("can run an observer during a nested fit", {
   s <- monty_sampler_nested_adaptive(
     list(base = diag(1), groups = rep(list(diag(1)), ng)))
   counter <- 0
-  observer <- monty_observer(function(...) {
+  ## Directly wire this in for now; we really just need better
+  ## examples here.
+  m$observer <- monty_observer(function(...) {
     counter <<- counter + 1
     list(n = counter)
   })
-  res <- monty_sample(m, s, 100, observer = observer)
+  m$properties$has_observer <- TRUE
+  res <- monty_sample(m, s, 100)
   expect_equal(
     dim(res$observations$n),
     c(1, 100, 1))
@@ -328,4 +331,41 @@ test_that("check nested adaptive inputs correctly", {
   expect_error(
     check_nested_adaptive(input, 3, TRUE, TRUE),
     "Expected a single value or NULL for input$groups[[3]]", fixed = TRUE)
+})
+
+test_that("can run nested adaptive sampler simultaneously", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  sampler <- monty_sampler_nested_adaptive(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)))
+  
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
+  
+  set.seed(1)
+  runner <- monty_runner_simultaneous()
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
+})
+
+
+test_that("can run nested adaptive sampler with rejecting boundaries
+          simultaneously", {
+  set.seed(1)
+  ng <- 5
+  m <- ex_simple_nested_with_base(ng)
+  m$domain[, 1] <- -3
+  m$domain[, 2] <- 3
+  sampler <- monty_sampler_nested_adaptive(
+    list(base = diag(1), groups = rep(list(diag(1)), ng)),
+    boundaries = "reject")
+  
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 100, n_chains = 3)
+  
+  set.seed(1)
+  runner <- monty_runner_simultaneous()
+  res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
+  expect_equal(res1, res2)
 })

@@ -68,7 +68,7 @@
 ##' Ultimately, our unpacked vector will need to hold four elements
 ##' (`b11`, `b12`, `b21`, `b22`), but there are only three distinct
 ##' values as the two off-diagonal elements will be the same (i.e.,
-##' `b12 == b21``).  So we might write this passing in `b_raw = 3` to
+##' `b12 == b21`).  So we might write this passing in `b_raw = 3` to
 ##' `array`, so that our unpacked list holds `b_raw = c(b11, b12,
 ##' b22)`.  We would then write `process` as something like:
 ##'
@@ -114,9 +114,36 @@
 ##' This approach generalises to higher dimensional input, though we
 ##' suspect you'll spend a bit of time head-scratching if you use it.
 ##'
-##' We do not currently offer the ability to pack this sort of output
-##' back up, though it's not hard.  Please let us know if you would
-##' use this.
+##' # Packing lists into vectors and matrices
+##'
+##' The unpacking operation is very common - an MCMC proceeds,
+##' produces an unstructured vector, and you unpack it into a list in
+##' order to be able to easily work with it.  The reverse is much less
+##' common, where we take a list and convert it into a vector (or
+##' matrix, or multidimensional array).  Use of this direction
+##' ("packing") may be more common where using packers to work with
+##' the output of state-space models (e.g. in
+##' [odin2](https://mrc-ide.github.io/odin2) or
+##' [dust2](https://mrc-ide.github.io/dust2), which use this
+##' machinery).
+##'
+##' The input to `pack()` will be the shape that `unpack()` returned;
+##' a named list of numerical vectors, matrices and arrays.  The names
+##' must correspond to the names in your packer (i.e., `scalar` and
+##' the names of `array`).  Each element has dimensions
+##'
+##' ```
+##' <...object, ...residual>
+##' ```
+##'
+##' where `...object` is the dimensions of the data itself and
+##' `...residual` is the dimensions of the hypothetical input to
+##' `pack`.
+##'
+##' There is an unfortunate ambiguity in R's lack of true scalar types
+##' that we cannot avoid.  It is hard to tell the difference packing a
+##' vector vs packing an array where all dimensions are 1.  See the
+##' examples, and please let us know if the behaviour needs changing.
 ##'
 ##' @title Build a parameter packer
 ##'
@@ -166,8 +193,69 @@
 ##'   element has the name of a value in `parameters` and each value
 ##'   has the indices within an unstructured vector where these values
 ##'   can be found.
+##' * `subset`: an experimental interface which can be used to subset a
+##'   packer to a packer for a subset of contents. Documentation will
+##'   be provided once the interface settles.
 ##'
 ##' @export
+##'
+##' @examples
+##' # Here's a really simple example
+##' p <- monty_packer(c("a", "b", "c"))
+##' p
+##'
+##' p$pack(list(a = 1, b = 2, c = 3))
+##' p$unpack(1:3)
+##'
+##' # Sometimes we have a vector embedded in our parameters:
+##' p <- monty_packer(c("a", "b"), list(v = 4))
+##' p$pack(list(a = 1, b = 2, v = c(6, 7, 8, 9)))
+##' p$unpack(c(1, 2, 6, 7, 8, 9))
+##'
+##' # Or a higher dimensional structure such as a matrix:
+##' p <- monty_packer(c("a", "b"), list(m = c(2, 2)))
+##' p$unpack(c(1, 2, 6, 7, 8, 9))
+##'
+##' # You can use a packer to set "fixed" parameters that do not vary
+##' # with the underlying model being fit, but are required by your model.
+##' # This is simpler than the "closure" approach used previously in our
+##' # mcstate package and also easier to accommodate with differentiable
+##' # models:
+##' p <- monty_packer(
+##'   c("a", "b"),
+##'   fixed = list(d = data.frame(n = 1:3, m = runif(3))))
+##' p$unpack(1:2)
+##' p$pack(p$unpack(1:2))
+##'
+##' # The example from above, where we create a symmetric 2 x 2 matrix
+##' # from a 3-element vector, alongside a scalar:
+##' p <- monty_packer(
+##'   scalar = "a",
+##'   array = list(b_flat = 3),
+##'   process = function(p) list(b = matrix(p$b_flat[c(1, 2, 2, 3)], 2, 2)))
+##'
+##' # Unpacking we see "b_flat" is still in the list, but "b" is our
+##' # symmetric matrix:
+##' p$unpack(1:4)
+##'
+##' # The processed elements are ignored on the return pack:
+##' p$pack(list(a = 1, b_flat = 2:4, b = matrix(c(2, 3, 3, 4), 2, 2)))
+##' p$pack(list(a = 1, b_flat = 2:4))
+##'
+##' # R lacks scalars, which means that some packers will unpack
+##' # different inputs to the same outputs:
+##' p <- monty_packer(c("a", "b"))
+##' p$unpack(1:2)
+##' p$unpack(cbind(1:2))
+##'
+##' # This means that we can't reliably pack these inputs in a way
+##' # that guarantees round-tripping is possible.  We have chosen to
+##' # prioritise the case where a *single vector* is round-trippable:
+##' p$pack(list(a = 1, b = 2))
+##'
+##' # This ambiguity goes away if unpacking matices with more than one
+##' # column:
+##' p$unpack(matrix(1:6, 2, 3))
 monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
                          process = NULL) {
   call <- environment()
@@ -189,11 +277,12 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
           i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
         arg = "scalar")
     }
-    idx[scalar] <- set_names(as.list(seq_along(scalar)), scalar)
+    shape[scalar] <- rep(list(integer()), length(scalar))
+    idx[scalar] <- as.list(seq_along(scalar))
     parameters <- c(parameters, scalar)
   }
 
-  len <- length(scalar) # start after scalars
+  len <- length(scalar) # start arrays after scalars
   if (!is.null(array)) {
     assert_named(array, unique = TRUE, call = call)
     for (nm in names(array)) {
@@ -243,20 +332,58 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
   }
 
   pack <- function(p) {
-    res <- numeric(length(parameters))
-    if (!all(lengths(p[names(idx)]) == lengths(idx))) {
-      ## Not quite enough, because we should check the dimensions too.
-      ## That ends up being quite hard with integer checks possibly
-      ## because we really want to use identical() - this will do for now.
-      cli::cli_abort("Invalid structure to 'pack()'")
+    ## We might want a more explicit error here?
+    assert_named(p, unique = TRUE)
+    ## TODO: drop any processed and fixed things here, which means
+    ## we're more concerned about finding things we can reshape than
+    ## anything else.
+    shp <- pack_check_dimensions(p, shape, names(fixed), process)
+    ret <- matrix(NA_real_, len, prod(shp))
+    for (nm in names(shape)) {
+      ret[idx[[nm]], ] <- p[[nm]]
     }
-    unlist(lapply(names(idx), function(el) p[el]), TRUE, FALSE)
+    drop <- length(shp) == 0 ||
+      (length(shp) == 1 &&
+         (length(shape) == 0 || all(lengths(shape) == 0)) &&
+         length(ret) == length(idx))
+    if (drop) {
+      dim(ret) <- NULL
+    } else if (length(shp) > 1) {
+      dim(ret) <- c(len, shp)
+    }
+    ret
+  }
+
+  subset <- function(keep) {
+    ## TODO: later we will allow passing integer indexes here.  This
+    ## is complicated because we should probably retain structure for
+    ## any compartments that are entirely captured (contiguously and
+    ## in order) and convert everything else into scalars.  Or perhaps
+    ## if we take a slice out of a matrix we keep it as an array.
+    ## Lots of decisions to make, so do it later.
+    if (is.character(keep)) {
+      if (anyDuplicated(keep)) {
+        dups <- unique(keep[duplicated(keep)])
+        cli::cli_abort("Duplicated name{?s} in 'keep': {squote(dups)}")
+      }
+      i <- match(keep, names(idx))
+      if (anyNA(i)) {
+        cli::cli_abort("Unknown name{?s} in 'keep': {squote(keep[is.na(i)])}")
+      }
+      index <- unlist(idx[i], FALSE, FALSE)
+      packer <- monty_packer(NULL, shape[keep])
+    } else {
+      cli::cli_abort(
+        "Invalid input for 'keep'; this must currently be a character vector")
+    }
+    list(index = index, packer = packer)
   }
 
   ret <- list(parameters = parameters,
               unpack = unpack,
               pack = pack,
-              index = function() idx)
+              index = function() idx,
+              subset = subset)
   class(ret) <- "monty_packer"
   ret
 }
@@ -274,8 +401,9 @@ prepare_pack_array <- function(name, shape, call = NULL) {
             "'{name}' is not"),
       arg = "array", call = call)
   }
+  shape <- as.integer(shape)
   if (length(shape) == 0) {
-    return(list(names = name, shape = 1, n = 1L))
+    return(list(names = name, shape = integer(0), n = 1L))
   }
   if (any(shape <= 0)) {
     cli::cli_abort(
@@ -398,4 +526,95 @@ unpack_array <- function(x, parameters, len, idx, shape, fixed, process) {
   }
 
   res
+}
+
+
+## Now, we do some annoying calculations to make sure that what we've
+## been given has the correct size, etc.
+pack_check_dimensions <- function(p, shape, fixed, process,
+                                  call = parent.frame()) {
+  msg <- setdiff(names(shape), names(p))
+  extra <- if (is.null(process)) setdiff(names(p), c(names(shape), fixed))
+
+  err <- setdiff(names(shape), names(p))
+  if (length(err) > 0) {
+    cli::cli_abort("Missing element{?s} from input to pack: {squote(err)}",
+                   call = call)
+  }
+  if (length(extra) > 0) {
+    cli::cli_abort(
+      "Unexpected element{?s} present in input to pack: {squote(extra)}",
+      call = call)
+  }
+
+  ## It's very tedious to check if we can map a set of inputs to a
+  ## single pack.  What we expect is if we have an element 'x' with
+  ## dimensions <a, b, c, ...> and we expect that the shape 's' of
+  ## this is <a, b> we need to validate that the first dimensions of
+  ## 'x' are 's' and then record the remainder - that's the shape of
+  ## the rest of the eventual object (so if there is no dimension left
+  ## then it was originally a vector, if there's one element left our
+  ## original input was a matrix and so on).  Then we check that this
+  ## remainder is consistent across all elements in the list.
+  ##
+  ## There are a couple of additional wrinkles due to scalar variables
+  ## (these are ones where 's' has length 0).  First, we can't drop
+  ## things from 'd' with d[-i] because that will drop everything.
+  ## Second, when working out the residual dimensions of the packed
+  ## data we might have a situation where there are some scalars for
+  ## which we think the residual dimension is 1 and some non-scalars
+  ## where we think there is no residual dimension.  This is actually
+  ## the same situation.  This is explored a bit in the tests and the
+  ## examples above.
+  res <- lapply(names(shape), function(nm) {
+    d <- dim2(p[[nm]])
+    s <- shape[[nm]]
+    i <- seq_along(s)
+    if (length(d) >= length(s) && identical(d[i], s)) {
+      list(success = TRUE, residual = if (length(i) == 0) d else d[-i])
+    } else {
+      list(success = FALSE, shape = d[i])
+    }
+  })
+
+  err <- !vlapply(res, "[[", "success")
+  if (any(err)) {
+    err_nms <- names(shape)[err]
+    detail <- sprintf(
+      "%s: expected <%s>, given <%s>",
+      err_nms,
+      vcapply(shape[err], paste, collapse = ", "),
+      vcapply(res[err], function(x) paste(x$shape, collapse = ", ")))
+    cli::cli_abort(
+      c("Incompatible dimensions in input for {squote(names(shape)[err])}",
+        set_names(detail, "x")),
+      call = call)
+  }
+
+  residual <- lapply(res, "[[", "residual")
+  is_scalar <- lengths(residual) == 0
+  is_vector_output <- any(is_scalar) &&
+    all(lengths(residual[!is_scalar]) == 1) &&
+    all(vnapply(residual[!is_scalar], identity) == 1)
+  if (is_vector_output) {
+    return(integer())
+  }
+
+  ret <- residual[[1]]
+  ok <- vlapply(residual, identical, ret)
+  if (!all(ok)) {
+    residual[is_scalar] <- 1L
+    hash <- vcapply(residual, rlang::hash)
+    detail <- vcapply(unique(hash), function(h) {
+      sprintf("%s: <...%s>",
+              paste(squote(names(shape)[hash == h]), collapse = ", "),
+              paste(residual[hash == h][[1]], collapse = ", "))
+    })
+    cli::cli_abort(
+      c("Inconsistent residual dimension in inputs",
+        set_names(detail, "x")),
+      call = call)
+  }
+
+  ret
 }
