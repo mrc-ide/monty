@@ -198,7 +198,7 @@ real_type btrs(rng_state_type& rng_state, real_type n, real_type p) {
 template <typename real_type>
 __host__ __device__
 void binomial_validate(real_type n, real_type p) {
-  if (n < 0 || p < 0 || p > 1) {
+  if (n < 0 || p < 0 || p > 1 || std::isnan(n) || std::isnan(p)) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to binomial with n = %.0f, p = %g, q = %g",

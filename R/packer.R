@@ -277,11 +277,12 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
           i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
         arg = "scalar")
     }
-    idx[scalar] <- set_names(as.list(seq_along(scalar)), scalar)
+    shape[scalar] <- rep(list(integer()), length(scalar))
+    idx[scalar] <- as.list(seq_along(scalar))
     parameters <- c(parameters, scalar)
   }
 
-  len <- length(scalar) # start after scalars
+  len <- length(scalar) # start arrays after scalars
   if (!is.null(array)) {
     assert_named(array, unique = TRUE, call = call)
     for (nm in names(array)) {
@@ -336,14 +337,15 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     ## TODO: drop any processed and fixed things here, which means
     ## we're more concerned about finding things we can reshape than
     ## anything else.
-    shp <- pack_check_dimensions(p, scalar, shape, names(fixed), process)
+    shp <- pack_check_dimensions(p, shape, names(fixed), process)
     ret <- matrix(NA_real_, len, prod(shp))
-    for (nm in c(scalar, names(shape))) {
+    for (nm in names(shape)) {
       ret[idx[[nm]], ] <- p[[nm]]
     }
-
     drop <- length(shp) == 0 ||
-      (length(shp) == 1 && (length(shape) == 0 || all(lengths(shape) == 0)))
+      (length(shp) == 1 &&
+         (length(shape) == 0 || all(lengths(shape) == 0)) &&
+         length(ret) == length(idx))
     if (drop) {
       dim(ret) <- NULL
     } else if (length(shp) > 1) {
@@ -369,18 +371,12 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
         cli::cli_abort("Unknown name{?s} in 'keep': {squote(keep[is.na(i)])}")
       }
       index <- unlist(idx[i], FALSE, FALSE)
-      ## Convert all scalars into array spec for now; this allows
-      ## reordering.
-      shape2 <- c(set_names(rep(list(integer()), length(scalar)), scalar),
-                  shape)
-      scalar_keep <- NULL
-      array_keep <- shape2[keep]
+      packer <- monty_packer(NULL, shape[keep])
     } else {
       cli::cli_abort(
         "Invalid input for 'keep'; this must currently be a character vector")
     }
-    list(index = index,
-         packer = monty_packer(scalar_keep, array_keep))
+    list(index = index, packer = packer)
   }
 
   ret <- list(parameters = parameters,
@@ -535,13 +531,8 @@ unpack_array <- function(x, parameters, len, idx, shape, fixed, process) {
 
 ## Now, we do some annoying calculations to make sure that what we've
 ## been given has the correct size, etc.
-pack_check_dimensions <- function(p, scalar, shape, fixed, process,
+pack_check_dimensions <- function(p, shape, fixed, process,
                                   call = parent.frame()) {
-  if (length(scalar) > 0) {
-    shape <- c(set_names(rep(list(integer()), length(scalar)), scalar),
-               shape)
-  }
-
   msg <- setdiff(names(shape), names(p))
   extra <- if (is.null(process)) setdiff(names(p), c(names(shape), fixed))
 
