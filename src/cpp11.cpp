@@ -140,6 +140,27 @@ extern "C" SEXP _monty_monty_rng_state(SEXP ptr, SEXP is_float) {
     return cpp11::as_sexp(monty_rng_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
   END_CPP11
 }
+// random2.cpp
+cpp11::doubles cpp_monty_random_real(SEXP ptr);
+extern "C" SEXP _monty_cpp_monty_random_real(SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_real(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
+  END_CPP11
+}
+// random2.cpp
+cpp11::doubles cpp_monty_random_binomial(cpp11::doubles r_size, cpp11::doubles r_prob, SEXP ptr);
+extern "C" SEXP _monty_cpp_monty_random_binomial(SEXP r_size, SEXP r_prob, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_binomial(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
+  END_CPP11
+}
+// random2.cpp
+cpp11::doubles cpp_monty_random_exponential_rate(cpp11::doubles r_rate, SEXP ptr);
+extern "C" SEXP _monty_cpp_monty_random_exponential_rate(SEXP r_rate, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_exponential_rate(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_rate), cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
+  END_CPP11
+}
 // rng_pointer.cpp
 cpp11::sexp monty_rng_pointer_init(int n_streams, cpp11::sexp seed, int long_jump, std::string algorithm);
 extern "C" SEXP _monty_monty_rng_pointer_init(SEXP n_streams, SEXP seed, SEXP long_jump, SEXP algorithm) {
@@ -172,29 +193,32 @@ extern "C" SEXP _monty_test_xoshiro_run(SEXP obj) {
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_monty_monty_rng_alloc",            (DL_FUNC) &_monty_monty_rng_alloc,            4},
-    {"_monty_monty_rng_beta",             (DL_FUNC) &_monty_monty_rng_beta,             6},
-    {"_monty_monty_rng_binomial",         (DL_FUNC) &_monty_monty_rng_binomial,         6},
-    {"_monty_monty_rng_cauchy",           (DL_FUNC) &_monty_monty_rng_cauchy,           6},
-    {"_monty_monty_rng_exponential_mean", (DL_FUNC) &_monty_monty_rng_exponential_mean, 5},
-    {"_monty_monty_rng_exponential_rate", (DL_FUNC) &_monty_monty_rng_exponential_rate, 5},
-    {"_monty_monty_rng_gamma_rate",       (DL_FUNC) &_monty_monty_rng_gamma_rate,       6},
-    {"_monty_monty_rng_gamma_scale",      (DL_FUNC) &_monty_monty_rng_gamma_scale,      6},
-    {"_monty_monty_rng_hypergeometric",   (DL_FUNC) &_monty_monty_rng_hypergeometric,   7},
-    {"_monty_monty_rng_jump",             (DL_FUNC) &_monty_monty_rng_jump,             2},
-    {"_monty_monty_rng_long_jump",        (DL_FUNC) &_monty_monty_rng_long_jump,        2},
-    {"_monty_monty_rng_multinomial",      (DL_FUNC) &_monty_monty_rng_multinomial,      6},
-    {"_monty_monty_rng_nbinomial",        (DL_FUNC) &_monty_monty_rng_nbinomial,        6},
-    {"_monty_monty_rng_normal",           (DL_FUNC) &_monty_monty_rng_normal,           7},
-    {"_monty_monty_rng_pointer_init",     (DL_FUNC) &_monty_monty_rng_pointer_init,     4},
-    {"_monty_monty_rng_pointer_sync",     (DL_FUNC) &_monty_monty_rng_pointer_sync,     2},
-    {"_monty_monty_rng_poisson",          (DL_FUNC) &_monty_monty_rng_poisson,          5},
-    {"_monty_monty_rng_random_normal",    (DL_FUNC) &_monty_monty_rng_random_normal,    5},
-    {"_monty_monty_rng_random_real",      (DL_FUNC) &_monty_monty_rng_random_real,      4},
-    {"_monty_monty_rng_state",            (DL_FUNC) &_monty_monty_rng_state,            2},
-    {"_monty_monty_rng_uniform",          (DL_FUNC) &_monty_monty_rng_uniform,          6},
-    {"_monty_test_rng_pointer_get",       (DL_FUNC) &_monty_test_rng_pointer_get,       2},
-    {"_monty_test_xoshiro_run",           (DL_FUNC) &_monty_test_xoshiro_run,           1},
+    {"_monty_cpp_monty_random_binomial",         (DL_FUNC) &_monty_cpp_monty_random_binomial,         3},
+    {"_monty_cpp_monty_random_exponential_rate", (DL_FUNC) &_monty_cpp_monty_random_exponential_rate, 2},
+    {"_monty_cpp_monty_random_real",             (DL_FUNC) &_monty_cpp_monty_random_real,             1},
+    {"_monty_monty_rng_alloc",                   (DL_FUNC) &_monty_monty_rng_alloc,                   4},
+    {"_monty_monty_rng_beta",                    (DL_FUNC) &_monty_monty_rng_beta,                    6},
+    {"_monty_monty_rng_binomial",                (DL_FUNC) &_monty_monty_rng_binomial,                6},
+    {"_monty_monty_rng_cauchy",                  (DL_FUNC) &_monty_monty_rng_cauchy,                  6},
+    {"_monty_monty_rng_exponential_mean",        (DL_FUNC) &_monty_monty_rng_exponential_mean,        5},
+    {"_monty_monty_rng_exponential_rate",        (DL_FUNC) &_monty_monty_rng_exponential_rate,        5},
+    {"_monty_monty_rng_gamma_rate",              (DL_FUNC) &_monty_monty_rng_gamma_rate,              6},
+    {"_monty_monty_rng_gamma_scale",             (DL_FUNC) &_monty_monty_rng_gamma_scale,             6},
+    {"_monty_monty_rng_hypergeometric",          (DL_FUNC) &_monty_monty_rng_hypergeometric,          7},
+    {"_monty_monty_rng_jump",                    (DL_FUNC) &_monty_monty_rng_jump,                    2},
+    {"_monty_monty_rng_long_jump",               (DL_FUNC) &_monty_monty_rng_long_jump,               2},
+    {"_monty_monty_rng_multinomial",             (DL_FUNC) &_monty_monty_rng_multinomial,             6},
+    {"_monty_monty_rng_nbinomial",               (DL_FUNC) &_monty_monty_rng_nbinomial,               6},
+    {"_monty_monty_rng_normal",                  (DL_FUNC) &_monty_monty_rng_normal,                  7},
+    {"_monty_monty_rng_pointer_init",            (DL_FUNC) &_monty_monty_rng_pointer_init,            4},
+    {"_monty_monty_rng_pointer_sync",            (DL_FUNC) &_monty_monty_rng_pointer_sync,            2},
+    {"_monty_monty_rng_poisson",                 (DL_FUNC) &_monty_monty_rng_poisson,                 5},
+    {"_monty_monty_rng_random_normal",           (DL_FUNC) &_monty_monty_rng_random_normal,           5},
+    {"_monty_monty_rng_random_real",             (DL_FUNC) &_monty_monty_rng_random_real,             4},
+    {"_monty_monty_rng_state",                   (DL_FUNC) &_monty_monty_rng_state,                   2},
+    {"_monty_monty_rng_uniform",                 (DL_FUNC) &_monty_monty_rng_uniform,                 6},
+    {"_monty_test_rng_pointer_get",              (DL_FUNC) &_monty_test_rng_pointer_get,              2},
+    {"_monty_test_xoshiro_run",                  (DL_FUNC) &_monty_test_xoshiro_run,                  1},
     {NULL, NULL, 0}
 };
 }
