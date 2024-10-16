@@ -1,0 +1,94 @@
+---
+title: "Adaptive MCMC"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Samplers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+set.seed(1)
+```
+
+In this vignette we detail the adaptive Metropolis-Hastings random walk algorithm used in `monty_sampler_adaptive()`, which is adapted from the accelerated shaping and scaling algorithm presented in the following paper:
+
+Spencer SEF (2021). "Accelerating adaptation in the adaptive Metropolis–Hastings random walk algorithm." Australian & New Zealand Journal of Statistics, 63(3), 468–484. https://doi.org/10.1111/anzs.12344
+
+At iteration $i$, we propose our new parameter set $Y_{i+1}$ given current parameter set $X_i$ ($d$ is the number of fitted parameters):
+
+$$\begin{align*}
+Y_{i+1}\sim N\left(X_i, \frac{2.38^2}{d}\lambda_i^2V_i\right)
+\end{align*}$$
+
+The algorithm can be broken into two parts:
+
+- the shaping part, which determines $V_i$
+- the scaling part, which determines $\lambda_i$
+
+## Shaping
+
+The shaping is controlled by the following input parameters to `monty_sampler_adaptive()`:
+
+- `initial_vcv`: the initial estimate of the variance-covariance matrix (VCV)
+- `initial_vcv_weight`: the prior weight on the initial VCV
+- `forget_rate`: the rate at which we forget early parameter sets
+- `forget_end`: the final iteration at which we can forget early parameter sets
+- `adapt_end`: the final iteration at which we adaptively update the proposal VCV (also applies to scaling)
+
+Additionally, the shaping algorithm involves calculation of an empirical VCV, which after iteration $i$ is given by
+$$\begin{align*}
+vcv_i & = cov\left(X_{\lfloor forget\_rate * \min\{i,\, forget\_end,\, adapt\_end\}\rfloor+1}, \ldots, X_{\min\{i,\, adapt\_end\}}\right).
+\end{align*}$$
+Thus while iteration $i \leq adapt\_end$ the empirical VCV is updated by including the new parameter set $X_i$, but additionally while $i \leq forget\_end$ we remove ("forget") the earliest parameter set remaining from the empirical VCV sample if $\lfloor forget\_rate * i \rfloor > \lfloor forget\_rate * (i - 1) \rfloor$ . After $forget\_end$ iterations we no longer forget early parameter sets from the sample VCV, and after $adapt\_end$ iterations the empirical VCV is no longer updated.
+
+With $weight_i$ being the size of the empirical VCV sample, we then weight the empirical VCV and initial VCV:
+$$\begin{align*}
+V_i = \frac{weight_i*sample\_vcv_i + \left(initial\_vcv\_weight+d+1\right)*initial\_vcv}{weight_i+initial\_vcv\_weight+d+2}
+\end{align*}$$
+(Note: weightings in numerator do not add up to denominator.)
+
+## Scaling algorithm
+
+The shaping is controlled by the following input parameters to `monty_sampler_adaptive()`:
+
+- `initial_scaling`: the initial value for scaling ($\lambda_0$)
+- `min_scaling`: the minimum value for scaling
+- `scaling_increment`: the increment we use to increase or decrease the scaling
+- `acceptance_target`: the acceptance rate we target
+- `initial_scaling_weight`: value used in the starting denominator of the scaling update
+- `pre_diminish`: the number of iterations before we apply diminishing adaptation to the scaling updates
+- `log_scaling_change`: logical whether we update the scaling on a log scale or not
+- `adapt_end`: the final iteration at which we adaptively update the proposal VCV (also applies to shaping)
+
+
+`initial_scaling_weight` can be unspecified (`NULL`), in which case we use
+$$initial\_scaling\_weight = \frac{5}{acceptance\_target * (1 - acceptance\_target)}$$
+
+`scaling_increment` can be unspecified (`NULL`), in which case we use $scaling\_increment = \frac{1}{100}$ if $\log\_scaling\_change$ is $FALSE$, otherwise
+$$\begin{align*}
+scaling\_increment & = \left(1 - \frac{1}{d}\right) \left(\frac{\sqrt{2\pi}}{2A}\exp\left(\frac{A ^ 2}{2}\right)\right) + \frac{1}{d * acceptance\_target * (1 - acceptance\_target)},
+\end{align*}$$
+where $A = -\psi^{-1}(acceptance\_target/2)$ and $\psi^{-1}$ is the inverse cdf of a standard normal distribution.
+
+
+We update scaling after iteration $i\leq adapt\_end$ based on the acceptance probability at that iteration
+
+- if $log\_scaling\_change = TRUE$:
+$$\begin{align*} 
+\log(\lambda_i) & = \max\left\{\log(min\_scaling), \log(\lambda_{i-1}) + \frac{scaling\_increment}{\sqrt{initial\_scaling\_weight + \max\{0,\, i - pre\_diminish\}}}(accept\_prob_i - acceptance\_target)\right\}
+\end{align*}$$
+- if $log\_scaling\_change = FALSE$:
+$$\begin{align*}
+\lambda_i = \max\left\{min\_scaling, \lambda_{i-1} + \frac{scaling\_increment}{\sqrt{initial\_scaling\_weight + \max\{0,\, i - pre\_diminish\}}}(accept\_prob_i - acceptance\_target)\right\}.
+\end{align*}$$
+
+So when the acceptance probability is larger than `acceptance_target` the scaling is increased, whereas when the acceptance probability is larger than `acceptance_target` the scaling is decreased. After $adapt\_end$ iterations, we no longer update the scaling.
+
+## Nested adaptive algorithm
+
+The adaptive algorithm of `monty_sampler_adaptive()` is extended to nested models with `monty_sampler_nested_adaptive()`. In this case the above algorithm is applied to each subset of parameters: the base parameters (if there are any) and each parameter group.
