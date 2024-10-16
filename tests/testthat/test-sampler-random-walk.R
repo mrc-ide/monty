@@ -26,7 +26,7 @@ test_that("validate sampler against model on initialisation", {
 
 test_that("can draw samples from a random model", {
   set.seed(1)
-  m <- ex_dust_sir()
+  m <- ex_sir_filter_posterior()
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
   res <- monty_sample(m, sampler, 20)
@@ -36,7 +36,7 @@ test_that("can draw samples from a random model", {
 
 
 test_that("can observe a model", {
-  m <- ex_dust_sir(save_trajectories = TRUE)
+  m <- ex_sir_filter_posterior(save_trajectories = TRUE)
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
 
@@ -46,18 +46,14 @@ test_that("can observe a model", {
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details", "observations"))
   expect_equal(names(res$observations),
-               c("trajectories", "state"))
+               "trajectories")
   expect_equal(dim(res$observations$trajectories),
-               c(2, 151, 20, 3)) # states, time steps, samples, chains
-  expect_equal(dim(res$observations$state),
-               c(5, 20, 3)) # states, samples, chains
-  expect_equal(res$observations$state[c(2, 4), , ],
-               res$observations$trajectories[, 151, , ])
+               c(2, 9, 20, 3)) # states, time steps, samples, chains
 })
 
 
 test_that("can continue observed models", {
-  m <- ex_dust_sir(save_trajectories = TRUE)
+  m <- ex_sir_filter_posterior(save_trajectories = TRUE)
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
 

@@ -81,112 +81,6 @@ ex_simple_nested_with_base <- function(n_groups) {
 }
 
 
-ex_dust_sir <- function(n_particles = 100, n_threads = 1,
-                        deterministic = FALSE, save_trajectories = FALSE) {
-  testthat::skip_if_not_installed("dust")
-  sir <- dust::dust_example("sir")
-
-  np <- 10
-  end <- 150 * 4
-  times <- seq(0, end, by = 4)
-  ans <- sir$new(list(), 0, np, seed = 1L)$simulate(times)
-  dat <- data.frame(time = times[-1], incidence = ans[5, 1, -1])
-
-  ## TODO: an upshot here is that our dust models are always going to
-  ## need to be initialisable; we might need to sample from the
-  ## statistical parameters, or set things up to allow two-phases of
-  ## initialsation (which is I think where we are heading, so that's
-  ## fine).
-  model <- sir$new(list(), 0, n_particles, seed = 1L, n_threads = n_threads,
-                   deterministic = deterministic)
-  model$set_data(dust::dust_data(dat))
-  model$set_index(c(2, 4))
-
-  prior_beta_shape <- 1
-  prior_beta_rate <- 1 / 0.5
-  prior_gamma_shape <- 1
-  prior_gamma_rate <- 1 / 0.5
-
-  trajectories <- NULL
-
-  density <- function(x) {
-    beta <- x[[1]]
-    gamma <- x[[2]]
-    prior <- dgamma(beta, prior_beta_shape, prior_beta_rate, log = TRUE) +
-      dgamma(gamma, prior_gamma_shape, prior_gamma_rate, log = TRUE)
-    if (is.finite(prior)) {
-      model$update_state(
-        pars = list(beta = x[[1]], gamma = x[[2]]),
-        time = 0,
-        set_initial_state = TRUE)
-      res <- model$filter(save_trajectories = save_trajectories)
-      if (save_trajectories) {
-        trajectories <<- res$trajectories
-      }
-      ll <- res$log_likelihood
-    } else {
-      ll <- -Inf
-    }
-    ll + prior
-  }
-
-  direct_sample <- function(rng) {
-    c(rng$gamma_scale(1, prior_beta_shape, 1 / prior_beta_rate),
-      rng$gamma_scale(1, prior_gamma_shape, 1 / prior_gamma_rate))
-  }
-
-  set_rng_state <- function(rng_state) {
-    n_streams <- n_particles + 1
-    if (length(rng_state) != 32 * n_streams) {
-      ## Expand the state by short jumps; we'll make this nicer once
-      ## we refactor the RNG interface and dust.
-      rng_state <- monty_rng$new(rng_state, n_streams)$state()
-    }
-    model$set_rng_state(rng_state)
-  }
-
-  get_rng_state <- function() {
-    model$rng_state()
-  }
-
-  if (save_trajectories) {
-    observer <- monty_observer(
-      function() {
-        ## TODO: It's not really clear to me (Rich) that we want the
-        ## rng coming in here.  In dust2 we'll correctly use the
-        ## *filter* rng.  however, even there we end up with the act
-        ## of observation changing the behaviour of the sampler and I
-        ## am not sure that is really desirable.  We could probably
-        ## improve that in dust, but that would require that we do not
-        ## pass the rng here too.  So for now we take the first
-        ## particle.
-        ## i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
-        i <- 1L
-        if (save_trajectories) {
-          traj <- trajectories[, i, , drop = FALSE]
-          dim(traj) <- dim(traj)[-2]
-        } else {
-          traj <- NULL
-        }
-        list(trajectories = traj, state = model$state()[, i])
-      })
-  } else {
-    observer <- NULL
-  }
-
-  monty_model(
-    list(model = model,
-         density = density,
-         direct_sample = direct_sample,
-         parameters = c("beta", "gamma"),
-         domain = cbind(c(0, 0), c(Inf, Inf)),
-         observer = observer,
-         set_rng_state = set_rng_state,
-         get_rng_state = get_rng_state),
-    monty_model_properties(is_stochastic = !deterministic))
-}
-
-
 random_array <- function(dim, named = FALSE) {
   if (named) {
     dn <- lapply(seq_along(dim), function(i) {
@@ -200,91 +94,21 @@ random_array <- function(dim, named = FALSE) {
 }
 
 
-ex_dust_sir_likelihood <- function(n_particles = 100, n_threads = 1,
-                                   deterministic = FALSE,
-                                   save_trajectories = FALSE) {
-  testthat::skip_if_not_installed("dust")
-  sir <- dust::dust_example("sir")
+ex_sir_filter_likelihood <- function(n_particles = 100,
+                                     deterministic = FALSE,
+                                     save_trajectories = FALSE) {
+  data <- data.frame(time      = c( 4,  8, 12, 16, 20, 24, 28, 32, 36),
+                     incidence = c( 1,  0,  3,  5,  2,  4,  3,  7,  2))
+  sir_filter_monty(data, n_particles, deterministic, save_trajectories)
+}
 
-  np <- 10
-  end <- 150 * 4
-  times <- seq(0, end, by = 4)
-  ans <- sir$new(list(), 0, np, seed = 1L)$simulate(times)
-  dat <- data.frame(time = times[-1], incidence = ans[5, 1, -1])
 
-  ## TODO: an upshot here is that our dust models are always going to
-  ## need to be initialisable; we might need to sample from the
-  ## statistical parameters, or set things up to allow two-phases of
-  ## initialsation (which is I think where we are heading, so that's
-  ## fine).
-  model <- sir$new(list(), 0, n_particles, seed = 1L, n_threads = n_threads,
-                   deterministic = deterministic)
-  model$set_data(dust::dust_data(dat))
-  model$set_index(c(2, 4))
-
-  trajectories <- NULL
-
-  density <- function(x) {
-    beta <- x[[1]]
-    gamma <- x[[2]]
-    model$update_state(
-      pars = list(beta = x[[1]], gamma = x[[2]]),
-      time = 0,
-      set_initial_state = TRUE)
-    res <- model$filter(save_trajectories = save_trajectories)
-    if (save_trajectories) {
-      trajectories <<- res$trajectories
-    }
-    res$log_likelihood
-  }
-
-  set_rng_state <- function(rng_state) {
-    n_streams <- n_particles + 1
-    if (length(rng_state) != 32 * n_streams) {
-      ## Expand the state by short jumps; we'll make this nicer once
-      ## we refactor the RNG interface and dust.
-      rng_state <- monty_rng$new(rng_state, n_streams)$state()
-    }
-    model$set_rng_state(rng_state)
-  }
-
-  get_rng_state <- function() {
-    model$rng_state()
-  }
-
-  if (save_trajectories) {
-    observer <- monty_observer(
-      function() {
-        ## TODO: It's not really clear to me (Rich) that we want the
-        ## rng coming in here.  In dust2 we'll correctly use the
-        ## *filter* rng.  however, even there we end up with the act
-        ## of observation changing the behaviour of the sampler and I
-        ## am not sure that is really desirable.  We could probably
-        ## improve that in dust, but that would require that we do not
-        ## pass the rng here too.  So for now we take the first
-        ## particle.
-        ## i <- floor(rng$random_real(1) * model$model$n_particles()) + 1L
-        i <- 1L
-        if (save_trajectories) {
-          traj <- trajectories[, i, , drop = FALSE]
-          dim(traj) <- dim(traj)[-2]
-        } else {
-          traj <- NULL
-        }
-        list(trajectories = traj, state = model$state()[, i])
-      })
-  } else {
-    observer <- NULL
-  }
-
-  monty_model(
-    list(model = model,
-         density = density,
-         parameters = c("beta", "gamma"),
-         observer = observer,
-         set_rng_state = set_rng_state,
-         get_rng_state = get_rng_state),
-    monty_model_properties(is_stochastic = !deterministic))
+ex_sir_filter_posterior <- function(...) {
+  prior <- monty_dsl({
+    beta ~ Gamma(shape = 1, rate = 1 / 0.5)
+    gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
+  })
+  ex_sir_filter_likelihood(...) + prior
 }
 
 

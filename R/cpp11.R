@@ -76,6 +76,18 @@ monty_rng_state <- function(ptr, is_float) {
   .Call(`_monty_monty_rng_state`, ptr, is_float)
 }
 
+cpp_monty_random_real <- function(ptr) {
+  .Call(`_monty_cpp_monty_random_real`, ptr)
+}
+
+cpp_monty_random_binomial <- function(r_size, r_prob, ptr) {
+  .Call(`_monty_cpp_monty_random_binomial`, r_size, r_prob, ptr)
+}
+
+cpp_monty_random_exponential_rate <- function(r_rate, ptr) {
+  .Call(`_monty_cpp_monty_random_exponential_rate`, r_rate, ptr)
+}
+
 monty_rng_pointer_init <- function(n_streams, seed, long_jump, algorithm) {
   .Call(`_monty_monty_rng_pointer_init`, n_streams, seed, long_jump, algorithm)
 }

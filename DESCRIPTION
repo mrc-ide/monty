@@ -1,6 +1,6 @@
 Package: monty
 Title: Monte Carlo Models
-Version: 0.2.18
+Version: 0.2.19
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"),
              person("Wes", "Hinsley", role = "aut"),
@@ -31,7 +31,6 @@ Suggests:
     coda,
     decor,
     knitr,
-    dust,
     mockery,
     mvtnorm,
     numDeriv,
@@ -43,5 +42,3 @@ Suggests:
 Config/testthat/edition: 3
 Language: en-GB
 VignetteBuilder: knitr
-Remotes:
-    mrc-ide/dust

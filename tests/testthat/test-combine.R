@@ -186,7 +186,7 @@ test_that("can combine gradients where parameters do not agree", {
 
 
 test_that("can combine a stochastic and deterministic model", {
-  ll <- ex_dust_sir_likelihood()
+  ll <- ex_sir_filter_likelihood()
   prior <- monty_dsl({
     beta ~ Gamma(shape = 1, rate = 1 / 0.5)
     gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
@@ -199,7 +199,7 @@ test_that("can combine a stochastic and deterministic model", {
 
 
 test_that("can't disable stochastic model on combination", {
-  ll <- ex_dust_sir_likelihood()
+  ll <- ex_sir_filter_likelihood()
   prior <- monty_dsl({
     beta ~ Gamma(shape = 1, rate = 1 / 0.5)
     gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
@@ -212,7 +212,7 @@ test_that("can't disable stochastic model on combination", {
 
 
 test_that("can't create model out of two stochastic halves", {
-  ll <- ex_dust_sir_likelihood()
+  ll <- ex_sir_filter_likelihood()
   expect_error(
     ll + ll,
     "Can't combine two stochastic models")
