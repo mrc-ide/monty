@@ -103,7 +103,7 @@ distr_gamma_rate <- distribution(
 
 distr_gamma_scale <- distribution(
   name = "Gamma",
-  variant = "rate",
+  variant = "scale",
   density = function(x, shape, scale) {
     dgamma(x, shape, scale = scale, log = TRUE)
   },
