@@ -1364,6 +1364,17 @@ test_that("can generate negative binomial numbers", {
 })
 
 
+test_that("negative_binomial_mu follows from negative_binomial_prob", {
+  rng1 <- monty_rng$new(seed = 1L)
+  rng2 <- monty_rng$new(seed = 1L)
+  prob <- 0.3
+  size <- 20
+  expect_identical(
+    rng1$negative_binomial_mu(100, size, size * (1 - prob) / prob),
+    rng2$negative_binomial_prob(100, size, prob))
+})
+
+
 test_that("deterministic negative binomial returns mean", {
   m <- 100
   p <- as.numeric(sample(10, m, replace = TRUE)) / 10
