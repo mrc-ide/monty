@@ -1357,7 +1357,7 @@ test_that("can generate negative binomial numbers", {
   m <- 1000000
   n <- 958
   p <- 0.004145
-  yf <- monty_rng$new(1)$nbinomial(m, n, p)
+  yf <- monty_rng$new(1)$negative_binomial_prob(m, n, p)
 
   expect_equal(mean(yf), (1 - p) * n / p, tolerance = 1e-3)
   expect_equal(var(yf), ((1 - p) * n) / p^2, tolerance = 1e-2)
@@ -1372,22 +1372,23 @@ test_that("deterministic negative binomial returns mean", {
   rng_f <- monty_rng$new(1, real_type = "float", deterministic = TRUE)
   rng_d <- monty_rng$new(1, real_type = "double", deterministic = TRUE)
 
-  expect_equal(rng_f$nbinomial(m, n, p), (1 - p) * n / p, tolerance = 1e-6)
-  expect_equal(rng_d$nbinomial(m, n, p), (1 - p) * n / p)
+  expect_equal(rng_f$negative_binomial_prob(m, n, p), (1 - p) * n / p,
+               tolerance = 1e-6)
+  expect_equal(rng_d$negative_binomial_prob(m, n, p), (1 - p) * n / p)
 })
 
 
 test_that("negative binomial prevents bad inputs", {
-  expect_error(monty_rng$new(1)$nbinomial(1, 10, 0),
-               "Invalid call to nbinomial with size = 10, prob = 0")
-  expect_error(monty_rng$new(1)$nbinomial(1, 0, 0.5),
-               "Invalid call to nbinomial with size = 0, prob = 0.5")
-  expect_error(monty_rng$new(1)$nbinomial(1, 10, 1.5),
-               "Invalid call to nbinomial with size = 10, prob = 1.5")
-  expect_error(monty_rng$new(1)$nbinomial(1, 10, Inf),
-               "Invalid call to nbinomial with size = 10, prob = inf")
-  expect_error(monty_rng$new(1)$nbinomial(1, Inf, 0.4),
-               "Invalid call to nbinomial with size = inf, prob = 0.4")
+  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, 0),
+               "Invalid call to negative_binomial with size = 10, prob = 0")
+  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 0, 0.5),
+               "Invalid call to negative_binomial with size = 0, prob = 0.5")
+  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, 1.5),
+               "Invalid call to negative_binomial with size = 10, prob = 1.5")
+  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, Inf),
+               "Invalid call to negative_binomial with size = 10, prob = inf")
+  expect_error(monty_rng$new(1)$negative_binomial_prob(1, Inf, 0.4),
+               "Invalid call to negative_binomial with size = inf, prob = 0.4")
 })
 
 
