@@ -134,8 +134,9 @@ distr_negative_binomial_mu <- distribution(
   domain = c(0, Inf),
   sample = function(rng, size, mu) rng$negative_binomial_mu(1, size, mu),
   expr = list(
-    density = quote(lchoose(x + size - 1, x) + size * log(size) + 
-                      x * log(mu) - (size + x) * log(size + mu)),
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      size * log(size) + x * log(mu) -
+                      (size + x) * log(size + mu)),
     mean = quote(mu)),
   cpp = list(density = "negative_binomial_mu", sample = "negative_binomial_mu"))
 
@@ -148,8 +149,8 @@ distr_negative_binomial_prob <- distribution(
   domain = c(0, Inf),
   sample = function(rng, size, prob) rng$negative_binomial_prob(1, size, prob),
   expr = list(
-    density = quote(lchoose(x + size - 1, x) + x * log(1 - prob) + 
-                      size * log(prob)),
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      x * log(1 - prob) + size * log(prob)),
     mean = quote(size * (1 - prob) / prob)),
   cpp = list(density = "negative_binomial_prob", sample = "negative_binomial_prob"))
 
