@@ -2,70 +2,75 @@
 % Please edit documentation in R/packer.R
 \name{monty_packer}
 \alias{monty_packer}
-\title{Build a parameter packer}
+\title{Build a packer}
 \usage{
 monty_packer(scalar = NULL, array = NULL, fixed = NULL, process = NULL)
 }
 \arguments{
-\item{scalar}{Names of scalar parameters.  This is similar for
-listing elements in \code{array} with values of 1, though elements in
+\item{scalar}{Names of scalars.  This is similar for listing
+elements in \code{array} with values of 1, though elements in
 \code{scalar} will be placed ahead of those listed in \code{array} within
 the final parameter vector, and elements in \code{array} will have
 generated names that include square brackets.}
 
-\item{array}{A list, where names correspond to the names of array
-parameters and values correspond to the lengths of parameters.
-Multiple dimensions are allowed (so if you provide an element
-with two entries these represent dimensions of a matrix).
-Zero-length integer vectors or \code{NULL} values are counted as
-scalars, which allows you to put scalars at positions other than
-the front of the packing vector. In future, you may be able to
-use \emph{strings} as values for the lengths, in which case these
-will be looked for within \code{fixed}.}
+\item{array}{A list, where names correspond to the names of arrays
+and values correspond to their lengths.  Multiple dimensions are
+allowed (so if you provide an element with two entries these
+represent dimensions of a matrix).  Zero-length integer vectors
+or \code{NULL} values are counted as scalars, which allows you to put
+scalars at positions other than the front of the packing
+vector. In future, you may be able to use \emph{strings} as values
+for the lengths, in which case these will be looked for within
+\code{fixed}.}
 
-\item{fixed}{A named list of fixed parameters; these will be added
-into the final list directly.  These typically represent
-additional pieces of data that your model needs to run, but
-which you are not performing inference on.}
+\item{fixed}{A named list of fixed data to be inserted into the
+final unpacked list; these will be added into the final list
+directly.  In the parameter packer context, these typically
+represent additional pieces of data that your model needs to
+run, but which you are not performing inference on.}
 
 \item{process}{An arbitrary R function that will be passed the
-final assembled parameter list; it may create any \emph{additional}
-entries, which will be concatenated onto the original list.  If
-you use this you should take care not to return any values with
-the same names as entries listed in \code{scalar}, \code{array} or
-\code{fixed}, as this is an error (this is so that \code{pack()} is
-not broken).  We will likely play around with this process in
-future in order to get automatic differentiation to work.}
+final assembled list; it may create any \emph{additional} entries,
+which will be concatenated onto the original list.  If you use
+this you should take care not to return any values with the same
+names as entries listed in \code{scalar}, \code{array} or \code{fixed}, as this
+is an error (this is so that \code{pack()} is not broken).  We will
+likely play around with this process in future in order to get
+automatic differentiation to work.}
 }
 \value{
-An object of class \code{monty_packer}, which has three
-elements:
+An object of class \code{monty_packer}, which has elements:
 \itemize{
-\item \code{parameters}: a character vector of computed parameter names;
-these are the names that your statistical model will use.
+\item \code{names}: a function that returns a character vector of computed
+names; in the parameter packer context these are the names that
+your statistical model will use.
 \item \code{unpack}: a function that can unpack an unstructured vector
 (say, from your statistical model parameters) into a structured
 list (say, for your generative model)
-\item \code{pack}: a function that can pack your structured list of
-parameters back into a numeric vector suitable for the
+\item \code{pack}: a function that can pack your structured list of data
+back into a numeric vector, for example suitable for a
 statistical model.  This ignores values created by a
-\code{preprocess} function.
+\code{preprocess} function and present in \code{fixed}.
 \item \code{index}: a function which produces a named list where each
-element has the name of a value in \code{parameters} and each value
-has the indices within an unstructured vector where these values
-can be found.
-\item \code{subset}: an experimental interface which can be used to subset a
-packer to a packer for a subset of contents. Documentation will
-be provided once the interface settles.
+element has the name of a value in \code{scalar} or \code{array} and each
+value has the indices within an unstructured vector where these
+values can be found, in the shape of the data that would be
+unpacked.  This is of limited most use to most people.
+\item \code{subset}: an experimental interface which can be used to subset
+a packer to a packer for a subset of contents. Documentation
+will be provided once the interface settles, but this is for
+advanced use only!
 }
 }
 \description{
-Build a parameter packer, which can be used in models to translate
-between an unstructured vector of numbers (the vector being
-updated by an MCMC for example) to a structured list of named
-values, which is easier to program against.  We refer to the
-process of taking a named list of scalars, vectors and arrays and
-converting into a single vector "packing" and the inverse
+Build a packer, which can be used to translate beween an
+unstructured vector of numbers (the vector being updated by an
+MCMC for example) to a structured list of named values, which is
+easier to program against.  This is useful for the bridge between
+model parameters and a models's implementation, but it is also
+useful for the state vector in a state-space model.  We refer to
+the process of taking a named list of scalars, vectors and arrays
+and converting into a single vector "packing" and the inverse
 "unpacking".
 }
 \details{

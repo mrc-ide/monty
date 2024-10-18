@@ -63,7 +63,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL) {
   }
 
   monty_model(
-    list(parameters = packer$parameters,
+    list(parameters = packer$names(),
          density = function(x) {
            rlang::inject(density(!!!packer$unpack(x)))
          }))

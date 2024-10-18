@@ -54,7 +54,7 @@ monty_domain_expand <- function(domain, packer) {
       arg = "domain")
   }
 
-  nms_full <- packer$parameters
+  nms_full <- packer$names()
   nms_map <- packer$unpack(nms_full)
   nms_logical <- names(nms_map)
 
@@ -76,5 +76,5 @@ monty_domain_expand <- function(domain, packer) {
                     domain[!i, , drop = FALSE])
   }
 
-  domain[order(match(rownames(domain), packer$parameters)), , drop = FALSE]
+  domain[order(match(rownames(domain), packer$names())), , drop = FALSE]
 }

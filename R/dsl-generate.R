@@ -56,7 +56,7 @@ dsl_generate_direct_sample <- function(dat, env, meta) {
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr, meta)
   body <- c(call("<-", meta[["pars"]], quote(list())),
             exprs,
-            bquote(unlist(.(meta[["pars"]])[packer$parameters], FALSE, FALSE)))
+            bquote(unlist(.(meta[["pars"]])[packer$names()], FALSE, FALSE)))
   as_function(alist(rng = ), body, env)
 }
 
