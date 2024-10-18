@@ -6,7 +6,7 @@ test_that("can't create empty packer", {
 
 test_that("trivial packer", {
   xp <- monty_packer("a")
-  expect_equal(xp$parameters, "a")
+  expect_equal(xp$names(), "a")
   expect_equal(xp$unpack(1), list(a = 1))
   expect_equal(xp$unpack(c(a = 1)), list(a = 1))
   expect_error(xp$unpack(c(b = 1)),
@@ -23,7 +23,7 @@ test_that("trivial packer", {
 
 test_that("multiple scalar unpacking", {
   xp <- monty_packer(c("a", "b", "c"))
-  expect_equal(xp$parameters, c("a", "b", "c"))
+  expect_equal(xp$names(), c("a", "b", "c"))
   expect_equal(xp$unpack(1:3), list(a = 1, b = 2, c = 3))
   expect_equal(xp$pack(list(a = 1, b = 2, c = 3)), 1:3)
   expect_equal(xp$index(), list(a = 1, b = 2, c = 3))
@@ -32,7 +32,7 @@ test_that("multiple scalar unpacking", {
 
 test_that("can bind data into an unpacked list", {
   xp <- monty_packer(c("a", "b"), fixed = list(x = 1:5, y = 10))
-  expect_equal(xp$parameters, c("a", "b"))
+  expect_equal(xp$names(), c("a", "b"))
   expect_equal(xp$unpack(1:2), list(a = 1, b = 2, x = 1:5, y = 10))
   expect_equal(xp$pack(list(a = 1, b = 2, x = 1:5, y = 10)), 1:2)
   expect_equal(xp$pack(list(a = 1, b = 2)), 1:2)
@@ -41,14 +41,14 @@ test_that("can bind data into an unpacked list", {
 
 test_that("can unpack arrays", {
   xp <- monty_packer("a", list(b = 3))
-  expect_equal(xp$parameters, c("a", "b[1]", "b[2]", "b[3]"))
+  expect_equal(xp$names(), c("a", "b[1]", "b[2]", "b[3]"))
   expect_equal(xp$unpack(1:4), list(a = 1, b = 2:4))
 })
 
 
 test_that("can use integer vectors for array inputs", {
   xp <- monty_packer("a", c(b = 3, c = 4))
-  expect_equal(xp$parameters,
+  expect_equal(xp$names(),
                c("a", sprintf("b[%d]", 1:3), sprintf("c[%d]", 1:4)))
   expect_equal(xp$unpack(1:8), list(a = 1, b = 2:4, c = 5:8))
   expect_equal(xp$index(), list(a = 1, b = 2:4, c = 5:8))
@@ -65,7 +65,7 @@ test_that("can create packers with higher-level dimensionsality", {
   xp <- monty_packer(
     array = list(a = 1, b = 2, c = 2:3, d = 2:4))
   expect_equal(
-    xp$parameters,
+    xp$names(),
     c("a[1]", "b[1]", "b[2]",
       sprintf("c[%d,%d]", 1:2, rep(1:3, each = 2)),
       sprintf("d[%d,%d,%d]", 1:2, rep(1:3, each = 2), rep(1:4, each = 6))))
@@ -112,7 +112,7 @@ test_that("validate array inputs", {
 
 test_that("can pass empty array elements as scalars", {
   p <- monty_packer(array = list(a = integer(), b = 2))
-  expect_equal(p$parameters, c("a", "b[1]", "b[2]"))
+  expect_equal(p$names(), c("a", "b[1]", "b[2]"))
   expect_equal(p$unpack(1:3), list(a = 1, b = 2:3))
   expect_equal(p$pack(list(a = 1, b = 2:3)), 1:3)
 })
@@ -120,7 +120,7 @@ test_that("can pass empty array elements as scalars", {
 
 test_that("can pass empty array elements as scalars in odd order", {
   p <- monty_packer(array = list(a = 2, b = NULL))
-  expect_equal(p$parameters, c("a[1]", "a[2]", "b"))
+  expect_equal(p$names(), c("a[1]", "a[2]", "b"))
   expect_equal(p$unpack(1:3), list(a = 1:2, b = 3))
   expect_equal(p$pack(list(a = 1:2, b = 3)), 1:3)
 })
@@ -138,7 +138,7 @@ test_that("can post-process parameters", {
     list(d = x$a + x$b + x$c)
   }
   xp <- monty_packer(c("a", "b", "c"), process = p)
-  expect_equal(xp$parameters, c("a", "b", "c"))
+  expect_equal(xp$names(), c("a", "b", "c"))
   expect_equal(xp$unpack(1:3), list(a = 1, b = 2, c = 3, d = 6))
   expect_equal(xp$pack(xp$unpack(1:3)), 1:3)
   expect_equal(xp$pack(list(a = 1, b = 2, c = 3)), 1:3)
@@ -158,7 +158,7 @@ test_that("require that process is well-behaved", {
   }
   xp <- monty_packer(c("a", "b", "c"), process = p)
   expect_error(xp$unpack(1:3),
-               "'process()' is trying to overwrite entries in parameters",
+               "'process()' is trying to overwrite entries in your list",
                fixed = TRUE)
 })
 
@@ -388,7 +388,7 @@ test_that("can subset a packer of scalars", {
   p <- monty_packer(c("a", "b", "c", "d"))
   res <- p$subset(c("b", "c"))
   expect_equal(res$index, 2:3)
-  expect_equal(res$packer$parameters, c("b", "c"))
+  expect_equal(res$packer$names(), c("b", "c"))
   expect_equal(res$packer$unpack(1:2), list(b = 1, c = 2))
 })
 
@@ -399,7 +399,7 @@ test_that("can subset a packer of arrays", {
   expect_equal(res$index, c(1, 4:12))
 
   cmp <- monty_packer(array = list(a = integer(), c = c(3, 3)))
-  expect_equal(res$packer$parameters, cmp$parameters)
+  expect_equal(res$packer$names(), cmp$names())
   expect_equal(res$packer$index(), cmp$index())
 })
 

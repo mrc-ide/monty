@@ -1,9 +1,11 @@
-##' Build a parameter packer, which can be used in models to translate
-##' between an unstructured vector of numbers (the vector being
-##' updated by an MCMC for example) to a structured list of named
-##' values, which is easier to program against.  We refer to the
-##' process of taking a named list of scalars, vectors and arrays and
-##' converting into a single vector "packing" and the inverse
+##' Build a packer, which can be used to translate beween an
+##' unstructured vector of numbers (the vector being updated by an
+##' MCMC for example) to a structured list of named values, which is
+##' easier to program against.  This is useful for the bridge between
+##' model parameters and a models's implementation, but it is also
+##' useful for the state vector in a state-space model.  We refer to
+##' the process of taking a named list of scalars, vectors and arrays
+##' and converting into a single vector "packing" and the inverse
 ##' "unpacking".
 ##'
 ##' There are several places where it is most convenient to work in an
@@ -145,57 +147,64 @@
 ##' vector vs packing an array where all dimensions are 1.  See the
 ##' examples, and please let us know if the behaviour needs changing.
 ##'
-##' @title Build a parameter packer
+##' @title Build a packer
 ##'
-##' @param scalar Names of scalar parameters.  This is similar for
-##'   listing elements in `array` with values of 1, though elements in
+##' @param scalar Names of scalars.  This is similar for listing
+##'   elements in `array` with values of 1, though elements in
 ##'   `scalar` will be placed ahead of those listed in `array` within
 ##'   the final parameter vector, and elements in `array` will have
 ##'   generated names that include square brackets.
 ##'
-##' @param array A list, where names correspond to the names of array
-##'   parameters and values correspond to the lengths of parameters.
-##'   Multiple dimensions are allowed (so if you provide an element
-##'   with two entries these represent dimensions of a matrix).
-##'   Zero-length integer vectors or `NULL` values are counted as
-##'   scalars, which allows you to put scalars at positions other than
-##'   the front of the packing vector. In future, you may be able to
-##'   use *strings* as values for the lengths, in which case these
-##'   will be looked for within `fixed`.
+##' @param array A list, where names correspond to the names of arrays
+##'   and values correspond to their lengths.  Multiple dimensions are
+##'   allowed (so if you provide an element with two entries these
+##'   represent dimensions of a matrix).  Zero-length integer vectors
+##'   or `NULL` values are counted as scalars, which allows you to put
+##'   scalars at positions other than the front of the packing
+##'   vector. In future, you may be able to use *strings* as values
+##'   for the lengths, in which case these will be looked for within
+##'   `fixed`.
 ##'
-##' @param fixed A named list of fixed parameters; these will be added
-##'   into the final list directly.  These typically represent
-##'   additional pieces of data that your model needs to run, but
-##'   which you are not performing inference on.
+##' @param fixed A named list of fixed data to be inserted into the
+##'   final unpacked list; these will be added into the final list
+##'   directly.  In the parameter packer context, these typically
+##'   represent additional pieces of data that your model needs to
+##'   run, but which you are not performing inference on.
 ##'
 ##' @param process An arbitrary R function that will be passed the
-##'   final assembled parameter list; it may create any *additional*
-##'   entries, which will be concatenated onto the original list.  If
-##'   you use this you should take care not to return any values with
-##'   the same names as entries listed in `scalar`, `array` or
-##'   `fixed`, as this is an error (this is so that `pack()` is
-##'   not broken).  We will likely play around with this process in
-##'   future in order to get automatic differentiation to work.
+##'   final assembled list; it may create any *additional* entries,
+##'   which will be concatenated onto the original list.  If you use
+##'   this you should take care not to return any values with the same
+##'   names as entries listed in `scalar`, `array` or `fixed`, as this
+##'   is an error (this is so that `pack()` is not broken).  We will
+##'   likely play around with this process in future in order to get
+##'   automatic differentiation to work.
 ##'
-##' @return An object of class `monty_packer`, which has three
-##'   elements:
+##' @return An object of class `monty_packer`, which has elements:
 ##'
-##' * `parameters`: a character vector of computed parameter names;
-##'   these are the names that your statistical model will use.
+##' * `names`: a function that returns a character vector of computed
+##'   names; in the parameter packer context these are the names that
+##'   your statistical model will use.
+##'
 ##' * `unpack`: a function that can unpack an unstructured vector
 ##'   (say, from your statistical model parameters) into a structured
 ##'   list (say, for your generative model)
-##' * `pack`: a function that can pack your structured list of
-##'   parameters back into a numeric vector suitable for the
+##'
+##' * `pack`: a function that can pack your structured list of data
+##'   back into a numeric vector, for example suitable for a
 ##'   statistical model.  This ignores values created by a
-##'   `preprocess` function.
+##'   `preprocess` function and present in `fixed`.
+##'
 ##' * `index`: a function which produces a named list where each
-##'   element has the name of a value in `parameters` and each value
-##'   has the indices within an unstructured vector where these values
-##'   can be found.
-##' * `subset`: an experimental interface which can be used to subset a
-##'   packer to a packer for a subset of contents. Documentation will
-##'   be provided once the interface settles.
+##'   element has the name of a value in `scalar` or `array` and each
+##'   value has the indices within an unstructured vector where these
+##'   values can be found, in the shape of the data that would be
+##'   unpacked.  This is of limited most use to most people.
+##'
+##' * `subset`: an experimental interface which can be used to subset
+##'   a packer to a packer for a subset of contents. Documentation
+##'   will be provided once the interface settles, but this is for
+##'   advanced use only!
 ##'
 ##' @export
 ##'
@@ -260,7 +269,7 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
                          process = NULL) {
   call <- environment()
 
-  parameters <- character(0)
+  nms <- character(0)
   idx <- list()
   shape <- list()
 
@@ -279,7 +288,7 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     }
     shape[scalar] <- rep(list(integer()), length(scalar))
     idx[scalar] <- as.list(seq_along(scalar))
-    parameters <- c(parameters, scalar)
+    nms <- c(nms, scalar)
   }
 
   len <- length(scalar) # start arrays after scalars
@@ -287,7 +296,7 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     assert_named(array, unique = TRUE, call = call)
     for (nm in names(array)) {
       tmp <- prepare_pack_array(nm, array[[nm]], call)
-      parameters <- c(parameters, tmp$names)
+      nms <- c(nms, tmp$names)
       shape[[nm]] <- tmp$shape
       idx[[nm]] <- seq_len(tmp$n) + len
       len <- len + tmp$n
@@ -325,9 +334,9 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
 
   unpack <- function(x) {
     if (is.null(dim(x))) {
-      unpack_vector(x, parameters, len, idx, shape, fixed, process)
+      unpack_vector(x, nms, len, idx, shape, fixed, process)
     } else {
-      unpack_array(x, parameters, len, idx, shape, fixed, process)
+      unpack_array(x, nms, len, idx, shape, fixed, process)
     }
   }
 
@@ -379,7 +388,7 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     list(index = index, packer = packer)
   }
 
-  ret <- list(parameters = parameters,
+  ret <- list(names = function() nms,
               unpack = unpack,
               pack = pack,
               index = function() idx,
@@ -438,7 +447,7 @@ array_indices <- function(shape) {
 print.monty_packer <- function(x, ...) {
   cli::cli_h1("<monty_packer>")
   cli::cli_alert_info(
-    "Packing {length(x$parameters)} parameter{?s}: {squote(x$parameters)}")
+    "Packing {length(x$names())} parameter{?s}: {squote(x$names())}")
   cli::cli_alert_info(
     "Use '$pack()' to convert from a list to a vector")
   cli::cli_alert_info(
@@ -448,10 +457,10 @@ print.monty_packer <- function(x, ...) {
 }
 
 
-unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
+unpack_vector <- function(x, nms, len, idx, shape, fixed, process) {
   call <- parent.frame()
   if (!is.null(names(x))) {
-    if (!identical(names(x), parameters)) {
+    if (!identical(names(x), nms)) {
       ## Here, we could do better I think with this message; we
       ## might pass thropuigh empty names, and produce some summary
       ## of different names.  Something for later though.
@@ -476,7 +485,7 @@ unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
     err <- intersect(names(extra), names(res))
     if (length(err) > 0) {
       cli::cli_abort(
-        c("'process()' is trying to overwrite entries in parameters",
+        c("'process()' is trying to overwrite entries in your list",
           i = paste("The 'process()' function should only create elements",
                     "that are not already present in 'scalar', 'array'",
                     "or 'fixed', as this lets us reverse the transformation",
@@ -494,10 +503,10 @@ unpack_vector <- function(x, parameters, len, idx, shape, fixed, process) {
 }
 
 
-unpack_array <- function(x, parameters, len, idx, shape, fixed, process) {
+unpack_array <- function(x, nms, len, idx, shape, fixed, process) {
   call <- parent.frame()
   dn <- dimnames(x)
-  if (!is.null(dn) && !is.null(dn[[1]]) && !identical(dn[[1]], parameters)) {
+  if (!is.null(dn) && !is.null(dn[[1]]) && !identical(dn[[1]], nms)) {
     ## See comment above about reporting on this better
     cli::cli_abort("Incorrect rownames in input")
   }
