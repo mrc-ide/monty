@@ -95,7 +95,13 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     cli::cli_abort("'process' is not yet compatible with grouped packers")
   }
 
-  p_base <- monty_packer(scalar, array, fixed)
+  if (!is.null(fixed)) {
+    i <- names(fixed) %in% groups
+    fixed <- list(shared = if (!all(i)) fixed[!i],
+                  varied = if (any(i)) set_names(fixed[groups], groups))
+  }
+
+  p_base <- monty_packer(scalar, array, fixed = fixed$shared)
 
   dups <- duplicate_values(shared)
   if (length(dups) > 0) {
@@ -106,7 +112,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
   }
 
   nms <- names(p_base$index())
-  err <- setdiff(names(shared), nms)
+  err <- setdiff(shared, nms)
   if (length(err) > 0) {
     cli::cli_abort(
       paste("Unknown value{?s} in 'shared' not present in",
@@ -123,10 +129,17 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
       arg = "groups")
   }
 
-  if (!is.null(fixed)) {
-    i <- names(fixed) %in% groups
-    fixed <- list(shared = if (!all(i)) fixed[!i],
-                  varied = if (any(i)) set_names(fixed[groups], groups))
+  if (!is.null(fixed$varied)) {
+    nms_fixed <- unlist(lapply(fixed$varied, names), FALSE, FALSE)
+    check <- list(scalar = scalar, array = names(array), groups = groups)
+    for (nm in names(check)) {
+      err <- intersect(nms_fixed, check[[nm]])
+      if (length(err) > 0) {
+        cli::cli_abort(
+          paste("{cli::qty(length(err))}Group-varying fixed element",
+                "{?name clashes/names clash} with '{nm}': {squote(err)}"))
+      }
+    }
   }
 
   d_shared <- p_base$subset(shared)
@@ -160,8 +173,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
       cli::cli_abort(
         "Incorrect length input; expected {len} but given {length(x)}")
     }
-    base <- c(set_names(vector("list", length(nms)), nms),
-              fixed$shared)
+    base <- set_names(vector("list", length(nms)), nms)
     base[shared] <- d_shared$packer$unpack(x[d_shared$index_packed])
     ret <- rep(list(base), n_groups)
     x_varied <- matrix(x[d_varied$index_packed], n_varied, n_groups)

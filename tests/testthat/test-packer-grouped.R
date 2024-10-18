@@ -22,6 +22,35 @@ test_that("can use a grouped packer", {
 })
 
 
+test_that("can use a grouped packer with no shared parameters", {
+  p <- monty_packer_grouped(
+    groups = c("x", "y"),
+    scalar = c("a", "b", "c", "d"))
+  expect_equal(
+    p$names(),
+    c("a<x>", "b<x>", "c<x>", "d<x>", "a<y>", "b<y>", "c<y>", "d<y>"))
+  expect_equal(p$unpack(1:8),
+               list(x = list(a = 1, b = 2, c = 3, d = 4),
+                    y = list(a = 5, b = 6, c = 7, d = 8)))
+  expect_equal(p$pack(p$unpack(1:8)), 1:8)
+})
+
+
+test_that("can use a grouped packer with no varied parameters", {
+  p <- monty_packer_grouped(
+    groups = c("x", "y"),
+    scalar = c("a", "b", "c", "d"),
+    shared = c("a", "b", "c", "d"))
+  expect_equal(
+    p$names(),
+    c("a", "b", "c", "d"))
+  expect_equal(p$unpack(1:4),
+               list(x = list(a = 1, b = 2, c = 3, d = 4),
+                    y = list(a = 1, b = 2, c = 3, d = 4)))
+  expect_equal(p$pack(p$unpack(1:4)), 1:4)
+})
+
+
 test_that("can use a grouped packer with arrays", {
   p <- monty_packer_grouped(
     groups = c("x", "y", "z"),
@@ -49,4 +78,65 @@ test_that("can use a grouped packer with fixed input", {
     list(x = list(a = 2, b = 3, c = 4, d = 1, m = 1:4),
          y = list(a = 5, b = 6, c = 7, d = 1, m = 1:4)))
   expect_equal(p$pack(p$unpack(1:7)), 1:7)
+})
+
+
+test_that("can use a grouped packer with shared and varied fixed input", {
+  p <- monty_packer_grouped(
+    groups = c("x", "y"),
+    scalar = "a",
+    fixed = list(b = 2, x = list(c = 3, d = 4), y = list(c = 5, d = 6)))
+  expect_equal(
+    p$unpack(c(0.1, 0.2)),
+    list(x = list(a = 0.1, b = 2, c = 3, d = 4),
+         y = list(a = 0.2, b = 2, c = 5, d = 6)))
+  expect_equal(p$pack(p$unpack(c(0.1, 0.2))), c(0.1, 0.2))
+})
+
+
+test_that("shared must list distinct elements", {
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      shared = c("b", "b")),
+    "Elements of 'shared' must be unique")
+})
+
+
+test_that("shared must list distinct members of the packer", {
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      shared = c("b", "e")),
+    "Unknown value in 'shared' not present in 'scalar' or 'array': 'e'")
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      shared = c("b", "e", "f")),
+    "Unknown values in 'shared' not present in 'scalar' or 'array': 'e'")
+})
+
+
+test_that("prevent varied names in fixed clashing with elements in packer", {
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      fixed = list(a = 5)),
+    "Names must be distinct between 'scalar', 'array' and 'fixed'")
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      fixed = list(x = list(a = 5))),
+    "Group-varying fixed element name clashes with 'scalar': 'a'")
+  expect_error(
+    monty_packer_grouped(
+      groups = c("x", "y", "z"),
+      scalar = c("a", "b", "c", "d"),
+      fixed = list(x = list(x = 5))),
+    "Group-varying fixed element name clashes with 'groups': 'x'")
 })
