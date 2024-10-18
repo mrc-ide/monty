@@ -103,7 +103,7 @@ distr_gamma_rate <- distribution(
 
 distr_gamma_scale <- distribution(
   name = "Gamma",
-  variant = "rate",
+  variant = "scale",
   density = function(x, shape, scale) {
     dgamma(x, shape, scale = scale, log = TRUE)
   },
@@ -124,6 +124,36 @@ distr_hypergeometric <- distribution(
     density = quote(lchoose(n1, x) + lchoose(n2, k - x) - lchoose(n1 + n2, k)),
     mean = quote(k * n1 / (n1 + n2))),
   cpp = list(density = "hypergeometric", sample = "hypergeometric"))
+
+distr_negative_binomial_prob <- distribution(
+  name = "NegativeBinomial",
+  variant = "prob",
+  density = function(x, size, prob) {
+    dnbinom(x, size, prob = prob, log = TRUE)
+  },
+  domain = c(0, Inf),
+  sample = function(rng, size, prob) rng$negative_binomial_prob(1, size, prob),
+  expr = list(
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      x * log(1 - prob) + size * log(prob)),
+    mean = quote(size * (1 - prob) / prob)),
+  cpp = list(density = "negative_binomial_prob",
+             sample = "negative_binomial_prob"))
+
+distr_negative_binomial_mu <- distribution(
+  name = "NegativeBinomial",
+  variant = "mu",
+  density = function(x, size, mu) {
+    dnbinom(x, size, mu = mu, log = TRUE)
+  },
+  domain = c(0, Inf),
+  sample = function(rng, size, mu) rng$negative_binomial_mu(1, size, mu),
+  expr = list(
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      size * log(size) + x * log(mu) -
+                      (size + x) * log(size + mu)),
+    mean = quote(mu)),
+  cpp = list(density = "negative_binomial_mu", sample = "negative_binomial_mu"))
 
 distr_normal <- distribution(
   name = "Normal",
@@ -166,6 +196,8 @@ dsl_distributions <- local({
     distr_gamma_rate,
     distr_gamma_scale,
     distr_hypergeometric,
+    distr_negative_binomial_prob,
+    distr_negative_binomial_mu,
     distr_normal,
     distr_poisson,
     distr_uniform)

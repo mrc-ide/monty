@@ -96,7 +96,10 @@
 ##' rng$binomial(5, 10, 0.3)
 ##'
 ##' # Negative binomially distributed random numbers with size and prob
-##' rng$nbinomial(5, 10, 0.3)
+##' rng$negative_binomial_prob(5, 10, 0.3)
+##' 
+##' # Negative binomially distributed random numbers with size and mean mu
+##' rng$negative_binomial_mu(5, 10, 25)
 ##'
 ##' # Hypergeometric distributed random numbers with parameters n1, n2 and k
 ##' rng$hypergeometric(5, 6, 10, 4)
@@ -283,9 +286,25 @@ monty_rng <- R6::R6Class(
     ##'   (between 0 and 1, length 1 or n)
     ##'
     ##' @param n_threads Number of threads to use; see Details
-    nbinomial = function(n, size, prob, n_threads = 1L) {
-      monty_rng_nbinomial(private$ptr, n, size, prob, n_threads,
-                          private$float)
+    negative_binomial_prob = function(n, size, prob, n_threads = 1L) {
+      monty_rng_negative_binomial_prob(private$ptr, n, size, prob, n_threads,
+                                       private$float)
+    },
+    
+    ##' @description Generate `n` numbers from a negative binomial distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param size The target number of successful trials
+    ##'   (zero or more, length 1 or n)
+    ##'
+    ##' @param mu The mean
+    ##'   (zero or more, length 1 or n)
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    negative_binomial_mu = function(n, size, mu, n_threads = 1L) {
+      monty_rng_negative_binomial_mu(private$ptr, n, size, mu, n_threads,
+                                     private$float)
     },
 
     ##' @description Generate `n` numbers from a hypergeometric distribution
