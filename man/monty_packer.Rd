@@ -63,9 +63,9 @@ advanced use only!
 }
 }
 \description{
-Build a packer, which can be used to translate beween an
+Build a packer, which can be used to translate between an
 unstructured vector of numbers (the vector being updated by an
-MCMC for example) to a structured list of named values, which is
+MCMC for example) and a structured list of named values, which is
 easier to program against.  This is useful for the bridge between
 model parameters and a models's implementation, but it is also
 useful for the state vector in a state-space model.  We refer to
