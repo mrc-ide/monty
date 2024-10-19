@@ -78,10 +78,17 @@ extern "C" SEXP _monty_monty_rng_binomial(SEXP ptr, SEXP n, SEXP r_size, SEXP r_
   END_CPP11
 }
 // random.cpp
-cpp11::sexp monty_rng_nbinomial(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_prob, int n_threads, bool is_float);
-extern "C" SEXP _monty_monty_rng_nbinomial(SEXP ptr, SEXP n, SEXP r_size, SEXP r_prob, SEXP n_threads, SEXP is_float) {
+cpp11::sexp monty_rng_negative_binomial_prob(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_prob, int n_threads, bool is_float);
+extern "C" SEXP _monty_monty_rng_negative_binomial_prob(SEXP ptr, SEXP n, SEXP r_size, SEXP r_prob, SEXP n_threads, SEXP is_float) {
   BEGIN_CPP11
-    return cpp11::as_sexp(monty_rng_nbinomial(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+    return cpp11::as_sexp(monty_rng_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// random.cpp
+cpp11::sexp monty_rng_negative_binomial_mu(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_mu, int n_threads, bool is_float);
+extern "C" SEXP _monty_monty_rng_negative_binomial_mu(SEXP ptr, SEXP n, SEXP r_size, SEXP r_mu, SEXP n_threads, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(monty_rng_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_mu), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
   END_CPP11
 }
 // random.cpp
@@ -208,7 +215,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_jump",                    (DL_FUNC) &_monty_monty_rng_jump,                    2},
     {"_monty_monty_rng_long_jump",               (DL_FUNC) &_monty_monty_rng_long_jump,               2},
     {"_monty_monty_rng_multinomial",             (DL_FUNC) &_monty_monty_rng_multinomial,             6},
-    {"_monty_monty_rng_nbinomial",               (DL_FUNC) &_monty_monty_rng_nbinomial,               6},
+    {"_monty_monty_rng_negative_binomial_mu",    (DL_FUNC) &_monty_monty_rng_negative_binomial_mu,    6},
+    {"_monty_monty_rng_negative_binomial_prob",  (DL_FUNC) &_monty_monty_rng_negative_binomial_prob,  6},
     {"_monty_monty_rng_normal",                  (DL_FUNC) &_monty_monty_rng_normal,                  7},
     {"_monty_monty_rng_pointer_init",            (DL_FUNC) &_monty_monty_rng_pointer_init,            4},
     {"_monty_monty_rng_pointer_sync",            (DL_FUNC) &_monty_monty_rng_pointer_sync,            2},
