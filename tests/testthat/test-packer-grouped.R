@@ -164,13 +164,13 @@ test_that("can't use 'progress' with a grouped packer", {
 
 test_that("grouped packers require at least two groups", {
   expect_error(
-    monty_packer_grouped("x", c("a", "b"))
+    monty_packer_grouped("x", c("a", "b")),
     "Expected at least two groups")
   expect_error(
-    monty_packer_grouped(character(), c("a", "b"))
+    monty_packer_grouped(character(), c("a", "b")),
     "Expected at least two groups")
   expect_error(
-    monty_packer_grouped(NULL, c("a", "b"))
+    monty_packer_grouped(NULL, c("a", "b")),
     "Expected 'groups' to be character")
 })
 
