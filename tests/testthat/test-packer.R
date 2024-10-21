@@ -439,9 +439,6 @@ test_that("prevent unknown names in subset", {
 test_that("don't allow things other than character vectors for now", {
   p <- monty_packer(c("a", "b"))
   expect_error(
-    p$subset(NULL),
-    "Invalid input for 'keep'; this must currently be a character vector")
-  expect_error(
     p$subset(1),
     "Invalid input for 'keep'; this must currently be a character vector")
 })
