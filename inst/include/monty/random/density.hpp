@@ -136,14 +136,8 @@ __host__ __device__ T negative_binomial_prob(int x, T size, T prob, bool log) {
   return negative_binomial_mu(x, size, mu, log);
 }
 
-// A note on this parametrisation:
-//
-//   prob = alpha / (alpha + beta)
-//   rho = 1 / (alpha + beta + 1)
-//
-// Where alpha and beta have (0, Inf) support
 template <typename T>
-__host__ __device__ T beta_binomial(int x, int size, T prob, T rho, bool log) {
+__host__ __device__ T beta_binomial_ab(int x, int size, T a, T b, bool log) {
 #ifndef __CUDA_ARCH__
   static_assert(std::is_floating_point<T>::value,
                 "beta_binomial should only be used with real types");
@@ -152,13 +146,26 @@ __host__ __device__ T beta_binomial(int x, int size, T prob, T rho, bool log) {
   if (x == 0 && size == 0) {
     ret = 0;
   } else {
-    const T a = prob * (1 / rho - 1);
-    const T b = (1 - prob) * (1 / rho - 1);
     ret = lchoose<T>(size, x) + lbeta(x + a, size - x + b) - lbeta(a, b);
   }
-
+  
   SYNCWARP
   return maybe_log(ret, log);
+}
+
+
+// A note on this parametrisation:
+//
+//   prob = a / (a + b)
+//   rho = 1 / (a + b + 1)
+//
+// Where a and b have (0, Inf) support
+template <typename T>
+__host__ __device__ T beta_binomial_prob(int x, int size, T prob, T rho,
+                                         bool log) {
+  const T a = prob * (1 / rho - 1);
+  const T b = (1 - prob) * (1 / rho - 1);
+  return beta_binomial_ab(size, a, b, log);
 }
 
 template <typename T>

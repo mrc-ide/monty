@@ -336,6 +336,98 @@ cpp11::sexp monty_rng_binomial(SEXP ptr, int n,
 
 
 template <typename real_type, typename T>
+cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n,
+                                         cpp11::doubles r_size, cpp11::doubles r_prob,
+                                         cpp11::doubles r_rho,
+                                         int n_threads) {
+  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  const int n_streams = rng->size();
+  cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
+  double * y = REAL(ret);
+  
+  const double * size = REAL(r_size);
+  const double * prob = REAL(r_prob);
+  const double * rho = REAL(r_rho);
+  auto size_vary = check_input_type(r_size, n, n_streams, "size");
+  auto prob_vary = check_input_type(r_prob, n, n_streams, "prob");
+  auto rho_vary = check_input_type(r_rho, n, n_streams, "rho");
+  
+  monty::utils::openmp_errors errors(n_streams);
+  
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) num_threads(n_threads)
+#endif
+  for (int i = 0; i < n_streams; ++i) {
+    try {
+      auto &state = rng->state(i);
+      auto y_i = y + n * i;
+      auto size_i = size_vary.generator ? size + size_vary.offset * i : size;
+      auto prob_i = prob_vary.generator ? prob + prob_vary.offset * i : prob;
+      auto rho_i = rho_vary.generator ? rho + rho_vary.offset * i : rho;
+      for (size_t j = 0; j < (size_t)n; ++j) {
+        auto size_ij = size_vary.draw ? size_i[j] : size_i[0];
+        auto prob_ij = prob_vary.draw ? prob_i[j] : prob_i[0];
+        auto rho_ij = rho_vary.draw ? rho_i[j] : rho_i[0];
+        y_i[j] = monty::random::beta_binomial_prob<real_type>(state, size_ij, prob_ij, rho_ij);
+      }
+    } catch (std::exception const& e) {
+      errors.capture(e, i);
+    }
+  }
+  
+  errors.report("generators", 4, true);
+  
+  return sexp_matrix(ret, n, n_streams);
+}
+
+
+template <typename real_type, typename T>
+cpp11::sexp monty_rng_beta_binomial_ab(SEXP ptr, int n,
+                                       cpp11::doubles r_size, cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       int n_threads) {
+  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  const int n_streams = rng->size();
+  cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
+  double * y = REAL(ret);
+  
+  const double * size = REAL(r_size);
+  const double * a = REAL(r_a);
+  const double * b = REAL(r_b);
+  auto size_vary = check_input_type(r_size, n, n_streams, "size");
+  auto a_vary = check_input_type(r_a, n, n_streams, "a");
+  auto b_vary = check_input_type(r_b, n, n_streams, "b");
+  
+  monty::utils::openmp_errors errors(n_streams);
+  
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) num_threads(n_threads)
+#endif
+  for (int i = 0; i < n_streams; ++i) {
+    try {
+      auto &state = rng->state(i);
+      auto y_i = y + n * i;
+      auto size_i = size_vary.generator ? size + size_vary.offset * i : size;
+      auto a_i = a_vary.generator ? a + a_vary.offset * i : a;
+      auto b_i = b_vary.generator ? b + b_vary.offset * i : b;
+      for (size_t j = 0; j < (size_t)n; ++j) {
+        auto size_ij = size_vary.draw ? size_i[j] : size_i[0];
+        auto a_ij = a_vary.draw ? a_i[j] : a_i[0];
+        auto b_ij = b_vary.draw ? b_i[j] : b_i[0];
+        y_i[j] = monty::random::beta_binomial_ab<real_type>(state, size_ij, a_ij, b_ij);
+      }
+    } catch (std::exception const& e) {
+      errors.capture(e, i);
+    }
+  }
+  
+  errors.report("generators", 4, true);
+  
+  return sexp_matrix(ret, n, n_streams);
+}
+
+
+template <typename real_type, typename T>
 cpp11::sexp monty_rng_negative_binomial_prob(SEXP ptr, int n,
                                 cpp11::doubles r_size, cpp11::doubles r_prob,
                                 int n_threads) {
@@ -851,6 +943,26 @@ cpp11::sexp monty_rng_binomial(SEXP ptr, int n,
   return is_float ?
     monty_rng_binomial<float, default_rng32>(ptr, n, r_size, r_prob, n_threads) :
     monty_rng_binomial<double, default_rng64>(ptr, n, r_size, r_prob, n_threads);
+}
+
+[[cpp11::register]]
+cpp11::sexp monty_rng_beta_binomial_ab(SEXP ptr, int n,
+                                       cpp11::doubles r_size, cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       int n_threads, bool is_float) {
+  return is_float ?
+  monty_rng_beta_binomial_ab<float, default_rng32>(ptr, n, r_size, r_a, r_b, n_threads) :
+  monty_rng_beta_binomial_ab<double, default_rng64>(ptr, n, r_size, r_a, r_b, n_threads);
+}
+
+[[cpp11::register]]
+cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n,
+                                         cpp11::doubles r_size, cpp11::doubles r_prob,
+                                         cpp11::doubles r_rho,
+                                       int n_threads, bool is_float) {
+  return is_float ?
+  monty_rng_beta_binomial_ab<float, default_rng32>(ptr, n, r_size, r_prob, r_rho, n_threads) :
+  monty_rng_beta_binomial_ab<double, default_rng64>(ptr, n, r_size, r_prob, r_rho, n_threads);
 }
 
 [[cpp11::register]]

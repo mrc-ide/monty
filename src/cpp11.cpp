@@ -78,6 +78,20 @@ extern "C" SEXP _monty_monty_rng_binomial(SEXP ptr, SEXP n, SEXP r_size, SEXP r_
   END_CPP11
 }
 // random.cpp
+cpp11::sexp monty_rng_beta_binomial_ab(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_a, cpp11::doubles r_b, int n_threads, bool is_float);
+extern "C" SEXP _monty_monty_rng_beta_binomial_ab(SEXP ptr, SEXP n, SEXP r_size, SEXP r_a, SEXP r_b, SEXP n_threads, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(monty_rng_beta_binomial_ab(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_b), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// random.cpp
+cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_prob, cpp11::doubles r_rho, int n_threads, bool is_float);
+extern "C" SEXP _monty_monty_rng_beta_binomial_prob(SEXP ptr, SEXP n, SEXP r_size, SEXP r_prob, SEXP r_rho, SEXP n_threads, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(monty_rng_beta_binomial_prob(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_rho), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// random.cpp
 cpp11::sexp monty_rng_negative_binomial_prob(SEXP ptr, int n, cpp11::doubles r_size, cpp11::doubles r_prob, int n_threads, bool is_float);
 extern "C" SEXP _monty_monty_rng_negative_binomial_prob(SEXP ptr, SEXP n, SEXP r_size, SEXP r_prob, SEXP n_threads, SEXP is_float) {
   BEGIN_CPP11
@@ -205,6 +219,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_real",             (DL_FUNC) &_monty_cpp_monty_random_real,             1},
     {"_monty_monty_rng_alloc",                   (DL_FUNC) &_monty_monty_rng_alloc,                   4},
     {"_monty_monty_rng_beta",                    (DL_FUNC) &_monty_monty_rng_beta,                    6},
+    {"_monty_monty_rng_beta_binomial_ab",        (DL_FUNC) &_monty_monty_rng_beta_binomial_ab,        7},
+    {"_monty_monty_rng_beta_binomial_prob",      (DL_FUNC) &_monty_monty_rng_beta_binomial_prob,      7},
     {"_monty_monty_rng_binomial",                (DL_FUNC) &_monty_monty_rng_binomial,                6},
     {"_monty_monty_rng_cauchy",                  (DL_FUNC) &_monty_monty_rng_cauchy,                  6},
     {"_monty_monty_rng_exponential_mean",        (DL_FUNC) &_monty_monty_rng_exponential_mean,        5},

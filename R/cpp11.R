@@ -40,6 +40,14 @@ monty_rng_binomial <- function(ptr, n, r_size, r_prob, n_threads, is_float) {
   .Call(`_monty_monty_rng_binomial`, ptr, n, r_size, r_prob, n_threads, is_float)
 }
 
+monty_rng_beta_binomial_ab <- function(ptr, n, r_size, r_a, r_b, n_threads, is_float) {
+  .Call(`_monty_monty_rng_beta_binomial_ab`, ptr, n, r_size, r_a, r_b, n_threads, is_float)
+}
+
+monty_rng_beta_binomial_prob <- function(ptr, n, r_size, r_prob, r_rho, n_threads, is_float) {
+  .Call(`_monty_monty_rng_beta_binomial_prob`, ptr, n, r_size, r_prob, r_rho, n_threads, is_float)
+}
+
 monty_rng_negative_binomial_prob <- function(ptr, n, r_size, r_prob, n_threads, is_float) {
   .Call(`_monty_monty_rng_negative_binomial_prob`, ptr, n, r_size, r_prob, n_threads, is_float)
 }
