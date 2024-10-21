@@ -227,9 +227,9 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
 print.monty_packer_grouped <- function(x, ...) {
   cli::cli_h1("<monty_packer_grouped>")
   cli::cli_alert_info(
-    "Packing {length(x$names)} value{?s}: {squote(x$names)}")
+    "Packing {length(x$names())} value{?s}: {squote(x$names())}")
   cli::cli_alert_info(
-    "Packing {length(x$groups)} group{?s}: {squote(x$groups)}")
+    "Packing {length(x$groups())} group{?s}: {squote(x$groups())}")
   cli::cli_alert_info(
     "Use '$pack()' to convert from a list to a vector")
   cli::cli_alert_info(

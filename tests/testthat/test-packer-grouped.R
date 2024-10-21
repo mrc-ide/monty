@@ -225,3 +225,15 @@ test_that("when packing, validate that shared input is correct", {
     p$pack(list(x = c(a = 1, b = 2), y = c(a = 3, b = 4))),
     "Shared values are not identical across groups")
 })
+
+
+test_that("Can print a grouped packer", {
+  p <- monty_packer_grouped(c("a", "b"), c("x", "y"))
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_mapequal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<monty_packer_grouped>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages,
+               "Packing 4 values: 'x<a>', 'y<a>', 'x<b>', and 'y<b>",
+               fixed = TRUE, all = FALSE)
+})
