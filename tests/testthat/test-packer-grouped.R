@@ -94,6 +94,19 @@ test_that("can use a grouped packer with shared and varied fixed input", {
 })
 
 
+test_that("varied fixed input can overwrite shared fixed input", {
+  p <- monty_packer_grouped(
+    groups = c("x", "y"),
+    scalar = "a",
+    fixed = list(b = 2, c = 3, x = list(d = 4), y = list(c = 5, d = 6)))
+  expect_equal(
+    p$unpack(c(0.1, 0.2)),
+    list(x = list(a = 0.1, b = 2, c = 3, d = 4),
+         y = list(a = 0.2, b = 2, c = 5, d = 6)))
+  expect_equal(p$pack(p$unpack(c(0.1, 0.2))), c(0.1, 0.2))
+})
+
+
 test_that("shared must list distinct elements", {
   expect_error(
     monty_packer_grouped(
@@ -139,4 +152,76 @@ test_that("prevent varied names in fixed clashing with elements in packer", {
       scalar = c("a", "b", "c", "d"),
       fixed = list(x = list(x = 5))),
     "Group-varying fixed element name clashes with 'groups': 'x'")
+})
+
+
+test_that("can't use 'progress' with a grouped packer", {
+  expect_error(
+    monty_packer_grouped(c("x", "y"), c("a", "b"), process = identity),
+    "process' is not yet compatible with grouped packers")
+})
+
+
+test_that("grouped packers require at least two groups", {
+  expect_error(
+    monty_packer_grouped("x", c("a", "b"))
+    "Expected at least two groups")
+  expect_error(
+    monty_packer_grouped(character(), c("a", "b"))
+    "Expected at least two groups")
+  expect_error(
+    monty_packer_grouped(NULL, c("a", "b"))
+    "Expected 'groups' to be character")
+})
+
+
+test_that("group names must not be used in names", {
+  expect_error(
+    monty_packer_grouped(c("x", "a"), c("a", "b")),
+    "'groups' must be distinct from 'scalar' but 'a' was used in both")
+  expect_error(
+    monty_packer_grouped(c("x", "d"), c("a", "b"), list(c = 3, d = 4)),
+    "'groups' must be distinct from 'array' but 'd' was used in both")
+})
+
+
+test_that("group varying fixed elements don't clash with other elements", {
+  groups <- c("x", "y")
+  scalar <- c("a", "b")
+  array <- list(c = 2, d = 3)
+
+  expect_error(
+    monty_packer_grouped(groups, scalar, array, fixed = list(x = list(a = 1))),
+    "Group-varying fixed element name clashes with 'scalar': 'a'")
+  expect_error(
+    monty_packer_grouped(groups, scalar, array, fixed = list(x = list(c = 1))),
+    "Group-varying fixed element name clashes with 'array': 'c'")
+  expect_error(
+    monty_packer_grouped(groups, scalar, array, fixed = list(x = list(x = 1))),
+    "Group-varying fixed element name clashes with 'groups': 'x'")
+})
+
+
+test_that("require that given array is correct size to unpack", {
+  p <- monty_packer_grouped(c("x", "y"), c("a", "b"))
+  expect_error(
+    p$unpack(1),
+    "Incorrect length input; expected 4 but given 1")
+})
+
+
+test_that("can't unpack matrix input yet", {
+  p <- monty_packer_grouped(c("x", "y"), c("a", "b"))
+  m <- matrix(1:8, 4, 2)
+  expect_error(
+    p$unpack(m),
+    "Can't use unpack with matrix input and grouped packer yet")
+})
+
+
+test_that("when packing, validate that shared input is correct", {
+  p <- monty_packer_grouped(c("x", "y"), c("a", "b"), shared = "a")
+  expect_error(
+    p$pack(list(x = c(a = 1, b = 2), y = c(a = 3, b = 4))),
+    "Shared values are not identical across groups")
 })

@@ -103,13 +103,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
 
   p_base <- monty_packer(scalar, array, fixed = fixed$shared)
 
-  dups <- duplicate_values(shared)
-  if (length(dups) > 0) {
-    cli::cli_abort(
-      c("Elements of 'shared' must be unique",
-        i = "Found {length(dups)} duplicate{?s}: {collapseq(dups)}"),
-      arg = "shared")
-  }
+  assert_distinct_values(shared)
 
   nms <- names(p_base$index())
   err <- setdiff(shared, nms)
@@ -121,12 +115,15 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
   }
   varied <- setdiff(nms, shared)
 
-  err <- intersect(groups, nms)
-  if (length(err) > 0) {
-    cli::cli_abort(
-      paste("Group names must be distinct from names in 'scalar' and 'array';",
-            "check: {squote(err)}"),
-      arg = "groups")
+  check <- list(scalar = scalar, array = names(array))
+  for (nm in names(check)) {
+    err <- intersect(groups, check[[nm]])
+    if (length(err)) {
+      cli::cli_abort(
+        paste("'groups' must be distinct from '{nm}' but {squote(err)} was",
+              "used in both"),
+        arg = groups)
+    }
   }
 
   if (!is.null(fixed$varied)) {
@@ -167,20 +164,23 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
 
   unpack <- function(x) {
     if (!is.null(dim(x))) {
-      cli::cli_abort("Can't unpack grouped arrays yet")
+      cli::cli_abort(
+        "Can't use unpack with matrix input and grouped packer yet")
     }
     if (length(x) != len) {
       cli::cli_abort(
         "Incorrect length input; expected {len} but given {length(x)}")
     }
-    base <- set_names(vector("list", length(nms)), nms)
+    assert_named_with(x, names_expanded, required = FALSE)
+    base <- c(set_names(vector("list", length(nms)), nms),
+              fixed$shared)
     base[shared] <- d_shared$packer$unpack(x[d_shared$index_packed])
     ret <- rep(list(base), n_groups)
     x_varied <- matrix(x[d_varied$index_packed], n_varied, n_groups)
     for (i in seq_len(n_groups)) {
       ret[[i]][varied] <- d_varied$packer$unpack(x_varied[, i])
       if (!is.null(fixed$varied)) {
-        ret[[i]] <- c(ret[[i]], fixed$varied[[i]])
+        ret[[i]][names(fixed$varied[[i]])] <- fixed$varied[[i]]
       }
     }
     names(ret) <- groups
@@ -189,7 +189,8 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
 
   pack <- function(p) {
     ## Where this throws errors they'll be hard to cope with, but I
-    ## don't expect that this will be very useful yet.
+    ## don't expect that this will be very useful yet - it's mostly
+    ## here for completeness.
     assert_named_with(p, groups, required = TRUE)
     p_shared <- lapply(p, "[", shared)
     if (length(unique(p_shared)) != 1L) {
@@ -223,9 +224,8 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
 }
 
 ##' @export
-print.monty_packer <- function(x, ...) {
+print.monty_packer_grouped <- function(x, ...) {
   cli::cli_h1("<monty_packer_grouped>")
-  ## Consider listing *logical* names here?
   cli::cli_alert_info(
     "Packing {length(x$names)} value{?s}: {squote(x$names)}")
   cli::cli_alert_info(
@@ -235,19 +235,5 @@ print.monty_packer <- function(x, ...) {
   cli::cli_alert_info(
     "Use '$unpack()' to convert from a vector to a list")
   cli::cli_alert_info("See {.help monty_packer_grouped} for more information")
-  invisible(x)
-}
-
-
-
-assert_named_with <- function(x, expected, required = FALSE,
-                              arg = deparse(substitute(x)),
-                              call = parent.frame()) {
-  nms <- names(x)
-  ok <- identical(nms, expected) || (is.null(nms) && !required)
-  if (!ok) {
-    cli::cli_abort("Unexpected names for '{arg}'",
-                   arg = arg, call = call)
-  }
   invisible(x)
 }
