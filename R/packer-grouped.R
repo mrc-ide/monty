@@ -46,14 +46,18 @@
 ##' @param groups A character vector of group names.  These must not
 ##'   be present within any of your `scalar` or `array` arguments.
 ##'
+##' @param shared Names of the elements in `scalar` and `array` that
+##'   are shared among all groups.
+##'
 ##' @inheritParams monty_packer
 ##'
 ##' @return An object of class `monty_packer_grouped`, which has the
 ##'   same elements as `monty_packer`, though with slightly different
 ##'   effects.
 ##'
-##' * `names`: A function that returns the computed parameter names,
-##'   which are names your model might use for parameters.
+##' * `names`: a function that returns a character vector of computed
+##'   names; in the parameter packer context these are the names that
+##'   your statistical model will use.
 ##'
 ##' * `groups`: A function that returns your group names (the `groups`
 ##'   argument as supplied)

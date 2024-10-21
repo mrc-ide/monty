@@ -47,14 +47,18 @@ names as entries listed in \code{scalar}, \code{array} or \code{fixed}, as this
 is an error (this is so that \code{pack()} is not broken).  We will
 likely play around with this process in future in order to get
 automatic differentiation to work.}
+
+\item{shared}{Names of the elements in \code{scalar} and \code{array} that
+are shared among all groups.}
 }
 \value{
 An object of class \code{monty_packer_grouped}, which has the
 same elements as \code{monty_packer}, though with slightly different
 effects.
 \itemize{
-\item \code{names}: A function that returns the computed parameter names,
-which are names your model might use for parameters.
+\item \code{names}: a function that returns a character vector of computed
+names; in the parameter packer context these are the names that
+your statistical model will use.
 \item \code{groups}: A function that returns your group names (the \code{groups}
 argument as supplied)
 \item \code{unpack}: A function for converting between an unstructured
