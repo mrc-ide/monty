@@ -13,7 +13,7 @@ namespace {
 
 template <typename real_type>
 void beta_binomial_validate(real_type size, real_type a, real_type b) {
-   if(!R_FINITE(size) || !R_FINITE(a) || !R_FINITE(b) || size <= 0 || a <= 0 || b <= 0) {
+   if(!R_FINITE(size) || !R_FINITE(a) || !R_FINITE(b) || size < 0 || a <= 0 || b <= 0) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to beta_binomial with size = %g, a = %g, b = %g", 

@@ -75,7 +75,7 @@ distr_beta_binomial_prob <- distribution(
       lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
       lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))},
   domain = c(0, Inf), # size?
-  sample = function(rng, size, prob) rng$beta_binomial_ab(1, size, a, b),
+  sample = function(rng, size, prob) rng$beta_binomial_prob(1, size, prob, rho),
   expr = list(
     density = quote(
       lchoose(size, x) + 
