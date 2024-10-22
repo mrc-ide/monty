@@ -4,7 +4,7 @@
 ##' twist: this time the unstructured vector of numbers contains
 ##' values that correspond to multiple *groups* and some are shared
 ##' across groups while others vary between groups.  This function
-##' does a lot of book keeping in a relatively short amount of code,
+##' does a lot of bookkeeping in a relatively short amount of code,
 ##' so you should be familiar with the ideas in [monty_packer()]
 ##' before continuing.
 ##'
@@ -22,9 +22,9 @@
 ##' list(a = 1, b = 2, c = 3, d = 4:7)
 ##' ```
 ##'
-##' Our aim here is to the same but to allow some of these values (say
+##' Our aim here is to do the same but to allow some of these values (say
 ##' `b` and `c`) to be shared (constant) over groups while the others
-##' (`a` and `d`) to vary by group.  So for groups `x` an `y` we might
+##' (`a` and `d`) to vary by group.  So for groups `x` and `y` we might
 ##' try and create something like
 ##'
 ##' ```r
@@ -62,14 +62,14 @@
 ##' * `groups`: A function that returns your group names (the `groups`
 ##'   argument as supplied)
 ##'
-##' * `unpack`: A function for converting between an unstructured
+##' * `unpack`: A function for converting from an unstructured
 ##'   vector into a nested list.  Each element of this list is
-##'   conceptually the same as the resullt of `unpack()` from
+##'   conceptually the same as the result of `unpack()` from
 ##'   [monty_packer()].
 ##'
 ##' * `pack`: The inverse to `unpack()` but less commonly performed.
 ##'   Convert a nested list into an unstructured vector.  Quite a lot
-##'   of validation is required to make sure that the intput has not
+##'   of validation is required to make sure that the input has not
 ##'   been tampered with, and errors thrown while doing this
 ##'   validation may not be very interpretable.
 ##'
