@@ -61,13 +61,13 @@ names; in the parameter packer context these are the names that
 your statistical model will use.
 \item \code{groups}: A function that returns your group names (the \code{groups}
 argument as supplied)
-\item \code{unpack}: A function for converting between an unstructured
+\item \code{unpack}: A function for converting from an unstructured
 vector into a nested list.  Each element of this list is
-conceptually the same as the resullt of \code{unpack()} from
+conceptually the same as the result of \code{unpack()} from
 \code{\link[=monty_packer]{monty_packer()}}.
 \item \code{pack}: The inverse to \code{unpack()} but less commonly performed.
 Convert a nested list into an unstructured vector.  Quite a lot
-of validation is required to make sure that the intput has not
+of validation is required to make sure that the input has not
 been tampered with, and errors thrown while doing this
 validation may not be very interpretable.
 \item \code{index}: The nested version of the \code{index()} function in
@@ -86,7 +86,7 @@ numbers to a named list of structured data, but with an extra
 twist: this time the unstructured vector of numbers contains
 values that correspond to multiple \emph{groups} and some are shared
 across groups while others vary between groups.  This function
-does a lot of book keeping in a relatively short amount of code,
+does a lot of bookkeeping in a relatively short amount of code,
 so you should be familiar with the ideas in \code{\link[=monty_packer]{monty_packer()}}
 before continuing.
 }
@@ -103,9 +103,9 @@ and \strong{unpack it} into a structured list like
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{list(a = 1, b = 2, c = 3, d = 4:7)
 }\if{html}{\out{</div>}}
 
-Our aim here is to the same but to allow some of these values (say
+Our aim here is to do the same but to allow some of these values (say
 \code{b} and \code{c}) to be shared (constant) over groups while the others
-(\code{a} and \code{d}) to vary by group.  So for groups \code{x} an \code{y} we might
+(\code{a} and \code{d}) to vary by group.  So for groups \code{x} and \code{y} we might
 try and create something like
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{list(
