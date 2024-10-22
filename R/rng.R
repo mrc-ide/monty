@@ -274,6 +274,39 @@ monty_rng <- R6::R6Class(
     binomial = function(n, size, prob, n_threads = 1L) {
       monty_rng_binomial(private$ptr, n, size, prob, n_threads, private$float)
     },
+    
+    ##' @description Generate `n` numbers from a beta-binomial distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param size The number of trials (zero or more, length 1 or n)
+    ##'
+    ##' @param a The first shape parameter (zero or more, length 1 or n)
+    ##' 
+    ##' @param b The second shape parameter (zero or more, length 1 or n)
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    beta_binomial_ab = function(n, size, a, b, n_threads = 1L) {
+      monty_rng_beta_binomial_ab(private$ptr, n, size, a, b, n_threads,
+                                 private$float)
+    },
+    
+    ##' @description Generate `n` numbers from a beta-binomial distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param size The number of trials (zero or more, length 1 or n)
+    ##'
+    ##' @param prob The mean probability of sucess on each trial
+    ##'   (between 0 and 1, length 1 or n)
+    ##' 
+    ##' @param rho The dispersion parameter (between 0 and 1, length 1 or n)
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    beta_binomial_prob = function(n, size, prob, rho, n_threads = 1L) {
+      monty_rng_beta_binomial_prob(private$ptr, n, size, prob, rho, n_threads,
+                                   private$float)
+    },
 
     ##' @description Generate `n` numbers from a negative binomial distribution
     ##'

@@ -67,6 +67,36 @@ distr_binomial <- distribution(
     mean = quote(size * prob)),
   cpp = list(density = "binomial", sample = "binomial"))
 
+distr_beta_binomial_prob <- distribution(
+  name = "BetaBinomial",
+  variant = "prob",
+  density = function(x, size, prob, rho) {
+    lchoose(size, x) + 
+      lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
+      lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))},
+  domain = c(0, Inf), # size?
+  sample = function(rng, size, prob, rho) rng$beta_binomial_prob(1, size, prob, rho),
+  expr = list(
+    density = quote(
+      lchoose(size, x) + 
+        lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
+        lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))),
+    mean = quote(size * prob)),
+  cpp = list(density = "beta_binomial_prob", sample = "beta_binomial_prob"))
+
+distr_beta_binomial_ab <- distribution(
+  name = "BetaBinomial",
+  variant = "ab",
+  density = function(x, size, a, b) {
+    lchoose(size, x) + lbeta(x + a, size - x + b) - lbeta(a, b)},
+  domain = c(0, Inf), # size?
+  sample = function(rng, size, a, b) rng$beta_binomial_ab(1, size, a, b),
+  expr = list(
+    density = quote(lchoose(size, x) + lbeta(x + a, size - x + b) - 
+                      lbeta(a, b)),
+    mean = quote(size * a / (a + b))),
+  cpp = list(density = "beta_binomial_ab", sample = "beta_binomial_ab"))
+
 distr_exponential_rate <- distribution(
   name = "Exponential",
   variant = "rate",
@@ -190,6 +220,8 @@ distr_uniform <- distribution(
 dsl_distributions <- local({
   d <- list(
     distr_beta,
+    distr_beta_binomial_prob,
+    distr_beta_binomial_ab,
     distr_binomial,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,

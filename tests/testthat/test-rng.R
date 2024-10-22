@@ -1403,6 +1403,64 @@ test_that("negative binomial prevents bad inputs", {
 })
 
 
+test_that("can generate beta-binomial numbers", {
+  m <- 1000000
+  n <- 100
+  a <- 1.5
+  b <- 8.5
+    
+  yf <- monty_rng$new(1)$beta_binomial_ab(m, n, a, b)
+  
+  expect_equal(mean(yf), n * a / (a + b), tolerance = 1e-3)
+  expect_equal(var(yf),
+               n * a * b * (a + b + n) / ((a + b)^2 * (a + b + 1)),
+               tolerance = 1e-2)
+})
+
+
+test_that("beta_binomial_prob follows from beta_binomial_ab", {
+  rng1 <- monty_rng$new(seed = 1L)
+  rng2 <- monty_rng$new(seed = 1L)
+  size <- 20
+  a <- 2
+  b <- 5
+  expect_identical(
+    rng1$beta_binomial_prob(100, size, a / (a + b), 1 / (a + b + 1)),
+    rng2$beta_binomial_ab(100, size, a, b))
+})
+
+
+test_that("deterministic beta-binomial returns mean", {
+  m <- 100
+  n <- as.numeric(sample(100, m, replace = TRUE))
+  a <- runif(m, 0, 10)
+  b <- runif(m, 0, 10)
+
+  rng_f <- monty_rng$new(1, real_type = "float", deterministic = TRUE)
+  rng_d <- monty_rng$new(1, real_type = "double", deterministic = TRUE)
+
+  expect_equal(rng_f$beta_binomial_ab(m, n, a, b), n * a / (a + b),
+               tolerance = 1e-6)
+  expect_equal(rng_d$beta_binomial_ab(m, n, a, b), n * a / (a + b))
+})
+
+
+test_that("beta-binomial prevents bad inputs", {
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, -1, 2, 5),
+               "Invalid call to beta_binomial with size = -1, a = 2, b = 5")
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 0, 5),
+               "Invalid call to beta_binomial with size = 10, a = 0, b = 5")
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 2, 0),
+               "Invalid call to beta_binomial with size = 10, a = 2, b = 0")
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, Inf, 2, 5),
+               "Invalid call to beta_binomial with size = inf, a = 2, b = 5")
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, Inf, 5),
+               "Invalid call to beta_binomial with size = 10, a = inf, b = 5")
+  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 2, Inf),
+               "Invalid call to beta_binomial with size = 10, a = 2, b = inf")
+})
+
+
 test_that("can generate samples from the cauchy distribution", {
   ## This one is really hard to validate because the cauchy does not
   ## have any finite moments...
