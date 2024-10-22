@@ -961,8 +961,8 @@ cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n,
                                          cpp11::doubles r_rho,
                                        int n_threads, bool is_float) {
   return is_float ?
-  monty_rng_beta_binomial_ab<float, default_rng32>(ptr, n, r_size, r_prob, r_rho, n_threads) :
-  monty_rng_beta_binomial_ab<double, default_rng64>(ptr, n, r_size, r_prob, r_rho, n_threads);
+  monty_rng_beta_binomial_prob<float, default_rng32>(ptr, n, r_size, r_prob, r_rho, n_threads) :
+  monty_rng_beta_binomial_prob<double, default_rng64>(ptr, n, r_size, r_prob, r_rho, n_threads);
 }
 
 [[cpp11::register]]
