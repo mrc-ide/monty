@@ -370,7 +370,12 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     ## in order) and convert everything else into scalars.  Or perhaps
     ## if we take a slice out of a matrix we keep it as an array.
     ## Lots of decisions to make, so do it later.
-    if (is.character(keep)) {
+    if (is.null(keep)) {
+      return(list(index = integer(), packer = null_packer()))
+    } else if (is.character(keep)) {
+      if (length(keep) == 0) {
+        return(list(index = integer(), packer = null_packer()))
+      }
       if (anyDuplicated(keep)) {
         dups <- unique(keep[duplicated(keep)])
         cli::cli_abort("Duplicated name{?s} in 'keep': {squote(dups)}")
@@ -393,6 +398,25 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
               pack = pack,
               index = function() idx,
               subset = subset)
+  class(ret) <- "monty_packer"
+  ret
+}
+
+
+null_packer <- function() {
+  empty_named_list <- set_names(list(), character())
+  ret <- list(
+    names = function() character(),
+    unpack = function(x) empty_named_list,
+    pack = function(p) numeric(),
+    index = function() empty_named_list,
+    subset = function(keep) {
+      if (length(keep) == 0) {
+        return(null_packer())
+      } else {
+        cli::cli_abort("Cannot subset the null packer")
+      }
+    })
   class(ret) <- "monty_packer"
   ret
 }

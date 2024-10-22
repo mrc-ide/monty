@@ -439,9 +439,6 @@ test_that("prevent unknown names in subset", {
 test_that("don't allow things other than character vectors for now", {
   p <- monty_packer(c("a", "b"))
   expect_error(
-    p$subset(NULL),
-    "Invalid input for 'keep'; this must currently be a character vector")
-  expect_error(
     p$subset(1),
     "Invalid input for 'keep'; this must currently be a character vector")
 })
@@ -451,4 +448,18 @@ test_that("can add matrix dimensions when unpacking", {
   p <- monty_packer(c("a", "b", "c"))
   m <- matrix(1:12, 3, 4)
   expect_equal(p$pack(p$unpack(m)), m)
+})
+
+
+test_that("can subset to produce null packer", {
+  p <- monty_packer(letters[1:4])
+  ps <- p$subset(character())
+  expect_equal(ps$packer$unpack(numeric()),
+               set_names(list(), character()))
+  expect_equal(ps$packer$pack(set_names(list(), character())),
+               numeric())
+  expect_length(ps$packer$names(), 0)
+  expect_equal(ps$packer$subset(character()), ps$packer)
+  expect_error(ps$packer$subset("a"),
+               "Cannot subset the null packer")
 })

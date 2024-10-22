@@ -65,6 +65,7 @@ reference:
     contents:
     - monty_observer
     - monty_packer
+    - monty_packer_grouped
     - monty_domain_expand
     - with_trace_random
 
