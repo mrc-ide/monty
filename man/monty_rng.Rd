@@ -143,6 +143,8 @@ rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
 \item \href{#method-monty_rng-uniform}{\code{monty_rng$uniform()}}
 \item \href{#method-monty_rng-normal}{\code{monty_rng$normal()}}
 \item \href{#method-monty_rng-binomial}{\code{monty_rng$binomial()}}
+\item \href{#method-monty_rng-beta_binomial_ab}{\code{monty_rng$beta_binomial_ab()}}
+\item \href{#method-monty_rng-beta_binomial_prob}{\code{monty_rng$beta_binomial_prob()}}
 \item \href{#method-monty_rng-negative_binomial_prob}{\code{monty_rng$negative_binomial_prob()}}
 \item \href{#method-monty_rng-negative_binomial_mu}{\code{monty_rng$negative_binomial_mu()}}
 \item \href{#method-monty_rng-hypergeometric}{\code{monty_rng$hypergeometric()}}
@@ -338,6 +340,57 @@ Generate \code{n} numbers from a binomial distribution
 
 \item{\code{prob}}{The probability of success on each trial
 (between 0 and 1, length 1 or n)}
+
+\item{\code{n_threads}}{Number of threads to use; see Details}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-monty_rng-beta_binomial_ab"></a>}}
+\if{latex}{\out{\hypertarget{method-monty_rng-beta_binomial_ab}{}}}
+\subsection{Method \code{beta_binomial_ab()}}{
+Generate \code{n} numbers from a beta-binomial distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$beta_binomial_ab(n, size, a, b, n_threads = 1L)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of samples to draw (per stream)}
+
+\item{\code{size}}{The number of trials (zero or more, length 1 or n)}
+
+\item{\code{a}}{The first shape parameter (zero or more, length 1 or n)}
+
+\item{\code{b}}{The second shape parameter (zero or more, length 1 or n)}
+
+\item{\code{n_threads}}{Number of threads to use; see Details}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-monty_rng-beta_binomial_prob"></a>}}
+\if{latex}{\out{\hypertarget{method-monty_rng-beta_binomial_prob}{}}}
+\subsection{Method \code{beta_binomial_prob()}}{
+Generate \code{n} numbers from a beta-binomial distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$beta_binomial_prob(n, size, prob, rho, n_threads = 1L)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of samples to draw (per stream)}
+
+\item{\code{size}}{The number of trials (zero or more, length 1 or n)}
+
+\item{\code{prob}}{The mean probability of sucess on each trial
+(between 0 and 1, length 1 or n)}
+
+\item{\code{rho}}{The dispersion parameter (between 0 and 1, length 1 or n)}
 
 \item{\code{n_threads}}{Number of threads to use; see Details}
 }
