@@ -330,9 +330,9 @@ test_that("Can rerun a stochastic model", {
   set.seed(1)
   m <- ex_sir_filter_posterior()
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
-  sampler1 <- monty_sampler_random_walk(vcv = vcv, rerun_every = 2)
-  sampler2 <- monty_sampler_random_walk(vcv = vcv, rerun_every = 2, 
-                                        rerun_random = TRUE)
+  sampler1 <- monty_sampler_random_walk(vcv = vcv, rerun_every = 2,
+                                        rerun_random = FALSE)
+  sampler2 <- monty_sampler_random_walk(vcv = vcv, rerun_every = 2)
   res1 <- monty_sample(m, sampler1, 20)
   res2 <- monty_sample(m, sampler2, 20)
   
