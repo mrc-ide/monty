@@ -32,11 +32,11 @@
 ##'   chains, at the cost of some bias in the results.
 ##'
 ##' @param rerun_random Logical, controlling the behaviour of
-##'   rerunning (when `rerun_every` is finite). The default value of
-##'   `FALSE` will rerun the model at fixed intervals of iterations
-##'   (given by `rerun_every`). If `TRUE`, then we stochastically
-##'   rerun each step with probability of `1 / rerun_every`. This gives
-##'   the same expected number of MCMC steps between reruns but a different
+##'   rerunning (when `rerun_every` is finite). With the default value of
+##'   `TRUE`, we stochastically rerun at each step with probability of
+##'   `1 / rerun_every`. If `FALSE` we rerun the model at fixed intervals of
+##'   iterations (given by `rerun_every`). The two methods give the same
+##'   expected number of MCMC steps between reruns but a different
 ##'   pattern.
 ##'
 ##' @return A `monty_sampler` object, which can be used with
@@ -44,7 +44,7 @@
 ##'
 ##' @export
 monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
-                                      rerun_every = Inf, rerun_random = FALSE) {
+                                      rerun_every = Inf, rerun_random = TRUE) {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()
 

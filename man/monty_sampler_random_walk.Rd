@@ -8,7 +8,7 @@ monty_sampler_random_walk(
   vcv = NULL,
   boundaries = "reflect",
   rerun_every = Inf,
-  rerun_random = FALSE
+  rerun_random = TRUE
 )
 }
 \arguments{
@@ -38,11 +38,11 @@ accepted parameters before doing the comparison.  This may help "unstick"
 chains, at the cost of some bias in the results.}
 
 \item{rerun_random}{Logical, controlling the behaviour of
-rerunning (when \code{rerun_every} is finite). The default value of
-\code{FALSE} will rerun the model at fixed intervals of iterations
-(given by \code{rerun_every}). If \code{TRUE}, then we stochastically
-rerun each step with probability of \code{1 / rerun_every}. This gives
-the same expected number of MCMC steps between reruns but a different
+rerunning (when \code{rerun_every} is finite). With the default value of
+\code{TRUE}, we stochastically rerun at each step with probability of
+\code{1 / rerun_every}. If \code{FALSE} we rerun the model at fixed intervals of
+iterations (given by \code{rerun_every}). The two methods give the same
+expected number of MCMC steps between reruns but a different
 pattern.}
 }
 \value{
