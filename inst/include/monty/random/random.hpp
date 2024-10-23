@@ -4,6 +4,7 @@
 #include "monty/random/prng.hpp"
 
 #include "monty/random/beta.hpp"
+#include "monty/random/beta_binomial.hpp"
 #include "monty/random/binomial.hpp"
 #include "monty/random/cauchy.hpp"
 #include "monty/random/exponential.hpp"
