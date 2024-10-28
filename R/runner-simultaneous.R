@@ -35,7 +35,7 @@ monty_runner_simultaneous <- function(progress = NULL) {
   run <- function(pars, model, sampler, steps, rng) {
     validate_suitable(model)
     n_chains <- length(rng)
-    pb <- progress_bar(n_chains, n_steps$total, progress, show_overall = FALSE)
+    pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     progress <- pb(seq_len(n_chains))
     rng_state <- lapply(rng, function(r) r$state())
     ## TODO: get the rng state back into 'rng' here, or (better) look
