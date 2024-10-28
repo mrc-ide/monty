@@ -223,3 +223,30 @@ test_that("samples, if provided, must match", {
       samples2),
     "Provided 'samples' does not match those at the start of the chain")
 })
+
+
+test_that("can use burnin/thinning_factor in manual sampling", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, n_chains = 2,
+                       burnin = 20, thinning_factor = 4)
+
+  set.seed(1)
+  path_a <- withr::local_tempdir()
+  monty_sample_manual_prepare(model, sampler, 60, path_a, n_chains = 2,
+                              burnin = 20, thinning_factor = 4)
+  monty_sample_manual_run(1, path_a)
+  monty_sample_manual_run(2, path_a)
+  res2a <- monty_sample_manual_collect(path_a, restartable = TRUE)
+  expect_equal(res2a$restart$thinning_factor, 4)
+
+  path_b <- withr::local_tempdir()
+  monty_sample_manual_prepare_continue(res2a, 40, path_b)
+  monty_sample_manual_run(1, path_b)
+  monty_sample_manual_run(2, path_b)
+  res2b <- monty_sample_manual_collect(path_b, res2a)
+
+  expect_equal(res2b$pars, res1$pars)
+})

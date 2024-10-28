@@ -60,10 +60,10 @@
 ##' monty_sample_manual_cleanup(path)
 monty_sample_manual_prepare <- function(model, sampler, n_steps, path,
                                         initial = NULL, n_chains = 1L,
-                                        burnin = NULL) {
+                                        burnin = NULL, thinning_factor = NULL) {
   ## This break exists to hide the 'seed' argument from the public
   ## interface.  We will use this from the callr version though.
-  steps <- monty_sample_steps(n_steps, burnin)
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
   sample_manual_prepare(model, sampler, steps, path, initial, n_chains)
 }
 
@@ -188,7 +188,8 @@ monty_sample_manual_collect <- function(path, samples = NULL,
   }
 
   if (restartable) {
-    samples$restart <- restart_data(res, inputs$model, inputs$sampler, NULL)
+    samples$restart <- restart_data(res, inputs$model, inputs$sampler, NULL,
+                                    inputs$steps$thinning_factor)
   }
   samples
 }
@@ -285,13 +286,16 @@ sample_manual_info_chain <- function(complete) {
 ##' @inherit monty_sample_manual_prepare return
 monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
-  steps <- monty_sample_steps(n_steps, burnin = NULL)
   ## I am not terribly happy wih the function name here, something for
   ## the review?
   ##
   ## also not happy with save_samples = "nothing"
   restart <- samples$restart
   samples <- sample_manual_prepare_check_samples(samples, save_samples)
+
+  steps <- monty_sample_steps(n_steps,
+                              burnin = NULL,
+                              thinning_factor = restart$thinning_factor)
 
   dat <- list(restart = restart,
               n_chains = length(restart$state),

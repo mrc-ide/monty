@@ -11,7 +11,8 @@ monty_sample_manual_prepare(
   path,
   initial = NULL,
   n_chains = 1L,
-  burnin = NULL
+  burnin = NULL,
+  thinning_factor = NULL
 )
 }
 \arguments{
@@ -52,6 +53,19 @@ in post-processing as this data is discarded with no chance of
 getting it back.  However, if your observation process creates a
 large amount of data, then you pay prefer to apply a burnin here
 to reduce how much memory is used.}
+
+\item{thinning_factor}{A thinning factor to apply while the chain
+is running.  If given, then we save every \code{thinning_factor}'th
+step.  So if \code{thinning_factor = 2} we save every second step,
+and if 10, we'd save every 10th.  Like \code{burnin} above, it is
+preferable to apply this in post processing.  However, for
+slow-mixing chains that have a large observer output you can use
+this to reduce the memory usage.  Use of \code{thinning_factor}
+requires that \code{n_steps} is an even multiple of
+\code{thinning_factor}; so if \code{thinning_factor} is 10, then \code{n_steps}
+must be a multiple of 10.  This ensures that the last step is in
+the sample.  The thinning factor cannot be changed when
+continuing a chain.}
 }
 \value{
 Invisibly, the path used to store files (the same as the
