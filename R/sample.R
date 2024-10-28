@@ -83,7 +83,7 @@
 ##' # diagnostics.
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL,
-                         restartable = FALSE) {
+                         restartable = FALSE, burnin = NULL) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
@@ -95,7 +95,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  steps <- monty_sample_steps(n_steps)
+  steps <- monty_sample_steps(n_steps, burnin)
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
@@ -149,7 +149,7 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   state <- samples$restart$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler
-  steps <- monty_sample_steps(n_steps)
+  steps <- monty_sample_steps(n_steps, burnin = NULL)
 
   res <- runner$continue(state, model, sampler, steps)
 
@@ -403,11 +403,19 @@ direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
 }
 
 
-monty_sample_steps <- function(n_steps) {
+monty_sample_steps <- function(n_steps, burnin = NULL, call = parent.frame()) {
   if (inherits(n_steps, "monty_sample_steps")) {
     return(n_steps)
   }
-  ret <- list(total = n_steps)
+  assert_scalar_size(n_steps, call = call)
+  if (!is.null(burnin)) {
+    assert_scalar_size(burnin, call = call)
+    if (burnin >= n_steps) {
+      cli::cli_abort("'burnin' must be smaller than 'n_steps'",
+                     arg = "burnin", call = call)
+    }
+  }
+  ret <- list(total = n_steps, burnin = burnin)
   class(ret) <- "monty_sample_steps"
   ret
 }

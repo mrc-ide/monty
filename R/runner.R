@@ -200,7 +200,7 @@ monty_run_chain2 <- function(chain_state, model, sampler, steps,
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
 
-  n_steps_record <- steps$total
+  n_steps_record <- steps$total - steps$burnin
 
   history_pars <- matrix(NA_real_, n_pars, n_steps_record)
   history_density <- rep(NA_real_, n_steps_record)
@@ -209,10 +209,12 @@ monty_run_chain2 <- function(chain_state, model, sampler, steps,
 
   for (i in seq_len(steps$total)) {
     chain_state <- sampler$step(chain_state, model, rng)
-    history_pars[, i] <- chain_state$pars
-    history_density[[i]] <- chain_state$density
-    if (has_observer && !is.null(chain_state$observation)) {
-      history_observation[[i]] <- chain_state$observation
+    if (i > burnin) {
+      history_pars[, i] <- chain_state$pars
+      history_density[[i]] <- chain_state$density
+      if (has_observer && !is.null(chain_state$observation)) {
+        history_observation[[i]] <- chain_state$observation
+      }
     }
     progress(i)
   }

@@ -59,10 +59,11 @@
 ##' # Clean up samples
 ##' monty_sample_manual_cleanup(path)
 monty_sample_manual_prepare <- function(model, sampler, n_steps, path,
-                                        initial = NULL, n_chains = 1L) {
+                                        initial = NULL, n_chains = 1L,
+                                        burnin = NULL) {
   ## This break exists to hide the 'seed' argument from the public
   ## interface.  We will use this from the callr version though.
-  steps <- monty_sample_steps(n_steps)
+  steps <- monty_sample_steps(n_steps, burnin)
   sample_manual_prepare(model, sampler, steps, path, initial, n_chains)
 }
 
@@ -282,8 +283,9 @@ sample_manual_info_chain <- function(complete) {
 ##'
 ##' @export
 ##' @inherit monty_sample_manual_prepare return
-monty_sample_manual_prepare_continue <- function(samples, steps, path,
+monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
+  steps <- monty_sample_steps(n_steps, burnin = NULL)
   ## I am not terribly happy wih the function name here, something for
   ## the review?
   ##
