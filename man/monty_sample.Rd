@@ -11,7 +11,8 @@ monty_sample(
   initial = NULL,
   n_chains = 1L,
   runner = NULL,
-  restartable = FALSE
+  restartable = FALSE,
+  burnin = NULL
 )
 }
 \arguments{
@@ -42,6 +43,14 @@ one chain then this argument is best left alone.}
 \item{restartable}{Logical, indicating if the chains should be
 restartable.  This will add additional data to the chains
 object.}
+
+\item{burnin}{Number of steps to discard as burnin.  This affects
+only the recording of steps as your chains run; we don't record
+the first \code{burnin} steps.  Generally you would want to do this
+in post-processing as this data is discarded with no chance of
+getting it back.  However, if your observation process creates a
+large amount of data, then you pay prefer to apply a burnin here
+to reduce how much memory is used.}
 }
 \value{
 A list of parameters and densities.  We provide conversion

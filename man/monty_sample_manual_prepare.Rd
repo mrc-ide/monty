@@ -10,7 +10,8 @@ monty_sample_manual_prepare(
   n_steps,
   path,
   initial = NULL,
-  n_chains = 1L
+  n_chains = 1L,
+  burnin = NULL
 )
 }
 \arguments{
@@ -43,6 +44,14 @@ sampling.  If not given, we sample from the model (or its prior).}
 
 \item{n_chains}{Number of chains to run.  The default is to run a
 single chain, but you will likely want to run more.}
+
+\item{burnin}{Number of steps to discard as burnin.  This affects
+only the recording of steps as your chains run; we don't record
+the first \code{burnin} steps.  Generally you would want to do this
+in post-processing as this data is discarded with no chance of
+getting it back.  However, if your observation process creates a
+large amount of data, then you pay prefer to apply a burnin here
+to reduce how much memory is used.}
 }
 \value{
 Invisibly, the path used to store files (the same as the
