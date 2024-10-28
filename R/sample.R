@@ -95,7 +95,8 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, n_steps, rng)
+  steps <- monty_sample_steps(n_steps)
+  res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- combine_chains(res, model$observer)
@@ -148,8 +149,9 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   state <- samples$restart$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler
+  steps <- monty_sample_steps(n_steps)
 
-  res <- runner$continue(state, model, sampler, n_steps)
+  res <- runner$continue(state, model, sampler, steps)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- append_chains(samples, combine_chains(res, observer), observer)
@@ -398,4 +400,14 @@ direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
       i = paste("Your model's 'direct_sample()' method is generating",
                 "samples that fall outside your model's domain.  Probably",
                 "you should fix one or both of these!")))
+}
+
+
+monty_sample_steps <- function(n_steps) {
+  if (inherits(n_steps, "monty_sample_steps")) {
+    return(n_steps)
+  }
+  ret <- list(total = n_steps)
+  class(ret) <- "monty_sample_steps"
+  ret
 }

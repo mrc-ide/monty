@@ -62,11 +62,12 @@ monty_sample_manual_prepare <- function(model, sampler, n_steps, path,
                                         initial = NULL, n_chains = 1L) {
   ## This break exists to hide the 'seed' argument from the public
   ## interface.  We will use this from the callr version though.
-  sample_manual_prepare(model, sampler, n_steps, path, initial, n_chains)
+  steps <- monty_sample_steps(n_steps)
+  sample_manual_prepare(model, sampler, steps, path, initial, n_chains)
 }
 
 
-sample_manual_prepare <- function(model, sampler, n_steps, path, initial,
+sample_manual_prepare <- function(model, sampler, steps, path, initial,
                                   n_chains, seed = NULL,
                                   call = parent.frame()) {
   assert_is(model, "monty_model", call = call)
@@ -81,7 +82,7 @@ sample_manual_prepare <- function(model, sampler, n_steps, path, initial,
               sampler = sampler,
               rng_state = rng_state,
               n_chains = n_chains,
-              n_steps = n_steps)
+              steps = steps)
 
   sample_manual_path_create(path, dat, call = call)
 }
@@ -119,25 +120,25 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
   }
 
   n_chains <- inputs$n_chains
-  n_steps <- inputs$n_steps
+  steps <- inputs$steps
 
   restart <- inputs$restart
   is_continue <- is.list(restart)
 
-  pb <- progress_bar(n_chains, n_steps, progress,
+  pb <- progress_bar(n_chains, steps$total, progress,
                      show_overall = FALSE, single_chain = TRUE)(chain_id)
 
   if (is_continue) {
     state <- restart$state
     model <- restart$model
     sampler <- restart$sampler
-    res <- monty_continue_chain(state[[chain_id]], model, sampler, n_steps, pb)
+    res <- monty_continue_chain(state[[chain_id]], model, sampler, steps, pb)
   } else {
     pars <- inputs$pars
     model <- inputs$model
     sampler <- inputs$sampler
     rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
-    res <- monty_run_chain(pars[, chain_id], model, sampler, n_steps, pb, rng)
+    res <- monty_run_chain(pars[, chain_id], model, sampler, steps, pb, rng)
   }
 
   saveRDS(res, path$results)
@@ -233,11 +234,12 @@ monty_sample_manual_info <- function(path) {
   path <- sample_manual_path(path)
   inputs <- readRDS(path$inputs)
   n_chains <- inputs$n_chains
+  n_steps <- inputs$steps$total
   path <- sample_manual_path(path$root, seq_len(inputs$n_chains))
   done <- file.exists(path$results)
   cli::cli_h1("Manual monty sampling at {.path {path$root}}")
   cli::cli_alert_info("Created {format(file.info(path$inputs)$ctime)}")
-  cli::cli_alert_info("{inputs$n_steps} steps x {n_chains} chains")
+  cli::cli_alert_info("{n_steps} steps x {n_chains} chains")
   if (is.list(inputs$restart)) {
     cli::cli_alert_info("This is a restart")
   }
@@ -280,7 +282,7 @@ sample_manual_info_chain <- function(complete) {
 ##'
 ##' @export
 ##' @inherit monty_sample_manual_prepare return
-monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
+monty_sample_manual_prepare_continue <- function(samples, steps, path,
                                                  save_samples = "hash") {
   ## I am not terribly happy wih the function name here, something for
   ## the review?
@@ -291,7 +293,7 @@ monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
 
   dat <- list(restart = restart,
               n_chains = length(restart$state),
-              n_steps = n_steps,
+              steps = steps,
               samples = samples)
   sample_manual_path_create(path, dat)
 }
