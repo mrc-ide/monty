@@ -35,6 +35,27 @@
 ##'   restartable.  This will add additional data to the chains
 ##'   object.
 ##'
+##' @param burnin Number of steps to discard as burnin.  This affects
+##'   only the recording of steps as your chains run; we don't record
+##'   the first `burnin` steps.  Generally you would want to do this
+##'   in post-processing as this data is discarded with no chance of
+##'   getting it back.  However, if your observation process creates a
+##'   large amount of data, then you may prefer to apply a burnin here
+##'   to reduce how much memory is used.
+##'
+##' @param thinning_factor A thinning factor to apply while the chain
+##'   is running.  If given, then we save every `thinning_factor`'th
+##'   step.  So if `thinning_factor = 2` we save every second step,
+##'   and if 10, we'd save every 10th.  Like `burnin` above, it is
+##'   preferable to apply this in post processing.  However, for
+##'   slow-mixing chains that have a large observer output you can use
+##'   this to reduce the memory usage.  Use of `thinning_factor`
+##'   requires that `n_steps` is an even multiple of
+##'   `thinning_factor`; so if `thinning_factor` is 10, then `n_steps`
+##'   must be a multiple of 10.  This ensures that the last step is in
+##'   the sample.  The thinning factor cannot be changed when
+##'   continuing a chain.
+##'
 ##' @return A list of parameters and densities.  We provide conversion
 ##'   to formats used by other packages, notably
 ##'   [posterior::as_draws_array], [posterior::as_draws_df] and
@@ -83,7 +104,8 @@
 ##' # diagnostics.
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL,
-                         restartable = FALSE) {
+                         restartable = FALSE, burnin = NULL,
+                         thinning_factor = NULL) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
@@ -95,12 +117,14 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  res <- runner$run(pars, model, sampler, n_steps, rng)
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+  res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- combine_chains(res, model$observer)
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, runner)
+    samples$restart <- restart_data(res, model, sampler, runner,
+                                    thinning_factor)
   }
   samples
 }
@@ -149,13 +173,18 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   model <- samples$restart$model
   sampler <- samples$restart$sampler
 
-  res <- runner$continue(state, model, sampler, n_steps)
+  burnin <- NULL
+  thinning_factor <- samples$restart$thinning_factor
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+
+  res <- runner$continue(state, model, sampler, steps)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
   samples <- append_chains(samples, combine_chains(res, observer), observer)
 
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, runner)
+    samples$restart <- restart_data(res, model, sampler, runner,
+                                    thinning_factor)
   }
   samples
 }
@@ -362,7 +391,7 @@ initial_rng <- function(n_chains, seed = NULL) {
 }
 
 
-restart_data <- function(res, model, sampler, runner) {
+restart_data <- function(res, model, sampler, runner, thinning_factor) {
   if (is.null(names(res))) {
     state <- lapply(res, function(x) x$internal$state)
   } else {
@@ -382,7 +411,8 @@ restart_data <- function(res, model, sampler, runner) {
   list(state = state,
        model = model,
        sampler = sampler,
-       runner = runner)
+       runner = runner,
+       thinning_factor = thinning_factor)
 }
 
 
@@ -398,4 +428,37 @@ direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
       i = paste("Your model's 'direct_sample()' method is generating",
                 "samples that fall outside your model's domain.  Probably",
                 "you should fix one or both of these!")))
+}
+
+
+monty_sample_steps <- function(n_steps, burnin = NULL, thinning_factor = NULL,
+                               call = parent.frame()) {
+  if (inherits(n_steps, "monty_sample_steps")) {
+    return(n_steps)
+  }
+  assert_scalar_size(n_steps, call = call)
+  if (is.null(burnin)) {
+    burnin <- 0
+  } else {
+    assert_scalar_size(burnin, allow_zero = TRUE, call = call)
+    if (burnin >= n_steps) {
+      cli::cli_abort("'burnin' must be smaller than 'n_steps'",
+                     arg = "burnin", call = call)
+    }
+  }
+  if (is.null(thinning_factor)) {
+    thinning_factor <- 1
+  } else {
+    assert_scalar_size(thinning_factor, allow_zero = FALSE, call = call)
+    if (n_steps %% thinning_factor != 0) {
+      cli::cli_abort(
+        "'thinning_factor' must be a divisor of 'n_steps'",
+        call = call)
+    }
+  }
+  ret <- list(total = n_steps,
+              burnin = burnin,
+              thinning_factor = thinning_factor)
+  class(ret) <- "monty_sample_steps"
+  ret
 }
