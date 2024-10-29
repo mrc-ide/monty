@@ -26,10 +26,12 @@
 ##' monty_domain_expand(rbind(x = c(0, 1), "x[2]" = c(0, Inf)), packer)
 ##' monty_domain_expand(rbind(x = c(0, 1), "y" = c(0, Inf)), packer)
 monty_domain_expand <- function(domain, packer) {
-  assert_is(packer, "monty_packer")
+  assert_is(packer, c("monty_packer", "monty_packer_grouped"))
   if (is.null(domain)) {
     return(domain)
   }
+
+  assert_is(packer, "monty_packer")
 
   if (!is.matrix(domain)) {
     cli::cli_abort("Expected 'domain' to be a matrix",
