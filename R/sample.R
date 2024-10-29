@@ -40,7 +40,7 @@
 ##'   the first `burnin` steps.  Generally you would want to do this
 ##'   in post-processing as this data is discarded with no chance of
 ##'   getting it back.  However, if your observation process creates a
-##'   large amount of data, then you pay prefer to apply a burnin here
+##'   large amount of data, then you may prefer to apply a burnin here
 ##'   to reduce how much memory is used.
 ##'
 ##' @param thinning_factor A thinning factor to apply while the chain
