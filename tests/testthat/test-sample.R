@@ -328,3 +328,100 @@ test_that("can change runner on restart", {
 
   expect_equal(res2d, res1)
 })
+
+
+test_that("validate burnin", {
+  expect_equal(monty_sample_steps(100, NULL)$burnin, 0)
+  expect_equal(monty_sample_steps(100, 0)$burnin, 0)
+  expect_equal(monty_sample_steps(100, 20)$burnin, 20)
+  expect_error(monty_sample_steps(100, 200),
+               "'burnin' must be smaller than 'n_steps'")
+})
+
+
+test_that("validate thinning rate", {
+  expect_equal(
+    monty_sample_steps(100, thinning_factor = NULL)$thinning_factor, 1)
+  expect_equal(
+    monty_sample_steps(100, thinning_factor = 1)$thinning_factor, 1)
+  expect_equal(
+    monty_sample_steps(100, thinning_factor = 20)$thinning_factor, 20)
+  expect_error(
+    monty_sample_steps(100, thinning_factor = 0),
+    "'thinning_factor' must be at least 1")
+  expect_error(
+    monty_sample_steps(100, thinning_factor = 17)$thinning_factor,
+    "'thinning_factor' must be a divisor of 'n_steps'")
+})
+
+
+test_that("can sample with burnin", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 3)
+  set.seed(1)
+  res2 <- monty_sample(model, sampler, 100, 3, burnin = 30)
+  expect_equal(res2$pars, res1$pars[, 31:100, , drop = FALSE])
+})
+
+
+test_that("can sample with thinning", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 3)
+  set.seed(1)
+  res2 <- monty_sample(model, sampler, 100, 3, thinning_factor = 4)
+  expect_equal(res2$pars, res1$pars[, seq(4, 100, by = 4), , drop = FALSE])
+})
+
+
+test_that("can sample with burnin and thinning", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 3)
+  ## Pick deliberately hard values here:
+  set.seed(1)
+  res2 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 25, thinning_factor = 10)
+  expect_equal(res2$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  set.seed(1)
+  res3 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 20, thinning_factor = 10)
+  expect_equal(res3$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+})
+
+
+test_that("can continue burnt in chain, does not burnin any further", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 1, n_chains = 3, burnin = 20)
+
+  set.seed(1)
+  res2a <- monty_sample(model, sampler, 60, 1, n_chains = 3,
+                        burnin = 20, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 40)
+
+  expect_equal(res2b, res1)
+})
+
+
+test_that("can continue thinned chain, continues thinning", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 1, n_chains = 3,
+                       thinning_factor = 4)
+
+  set.seed(1)
+  res2a <- monty_sample(model, sampler, 60, 1, n_chains = 3,
+                        thinning_factor = 4, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 40)
+
+  expect_equal(res2b, res1)
+})

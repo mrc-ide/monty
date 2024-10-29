@@ -77,15 +77,15 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     all(env$status == "done")
   }
 
-  loop <- function(path, n_workers, n_chains, n_steps, progress) {
-    pb <- progress_bar(n_chains, n_steps, progress, show_overall = TRUE)
+  loop <- function(path, n_workers, n_chains, steps, progress) {
+    pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
     n_workers <- min(n_chains, n_workers)
     env$path <- path
     env$sessions <- vector("list", n_workers)
     env$target <- rep(NA_integer_, n_workers)
     env$status <- rep("pending", n_chains)
     env$result_path <- rep(NA_character_, n_chains)
-    env$n_steps <- n_steps
+    env$n_steps <- steps$total
     env$n_steps_progress <- rep(0, n_chains)
     env$progress <- pb(seq_len(n_chains))
     for (session_id in seq_len(n_workers)) {
@@ -99,26 +99,26 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     res
   }
 
-  run <- function(pars, model, sampler, n_steps, rng) {
+  run <- function(pars, model, sampler, steps, rng) {
     seed <- unlist(lapply(rng, function(r) r$state()))
     n_chains <- length(rng)
     path <- tempfile()
     sample_manual_prepare(
-      model = model, sampler = sampler, n_steps = n_steps, path = path,
+      model = model, sampler = sampler, steps = steps, path = path,
       initial = pars, n_chains = n_chains,
       seed = seed)
-    loop(path, n_workers, n_chains, n_steps, progress)
+    loop(path, n_workers, n_chains, steps, progress)
   }
 
-  continue <- function(state, model, sampler, n_steps) {
+  continue <- function(state, model, sampler, steps) {
     restart <- list(state = state,
                     model = model,
                     sampler = sampler)
     n_chains <- length(state)
     path <- tempfile()
     monty_sample_manual_prepare_continue(
-      list(restart = restart), n_steps, path, "nothing")
-    loop(path, n_workers, n_chains, n_steps, progress)
+      list(restart = restart), steps, path, "nothing")
+    loop(path, n_workers, n_chains, steps, progress)
   }
 
   monty_runner("callr",

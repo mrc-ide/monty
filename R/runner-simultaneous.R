@@ -32,10 +32,10 @@ monty_runner_simultaneous <- function(progress = NULL) {
       call = environment())
   }
 
-  run <- function(pars, model, sampler, n_steps, rng) {
+  run <- function(pars, model, sampler, steps, rng) {
     validate_suitable(model)
     n_chains <- length(rng)
-    pb <- progress_bar(n_chains, n_steps, progress, show_overall = FALSE)
+    pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     progress <- pb(seq_len(n_chains))
     rng_state <- lapply(rng, function(r) r$state())
     ## TODO: get the rng state back into 'rng' here, or (better) look
@@ -45,16 +45,16 @@ monty_runner_simultaneous <- function(progress = NULL) {
     ## >   rng[[i]]$set_state(rng_state[, i]) # not supported!
     ## > }
     monty_run_chains_simultaneous(pars, model, sampler,
-                                  n_steps, progress, rng_state)
+                                  steps, progress, rng_state)
   }
 
-  continue <- function(state, model, sampler, n_steps) {
+  continue <- function(state, model, sampler, steps) {
     validate_suitable(model)
     n_chains <- length(state)
-    pb <- progress_bar(n_chains, n_steps, progress, show_overall = FALSE)
+    pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     progress <- pb(seq_len(n_chains))
     monty_continue_chains_simultaneous(state, model, sampler,
-                                       n_steps, progress)
+                                       steps, progress)
   }
 
   monty_runner("Simultaneous",
@@ -74,7 +74,7 @@ monty_runner_simultaneous <- function(progress = NULL) {
 ##   hard to avoid.
 ## * there's quite a lot of churn around rng state
 monty_run_chains_simultaneous <- function(pars, model, sampler,
-                                          n_steps, progress, rng_state) {
+                                          steps, progress, rng_state) {
   r_rng_state <- get_r_rng_state()
   n_chains <- length(rng_state)
   rng <- monty_rng$new(unlist(rng_state), n_chains)
@@ -82,12 +82,12 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
   chain_state <- sampler$initialise(pars, model, rng)
 
   monty_run_chains_simultaneous2(chain_state, model, sampler,
-                                 n_steps, progress, rng, r_rng_state)
+                                 steps, progress, rng, r_rng_state)
 }
 
 
 monty_continue_chains_simultaneous <- function(state, model, sampler,
-                                               n_steps, progress) {
+                                               steps, progress) {
   r_rng_state <- get_r_rng_state()
   n_chains <- length(state)
   n_pars <- length(model$parameters)
@@ -111,21 +111,22 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   ## Need to use model$rng_state$set to put state$model_rng into the model
 
   monty_run_chains_simultaneous2(chain_state, model, sampler,
-                                 n_steps, progress, rng, r_rng_state)
+                                 steps, progress, rng, r_rng_state)
 }
 
 
 monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
-                                           n_steps, progress, rng,
+                                           steps, progress, rng,
                                            r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   n_chains <- length(chain_state$density)
+  n_steps_record <- steps$total
 
-  history_pars <- array(NA_real_, c(n_pars, n_steps, n_chains))
-  history_density <- matrix(NA_real_, n_steps, n_chains)
+  history_pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
+  history_density <- matrix(NA_real_, n_steps_record, n_chains)
 
-  for (i in seq_len(n_steps)) {
+  for (i in seq_len(steps$total)) {
     chain_state <- sampler$step(chain_state, model, rng)
     history_pars[, i, ] <- chain_state$pars
     history_density[i, ] <- chain_state$density
