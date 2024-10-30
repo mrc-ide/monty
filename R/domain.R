@@ -31,8 +31,6 @@ monty_domain_expand <- function(domain, packer) {
     return(domain)
   }
 
-  assert_is(packer, "monty_packer")
-
   if (!is.matrix(domain)) {
     cli::cli_abort("Expected 'domain' to be a matrix",
                    arg = "domain")
@@ -45,6 +43,9 @@ monty_domain_expand <- function(domain, packer) {
   if (nrow(domain) == 0) {
     return(NULL)
   }
+
+  ## Below here needs some actual work for grouped packers
+  assert_is(packer, "monty_packer")
   nms <- rownames(domain)
   if (is.null(nms)) {
     cli::cli_abort("Expected 'domain' to have row names", arg = "domain")
