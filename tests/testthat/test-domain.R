@@ -5,8 +5,8 @@ test_that("Return NULL where no domain given as input", {
 })
 
 
-test_that("Return NULL where no domain given as input", {
-  packer <- monty_packer(c("a", "b"))
+test_that("Return NULL where no domain given as input, with grouped packer", {
+  packer <- monty_packer_grouped(c("x", "y"), c("a", "b"))
   expect_null(monty_domain_expand(NULL, packer))
   expect_null(monty_domain_expand(matrix(numeric(), 0, 2), packer))
 })
