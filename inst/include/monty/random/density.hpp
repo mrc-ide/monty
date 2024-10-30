@@ -165,7 +165,7 @@ __host__ __device__ T beta_binomial_prob(int x, int size, T prob, T rho,
                                          bool log) {
   const T a = prob * (1 / rho - 1);
   const T b = (1 - prob) * (1 / rho - 1);
-  return beta_binomial_ab(size, a, b, log);
+  return beta_binomial_ab(x, size, a, b, log);
 }
 
 template <typename T>
