@@ -26,7 +26,7 @@
 ##' monty_domain_expand(rbind(x = c(0, 1), "x[2]" = c(0, Inf)), packer)
 ##' monty_domain_expand(rbind(x = c(0, 1), "y" = c(0, Inf)), packer)
 monty_domain_expand <- function(domain, packer) {
-  assert_is(packer, "monty_packer")
+  assert_is(packer, c("monty_packer", "monty_packer_grouped"))
   if (is.null(domain)) {
     return(domain)
   }
@@ -43,6 +43,9 @@ monty_domain_expand <- function(domain, packer) {
   if (nrow(domain) == 0) {
     return(NULL)
   }
+
+  ## Below here needs some actual work for grouped packers
+  assert_is(packer, "monty_packer")
   nms <- rownames(domain)
   if (is.null(nms)) {
     cli::cli_abort("Expected 'domain' to have row names", arg = "domain")
