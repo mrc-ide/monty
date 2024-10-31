@@ -4,7 +4,12 @@
 \alias{monty_sample_manual_collect}
 \title{Collect manually run samples}
 \usage{
-monty_sample_manual_collect(path, samples = NULL, restartable = FALSE)
+monty_sample_manual_collect(
+  path,
+  samples = NULL,
+  restartable = FALSE,
+  append = TRUE
+)
 }
 \arguments{
 \item{path}{The path used in the call to
@@ -17,6 +22,9 @@ these where \code{save_samples} was set to anything other than "value"}
 restartable.  This will add additional data to the chains
 object.  Note that this is controlled at chain collection and
 not creation.}
+
+\item{append}{Logical, indicating if we should append the results
+of the resumed chain together with the original chain.}
 }
 \value{
 A \code{monty_samples} object.
