@@ -53,6 +53,32 @@ test_that("can continue a manually sampled chain", {
 })
 
 
+test_that("can continue a manually sampled chain without appending", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1a <- monty_sample(model, sampler, 100, n_chains = 2, restartable = TRUE)
+  res1b <- monty_sample_continue(res1a, 50)
+
+  set.seed(1)
+  path_a <- withr::local_tempdir()
+  monty_sample_manual_prepare(model, sampler, 100, path_a, n_chains = 2)
+  monty_sample_manual_run(1, path_a)
+  monty_sample_manual_run(2, path_a)
+  res2a <- monty_sample_manual_collect(path_a, restartable = TRUE)
+  expect_equal(res1a$pars, res2a$pars)
+
+  path_b <- withr::local_tempdir()
+  monty_sample_manual_prepare_continue(res2a, 50, path_b)
+  monty_sample_manual_run(1, path_b)
+  monty_sample_manual_run(2, path_b)
+  res2b <- monty_sample_manual_collect(path_b, res2a, append = FALSE)
+
+  expect_equal(res2b$pars, res1b$pars[, 101:150, , drop = FALSE])
+})
+
+
 test_that("path used for manual sampling must be empty", {
   tmp <- withr::local_tempdir()
   file.create(file.path(tmp, "other"))
@@ -135,7 +161,7 @@ test_that("can print information about chain completeness", {
 })
 
 
-test_that("...", {
+test_that("can validate previously provided samples", {
   path <- withr::local_tempdir()
   model <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
@@ -173,22 +199,28 @@ test_that("can validate samples on collect for non-restarts", {
   inputs <- NULL
   expect_null(sample_manual_collect_check_samples(inputs, NULL))
   expect_error(
-    sample_manual_collect_check_samples(inputs, list()),
+    sample_manual_collect_check_samples(inputs, list(), TRUE),
+    "'samples' provided, but this was not a restarted sample")
+  expect_error(
+    sample_manual_collect_check_samples(inputs, list(), FALSE),
     "'samples' provided, but this was not a restarted sample")
 })
 
 
 test_that("continuation without passing samples allowed if samples saved", {
   inputs <- list(restart = list(1), samples = list(value = 2))
-  expect_equal(sample_manual_collect_check_samples(inputs, NULL), 2)
+  expect_equal(sample_manual_collect_check_samples(inputs, NULL, TRUE), 2)
+  expect_null(sample_manual_collect_check_samples(inputs, NULL, FALSE))
 })
 
 
 test_that("continuation without passing samples not allowed otherwise", {
   inputs <- list(restart = list(1))
   expect_error(
-    sample_manual_collect_check_samples(inputs, NULL),
+    sample_manual_collect_check_samples(inputs, NULL, TRUE),
     "Expected 'samples' to be provided, as this chain is a continuation")
+  expect_null(
+    sample_manual_collect_check_samples(inputs, NULL, FALSE))
 })
 
 
@@ -204,23 +236,42 @@ test_that("samples, if provided, must match", {
   expect_equal(
     sample_manual_collect_check_samples(
       list(restart = list(), samples = list(value = samples1, hash = NULL)),
-      samples1),
+      samples1, TRUE),
     samples1)
   expect_equal(
     sample_manual_collect_check_samples(
       list(restart = list(), samples = list(value = NULL, hash = hash1)),
-      samples1),
+      samples1, TRUE),
     samples1)
+
+  expect_null(
+    sample_manual_collect_check_samples(
+      list(restart = list(), samples = list(value = samples1, hash = NULL)),
+      samples1, FALSE))
+  expect_null(
+    sample_manual_collect_check_samples(
+      list(restart = list(), samples = list(value = NULL, hash = hash1)),
+      samples1, FALSE))
 
   expect_error(
     sample_manual_collect_check_samples(
       list(restart = list(), samples = list(value = samples1, hash = NULL)),
-      samples2),
+      samples2, TRUE),
     "Provided 'samples' does not match those at the start of the chain")
   expect_error(
     sample_manual_collect_check_samples(
       list(restart = list(), samples = list(value = NULL, hash = hash1)),
-      samples2),
+      samples2, TRUE),
+    "Provided 'samples' does not match those at the start of the chain")
+  expect_error(
+    sample_manual_collect_check_samples(
+      list(restart = list(), samples = list(value = samples1, hash = NULL)),
+      samples2, FALSE),
+    "Provided 'samples' does not match those at the start of the chain")
+  expect_error(
+    sample_manual_collect_check_samples(
+      list(restart = list(), samples = list(value = NULL, hash = hash1)),
+      samples2, FALSE),
     "Provided 'samples' does not match those at the start of the chain")
 })
 

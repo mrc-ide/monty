@@ -168,23 +168,24 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##' @export
 ##' @inherit monty_sample_manual_prepare examples
 monty_sample_manual_collect <- function(path, samples = NULL,
-                                        restartable = FALSE) {
+                                        restartable = FALSE,
+                                        append = TRUE) {
   inputs <- readRDS(sample_manual_path(path)$inputs)
   path <- sample_manual_path(path, seq_len(inputs$n_chains))
+  assert_scalar_logical(append)
 
   msg <- !file.exists(path$results)
   if (any(msg)) {
     cli::cli_abort("Results missing for chain{?s} {as.character(which(msg))}")
   }
 
-  prev <- sample_manual_collect_check_samples(inputs, samples)
+  prev <- sample_manual_collect_check_samples(inputs, samples, append)
 
   observer <- inputs$model$observer
   res <- lapply(path$results, readRDS)
   samples <- combine_chains(res, observer)
   if (!is.null(prev)) {
-    samples <- append_chains(prev, combine_chains(res, observer),
-                             observer)
+    samples <- append_chains(prev, samples, observer)
   }
 
   if (restartable) {
@@ -372,7 +373,7 @@ sample_manual_prepare_check_samples <- function(samples, save_samples,
 }
 
 
-sample_manual_collect_check_samples <- function(inputs, samples,
+sample_manual_collect_check_samples <- function(inputs, samples, append,
                                                 call = parent.frame()) {
   if (!is.list(inputs$restart)) {
     if (!is.null(samples)) {
@@ -385,7 +386,9 @@ sample_manual_collect_check_samples <- function(inputs, samples,
         arg = "samples", call = call)
     }
   } else if (is.null(samples)) {
-    if (!is.null(inputs$samples$value)) {
+    if (!append) {
+      samples <- NULL
+    } else if (!is.null(inputs$samples$value)) {
       samples <- inputs$samples$value
     } else {
       cli::cli_abort(
@@ -400,6 +403,9 @@ sample_manual_collect_check_samples <- function(inputs, samples,
       cli::cli_abort(
         "Provided 'samples' does not match those at the start of the chain",
         arg = "samples", call = call)
+    }
+    if (!append) {
+      samples <- NULL
     }
   }
   samples

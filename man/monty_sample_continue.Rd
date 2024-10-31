@@ -4,7 +4,13 @@
 \alias{monty_sample_continue}
 \title{Continue sampling}
 \usage{
-monty_sample_continue(samples, n_steps, restartable = FALSE, runner = NULL)
+monty_sample_continue(
+  samples,
+  n_steps,
+  restartable = FALSE,
+  runner = NULL,
+  append = TRUE
+)
 }
 \arguments{
 \item{samples}{A \code{monty_samples} object created by
@@ -27,6 +33,9 @@ given, must be a \code{monty_runner} object such as
 use this argument to change the configuration of a runner, as
 well as the type of runner (e.g., changing the number of
 allocated cores).}
+
+\item{append}{Logical, indicating if we should append the results
+of the resumed chain together with the original chain.}
 }
 \value{
 A list of parameters and densities

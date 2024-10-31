@@ -425,3 +425,19 @@ test_that("can continue thinned chain, continues thinning", {
 
   expect_equal(res2b, res1)
 })
+
+
+test_that("can choose not to append when continuing samples", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100, 1, n_chains = 3)
+
+  set.seed(1)
+  res2a <- monty_sample(model, sampler, 60, 1, n_chains = 3,
+                          restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 40, append = FALSE)
+
+  expect_equal(res2b$pars, res1$pars[, 61:100, , drop = FALSE])
+})

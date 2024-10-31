@@ -155,14 +155,18 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 ##'   well as the type of runner (e.g., changing the number of
 ##'   allocated cores).
 ##'
+##' @param append Logical, indicating if we should append the results
+##'   of the resumed chain together with the original chain.
+##'
 ##' @inheritParams monty_sample
 ##'
 ##' @return A list of parameters and densities
 ##' @export
 monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
-                                  runner = NULL) {
+                                  runner = NULL, append = TRUE) {
   check_can_continue_samples(samples)
   assert_scalar_logical(restartable)
+  assert_scalar_logical(append)
 
   if (is.null(runner)) {
     runner <- samples$restart$runner
@@ -178,9 +182,14 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
 
   res <- runner$continue(state, model, sampler, steps)
-
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples <- append_chains(samples, combine_chains(res, observer), observer)
+  samples_new <- combine_chains(res, observer)
+
+  if (append) {
+    samples <- append_chains(samples, samples_new, observer)
+  } else {
+    samples <- samples_new
+  }
 
   if (restartable) {
     samples$restart <- restart_data(res, model, sampler, runner,

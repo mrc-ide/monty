@@ -4,7 +4,12 @@
 \alias{monty_sample_manual_collect}
 \title{Collect manually run samples}
 \usage{
-monty_sample_manual_collect(path, samples = NULL, restartable = FALSE)
+monty_sample_manual_collect(
+  path,
+  samples = NULL,
+  restartable = FALSE,
+  append = TRUE
+)
 }
 \arguments{
 \item{path}{The path used in the call to
