@@ -154,6 +154,7 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##' @title Collect manually run samples
 ##'
 ##' @inheritParams monty_sample_manual_run
+##' @inheritParams monty_sample_continue
 ##'
 ##' @param samples Samples from the parent run.  You need to provide
 ##'   these where `save_samples` was set to anything other than "value"

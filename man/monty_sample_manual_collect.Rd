@@ -22,6 +22,9 @@ these where \code{save_samples} was set to anything other than "value"}
 restartable.  This will add additional data to the chains
 object.  Note that this is controlled at chain collection and
 not creation.}
+
+\item{append}{Logical, indicating if we should append the results
+of the resumed chain together with the original chain.}
 }
 \value{
 A \code{monty_samples} object.
