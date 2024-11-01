@@ -133,13 +133,15 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
     state <- restart$state
     model <- restart$model
     sampler <- restart$sampler
-    res <- monty_continue_chain(state[[chain_id]], model, sampler, steps, pb)
+    res <- monty_continue_chain(chain_id, state[[chain_id]], model, sampler,
+                                steps, pb)
   } else {
     pars <- inputs$pars
     model <- inputs$model
     sampler <- inputs$sampler
     rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
-    res <- monty_run_chain(pars[, chain_id], model, sampler, steps, pb, rng)
+    res <- monty_run_chain(chain_id, pars[, chain_id], model, sampler, steps,
+                           pb, rng)
   }
 
   saveRDS(res, path$results)
