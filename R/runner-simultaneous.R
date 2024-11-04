@@ -36,7 +36,6 @@ monty_runner_simultaneous <- function(progress = NULL) {
     validate_suitable(model)
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
-    progress <- pb(seq_len(n_chains))
     rng_state <- lapply(rng, function(r) r$state())
     ## TODO: get the rng state back into 'rng' here, or (better) look
     ## at if we should just be using seed instead here perhaps?
@@ -44,17 +43,20 @@ monty_runner_simultaneous <- function(progress = NULL) {
     ## > for (i in seq_len(n_chains)) {
     ## >   rng[[i]]$set_state(rng_state[, i]) # not supported!
     ## > }
-    monty_run_chains_simultaneous(pars, model, sampler,
-                                  steps, progress, rng_state)
+    with_progress_fail_on_error(
+      pb,
+      monty_run_chains_simultaneous(pars, model, sampler, steps, pb$update,
+                                    rng_state))
   }
 
   continue <- function(state, model, sampler, steps) {
     validate_suitable(model)
     n_chains <- length(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
-    progress <- pb(seq_len(n_chains))
-    monty_continue_chains_simultaneous(state, model, sampler,
-                                       steps, progress)
+    with_progress_fail_on_error(
+      pb,
+      monty_continue_chains_simultaneous(state, model, sampler, steps,
+                                         pb$update))
   }
 
   monty_runner("Simultaneous",
@@ -131,7 +133,7 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
     history_pars[, i, ] <- chain_state$pars
     history_density[i, ] <- chain_state$density
     ## TODO: also allow observations here if enabled
-    progress(i)
+    progress(chain_id, i)
   }
 
   ## Pop the parameter names on last

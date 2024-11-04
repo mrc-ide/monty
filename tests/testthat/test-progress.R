@@ -1,4 +1,5 @@
 test_that("can select sensible values for progress", {
+  withr::local_envvar(TESTTHAT = FALSE)
   withr::with_options(list(monty.progress = TRUE), {
     expect_equal(show_progress_bar(FALSE), "none")
     expect_equal(show_progress_bar(TRUE), "fancy")
@@ -23,8 +24,8 @@ test_that("can select sensible values for progress", {
 
 
 test_that("null progress bar does nothing", {
-  p <- progress_bar(10, 10, FALSE)(1)
-  expect_silent(p(1))
+  p <- progress_bar(10, 10, FALSE)
+  expect_silent(p$update(1, 1))
 })
 
 
@@ -67,14 +68,13 @@ test_that("overall progress is empty if disabled", {
 
 
 test_that("can format fancy", {
-  f <- progress_bar_fancy(4, 100, TRUE)
-  g <- f(1)
+  f <- progress_bar_fancy(4, 100, TRUE)$update
   id <- environment(f)$id
   e <- environment(f)$e
 
   mock_update <- mockery::mock()
-  mockery::stub(g, "cli::cli_progress_update", mock_update)
-  g(5)
+  mockery::stub(f, "cli::cli_progress_update", mock_update)
+  f(1, 5)
   mockery::expect_called(mock_update, 1)
   expect_equal(mockery::mock_args(mock_update)[[1]],
                list(id = id, set = 5))
@@ -102,14 +102,13 @@ test_that("can create pb", {
 
 
 test_that("can create a simple progress bar", {
-  pb <- progress_bar_simple(104, 5)
-  p <- pb(1)
-  expect_message(p(10), "MONTY-PROGRESS: chain: 1, step: 10")
-  expect_no_message(p(11))
-  expect_message(p(36), "MONTY-PROGRESS: chain: 1, step: 36")
-  expect_message(p(102), "MONTY-PROGRESS: chain: 1, step: 102")
-  expect_no_message(p(103))
-  expect_message(p(104), "MONTY-PROGRESS: chain: 1, step: 104")
+  p <- progress_bar_simple(104, 5)$update
+  expect_message(p(1, 10), "MONTY-PROGRESS: chain: 1, step: 10")
+  expect_no_message(p(1, 11))
+  expect_message(p(1, 36), "MONTY-PROGRESS: chain: 1, step: 36")
+  expect_message(p(1, 102), "MONTY-PROGRESS: chain: 1, step: 102")
+  expect_no_message(p(1, 103))
+  expect_message(p(1, 104), "MONTY-PROGRESS: chain: 1, step: 104")
 })
 
 

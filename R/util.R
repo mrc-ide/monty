@@ -219,3 +219,8 @@ callr_safe_result <- function(rs, grace = 2, dt = 0.1) {
 last <- function(x) {
   x[[length(x)]]
 }
+
+
+is_testing <- function() {
+  identical(Sys.getenv("TESTTHAT"), "true")
+}

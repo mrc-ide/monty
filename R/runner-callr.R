@@ -71,7 +71,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
           }
         }
       }
-      env$progress(env$n_steps_progress)
+      env$progress$update(env$n_steps_progress)
     }
 
     all(env$status == "done")
@@ -87,12 +87,14 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     env$result_path <- rep(NA_character_, n_chains)
     env$n_steps <- steps$total
     env$n_steps_progress <- rep(0, n_chains)
-    env$progress <- pb(seq_len(n_chains))
+    env$progress <- pb
     for (session_id in seq_len(n_workers)) {
       launch(session_id)
     }
-    while (!step()) {
-    }
+    with_progress_fail_on_error(
+      pb,
+      while (!step()) {
+      })
 
     res <- lapply(env$result_path, readRDS)
     unlink(env$path, recursive = TRUE)
