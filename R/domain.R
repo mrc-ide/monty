@@ -45,7 +45,6 @@ monty_domain_expand <- function(domain, packer) {
   }
 
   ## Below here needs some actual work for grouped packers
-  assert_is(packer, "monty_packer")
   nms <- rownames(domain)
   if (is.null(nms)) {
     cli::cli_abort("Expected 'domain' to have row names", arg = "domain")
@@ -59,7 +58,14 @@ monty_domain_expand <- function(domain, packer) {
 
   nms_full <- packer$names()
   nms_map <- packer$unpack(nms_full)
-  nms_logical <- names(nms_map)
+
+  is_grouped <- inherits(packer, "monty_packer_grouped")
+
+  if (is_grouped) {
+    nms_logical <- unique(unlist(lapply(nms_map, names), FALSE, FALSE))
+  } else {
+    nms_logical <- names(nms_map)
+  }
 
   i <- nms %in% nms_logical & !(nms %in% intersect(nms_logical, nms_full))
   err <- !(i | nms %in% nms_full)
@@ -71,11 +77,20 @@ monty_domain_expand <- function(domain, packer) {
 
   if (any(i)) {
     nms_expand <- nms[i]
-    extra <- unname(domain)[
-      rep(which(i), lengths(nms_map[nms_expand])), , drop = FALSE]
-    rownames(extra) <- unlist(nms_map[nms_expand], FALSE, FALSE)
-    j <- !(rownames(extra) %in% rownames(domain))
-    domain <- rbind(extra[j, , drop = FALSE],
+    if (is_grouped) {
+      j <- unlist(lapply(unname(nms_map), function(el) {
+        nms_el <- intersect(nms, names(el))
+        set_names(rep(match(nms_el, nms), lengths(el[nms_el])),
+                  unlist(el[nms_el]))
+      }))
+    } else {
+      j <- set_names(rep(which(i), lengths(nms_map[nms_expand])),
+                     unlist(nms_map[nms_expand], FALSE, FALSE))
+    }
+    extra <- unname(domain)[j, , drop = FALSE]
+    rownames(extra) <- names(j)
+    keep <- !(rownames(extra) %in% rownames(domain))
+    domain <- rbind(extra[keep, , drop = FALSE],
                     domain[!i, , drop = FALSE])
   }
 
