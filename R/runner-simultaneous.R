@@ -128,6 +128,8 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   history_pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
   history_density <- matrix(NA_real_, n_steps_record, n_chains)
 
+  chain_id <- seq_len(n_chains)
+
   for (i in seq_len(steps$total)) {
     chain_state <- sampler$step(chain_state, model, rng)
     history_pars[, i, ] <- chain_state$pars
