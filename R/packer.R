@@ -651,3 +651,19 @@ pack_check_dimensions <- function(p, shape, fixed, process,
 
   ret
 }
+
+
+unpack_vector_process <- function(x, process) {
+  extra <- process(x)
+  err <- intersect(names(extra), names(x))
+  if (length(err) > 0) {
+    cli::cli_abort(
+      c("'process()' is trying to overwrite entries in your list",
+        i = paste("The 'process()' function should only create elements",
+                  "that are not already present in 'scalar', 'array'",
+                  "or 'fixed', as this lets us reverse the transformation",
+                  "process"),
+        x = "{?Entry/Entries} already present: {squote(err)}"))
+  }
+  c(x, extra)
+}
