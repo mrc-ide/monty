@@ -485,6 +485,6 @@ test_that("can use samples as initial conditions", {
   res1 <- monty_sample(m, sampler, 50, initial, n_chains = 2)
   res2 <- monty_sample(m, sampler, 20, res1, n_chains = 3)
 
-  expect_equal(dim(res1$pars), c(2, 20, 2))
+  expect_equal(dim(res1$pars), c(2, 50, 2))
   expect_equal(dim(res2$pars), c(2, 20, 3))
 })
