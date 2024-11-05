@@ -290,7 +290,8 @@ test_that("can combine models that allow multiple parameters", {
 
 
 test_that("Don't allow multiple parameters where either model lacks support", {
-  m <- ex_sir_filter_likelihood()
+  m <- ex_simple_gamma1()
+  m$properties$allow_multiple_parameters <- FALSE
   p <- monty_dsl({
     beta ~ Gamma(shape = 1, rate = 1 / 0.5)
     gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
@@ -300,10 +301,10 @@ test_that("Don't allow multiple parameters where either model lacks support", {
 
   properties <- monty_model_properties(allow_multiple_parameters = FALSE)
   expect_false(
-    monty_model_combine(m, p, properties)$allow_multiple_parmeters)
+    monty_model_combine(m, p, properties)$properties$allow_multiple_parameters)
   properties <- monty_model_properties(allow_multiple_parameters = NULL)
   expect_false(
-    monty_model_combine(m, p, properties)$allow_multiple_parmeters)
+    monty_model_combine(m, p, properties)$properties$allow_multiple_parameters)
   properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   expect_error(
     monty_model_combine(m, p, properties),
