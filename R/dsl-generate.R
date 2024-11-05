@@ -17,7 +17,7 @@ dsl_generate <- function(dat) {
   properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   monty_model(
     list(parameters = dat$parameters,
-         density = vectorise_over_parameters(density),
+         density = density,
          gradient = gradient,
          domain = domain,
          direct_sample = direct_sample),
@@ -31,7 +31,8 @@ dsl_generate_density <- function(dat, env, meta) {
             call("<-", meta[["density"]], quote(numeric())),
             exprs,
             call("sum", meta[["density"]]))
-  as_function(alist(x = ), body, env)
+  vectorise_density_over_parameters(
+    as_function(alist(x = ), body, env))
 }
 
 
@@ -50,7 +51,9 @@ dsl_generate_gradient <- function(dat, env, meta) {
   body <- c(call("<-", meta[["data"]], quote(packer$unpack(x))),
             unname(eqs),
             eq_return)
-  as_function(alist(x = ), body, env)
+  vectorise_gradient_over_parameters(
+    as_function(alist(x = ), body, env),
+    length(dat$parameters))
 }
 
 
@@ -166,8 +169,26 @@ fold_c <- function(x) {
 ## until the rest of the DSL is written, especially arrays.  For
 ## simple models with scalars we should be able to just pass through
 ## multiple parameters at once.
-vectorise_over_parameters <- function(f) {
-  function(p) {
-    if (is.matrix(p)) vnapply(seq_len(ncol(p)), function(i) f(p[, i])) else f(p)
+vectorise_density_over_parameters <- function(density) {
+  function(x) {
+    if (is.matrix(x)) {
+      vnapply(seq_len(ncol(x)), function(i) density(x[, i]))
+    } else {
+      density(x)
+    }
+  }
+}
+
+vectorise_gradient_over_parameters <- function(gradient, len) {
+  function(x) {
+    if (is.matrix(x)) {
+      g <- vapply(seq_len(ncol(x)), function(i) gradient(x[, i]), numeric(len))
+      if (is.null(dim(g))) {
+        dim(g) <- c(len, ncol(x))
+      }
+      g
+    } else {
+      gradient(x)
+    }
   }
 }

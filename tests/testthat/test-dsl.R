@@ -161,4 +161,27 @@ test_that("can evaluate dsl model densities for multiple parameters", {
   x <- matrix(runif(10), 2, 5)
   expect_equal(m$density(x),
                dnorm(x[1, ], 0, 1, TRUE) + dexp(x[2, ], 2, TRUE))
+  expect_equal(
+    m$gradient(x),
+    apply(x, 2, m$gradient))
+  expect_equal(
+    m$gradient(x[, 1, drop = FALSE]),
+    cbind(m$gradient(x[, 1])))
+})
+
+
+test_that("gradient calculation correct single-parameter model", {
+  m <- monty_dsl({
+    a ~ Normal(0, 1)
+  })
+  expect_true(m$properties$allow_multiple_parameters)
+  x <- matrix(runif(5), 1, 5)
+  expect_equal(m$density(x),
+               dnorm(x[1, ], 0, 1, TRUE))
+  expect_equal(
+    m$gradient(x),
+    rbind(apply(x, 2, m$gradient)))
+  expect_equal(
+    m$gradient(x[, 1, drop = FALSE]),
+    cbind(m$gradient(x[, 1])))
 })
