@@ -41,7 +41,11 @@ the process calling \code{monty_sample_manual_prepare} should outlive
 running all sampling.}
 
 \item{initial}{Optionally, initial parameter values for the
-sampling.  If not given, we sample from the model (or its prior).}
+sampling.  If not given, we sample from the model (or its
+prior).  Alternatively, you can provide an \code{monty_samples}
+object here -- the result of a previous call to this function --
+and we will sample some starting points from the final portion
+of the chains.}
 
 \item{n_chains}{Number of chains to run.  The default is to run a
 single chain, but you will likely want to run more.}

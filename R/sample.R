@@ -20,7 +20,11 @@
 ##' @param n_steps The number of steps to run the sampler for.
 ##'
 ##' @param initial Optionally, initial parameter values for the
-##'   sampling.  If not given, we sample from the model (or its prior).
+##'   sampling.  If not given, we sample from the model (or its
+##'   prior).  Alternatively, you can provide an `monty_samples`
+##'   object here -- the result of a previous call to this function --
+##'   and we will sample some starting points from the final portion
+##'   of the chains.
 ##'
 ##' @param n_chains Number of chains to run.  The default is to run a
 ##'   single chain, but you will likely want to run more.
@@ -249,7 +253,27 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
     ## sample from the posterior!
     initial <- lapply(rng, function(r) direct_sample_within_domain(model, r))
   }
-  if (is.list(initial)) {
+  if (inherits(initial, "monty_samples")) {
+    pars <- initial$pars
+    if (nrow(pars) != n_pars) {
+      cli::cli_abort(
+        c("Unexpected parameter length in 'initial'; expected {n_pars}",
+          i = paste("Your model has {n_pars} parameter{?s}, so the 'initial'",
+                    "object must have this many rows within its 'pars'",
+                    "element, but yours had {nrow(pars)} row{?s}")),
+        arg = "initial", call = call)
+    }
+    ## Heuristic here; sample from the last 5% of the chain or 20
+    ## points, whichever is smaller - hopefully a reasonable
+    ## heuristic.  Then sample
+    n_samples <- ncol(pars)
+    n_keep <- min(ceiling(n_samples * 0.05), 20)
+    initial <- pars[, seq(to = n_samples, length.out = n_keep), , drop = FALSE]
+    n_keep <- prod(dim(initial)[-1])
+    dim(initial) <- c(nrow(initial), n_keep)
+    i <- ceiling(vnapply(rng, function(r) r$random_real(1)) * n_keep)
+    initial <- initial[, i, drop = FALSE]
+  } else if (is.list(initial)) {
     if (length(initial) != n_chains) {
       cli::cli_abort(
         c(paste("Unexpected length for list 'initial'",

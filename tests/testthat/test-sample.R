@@ -441,3 +441,19 @@ test_that("can choose not to append when continuing samples", {
 
   expect_equal(res2b$pars, res1$pars[, 61:100, , drop = FALSE])
 })
+
+
+test_that("can use samples as initial conditions", {
+  set.seed(1)
+  m <- ex_sir_filter_posterior(n_particles = 20)
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
+  initial <- c(0.2, 0.1)
+
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 50, initial, n_chains = 2)
+  res2 <- monty_sample(m, sampler, 20, res1, n_chains = 3)
+
+  expect_equal(dim(res1$pars), c(2, 20, 2))
+  expect_equal(dim(res2$pars), c(2, 20, 3))
+})
