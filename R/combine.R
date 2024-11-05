@@ -89,9 +89,13 @@ monty_model_combine <- function(a, b, properties = NULL,
   require_monty_model(b)
   properties <- validate_model_properties(properties, call)
 
+  properties$allow_multiple_parameters <-
+    model_combine_allow_multiple_parameters(a, b, properties)
+
   parameters <- union(a$parameters, b$parameters)
   domain <- model_combine_domain(a, b, parameters)
-  density <- model_combine_density(a, b, parameters)
+  density <- model_combine_density(a, b, parameters,
+                                   properties$allow_multiple_parameters)
 
   gradient <- model_combine_gradient(
     a, b, parameters, properties, call)
@@ -101,6 +105,7 @@ monty_model_combine <- function(a, b, properties = NULL,
     a, b, properties)
   observer <- model_combine_observer(
     a, b, parameters, properties, name_a, name_b, call)
+
 
   monty_model(
     list(model = list(a, b),
@@ -146,11 +151,22 @@ model_combine_domain <- function(a, b, parameters) {
 }
 
 
-model_combine_density <- function(a, b, parameters) {
+model_combine_density <- function(a, b, parameters, allow_multiple_parameters) {
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
-  function(x, ...) {
-    a$density(x[i_a], ...) + b$density(x[i_b], ...)
+  if (allow_multiple_parameters) {
+    function(x, ...) {
+      if (is.matrix(x)) {
+        a$density(x[i_a, , drop = FALSE], ...) +
+          b$density(x[i_b, , drop = FALSE], ...)
+      } else {
+        a$density(x[i_a], ...) + b$density(x[i_b], ...)
+      }
+    }
+  } else {
+    function(x, ...) {
+      a$density(x[i_a], ...) + b$density(x[i_b], ...)
+    }
   }
 }
 
@@ -310,4 +326,25 @@ model_combine_observer <- function(a, b, parameters, properties,
 
   model <- if (a$properties$has_observer) a else b
   model$observer
+}
+
+
+model_combine_allow_multiple_parameters <- function(a, b, properties,
+                                                    call = parent.frame()) {
+  if (isFALSE(properties$allow_multiple_parameters)) {
+    return(FALSE)
+  }
+  possible <- a$properties$allow_multiple_parameters &&
+    b$properties$allow_multiple_parameters
+  if (possible) {
+    return(TRUE)
+  }
+  required <- isTRUE(properties$allow_multiple_parameters)
+  if (!required) {
+    return(FALSE)
+  }
+  cli::cli_abort(
+    paste("Can't specify 'allow_multiple_parameters = TRUE' as this is",
+          "not supported by both of your models"),
+    call = call)
 }

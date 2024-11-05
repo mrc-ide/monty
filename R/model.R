@@ -58,20 +58,19 @@ monty_model_properties <- function(has_gradient = NULL,
                                    is_stochastic = NULL,
                                    has_parameter_groups = NULL,
                                    has_observer = NULL,
-                                   allow_multiple_parameters = FALSE) {
+                                   allow_multiple_parameters = NULL) {
   assert_scalar_logical(has_gradient, allow_null = TRUE)
   assert_scalar_logical(has_direct_sample, allow_null = TRUE)
   assert_scalar_logical(is_stochastic, allow_null = TRUE)
   assert_scalar_logical(has_parameter_groups, allow_null = TRUE)
   assert_scalar_logical(has_observer, allow_null = TRUE)
-  assert_scalar_logical(allow_multiple_parameters)
+  assert_scalar_logical(allow_multiple_parameters, allow_null = TRUE)
 
   ret <- list(has_gradient = has_gradient,
               has_direct_sample = has_direct_sample,
               is_stochastic = is_stochastic,
               has_parameter_groups = has_parameter_groups,
               has_observer = has_observer,
-              ## TODO: I am not convinced on this name
               allow_multiple_parameters = allow_multiple_parameters)
   class(ret) <- "monty_model_properties"
   ret
@@ -207,6 +206,8 @@ monty_model <- function(model, properties = NULL) {
   properties$is_stochastic <- !is.null(rng_state$set)
   properties$has_parameter_groups <- !is.null(parameter_groups)
   properties$has_observer <- !is.null(observer)
+  properties$allow_multiple_parameters <-
+    properties$allow_multiple_parameters %||% FALSE
 
   ret <- list(model = model,
               parameters = parameters,
@@ -619,7 +620,8 @@ monty_model_properties_str <- function(properties) {
   c(if (properties$has_gradient) "can compute gradients",
     if (properties$has_direct_sample) "can be directly sampled from",
     if (properties$is_stochastic) "is stochastic",
-    if (properties$has_observer) "has an observer")
+    if (properties$has_observer) "has an observer",
+    if (properties$allow_multiple_parameters) "accepts multiple parameters")
 }
 
 

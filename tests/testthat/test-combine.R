@@ -270,3 +270,42 @@ test_that("Can't create observer where both models have them", {
   res <- monty_model_combine(a, a, properties = properties)
   expect_false(res$properties$has_observer)
 })
+
+
+test_that("can combine models that allow multiple parameters", {
+  m1 <- monty_dsl({
+    a ~ Normal(0, 1)
+  })
+  m2 <- monty_dsl({
+    a ~ Normal(0, 2)
+    b ~ Normal(0, 3)
+  })
+  m <- m1 + m2
+  expect_true(m$properties$allow_multiple_parameters)
+  x <- matrix(rnorm(6), 2, 3)
+  expect_equal(
+    m$density(x),
+    m1$density(x[1, , drop = FALSE]) + m2$density(x))
+})
+
+
+test_that("Don't allow multiple parameters where either model lacks support", {
+  m <- ex_sir_filter_likelihood()
+  p <- monty_dsl({
+    beta ~ Gamma(shape = 1, rate = 1 / 0.5)
+    gamma ~ Gamma(shape = 1, rate = 1 / 0.5)
+  })
+  expect_false((m + p)$properties$allow_multiple_parameters)
+  expect_false((m + m)$properties$allow_multiple_parameters)
+
+  properties <- monty_model_properties(allow_multiple_parameters = FALSE)
+  expect_false(
+    monty_model_combine(m, p, properties)$allow_multiple_parmeters)
+  properties <- monty_model_properties(allow_multiple_parameters = NULL)
+  expect_false(
+    monty_model_combine(m, p, properties)$allow_multiple_parmeters)
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
+  expect_error(
+    monty_model_combine(m, p, properties),
+    "Can't specify 'allow_multiple_parameters = TRUE' as this is not")
+})
