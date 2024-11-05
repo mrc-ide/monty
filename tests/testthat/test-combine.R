@@ -286,6 +286,16 @@ test_that("can combine models that allow multiple parameters", {
   expect_equal(
     m$density(x),
     m1$density(x[1, , drop = FALSE]) + m2$density(x))
+  expect_equal(
+    m$density(x[, 1]),
+    m1$density(x[1, 1]) + m2$density(x[, 1]))
+
+  expect_equal(
+    m$gradient(x),
+    rbind(m1$gradient(x[1, , drop = FALSE]), 0) + m2$gradient(x))
+  expect_equal(
+    m$gradient(x[, 1]),
+    c(m1$gradient(x[1, 1]), 0) + m2$gradient(x[, 1]))
 })
 
 

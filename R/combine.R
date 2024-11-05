@@ -245,11 +245,29 @@ model_combine_gradient <- function(a, b, parameters, properties, call = NULL) {
   n_pars <- length(parameters)
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
-  function(x, ...) {
+
+  gradient_vector <- function(x, ...) {
     ret <- numeric(n_pars)
     ret[i_a] <- ret[i_a] + a$gradient(x[i_a], ...)
     ret[i_b] <- ret[i_b] + b$gradient(x[i_b], ...)
     ret
+  }
+
+  if (properties$allow_multiple_parameters) {
+    function(x, ...) {
+      if (is.matrix(x)) {
+        ret <- matrix(0, n_pars, ncol(x))
+        ret[i_a, ] <-
+          ret[i_a, , drop = FALSE] + a$gradient(x[i_a, , drop = FALSE], ...)
+        ret[i_b, ] <-
+          ret[i_b, , drop = FALSE] + b$gradient(x[i_b, , drop = FALSE], ...)
+        ret
+      } else {
+        gradient_vector(x, ...)
+      }
+    }
+  } else {
+    gradient_vector
   }
 }
 
