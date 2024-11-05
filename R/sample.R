@@ -260,7 +260,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
     ## Heuristic here; sample from the last 5% of the chain or 20
     ## points, whichever is smaller - hopefully a reasonable
     ## heuristic.  Then sample
-    pars <- tail_and_pool(samples$pars, 0.05, 20)
+    pars <- tail_and_pool(initial$pars, 0.05, 20)
     if (nrow(pars) != n_pars) {
       cli::cli_abort(
         c(paste("Unexpected parameter length in 'monty_samples' object",
