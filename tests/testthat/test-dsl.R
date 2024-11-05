@@ -150,3 +150,15 @@ test_that("can use fixed data in dsl", {
   }, fixed = list(mu = 1, sd = 2))
   expect_equal(m$density(0), dnorm(0, 1, 2, log = TRUE))
 })
+
+
+test_that("can evaluate dsl model densities for multiple parameters", {
+  m <- monty_dsl({
+    a ~ Normal(0, 1)
+    b ~ Exponential(2)
+  })
+  expect_true(m$properties$allow_multiple_parameters)
+  x <- matrix(runif(10), 2, 5)
+  expect_equal(m$density(x),
+               dnorm(x[1, ], 0, 1, TRUE) + dexp(x[2, ], 2, TRUE))
+})

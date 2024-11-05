@@ -14,12 +14,14 @@ dsl_generate <- function(dat) {
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
   gradient <- dsl_generate_gradient(dat, env, meta)
   domain <- dsl_generate_domain(dat, meta)
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   monty_model(
     list(parameters = dat$parameters,
-         density = density,
+         density = vectorise_over_parameters(density),
          gradient = gradient,
          domain = domain,
-         direct_sample = direct_sample))
+         direct_sample = direct_sample),
+    properties)
 }
 
 
@@ -157,4 +159,15 @@ dsl_static_eval <- function(expr, env) {
 
 fold_c <- function(x) {
   if (length(x) == 1) x[[1]] else as.call(c(quote(c), x))
+}
+
+
+## We can actually do much better than this, but it feels best to wait
+## until the rest of the DSL is written, especially arrays.  For
+## simple models with scalars we should be able to just pass through
+## multiple parameters at once.
+vectorise_over_parameters <- function(f) {
+  function(p) {
+    if (is.matrix(p)) vnapply(seq_len(ncol(p)), function(i) f(p[, i])) else f(p)
+  }
 }
