@@ -254,25 +254,21 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
     initial <- lapply(rng, function(r) direct_sample_within_domain(model, r))
   }
   if (inherits(initial, "monty_samples")) {
-    pars <- initial$pars
+    ## Heuristic here; sample from the last 5% of the chain or 20
+    ## points, whichever is smaller - hopefully a reasonable
+    ## heuristic.  Then sample
+    pars <- tail_and_pool(samples$pars, 0.05, 20)
     if (nrow(pars) != n_pars) {
       cli::cli_abort(
-        c("Unexpected parameter length in 'initial'; expected {n_pars}",
+        c(paste("Unexpected parameter length in 'monty_samples' object",
+                "'initial'; expected {n_pars}"),
           i = paste("Your model has {n_pars} parameter{?s}, so the 'initial'",
                     "object must have this many rows within its 'pars'",
                     "element, but yours had {nrow(pars)} row{?s}")),
         arg = "initial", call = call)
     }
-    ## Heuristic here; sample from the last 5% of the chain or 20
-    ## points, whichever is smaller - hopefully a reasonable
-    ## heuristic.  Then sample
-    n_samples <- ncol(pars)
-    n_keep <- min(ceiling(n_samples * 0.05), 20)
-    initial <- pars[, seq(to = n_samples, length.out = n_keep), , drop = FALSE]
-    n_keep <- prod(dim(initial)[-1])
-    dim(initial) <- c(nrow(initial), n_keep)
-    i <- ceiling(vnapply(rng, function(r) r$random_real(1)) * n_keep)
-    initial <- initial[, i, drop = FALSE]
+    i <- ceiling(vnapply(rng, function(r) r$random_real(1)) * ncol(pars))
+    initial <- pars[, i, drop = FALSE]
   } else if (is.list(initial)) {
     if (length(initial) != n_chains) {
       cli::cli_abort(
@@ -493,5 +489,14 @@ monty_sample_steps <- function(n_steps, burnin = NULL, thinning_factor = NULL,
               burnin = burnin,
               thinning_factor = thinning_factor)
   class(ret) <- "monty_sample_steps"
+  ret
+}
+
+
+tail_and_pool <- function(pars, p, n) {
+  n_samples <- ncol(pars)
+  n_keep <- min(ceiling(n_samples * p), n)
+  ret <- pars[, seq(to = n_samples, length.out = n_keep), , drop = FALSE]
+  dim(ret) <- c(nrow(ret), prod(dim(ret)[-1]))
   ret
 }
