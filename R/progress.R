@@ -11,7 +11,7 @@ progress_bar <- function(n_chains, n_steps, progress, show_overall,
 
 show_progress_bar <- function(progress, call = NULL) {
   if (is.null(progress)) {
-    progress <- getOption("monty.progress", TRUE)
+    progress <- getOption("monty.progress", !is_testing())
   }
   ## Errors here are not great if we get this from an option, probably
   ## needs its own error path.
@@ -33,48 +33,64 @@ show_progress_bar <- function(progress, call = NULL) {
 ##
 ## These are currently not tuneable from user-facing code.
 progress_bar_simple <- function(n_steps, every_s = 1, min_updates = 20) {
-  function(chain_index) {
-    env <- new.env(parent = emptyenv())
-    env$t_next <- Sys.time()
-    freq <- ceiling(n_steps / min_updates)
-    function(at) {
-      now <- Sys.time()
-      show_progress <- at == n_steps || at %% freq == 0 || now > env$t_next
-      if (show_progress) {
-        env$t_next <- now + every_s
-        message(sprintf("MONTY-PROGRESS: chain: %s, step: %s",
-                        chain_index, at))
-      }
+  env <- new.env(parent = emptyenv())
+  env$t_next <- Sys.time()
+  freq <- ceiling(n_steps / min_updates)
+  update <- function(chain_id, at) {
+    now <- Sys.time()
+    show_progress <- at == n_steps || at %% freq == 0 || now > env$t_next
+    if (show_progress) {
+      env$t_next <- now + every_s
+      message(sprintf("MONTY-PROGRESS: chain: %s, step: %s",
+                      chain_id, at))
     }
   }
+  list(update = update, fail = fail_no_action)
 }
 
 
 progress_bar_fancy <- function(n_chains, n_steps, show_overall,
                                single_chain = FALSE) {
+  ## We're expecting to take a while, so we show immediately, if enabled:
+  oo <- options(cli.progress_show_after = 0)
+  on.exit(options(oo))
+
   e <- new.env()
   e$n <- rep(0, n_chains)
   overall <- progress_overall(n_chains, n_steps, show_overall, single_chain)
   fmt <- paste("Sampling {overall(e$n)} {cli::pb_bar} |",
                "{cli::pb_percent} ETA: {cli::pb_eta}")
+  fmt_done <- paste(
+    "{cli::col_green(cli::symbol$tick)} Sampled {cli::pb_total} steps",
+    "across {n_chains} chains in {cli::pb_elapsed}")
+  fmt_failed <- paste(
+    "{cli::col_red(cli::symbol$cross)} Sampling stopped at {cli::pb_current}",
+    "step{?s} after {cli::pb_elapsed}")
   n_steps_total <- if (single_chain) n_steps else n_chains * n_steps
   id <- cli::cli_progress_bar(
     total = n_steps_total,
     format = fmt,
+    format_done = fmt_done,
+    format_failed = fmt_failed,
+    clear = FALSE,
     .auto_close = FALSE)
 
-  function(chain_index) {
-    function(at) {
-      ## Avoid writing into a closed progress bar, it will cause an
-      ## error.  We do this by checking to see if progress has changed
-      ## from last time we tried updating.
-      changed <- any(e$n[chain_index] != at, na.rm = TRUE)
-      if (changed) {
-        e$n[chain_index] <- at
-        cli::cli_progress_update(id = id, set = sum(e$n))
-      }
+  update <- function(chain_id, at) {
+    ## Avoid writing into a closed progress bar, it will cause an
+    ## error.  We do this by checking to see if progress has changed
+    ## from last time we tried updating.
+    changed <- any(e$n[chain_id] != at, na.rm = TRUE)
+    if (changed) {
+      e$n[chain_id] <- at
+      cli::cli_progress_update(id = id, set = sum(e$n))
     }
   }
+
+  fail <- function() {
+    cli::cli_progress_done(id, result = "failed")
+  }
+
+  list(update = update, fail = fail)
 }
 
 
@@ -93,10 +109,13 @@ parse_progress_bar_simple <- function(txt) {
 
 ## Dummy version that can be used where no progress bar is wanted.
 progress_bar_none <- function(...) {
-  function(chain_index) {
-    function(at) {
-    }
+  update <- function(chain_id, at) {
   }
+  list(update = update, fail = fail_no_action)
+}
+
+
+fail_no_action <- function() {
 }
 
 
@@ -121,4 +140,18 @@ progress_overall <- function(n_chains, n_steps, show_overall, single_chain) {
     ret[i_running] <- col_running(ret[i_running])
     paste0(c("[", ret, "]"), collapse = "")
   }
+}
+
+
+## Sets up some erorr handlers that close out the progress bar where
+## we exit uncleanly; this works for everything other than closing out
+## progress bars that were exited from a browser call, which we can't
+## really help with.  If we don't do this then an ugly partial
+## progress bar will be printed a the completion of every subsequent
+## progress bar, because we use .auto_close = FALSE.
+with_progress_fail_on_error <- function(progress, code) {
+  withCallingHandlers(
+    code,
+    error = function(e) progress$fail(),
+    interrupt = function(e) progress$fail())
 }

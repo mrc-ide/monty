@@ -10,11 +10,8 @@ monty_runner_serial(progress = NULL)
 \item{progress}{Optional logical, indicating if we should print a
 progress bar while running.  If \code{NULL}, we use the value of the
 option \code{monty.progress} if set, otherwise we show the progress
-bar (as it is typically wanted).  The progress bar itself
-responds to cli's options; in particular
-\code{cli.progress_show_after} and \code{cli.progress_clear} will affect
-your experience.  Alternatively, you can provide a string
-indicating the progress bar type.  Options are \code{fancy}
+bar (as it is typically wanted).  Alternatively, you can provide
+a string indicating the progress bar type.  Options are \code{fancy}
 (equivalent to \code{TRUE}), \code{none} (equivalent to \code{FALSE}) and
 \code{simple} (a very simple text-mode progress indicator designed
 play nicely with logging; it does not use special codes to clear

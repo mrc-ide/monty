@@ -127,20 +127,25 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
   is_continue <- is.list(restart)
 
   pb <- progress_bar(n_chains, steps$total, progress,
-                     show_overall = FALSE, single_chain = TRUE)(chain_id)
+                     show_overall = FALSE, single_chain = TRUE)
 
-  if (is_continue) {
-    state <- restart$state
-    model <- restart$model
-    sampler <- restart$sampler
-    res <- monty_continue_chain(state[[chain_id]], model, sampler, steps, pb)
-  } else {
-    pars <- inputs$pars
-    model <- inputs$model
-    sampler <- inputs$sampler
-    rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
-    res <- monty_run_chain(pars[, chain_id], model, sampler, steps, pb, rng)
-  }
+  with_progress_fail_on_error(
+    pb,
+    if (is_continue) {
+      state <- restart$state
+      model <- restart$model
+      sampler <- restart$sampler
+      res <- monty_continue_chain(chain_id, state[[chain_id]], model, sampler,
+                                  steps, pb$update)
+    } else {
+      pars <- inputs$pars
+      model <- inputs$model
+      sampler <- inputs$sampler
+      rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
+      res <- monty_run_chain(chain_id, pars[, chain_id], model, sampler, steps,
+                             pb$update, rng)
+    }
+  )
 
   saveRDS(res, path$results)
   invisible(path$results)

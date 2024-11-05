@@ -7,11 +7,8 @@
 ##' @param progress Optional logical, indicating if we should print a
 ##'   progress bar while running.  If `NULL`, we use the value of the
 ##'   option `monty.progress` if set, otherwise we show the progress
-##'   bar (as it is typically wanted).  The progress bar itself
-##'   responds to cli's options; in particular
-##'   `cli.progress_show_after` and `cli.progress_clear` will affect
-##'   your experience.  Alternatively, you can provide a string
-##'   indicating the progress bar type.  Options are `fancy`
+##'   bar (as it is typically wanted).  Alternatively, you can provide
+##'   a string indicating the progress bar type.  Options are `fancy`
 ##'   (equivalent to `TRUE`), `none` (equivalent to `FALSE`) and
 ##'   `simple` (a very simple text-mode progress indicator designed
 ##'   play nicely with logging; it does not use special codes to clear
@@ -25,22 +22,26 @@ monty_runner_serial <- function(progress = NULL) {
   run <- function(pars, model, sampler, steps, rng) {
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
-    lapply(
-      seq_along(rng),
-      function(i) {
-        monty_run_chain(pars[, i], model, sampler, steps,
-                        pb(i), rng[[i]])
-      })
+    with_progress_fail_on_error(
+      pb,
+      lapply(
+        seq_along(rng),
+        function(i) {
+          monty_run_chain(i, pars[, i], model, sampler, steps,
+                          pb$update, rng[[i]])
+        }))
   }
 
   continue <- function(state, model, sampler, steps) {
     n_chains <- length(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
-    lapply(
-      seq_along(state),
-      function(i) {
-        monty_continue_chain(state[[i]], model, sampler, steps, pb(i))
-      })
+    with_progress_fail_on_error(
+      pb,
+      lapply(
+        seq_along(state),
+        function(i) {
+          monty_continue_chain(i, state[[i]], model, sampler, steps, pb$update)
+        }))
   }
 
   monty_runner("Serial",
@@ -130,10 +131,11 @@ monty_runner_parallel <- function(n_workers) {
     args <- list(model = model,
                  sampler = sampler,
                  steps = steps,
-                 progress = function(i) NULL)
+                 progress = progress_bar_none()$update)
     parallel::clusterMap(
       cl,
       monty_continue_chain,
+      seq_len(n_chains),
       state,
       MoreArgs = args)
   }
@@ -145,14 +147,15 @@ monty_runner_parallel <- function(n_workers) {
 }
 
 
-monty_run_chain_parallel <- function(pars, model, sampler, steps, rng) {
+monty_run_chain_parallel <- function(chain_id, pars, model, sampler, steps,
+                                     rng) {
   rng <- monty_rng$new(rng)
-  progress <- function(i) NULL
-  monty_run_chain(pars, model, sampler, steps, progress, rng)
+  progress <- progress_bar_none()$update
+  monty_run_chain(chain_id, pars, model, sampler, steps, progress, rng)
 }
 
 
-monty_run_chain <- function(pars, model, sampler, steps,
+monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
   chain_state <- sampler$initialise(pars, model, rng)
@@ -177,24 +180,25 @@ monty_run_chain <- function(pars, model, sampler, steps,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  monty_run_chain2(chain_state, model, sampler, steps, progress,
+  monty_run_chain2(chain_id, chain_state, model, sampler, steps, progress,
                    rng, r_rng_state)
 }
 
 
-monty_continue_chain <- function(state, model, sampler, steps, progress) {
+monty_continue_chain <- function(chain_id, state, model, sampler, steps,
+                                 progress) {
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng$new(seed = state$rng)
   sampler$set_internal_state(state$sampler)
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
-  monty_run_chain2(state$chain, model, sampler, steps, progress,
+  monty_run_chain2(chain_id, state$chain, model, sampler, steps, progress,
                    rng, r_rng_state)
 }
 
 
-monty_run_chain2 <- function(chain_state, model, sampler, steps,
+monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
                              progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
@@ -221,7 +225,7 @@ monty_run_chain2 <- function(chain_state, model, sampler, steps,
       }
       j <- j + 1L
     }
-    progress(i)
+    progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
