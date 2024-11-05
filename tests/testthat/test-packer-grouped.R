@@ -241,3 +241,10 @@ test_that("can used process with grouped packer", {
                list(a = list(x = 1, y = 2, z = 3),
                     b = list(x = 3, y = 4, z = 7)))
 })
+
+
+test_that("can used process with grouped packer", {
+  expect_error(
+    monty_packer_grouped(c("a", "b"), c("x", "y"), process = TRUE),
+    "Expected a function for 'process'")
+})

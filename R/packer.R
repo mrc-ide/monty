@@ -505,23 +505,7 @@ unpack_vector <- function(x, nms, len, idx, shape, fixed, process) {
     res <- c(res, fixed)
   }
   if (!is.null(process)) {
-    extra <- process(res)
-    err <- intersect(names(extra), names(res))
-    if (length(err) > 0) {
-      cli::cli_abort(
-        c("'process()' is trying to overwrite entries in your list",
-          i = paste("The 'process()' function should only create elements",
-                    "that are not already present in 'scalar', 'array'",
-                    "or 'fixed', as this lets us reverse the transformation",
-                    "process"),
-          x = "{?Entry/Entries} already present: {squote(err)}"))
-    }
-    ## TODO: check names?
-    ##
-    ## TODO: this fails the multi-region use - but I think that we
-    ## might want a different interface there anyway as we'll
-    ## struggle to hold all the options here.
-    res <- c(res, extra)
+    res <- unpack_vector_process(res, process)
   }
   res
 }
