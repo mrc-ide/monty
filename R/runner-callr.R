@@ -71,7 +71,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
           }
         }
       }
-      env$progress$update(res$chain_id, env$n_steps_progress)
+      env$progress$update(env$chain_ids, env$n_steps_progress)
     }
 
     all(env$status == "done")
@@ -84,6 +84,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     env$sessions <- vector("list", n_workers)
     env$target <- rep(NA_integer_, n_workers)
     env$status <- rep("pending", n_chains)
+    env$chain_ids <- seq_len(n_chains)
     env$result_path <- rep(NA_character_, n_chains)
     env$n_steps <- steps$total
     env$n_steps_progress <- rep(0, n_chains)
