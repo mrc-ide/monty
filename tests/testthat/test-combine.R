@@ -320,3 +320,31 @@ test_that("Don't allow multiple parameters where either model lacks support", {
     monty_model_combine(m, p, properties),
     "Can't specify 'allow_multiple_parameters = TRUE' as this is not")
 })
+
+
+test_that("can split combined models", {
+  a <- monty_model(list(parameters = "x",
+                        density = function(x) dnorm(x, log = TRUE)))
+  b <- monty_model(list(parameters = "x",
+                        density = function(x) dexp(x, log = TRUE)))
+  ab <- a + b
+  expect_equal(ab$split(), list(a, b))
+  expect_null(a$split)
+})
+
+
+test_that("can split prior from likelihood", {
+  a <- monty_dsl({
+    x ~ Normal(0, 1)
+  })
+  b <- monty_model(list(parameters = "x",
+                        density = function(x) dexp(x, log = TRUE)))
+  expect_equal(split_prior(a + b), list(prior = a, likelihood = b))
+  expect_equal(split_prior(b + a), list(prior = a, likelihood = b))
+  expect_error(split_prior(a + a),
+               "Either model component could be the prior")
+  expect_error(split_prior(b + b),
+               "Neither model component looks like a prior")
+  expect_error(split_prior(a),
+               "Cannot split prior from 'a' as it is not a combined model")
+})
