@@ -30,3 +30,13 @@ test_that("can continue parallel runs", {
 
   expect_equal(res2b, res1b)
 })
+
+
+test_that("can produce progress bars", {
+  m <- monty_example("banana")
+  s <- monty_sampler_random_walk(vcv = diag(2) * 0.02)
+  r <- monty_runner_callr(2, progress = TRUE)
+  res <- evaluate_promise(monty_sample(m, s, 100, n_chains = 4, runner = r))
+  expect_match(res$messages, "Sampled 400 steps across 4 chains in",
+               all = FALSE)
+})
