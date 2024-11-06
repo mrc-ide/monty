@@ -120,6 +120,37 @@ test_that("validate that initial have correct size for vector inputs", {
 })
 
 
+test_that("sample from previous samples", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  set.seed(1)
+  samples <- monty_sample(model, sampler, 100, 1, n_chains = 2)
+  r1 <- initial_rng(6, seed = 42)
+
+  initial <- initial_parameters(samples, model, r1)
+  expect_equal(dim(initial), c(1, 6))
+
+  cmp <- tail_and_pool(samples$pars, 0.05, 20)
+  r2 <- initial_rng(6, seed = 42)
+  i <- ceiling(vnapply(r2, function(r) r$random_real(1)) * ncol(cmp))
+  expect_equal(initial, cmp[, i, drop = FALSE])
+})
+
+
+test_that("validate parameter size when using previous samples", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  set.seed(1)
+  samples <- monty_sample(model, sampler, 100, 1, n_chains = 2)
+
+  samples$pars <- array(samples$pars, c(3, 50, 2))
+  r <- initial_rng(6, seed = 42)
+  expect_error(
+    initial_parameters(samples, model, r),
+    "Unexpected parameter length in 'monty_samples' object 'initial'")
+})
+
+
 test_that("can run more than one chain, in parallel", {
   model <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
@@ -440,4 +471,20 @@ test_that("can choose not to append when continuing samples", {
   res2b <- monty_sample_continue(res2a, 40, append = FALSE)
 
   expect_equal(res2b$pars, res1$pars[, 61:100, , drop = FALSE])
+})
+
+
+test_that("can use samples as initial conditions", {
+  set.seed(1)
+  m <- ex_sir_filter_posterior(n_particles = 20)
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
+  initial <- c(0.2, 0.1)
+
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 50, initial, n_chains = 2)
+  res2 <- monty_sample(m, sampler, 20, res1, n_chains = 3)
+
+  expect_equal(dim(res1$pars), c(2, 50, 2))
+  expect_equal(dim(res2$pars), c(2, 20, 3))
 })
