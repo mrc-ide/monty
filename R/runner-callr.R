@@ -71,7 +71,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
           }
         }
       }
-      env$progress$update(env$n_steps_progress)
+      env$progress$update(res$chain_id, env$n_steps_progress)
     }
 
     all(env$status == "done")
