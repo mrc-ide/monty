@@ -12,6 +12,46 @@ test_that("can print samples", {
 })
 
 
+test_that("print information about observations", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  s <- monty_sample(model, sampler, 100, 1, n_chains = 3)
+
+  res <- evaluate_promise(print(s))
+  expect_no_match(
+    res$messages,
+    "These samples have associated observations",
+    fixed = TRUE, all = FALSE)
+
+  s$observations <- list(a = 1)
+  res <- evaluate_promise(print(s))
+  expect_match(
+    res$messages,
+    "These samples have associated observations",
+    fixed = TRUE, all = FALSE)
+})
+
+
+test_that("print information about restart", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  s <- monty_sample(model, sampler, 100, 1, n_chains = 3)
+
+  res <- evaluate_promise(print(s))
+  expect_no_match(
+    res$messages,
+    "These samples can be restared with",
+    fixed = TRUE, all = FALSE)
+
+  s$restart <- list()
+  res <- evaluate_promise(print(s))
+  expect_match(
+    res$messages,
+    "These samples can be restared with",
+    fixed = TRUE, all = FALSE)
+})
+
+
 test_that("can convert to posterior draws types", {
   skip_if_not_installed("posterior")
   model <- ex_simple_gamma1()

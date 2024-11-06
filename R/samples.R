@@ -26,6 +26,10 @@ print.monty_samples <- function(x, ...) {
     cli::cli_alert_info(
       "These samples can be restared with {.help monty_sample_continue}")
   }
+  if (!is.null(x$observations)) {
+    cli::cli_alert_info(
+      "These samples have associated observations")
+  }
 
   cli::cli_alert_info(
     paste('See {.help monty_sample} and {.run vignette("samples")} for more',
