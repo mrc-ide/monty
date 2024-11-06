@@ -126,3 +126,15 @@ test_that("can report on package status", {
   mockery::expect_called(mock_loaded, 3)
   mockery::expect_called(mock_pkgs, 2)
 })
+
+
+test_that("can poll for callr result", {
+  skip_if_not_installed("mockery")
+  rs <- list(is_alive = mockery::mock(TRUE, TRUE, FALSE),
+             get_result = mockery::mock(1))
+  expect_equal(
+    callr_safe_result(rs, 1, 0.001),
+    1)
+  mockery::expect_called(rs$is_alive, 3)
+  mockery::expect_called(rs$get_result, 1)
+})
