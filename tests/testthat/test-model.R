@@ -7,7 +7,8 @@ test_that("can create a minimal model", {
                                       has_direct_sample = FALSE,
                                       is_stochastic = FALSE,
                                       has_observer = FALSE,
-                                      has_parameter_groups = FALSE))
+                                      has_parameter_groups = FALSE,
+                                      allow_multiple_parameters = FALSE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
   expect_equal(m$parameters, "a")
   expect_equal(m$density(0), dnorm(0, log = TRUE))

@@ -14,12 +14,14 @@ dsl_generate <- function(dat) {
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
   gradient <- dsl_generate_gradient(dat, env, meta)
   domain <- dsl_generate_domain(dat, meta)
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   monty_model(
     list(parameters = dat$parameters,
          density = density,
          gradient = gradient,
          domain = domain,
-         direct_sample = direct_sample))
+         direct_sample = direct_sample),
+    properties)
 }
 
 
@@ -29,7 +31,8 @@ dsl_generate_density <- function(dat, env, meta) {
             call("<-", meta[["density"]], quote(numeric())),
             exprs,
             call("sum", meta[["density"]]))
-  as_function(alist(x = ), body, env)
+  vectorise_density_over_parameters(
+    as_function(alist(x = ), body, env))
 }
 
 
@@ -48,7 +51,9 @@ dsl_generate_gradient <- function(dat, env, meta) {
   body <- c(call("<-", meta[["data"]], quote(packer$unpack(x))),
             unname(eqs),
             eq_return)
-  as_function(alist(x = ), body, env)
+  vectorise_gradient_over_parameters(
+    as_function(alist(x = ), body, env),
+    length(dat$parameters))
 }
 
 
@@ -157,4 +162,33 @@ dsl_static_eval <- function(expr, env) {
 
 fold_c <- function(x) {
   if (length(x) == 1) x[[1]] else as.call(c(quote(c), x))
+}
+
+
+## We can actually do much better than this, but it feels best to wait
+## until the rest of the DSL is written, especially arrays.  For
+## simple models with scalars we should be able to just pass through
+## multiple parameters at once.
+vectorise_density_over_parameters <- function(density) {
+  function(x) {
+    if (is.matrix(x)) {
+      vnapply(seq_len(ncol(x)), function(i) density(x[, i]))
+    } else {
+      density(x)
+    }
+  }
+}
+
+vectorise_gradient_over_parameters <- function(gradient, len) {
+  function(x) {
+    if (is.matrix(x)) {
+      g <- vapply(seq_len(ncol(x)), function(i) gradient(x[, i]), numeric(len))
+      if (is.null(dim(g))) {
+        dim(g) <- c(len, ncol(x))
+      }
+      g
+    } else {
+      gradient(x)
+    }
+  }
 }

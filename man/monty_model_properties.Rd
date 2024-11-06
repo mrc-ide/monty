@@ -10,7 +10,7 @@ monty_model_properties(
   is_stochastic = NULL,
   has_parameter_groups = NULL,
   has_observer = NULL,
-  allow_multiple_parameters = FALSE
+  allow_multiple_parameters = NULL
 )
 }
 \arguments{
