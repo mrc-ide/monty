@@ -128,3 +128,25 @@ test_that("can parse messages produced by simple progress bar", {
   expect_null(parse_progress_bar_simple(character()))
   expect_null(parse_progress_bar_simple("other text"))
 })
+
+
+test_that("can fail progress bar nicely", {
+  withr::local_options(monty.progress = TRUE)
+  env <- list2env(list(n = 0))
+  density <- function(x) {
+    if (env$n >= 10) {
+      stop("some error")
+    }
+    env$n <- env$n + 1
+    dnorm(x, log = TRUE)
+  }
+  m <- monty_model(list(parameters = "x", density = density))
+  s <- monty_sampler_random_walk(vcv = diag(1))
+
+  res <- evaluate_promise(
+    tryCatch(monty_sample(m, s, 100, n_chains = 4, initial = 1),
+             error = identity))
+  expect_match(res$messages, "Sampling stopped at 9 steps after", all = FALSE)
+  expect_s3_class(res$result, "simpleError")
+  expect_equal(conditionMessage(res$result), "some error")
+})
