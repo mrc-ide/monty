@@ -50,7 +50,7 @@
 ##'   are shared among all groups.
 ##'
 ##' @param process An arbitrary R function that will be passed the
-##'   final assembled list **for each region**; it may create any
+##'   final assembled list **for each group**; it may create any
 ##'   *additional* entries, which will be concatenated onto the
 ##'   original list.  If you use this you should take care not to
 ##'   return any values with the same names as entries listed in

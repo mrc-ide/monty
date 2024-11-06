@@ -232,7 +232,17 @@ test_that("Can print a grouped packer", {
 })
 
 
-test_that("can used process with grouped packer", {
+test_that("process can't duplicate existing var with grouped packer", {
+  process <- function(res) {
+    list(x = res$x + res$y)
+  }
+  expect_error(
+    monty_packer_grouped(c("a", "b"), c("x", "y"), process = process),
+    "'process\\(\\)' is trying to overwrite")
+})
+
+
+test_that("can use process with grouped packer", {
   process <- function(res) {
     list(z = res$x + res$y)
   }
@@ -243,7 +253,7 @@ test_that("can used process with grouped packer", {
 })
 
 
-test_that("can used process with grouped packer", {
+test_that("can use process with grouped packer", {
   expect_error(
     monty_packer_grouped(c("a", "b"), c("x", "y"), process = TRUE),
     "Expected a function for 'process'")
