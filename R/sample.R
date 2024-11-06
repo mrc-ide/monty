@@ -21,7 +21,7 @@
 ##'
 ##' @param initial Optionally, initial parameter values for the
 ##'   sampling.  If not given, we sample from the model (or its
-##'   prior).  Alternatively, you can provide an `monty_samples`
+##'   prior).  Alternatively, you can provide a `monty_samples`
 ##'   object here -- the result of a previous call to this function --
 ##'   and we will sample some starting points from the final portion
 ##'   of the chains (the exact details here are subject to change, but
