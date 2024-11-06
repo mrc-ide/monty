@@ -155,13 +155,6 @@ test_that("prevent varied names in fixed clashing with elements in packer", {
 })
 
 
-test_that("can't use 'progress' with a grouped packer", {
-  expect_error(
-    monty_packer_grouped(c("x", "y"), c("a", "b"), process = identity),
-    "process' is not yet compatible with grouped packers")
-})
-
-
 test_that("grouped packers require at least two groups", {
   expect_error(
     monty_packer_grouped("x", c("a", "b")),
@@ -236,4 +229,32 @@ test_that("Can print a grouped packer", {
   expect_match(res$messages,
                "Packing 4 values: 'x<a>', 'y<a>', 'x<b>', and 'y<b>",
                fixed = TRUE, all = FALSE)
+})
+
+
+test_that("process can't duplicate existing var with grouped packer", {
+  process <- function(res) {
+    list(x = res$x + res$y)
+  }
+  expect_error(
+    monty_packer_grouped(c("a", "b"), c("x", "y"), process = process),
+    "'process\\(\\)' is trying to overwrite")
+})
+
+
+test_that("can use process with grouped packer", {
+  process <- function(res) {
+    list(z = res$x + res$y)
+  }
+  p <- monty_packer_grouped(c("a", "b"), c("x", "y"), process = process)
+  expect_equal(p$unpack(1:4),
+               list(a = list(x = 1, y = 2, z = 3),
+                    b = list(x = 3, y = 4, z = 7)))
+})
+
+
+test_that("can use process with grouped packer", {
+  expect_error(
+    monty_packer_grouped(c("a", "b"), c("x", "y"), process = TRUE),
+    "Expected a function for 'process'")
 })

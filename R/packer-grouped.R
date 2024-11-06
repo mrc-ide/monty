@@ -49,6 +49,16 @@
 ##' @param shared Names of the elements in `scalar` and `array` that
 ##'   are shared among all groups.
 ##'
+##' @param process An arbitrary R function that will be passed the
+##'   final assembled list **for each group**; it may create any
+##'   *additional* entries, which will be concatenated onto the
+##'   original list.  If you use this you should take care not to
+##'   return any values with the same names as entries listed in
+##'   `scalar`, `array` or `fixed`, as this is an error (this is so
+##'   that `pack()` is not broken).  We will likely play around with
+##'   this process in future in order to get automatic differentiation
+##'   to work.
+##'
 ##' @inheritParams monty_packer
 ##'
 ##' @return An object of class `monty_packer_grouped`, which has the
@@ -96,9 +106,12 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     cli::cli_abort("Expected at least two groups", arg = "groups")
   }
   if (!is.null(process)) {
-    cli::cli_abort("'process' is not yet compatible with grouped packers")
+    if (!is.function(process)) {
+      cli::cli_abort(
+        "Expected a function for 'process'",
+        arg = "process")
+    }
   }
-
   if (!is.null(fixed)) {
     i <- names(fixed) %in% groups
     fixed <- list(shared = if (!all(i)) fixed[!i],
@@ -185,6 +198,9 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
       ret[[i]][varied] <- d_varied$packer$unpack(x_varied[, i])
       if (!is.null(fixed$varied)) {
         ret[[i]][names(fixed$varied[[i]])] <- fixed$varied[[i]]
+      }
+      if (!is.null(process)) {
+        ret[[i]] <- unpack_vector_process(ret[[i]], process)
       }
     }
     names(ret) <- groups
