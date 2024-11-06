@@ -366,3 +366,28 @@ model_combine_allow_multiple_parameters <- function(a, b, properties,
           "not supported by both of your models"),
     call = call)
 }
+
+
+split_prior <- function(x, name = deparse(substitute(x)), call = NULL) {
+  require_monty_model(x, arg = name, call = call)
+  if (is.null(x$split)) {
+    cli::cli_abort(
+      "Cannot split prior from '{name}' as it is not a combined model",
+      arg = name, call = call)
+  }
+  parts <- x$split()
+  is_prior <- vlapply(parts, function(el) {
+    el$properties$has_direct_sample && !el$properties$is_stochastic
+  })
+
+  if (!any(is_prior)) {
+    cli::cli_abort(
+      "Neither model component looks like a prior", arg = name, call = call)
+  }
+  if (all(is_prior)) {
+    cli::cli_abort(
+      "Either model component could be the prior", arg = name, call = call)
+  }
+  list(prior = parts[[which(is_prior)]],
+       likelihood = parts[[which(!is_prior)]])
+}
