@@ -345,4 +345,6 @@ test_that("can split prior from likelihood", {
                "Either model component could be the prior")
   expect_error(split_prior(b + b),
                "Neither model component looks like a prior")
+  expect_error(split_prior(a),
+               "Cannot split prior from 'a' as it is not a combined model")
 })
