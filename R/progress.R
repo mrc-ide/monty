@@ -62,7 +62,7 @@ progress_bar_fancy <- function(n_chains, n_steps, show_overall,
                "{cli::pb_percent} ETA: {cli::pb_eta}")
   fmt_done <- paste(
     "{cli::col_green(cli::symbol$tick)} Sampled {cli::pb_total} steps",
-    "across {n_chains} chains in {cli::pb_elapsed}")
+    "across {n_chains} chain{?s} in {cli::pb_elapsed}")
   fmt_failed <- paste(
     "{cli::col_red(cli::symbol$cross)} Sampling stopped at {cli::pb_current}",
     "step{?s} after {cli::pb_elapsed}")
