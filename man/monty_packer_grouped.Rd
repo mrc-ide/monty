@@ -40,13 +40,14 @@ represent additional pieces of data that your model needs to
 run, but which you are not performing inference on.}
 
 \item{process}{An arbitrary R function that will be passed the
-final assembled list; it may create any \emph{additional} entries,
-which will be concatenated onto the original list.  If you use
-this you should take care not to return any values with the same
-names as entries listed in \code{scalar}, \code{array} or \code{fixed}, as this
-is an error (this is so that \code{pack()} is not broken).  We will
-likely play around with this process in future in order to get
-automatic differentiation to work.}
+final assembled list \strong{for each group}; it may create any
+\emph{additional} entries, which will be concatenated onto the
+original list.  If you use this you should take care not to
+return any values with the same names as entries listed in
+\code{scalar}, \code{array} or \code{fixed}, as this is an error (this is so
+that \code{pack()} is not broken).  We will likely play around with
+this process in future in order to get automatic differentiation
+to work.}
 
 \item{shared}{Names of the elements in \code{scalar} and \code{array} that
 are shared among all groups.}
