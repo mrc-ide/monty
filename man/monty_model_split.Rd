@@ -22,3 +22,19 @@ If one model might be the prior it will be listed first.
 Split a model that has been combined by \code{\link[=monty_model_combine]{monty_model_combine()}} into
 its constituent parts.
 }
+\details{
+We assume that a split model can be broken into a "prior" and a
+"likelihood" if exactly one model:
+\itemize{
+\item can be directly sampled from
+\item is not stochastic
+\item consumes all parameters
+}
+
+Typically, it will be the first criterion that will separate a
+model into prior and likelihood (if you could sample from your
+likelihood, then you would not use a sampler, which is where we
+are typically going to perform this action).
+
+If \code{prior_first} is \code{FALSE} we just return the parts.
+}

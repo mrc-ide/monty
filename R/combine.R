@@ -153,6 +153,20 @@ monty_model_combine <- function(a, b, properties = NULL,
 ##' Split a model that has been combined by [monty_model_combine()] into
 ##' its constituent parts.
 ##'
+##' We assume that a split model can be broken into a "prior" and a
+##' "likelihood" if exactly one model:
+##'
+##' * can be directly sampled from
+##' * is not stochastic
+##' * consumes all parameters
+##'
+##' Typically, it will be the first criterion that will separate a
+##' model into prior and likelihood (if you could sample from your
+##' likelihood, then you would not use a sampler, which is where we
+##' are typically going to perform this action).
+##'
+##' If `prior_first` is `FALSE` we just return the parts.
+##'
 ##' @title Split a combined model
 ##'
 ##' @param model A combined model
