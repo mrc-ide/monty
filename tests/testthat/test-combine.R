@@ -328,8 +328,7 @@ test_that("can split combined models", {
   b <- monty_model(list(parameters = "x",
                         density = function(x) dexp(x, log = TRUE)))
   ab <- a + b
-  expect_equal(ab$split(), list(a, b))
-  expect_null(a$split)
+  expect_equal(monty_model_split(ab), list(a, b))
 })
 
 
@@ -339,12 +338,28 @@ test_that("can split prior from likelihood", {
   })
   b <- monty_model(list(parameters = "x",
                         density = function(x) dexp(x, log = TRUE)))
-  expect_equal(split_prior(a + b), list(prior = a, likelihood = b))
-  expect_equal(split_prior(b + a), list(prior = a, likelihood = b))
-  expect_error(split_prior(a + a),
-               "Either model component could be the prior")
-  expect_error(split_prior(b + b),
-               "Neither model component looks like a prior")
-  expect_error(split_prior(a),
-               "Cannot split prior from 'a' as it is not a combined model")
+
+  ab <- a + b
+  expect_equal(monty_model_split(ab), list(a, b))
+  expect_equal(monty_model_split(ab, TRUE), list(a, b))
+
+  ba <- b + a
+  expect_equal(monty_model_split(ba), list(a, b))
+  expect_equal(monty_model_split(ba, TRUE), list(a, b))
+
+  aa <- a + a
+  expect_equal(monty_model_split(aa), list(a, a))
+  expect_error(
+    monty_model_split(aa, TRUE),
+    "Either model component could be the prior")
+
+  bb <- b + b
+  expect_equal(monty_model_split(bb), list(b, b))
+  expect_error(
+    monty_model_split(bb, TRUE),
+    "Neither model component looks like a prior")
+
+  expect_error(
+    monty_model_split(a),
+    "Cannot split this model as it is not a combined model")
 })

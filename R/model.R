@@ -209,9 +209,7 @@ monty_model <- function(model, properties = NULL) {
   properties$allow_multiple_parameters <-
     properties$allow_multiple_parameters %||% FALSE
 
-  is_combined_model <- is.list(model$model) && length(model$model) == 2 &&
-    all(vlapply(model$model, inherits, "monty_model"))
-  split <- if (is_combined_model) function() model$model else NULL
+  split <- make_split(model)
 
   ret <- list(model = model,
               parameters = parameters,
@@ -541,6 +539,28 @@ validate_model_parameter_groups <- function(model, properties, call) {
                    call = call)
   }
   parameter_groups
+}
+
+
+make_split <- function(model) {
+  is_combined_model <- is.list(model$model) &&
+    is.list(model$model$parts) &&
+    length(model$model$parts) == 2 &&
+    all(vlapply(model$model$parts, inherits, "monty_model"))
+  function(prior = FALSE, call = parent.frame()) {
+    if (!is_combined_model) {
+      cli::cli_abort(
+        "Cannot split prior from '{name}' as it is not a combined model",
+        arg = name, call = call)
+    }
+    if (prior && !model$model$a_is_prior) {
+      cli::cli_abort(
+        paste("This combined model does look like it splits into",
+              "prior + likelihood"),
+        call = call)
+    }
+    model$model$parts
+  }
 }
 
 
