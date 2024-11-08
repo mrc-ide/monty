@@ -89,26 +89,44 @@ monty_model_combine <- function(a, b, properties = NULL,
   require_monty_model(b)
   properties <- validate_model_properties(properties, call)
 
-  properties$allow_multiple_parameters <-
-    model_combine_allow_multiple_parameters(a, b, properties)
-
   parameters <- union(a$parameters, b$parameters)
-  domain <- model_combine_domain(a, b, parameters)
-  density <- model_combine_density(a, b, parameters,
+
+  parts <- set_names(list(a, b), c(name_a, name_b))
+  is_prior <- vlapply(parts, function(el) {
+    el$properties$has_direct_sample &&
+      !el$properties$is_stochastic &&
+      all(el$parameters %in% parameters)
+  })
+
+  one_is_prior <- sum(is_prior) == 1
+  if (one_is_prior && is_prior[[2]]) {
+    parts <- parts[2:1]
+    is_prior <- is_prior[2:1]
+  }
+
+  properties$allow_multiple_parameters <-
+    model_combine_allow_multiple_parameters(parts, properties)
+
+  domain <- model_combine_domain(parts, parameters)
+  density <- model_combine_density(parts, parameters,
                                    properties$allow_multiple_parameters)
 
   gradient <- model_combine_gradient(
-    a, b, parameters, properties, call)
+    parts, parameters, properties, call)
   direct_sample <- model_combine_direct_sample(
-    a, b, parameters, properties, name_a, name_b, call)
+    parts, parameters, properties, call)
   stochastic <- model_combine_stochastic(
-    a, b, properties)
+    parts, properties)
   observer <- model_combine_observer(
-    a, b, parameters, properties, name_a, name_b, call)
+    parts, parameters, properties, call)
 
+  data <- list(
+    parts = unname(parts),
+    is_prior = unname(is_prior))
+  class(data) <- "_combined_model"
 
   monty_model(
-    list(model = list(a, b),
+    list(data = data,
          parameters = parameters,
          domain = domain,
          density = density,
@@ -132,7 +150,63 @@ monty_model_combine <- function(a, b, properties = NULL,
 }
 
 
-model_combine_domain <- function(a, b, parameters) {
+##' Split a model that has been combined by [monty_model_combine()] into
+##' its constituent parts.
+##'
+##' We assume that a split model can be broken into a "prior" and a
+##' "likelihood" if exactly one model:
+##'
+##' * can be directly sampled from
+##' * is not stochastic
+##' * consumes all parameters
+##'
+##' Typically, it will be the first criterion that will separate a
+##' model into prior and likelihood (if you could sample from your
+##' likelihood, then you would not use a sampler, which is where we
+##' are typically going to perform this action).
+##'
+##' If `prior_first` is `FALSE` we just return the parts.
+##'
+##' @title Split a combined model
+##'
+##' @param model A combined model
+##'
+##' @param prior_first Logical, indicating that we should require that
+##'   the model component that could be the prior is listed first.  If
+##'   `TRUE` and one component model is not plausibly the prior, we
+##'   will error.  See Details for the heuristic used.
+##'
+##' @return An unnamed list of length 2, being the component models.
+##'   If one model might be the prior it will be listed first.
+##'
+##' @export
+monty_model_split <- function(model, prior_first = FALSE) {
+  require_monty_model(model, arg = name, call = call)
+
+  if (!inherits(model$model$data, "_combined_model")) {
+    cli::cli_abort(
+      "Cannot split this model as it is not a combined model")
+  }
+
+  if (prior_first) {
+    is_prior <- model$model$data$is_prior
+    if (!any(is_prior)) {
+      cli::cli_abort(
+        "Neither model component looks like a prior")
+    }
+    if (all(is_prior)) {
+      cli::cli_abort(
+        "Either model component could be the prior")
+    }
+  }
+
+  model$model$data$parts
+}
+
+
+model_combine_domain <- function(parts, parameters) {
+  a <- parts[[1]]
+  b <- parts[[2]]
   domain <- matrix(NA_real_, length(parameters), 2)
   rownames(domain) <- parameters
 
@@ -151,7 +225,9 @@ model_combine_domain <- function(a, b, parameters) {
 }
 
 
-model_combine_density <- function(a, b, parameters, allow_multiple_parameters) {
+model_combine_density <- function(parts, parameters, allow_multiple_parameters) {
+  a <- parts[[1]]
+  b <- parts[[2]]
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
   if (allow_multiple_parameters) {
@@ -171,7 +247,9 @@ model_combine_density <- function(a, b, parameters, allow_multiple_parameters) {
 }
 
 
-model_combine_stochastic <- function(a, b, properties, call = NULL) {
+model_combine_stochastic <- function(parts, properties, call = NULL) {
+  a <- parts[[1]]
+  b <- parts[[2]]
   a_stochastic <- a$properties$is_stochastic
   b_stochastic <- b$properties$is_stochastic
 
@@ -225,7 +303,9 @@ model_combine_stochastic <- function(a, b, properties, call = NULL) {
 }
 
 
-model_combine_gradient <- function(a, b, parameters, properties, call = NULL) {
+model_combine_gradient <- function(parts, parameters, properties, call = NULL) {
+  a <- parts[[1]]
+  b <- parts[[2]]
   if (isFALSE(properties$has_gradient)) {
     return(NULL)
   }
@@ -272,8 +352,12 @@ model_combine_gradient <- function(a, b, parameters, properties, call = NULL) {
 }
 
 
-model_combine_direct_sample <- function(a, b, parameters, properties,
-                                        name_a, name_b, call = NULL) {
+model_combine_direct_sample <- function(parts, parameters, properties,
+                                        call = NULL) {
+  a <- parts[[1]]
+  b <- parts[[2]]
+  name_a <- names(parts)[[1]]
+  name_b <- names(parts)[[2]]
   if (isFALSE(properties$has_direct_sample)) {
     return(NULL)
   }
@@ -318,8 +402,11 @@ model_combine_direct_sample <- function(a, b, parameters, properties,
 }
 
 
-model_combine_observer <- function(a, b, parameters, properties,
-                                   name_a, name_b, call = NULL) {
+model_combine_observer <- function(parts, parameters, properties, call = NULL) {
+  a <- parts[[1]]
+  b <- parts[[2]]
+  name_a <- names(parts)[[1]]
+  name_b <- names(parts)[[2]]
   if (isFALSE(properties$has_observer)) {
     return(NULL)
   }
@@ -347,8 +434,10 @@ model_combine_observer <- function(a, b, parameters, properties,
 }
 
 
-model_combine_allow_multiple_parameters <- function(a, b, properties,
+model_combine_allow_multiple_parameters <- function(parts, properties,
                                                     call = parent.frame()) {
+  a <- parts[[1]]
+  b <- parts[[2]]
   if (isFALSE(properties$allow_multiple_parameters)) {
     return(FALSE)
   }
@@ -365,29 +454,4 @@ model_combine_allow_multiple_parameters <- function(a, b, properties,
     paste("Can't specify 'allow_multiple_parameters = TRUE' as this is",
           "not supported by both of your models"),
     call = call)
-}
-
-
-split_prior <- function(x, name = deparse(substitute(x)), call = NULL) {
-  require_monty_model(x, arg = name, call = call)
-  if (is.null(x$split)) {
-    cli::cli_abort(
-      "Cannot split prior from '{name}' as it is not a combined model",
-      arg = name, call = call)
-  }
-  parts <- x$split()
-  is_prior <- vlapply(parts, function(el) {
-    el$properties$has_direct_sample && !el$properties$is_stochastic
-  })
-
-  if (!any(is_prior)) {
-    cli::cli_abort(
-      "Neither model component looks like a prior", arg = name, call = call)
-  }
-  if (all(is_prior)) {
-    cli::cli_abort(
-      "Either model component could be the prior", arg = name, call = call)
-  }
-  list(prior = parts[[which(is_prior)]],
-       likelihood = parts[[which(!is_prior)]])
 }

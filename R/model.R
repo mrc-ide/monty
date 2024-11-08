@@ -209,10 +209,6 @@ monty_model <- function(model, properties = NULL) {
   properties$allow_multiple_parameters <-
     properties$allow_multiple_parameters %||% FALSE
 
-  is_combined_model <- is.list(model$model) && length(model$model) == 2 &&
-    all(vlapply(model$model, inherits, "monty_model"))
-  split <- if (is_combined_model) function() model$model else NULL
-
   ret <- list(model = model,
               parameters = parameters,
               parameter_groups = parameter_groups,
@@ -221,7 +217,6 @@ monty_model <- function(model, properties = NULL) {
               gradient = gradient,
               direct_sample = direct_sample,
               observer = observer,
-              split = split,
               rng_state = rng_state,
               properties = properties)
   class(ret) <- "monty_model"
