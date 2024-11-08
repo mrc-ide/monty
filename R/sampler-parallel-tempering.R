@@ -229,12 +229,21 @@ parallel_tempering_scale <- function(target, base, beta) {
     beta * d_target + (1 - beta) * d_base
   }
 
+  properties <- target$properties
+
   ## Gradient follows density above, will implement with HMC support
   gradient <- NULL
+  properties$has_gradient <- FALSE
 
   ## Observer will require more work here and in the sampler to pull
   ## from correct chain
   observer <- NULL
+  properties$has_observer <- FALSE
+
+  ## Observer will require more work here and in the sampler to pull
+  ## from correct chain
+  direct_sample <- NULL
+  properties$has_direct_sample <- FALSE
 
   ## Combine the domains; this does nothing for the split model case
   ## but will save us some pain in the case where base is given
@@ -247,12 +256,12 @@ parallel_tempering_scale <- function(target, base, beta) {
          gradient = gradient,
          observer = observer,
          domain = domain,
+         direct_sample = direct_sample,
          ## Below here is error prone, but should be correct for now
          parameter_groups = target$parameter_groups,
-         direct_sample = NULL, # target$direct_sample,
          set_rng_state = target$rng_state$set,
          get_rng_state = target$rng_state$get,
          ## Extra for PT:
          last_density = function() env$density),
-    target$properties)
+    properties)
 }
