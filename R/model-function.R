@@ -24,11 +24,12 @@
 ##'
 ##' @param allow_multiple_parameters Logical, indicating if passing in
 ##'   vectors for all parameters will return a vector of densities.
+##'   This is `FALSE` by default because we cannot determine this
+##'   automatically.
 ##'
 ##' @return A [monty_model] object that computes log density with the
 ##'   provided `density` function, given a numeric vector argument
-##'   representing all parameters.  This is `FALSE` by default because
-##'   we cannot determine this automatically.
+##'   representing all parameters.
 ##'
 ##' @export
 ##' @examples

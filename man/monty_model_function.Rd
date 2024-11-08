@@ -26,13 +26,14 @@ conjunction with \code{packer} (you should use the \code{fixed} argument
 to \code{monty_packer} instead).}
 
 \item{allow_multiple_parameters}{Logical, indicating if passing in
-vectors for all parameters will return a vector of densities.}
+vectors for all parameters will return a vector of densities.
+This is \code{FALSE} by default because we cannot determine this
+automatically.}
 }
 \value{
 A \link{monty_model} object that computes log density with the
 provided \code{density} function, given a numeric vector argument
-representing all parameters.  This is \code{FALSE} by default because
-we cannot determine this automatically.
+representing all parameters.
 }
 \description{
 Create a \link{monty_model} from a function that computes density.
