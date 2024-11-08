@@ -229,37 +229,30 @@ parallel_tempering_scale <- function(target, base, beta) {
     beta * d_target + (1 - beta) * d_base
   }
 
-  if (target$properties$has_gradient) {
-    gradient <- function(x) {
-      g_target <- target$gradient(x)
-      g_base <- base$gradient(x)
-      env$gradient <- list(target = g_target, base = g_base)
-      ## calculation as above for density
-      beta * g_target + (1 - beta) * g_base
-    }
-  } else {
-    gradient <- NULL
-  }
+  ## Gradient follows density above, will implement with HMC support
+  gradient <- NULL
 
-  if (target$properties$has_observer) {
-    cli::cli_abort("Observers in parallel tempering not yet supported")
-  } else {
-    observer <- NULL
-  }
+  ## Observer will require more work here and in the sampler to pull
+  ## from correct chain
+  observer <- NULL
+
+  ## Combine the domains; this does nothing for the split model case
+  ## but will save us some pain in the case where base is given
+  ## explicitly.
+  domain <- model_combine_domain(list(target, base), target$parameters)
 
   monty_model(
     list(parameters = target$parameters,
          density = density,
          gradient = gradient,
          observer = observer,
+         domain = domain,
          ## Below here is error prone, but should be correct for now
          parameter_groups = target$parameter_groups,
-         domain = target$domain, # or base? or combine?
-         direct_sample = target$direct_sample,
+         direct_sample = NULL, # target$direct_sample,
          set_rng_state = target$rng_state$set,
          get_rng_state = target$rng_state$get,
          ## Extra for PT:
-         last_density = function() env$density,
-         last_gradient = function() env$gradient),
+         last_density = function() env$density),
     target$properties)
 }
