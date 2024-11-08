@@ -52,3 +52,16 @@ test_that("can fix some data", {
     monty_model_function(fn, p, fixed = list(x = 10)),
     "Can't provide both 'packer' and 'fixed'")
 })
+
+
+test_that("can compute vectorised densities", {
+  fn <- function(x, y, s) {
+    dnorm(x, y, s, log = TRUE)
+  }
+  m <- monty_model_function(fn, allow_multiple_parameters = TRUE)
+  expect_true(m$properties$allow_multiple_parameters)
+  expect_equal(m$density(c(0, 1, 2)), dnorm(0, 1, 2, log = TRUE))
+  expect_equal(m$density(cbind(c(0, 1, 2))), dnorm(0, 1, 2, log = TRUE))
+  expect_equal(m$density(cbind(c(0, 1, 2), c(3, 4, 5))),
+               dnorm(c(0, 3), c(1, 4), c(2, 5), log = TRUE))
+})

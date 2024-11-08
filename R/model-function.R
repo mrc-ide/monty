@@ -22,6 +22,11 @@
 ##'   conjunction with `packer` (you should use the `fixed` argument
 ##'   to `monty_packer` instead).
 ##'
+##' @param allow_multiple_parameters Logical, indicating if passing in
+##'   vectors for all parameters will return a vector of densities.
+##'   This is `FALSE` by default because we cannot determine this
+##'   automatically.
+##'
 ##' @return A [monty_model] object that computes log density with the
 ##'   provided `density` function, given a numeric vector argument
 ##'   representing all parameters.
@@ -41,7 +46,8 @@
 ##'
 ##' # Same as the built-in banana example:
 ##' monty_model_density(monty_example("banana"), c(0, 0))
-monty_model_function <- function(density, packer = NULL, fixed = NULL) {
+monty_model_function <- function(density, packer = NULL, fixed = NULL,
+                                 allow_multiple_parameters = FALSE) {
   if (!is.function(density)) {
     cli::cli_abort("Expected 'density' to be a function", arg = "density")
   }
@@ -62,9 +68,13 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL) {
     }
   }
 
+  properties <- monty_model_properties(
+    allow_multiple_parameters = allow_multiple_parameters)
+
   monty_model(
     list(parameters = packer$names(),
          density = function(x) {
            rlang::inject(density(!!!packer$unpack(x)))
-         }))
+         }),
+    properties)
 }

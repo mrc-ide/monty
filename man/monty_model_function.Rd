@@ -4,7 +4,12 @@
 \alias{monty_model_function}
 \title{Create \code{monty_model} from a function computing density}
 \usage{
-monty_model_function(density, packer = NULL, fixed = NULL)
+monty_model_function(
+  density,
+  packer = NULL,
+  fixed = NULL,
+  allow_multiple_parameters = FALSE
+)
 }
 \arguments{
 \item{density}{A function to compute log density.  It can take any
@@ -19,6 +24,11 @@ are present in your numeric vector and if they are all scalars.}
 substitute into the call to \code{density}.  This cannot be used in
 conjunction with \code{packer} (you should use the \code{fixed} argument
 to \code{monty_packer} instead).}
+
+\item{allow_multiple_parameters}{Logical, indicating if passing in
+vectors for all parameters will return a vector of densities.
+This is \code{FALSE} by default because we cannot determine this
+automatically.}
 }
 \value{
 A \link{monty_model} object that computes log density with the
