@@ -54,7 +54,7 @@
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
+monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
   ## We may want to warn if users provide an odd number of rungs as we
   ## do a different number of swaps on even/odd steps.  Marc to check
   ## if this would affect efficiency of the sampler.
