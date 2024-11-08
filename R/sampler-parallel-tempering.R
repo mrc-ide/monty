@@ -73,7 +73,6 @@ monty_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
 
   internal <- new.env()
   internal$even_step <- FALSE
-  internal$accept_swap <- integer(n_rungs)
 
   ## TODO: we might need to accept an initialised sampler here,
   ## otherwise dots.  Doing that means that control over the us being
@@ -128,6 +127,7 @@ monty_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     ## Use this new model to initialise our multi-parameter sample
     state <- sampler$initialise(pars_full, internal$model, rng)
     internal$state <- state
+    internal$accept_swap <- integer(n_rungs)
 
     list(pars = state$pars[, 1], density = state$density[[1]])
   }
