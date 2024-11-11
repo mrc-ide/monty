@@ -5,7 +5,7 @@
 ##' [monty_sampler_random_walk] as the underlying sampler, but we will
 ##' make this configurable in a future version.
 ##'
-##' We implement the sampler based on https://arxiv.org/pdf/1905.02939
+##' We implement the sampler based on https://doi.org/10.1111/rssb.12464
 ##'
 ##' # Efficiency of the sampler
 ##'
@@ -19,7 +19,7 @@
 ##' 1. **Your model is parallelisable**.  If your underlying model can
 ##' run very efficiently in parallel then it may not take much longer
 ##' in "wall time" to run the extra copies of the calculations.  In
-##' this case, you'll stil be using much more CPU time but will be
+##' this case, you'll still be using much more CPU time but will be
 ##' able to take advantage of extra cores to get more effective
 ##' sampling if the parallel tempering sampler mixes better than the
 ##' underlying sampler.
@@ -158,7 +158,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     i1 <- swap[[internal$even_step + 1]]
     i2 <- i1 + 1L
 
-    ## Equation (6) in section 2.3 of https://arxiv.org/pdf/1905.02939
+    ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
     ##
     ## TODO: Marc to check and perhaps harmonise names
     ## TODO: Marc: I have reversed the i's on beta here, seems required?
