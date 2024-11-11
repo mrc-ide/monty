@@ -168,7 +168,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     ## scaled by beta.
     alpha <- pmin(
       0,
-      (beta[i1] - beta[i2]) * (density$target[i2] - density$target[i1]))
+      (beta[i2] - beta[i1]) * ((density$target[i2]-density$base[i2]) - (density$target[i1])-density$base[i1]))
     u <- rng$random_real(length(i1))
     accept <- log(u) < alpha
 
@@ -178,7 +178,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       state$pars[, i_to] <- state$pars[, i_from]
       d_target <- density$target[i_from]
       d_base <- density$base[i_from]
-      state$density[i_to] <- beta[i_to] * d_target * (1 - beta[i_to]) * d_base
+      state$density[i_to] <- beta[i_to] * d_target + (1 - beta[i_to]) * d_base
     }
     internal$accept_swap[i1] <- internal$accept_swap[i1] + accept
 
