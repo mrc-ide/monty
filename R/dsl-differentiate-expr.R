@@ -254,7 +254,7 @@ maths <- local({
       if (fn == "(") {
         return(.parentheses_except(x[[2]], except))
       }
-      pass <- grepl("^[a-z]", fn) ||
+      pass <- grepl("^[A-Za-z]", fn) ||
         (length(except) > 0 && fn %in% except) ||
         "unary_minus" %in% except && .is_unary_minus(x)
       if (pass) {
