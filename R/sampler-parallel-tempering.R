@@ -140,7 +140,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
   ## might define a base R6 class that everything can inherit from?
   ##
   ## Alternatively, initialise could pass back internal state and we
-  ## could recieve it here; that might be nicer, actually.
+  ## could receive it here; that might be nicer, actually.
   step <- function(state, model, rng) {
     ## Make sure we're in sync.  This could be an assignment or an
     ## assertion.
@@ -148,6 +148,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       all(internal$state$pars[, 1] == state$pars),
       all(internal$state$density[1] == state$density))
 
+    browser()
     ## Update step, later this will propose/accept hot chain differently
     state <- sampler$step(internal$state, internal$model, rng)
 
