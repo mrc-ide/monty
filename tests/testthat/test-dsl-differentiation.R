@@ -253,6 +253,14 @@ test_that("uminus on subtraction reverses arguments", {
 })
 
 
+test_that("uminus does not use parens with prefix functions", {
+  expect_identical(maths$uminus(quote(f(a, b))),
+                   quote(-f(a, b)))
+  expect_identical(maths$uminus(quote(Fn(a, b))),
+                   quote(-Fn(a, b)))
+})
+
+
 test_that("times copes with numeric edge cases", {
   expect_identical(maths$times(3, 5), 15)
   expect_identical(maths$times(1, quote(a)), quote(a))
