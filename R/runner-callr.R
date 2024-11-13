@@ -4,7 +4,7 @@
 ##' this is the same as "worker" processes.  Unless your chains take a
 ##' few seconds to run, this will be slower than running with the
 ##' default serial runner ([monty_runner_serial]), however for long
-##' running chains, the speedup will typically scale with workers
+##' running chains, the speed-up will typically scale with workers
 ##' added, so long as your chains divide neatly over workers.
 ##'
 ##' @title Run MCMC chains in parallel with `callr`

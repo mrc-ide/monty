@@ -2,7 +2,7 @@
 ##' unstructured vector of numbers (the vector being updated by an
 ##' MCMC for example) and a structured list of named values, which is
 ##' easier to program against.  This is useful for the bridge between
-##' model parameters and a models's implementation, but it is also
+##' model parameters and a model's implementation, but it is also
 ##' useful for the state vector in a state-space model.  We refer to
 ##' the process of taking a named list of scalars, vectors and arrays
 ##' and converting into a single vector "packing" and the inverse

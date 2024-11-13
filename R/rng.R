@@ -297,7 +297,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param size The number of trials (zero or more, length 1 or n)
     ##'
-    ##' @param prob The mean probability of sucess on each trial
+    ##' @param prob The mean probability of success on each trial
     ##'   (between 0 and 1, length 1 or n)
     ##' 
     ##' @param rho The dispersion parameter (between 0 and 1, length 1 or n)
