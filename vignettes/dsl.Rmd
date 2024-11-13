@@ -52,14 +52,14 @@ We can draw samples from the model if we provide a `monty_rng` object
 
 ```{r}
 rng <- monty_rng$new()
-theta <- prior$direct_sample(rng)
+theta <- monty_model_direct_sample(prior, rng)
 theta
 ```
 
 We can compute the (log) density at a point in parameter space
 
 ```{r}
-prior$density(theta)
+monty_model_density(theta)
 ```
 
 The computed properties for the model are:
