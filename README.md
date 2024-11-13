@@ -1,7 +1,7 @@
 # monty
 
 <!-- badges: start -->
-[![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](https://www.repostatus.org/badges/latest/concept.svg)](https://www.repostatus.org/#concept)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![R-CMD-check](https://github.com/mrc-ide/monty/actions/workflows/R-CMD-check.yaml/badge.svg?branch=main)](https://github.com/mrc-ide/monty/actions/workflows/R-CMD-check.yaml)
 [![codecov.io](https://codecov.io/github/mrc-ide/monty/coverage.svg?branch=main)](https://codecov.io/github/mrc-ide/monty?branch=main)
 <!-- badges: end -->
@@ -9,8 +9,6 @@
 `monty` is a toolbox for Monte Carlo methods.  It is designed to help run MCMC with models that do not fit closely within the paradigms of packages such as [stan](https://mc-stan.org/) - for example some likelihood you have written by hand.
 
 See the [package vignette](https://mrc-ide.github.io/monty/articles/monty.html) for a basic introduction.
-
-The package is in an early, though rapid, stage of development and we cannot guarantee that interfaces will not change (in fact, we can guarantee that they **will** really).  However the core concepts have now solidified.
 
 The core of the package is built around some basic ideas:
 
