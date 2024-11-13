@@ -387,7 +387,7 @@ Generate \code{n} numbers from a beta-binomial distribution
 
 \item{\code{size}}{The number of trials (zero or more, length 1 or n)}
 
-\item{\code{prob}}{The mean probability of sucess on each trial
+\item{\code{prob}}{The mean probability of success on each trial
 (between 0 and 1, length 1 or n)}
 
 \item{\code{rho}}{The dispersion parameter (between 0 and 1, length 1 or n)}
