@@ -59,7 +59,7 @@ theta
 We can compute the (log) density at a point in parameter space
 
 ```{r}
-monty_model_density(theta)
+monty_model_density(prior, theta)
 ```
 
 The computed properties for the model are:
