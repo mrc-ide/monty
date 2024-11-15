@@ -57,15 +57,14 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
 
   initialise <- function(pars, model, rng) {
     n_pars <- length(model$parameters)
-    internal$multiple_parameters <- length(dim2(pars)) > 1
-    if (internal$multiple_parameters) {
+    multiple_parameters <- length(dim2(pars)) > 1
+    if (multiple_parameters) {
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
     
     internal$rerun <- 
       make_rerun(rerun_every, rerun_random, model$properties$is_stochastic)
-    internal$step <- 0
 
     vcv <- sampler_validate_vcv(vcv, pars)
     internal$proposal <-
@@ -74,8 +73,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
   }
 
   step <- function(state, model, rng) {
-    internal$step <- internal$step + 1
-    rerun <- internal$rerun(internal$step, rng)
+    rerun <- internal$rerun(rng)
     if (any(rerun)) {
       ## This is currently just setup assuming we are not using multiple
       ## parameters as currently they cannot be used with stochastic models,
@@ -106,10 +104,11 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
   }
 
   get_internal_state <- function() {
-    NULL
+    as.list(internal)
   }
 
   set_internal_state <- function(state) {
+    list2env(state, internal)
   }
 
   monty_sampler("Random walk",
@@ -186,10 +185,15 @@ is_parameters_in_domain <- function(x, domain) {
 
 make_rerun <- function(every, random, is_stochastic) {
   if (!is_stochastic && !is.finite(every)) {
-    function(i, rng) rep(FALSE, rng$size())
+    function(rng) rep(FALSE, rng$size())
   } else if (random) {
-    function(i, rng) rng$random_real(1) < 1 / every
+    function(rng) rng$random_real(1) < 1 / every
   } else {
-    function(i, rng) rep(i %% every == 0, rng$size())
+    i <- 0L
+    env <- environment()
+    function(rng) {
+      env$i <- i + 1L
+      rep(i %% every == 0, rng$size())
+    }
   }
 }
