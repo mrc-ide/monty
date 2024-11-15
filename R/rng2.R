@@ -1,7 +1,6 @@
 monty_random_alloc <- function(n_streams = 1L, seed = NULL,
                                deterministic = FALSE) {
-  float <- FALSE
-  ptr <- monty_rng_alloc(seed, n_streams, deterministic, float)
+  ptr <- monty_rng_alloc(seed, n_streams, deterministic)
   ret <- list(ptr = ptr, n_streams = n_streams, deterministic = deterministic)
   class(ret) <- "monty_random_state"
   ret
