@@ -5,8 +5,8 @@ sir_filter_monty <- function(data, n_particles, deterministic = FALSE,
   base <- list(N = 1000, I0 = 10, beta = 0.2, gamma = 0.1, exp_noise = 1e6)
 
   get_rng_state <- function() {
-    c(monty_rng_state(env$rng$filter$ptr, FALSE),
-      monty_rng_state(env$rng$system$ptr, FALSE))
+    c(monty_rng_state(env$rng$filter$ptr),
+      monty_rng_state(env$rng$system$ptr))
   }
 
   set_rng_state <- function(rng_state) {

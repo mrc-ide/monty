@@ -165,12 +165,7 @@ rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
 \subsection{Method \code{new()}}{
 Create a \code{monty_rng} object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{monty_rng$new(
-  seed = NULL,
-  n_streams = 1L,
-  real_type = "double",
-  deterministic = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$new(seed = NULL, n_streams = 1L, deterministic = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -179,16 +174,10 @@ Create a \code{monty_rng} object
 \item{\code{seed}}{The seed, as an integer, a raw vector or \code{NULL}.
 If an integer we will create a suitable seed via the "splitmix64"
 algorithm, if a raw vector it must the correct length (a multiple
-of either 32 or 16 for \code{float = FALSE} or \code{float = TRUE}
-respectively). If \code{NULL} then we create a seed using R's random
+of 32). If \code{NULL} then we create a seed using R's random
 number generator.}
 
 \item{\code{n_streams}}{The number of streams to use (see Details)}
-
-\item{\code{real_type}}{The type of floating point number to use. Currently
-only \code{float} and \code{double} are supported (with \code{double} being
-the default). This will have no (or negligible) impact on speed,
-but exists to test the low-precision generators.}
 
 \item{\code{deterministic}}{Logical, indicating if we should use
 "deterministic" mode where distributions return their

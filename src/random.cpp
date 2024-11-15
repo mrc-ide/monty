@@ -13,8 +13,7 @@
 #include <monty/random/random.hpp>
 #include <monty/utils.hpp>
 
-using default_rng64 = monty::random::prng<monty::random::generator<double>>;
-using default_rng32 = monty::random::prng<monty::random::generator<float>>;
+using default_rng = monty::random::prng<monty::random::generator<double>>;
 
 template <typename T>
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
@@ -823,58 +822,38 @@ cpp11::sexp monty_rng_state(SEXP ptr) {
 }
 
 [[cpp11::register]]
-SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic,
-                     bool is_float) {
-  return is_float ?
-    monty_rng_alloc<default_rng32>(r_seed, n_streams, deterministic) :
-    monty_rng_alloc<default_rng64>(r_seed, n_streams, deterministic);
+SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
+  return monty_rng_alloc<default_rng>(r_seed, n_streams, deterministic);
 }
 
 [[cpp11::register]]
-void monty_rng_jump(SEXP ptr, bool is_float) {
-  if (is_float) {
-    monty_rng_jump<default_rng32>(ptr);
-  } else {
-    monty_rng_jump<default_rng64>(ptr);
-  }
+void monty_rng_jump(SEXP ptr) {
+  monty_rng_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]
-void monty_rng_long_jump(SEXP ptr, bool is_float) {
-  if (is_float) {
-    monty_rng_long_jump<default_rng32>(ptr);
-  } else {
-    monty_rng_long_jump<default_rng64>(ptr);
-  }
+void monty_rng_long_jump(SEXP ptr) {
+  monty_rng_long_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]
-cpp11::sexp monty_rng_random_real(SEXP ptr, int n, int n_threads,
-                                  bool is_float) {
-  return is_float ?
-    monty_rng_random_real<float, default_rng32>(ptr, n, n_threads) :
-    monty_rng_random_real<double, default_rng64>(ptr, n, n_threads);
+cpp11::sexp monty_rng_random_real(SEXP ptr, int n, int n_threads) {
+  return monty_rng_random_real<double, default_rng>(ptr, n, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_random_normal(SEXP ptr, int n, int n_threads,
-                                    std::string algorithm, bool is_float) {
+                                    std::string algorithm) {
   cpp11::sexp ret;
   if (algorithm == "box_muller") {
     constexpr auto a = monty::random::algorithm::normal::box_muller;
-    ret = is_float ?
-      monty_rng_random_normal<float, a, default_rng32>(ptr, n, n_threads) :
-      monty_rng_random_normal<double, a, default_rng64>(ptr, n, n_threads);
+    ret = monty_rng_random_normal<double, a, default_rng>(ptr, n, n_threads);
   } else if (algorithm == "polar") {
     constexpr auto a = monty::random::algorithm::normal::polar;
-    ret = is_float ?
-      monty_rng_random_normal<float, a, default_rng32>(ptr, n, n_threads) :
-      monty_rng_random_normal<double, a, default_rng64>(ptr, n, n_threads);
+    ret = monty_rng_random_normal<double, a, default_rng>(ptr, n, n_threads);
   } else if (algorithm == "ziggurat") {
     constexpr auto a = monty::random::algorithm::normal::ziggurat;
-    ret = is_float ?
-      monty_rng_random_normal<float, a, default_rng32>(ptr, n, n_threads) :
-      monty_rng_random_normal<double, a, default_rng64>(ptr, n, n_threads);
+    ret = monty_rng_random_normal<double, a, default_rng>(ptr, n, n_threads);
   } else {
     cpp11::stop("Unknown normal algorithm '%s'", algorithm.c_str());
   }
@@ -885,51 +864,36 @@ cpp11::sexp monty_rng_random_normal(SEXP ptr, int n, int n_threads,
 cpp11::sexp monty_rng_uniform(SEXP ptr, int n,
                               cpp11::doubles r_min,
                               cpp11::doubles r_max,
-                              int n_threads,
-                              bool is_float) {
-  return is_float ?
-    monty_rng_uniform<float, default_rng32>(ptr, n, r_min, r_max, n_threads) :
-    monty_rng_uniform<double, default_rng64>(ptr, n, r_min, r_max, n_threads);
+                              int n_threads) {
+  return monty_rng_uniform<double, default_rng>(ptr, n, r_min, r_max, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_exponential_rate(SEXP ptr, int n, cpp11::doubles r_rate,
-                                       int n_threads,
-                                       bool is_float) {
-  return is_float ?
-    monty_rng_exponential_rate<float, default_rng32>(ptr, n, r_rate, n_threads) :
-    monty_rng_exponential_rate<double, default_rng64>(ptr, n, r_rate, n_threads);
+                                       int n_threads) {
+  return monty_rng_exponential_rate<double, default_rng>(ptr, n, r_rate, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_exponential_mean(SEXP ptr, int n, cpp11::doubles r_mean,
-                                       int n_threads,
-                                       bool is_float) {
-  return is_float ?
-    monty_rng_exponential_mean<float, default_rng32>(ptr, n, r_mean, n_threads) :
-    monty_rng_exponential_mean<double, default_rng64>(ptr, n, r_mean, n_threads);
+                                       int n_threads) {
+  return monty_rng_exponential_mean<double, default_rng>(ptr, n, r_mean, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_normal(SEXP ptr, int n, cpp11::doubles r_mean,
                              cpp11::doubles r_sd, int n_threads,
-                             std::string algorithm, bool is_float) {
+                             std::string algorithm) {
   cpp11::sexp ret;
   if (algorithm == "box_muller") {
     constexpr auto a = monty::random::algorithm::normal::box_muller;
-    ret = is_float ?
-      monty_rng_normal<float, a, default_rng32>(ptr, n, r_mean, r_sd, n_threads) :
-      monty_rng_normal<double, a, default_rng64>(ptr, n, r_mean, r_sd, n_threads);
+    ret = monty_rng_normal<double, a, default_rng>(ptr, n, r_mean, r_sd, n_threads);
   } else if (algorithm == "polar") {
     constexpr auto a = monty::random::algorithm::normal::polar;
-    ret = is_float ?
-      monty_rng_normal<float, a, default_rng32>(ptr, n, r_mean, r_sd, n_threads) :
-      monty_rng_normal<double, a, default_rng64>(ptr, n, r_mean, r_sd, n_threads);
+    ret = monty_rng_normal<double, a, default_rng>(ptr, n, r_mean, r_sd, n_threads);
   } else if (algorithm == "ziggurat") {
     constexpr auto a = monty::random::algorithm::normal::ziggurat;
-    ret = is_float ?
-      monty_rng_normal<float, a, default_rng32>(ptr, n, r_mean, r_sd, n_threads) :
-      monty_rng_normal<double, a, default_rng64>(ptr, n, r_mean, r_sd, n_threads);
+    ret = monty_rng_normal<double, a, default_rng>(ptr, n, r_mean, r_sd, n_threads);
   } else {
     cpp11::stop("Unknown normal algorithm '%s'", algorithm.c_str());
   }
@@ -939,48 +903,38 @@ cpp11::sexp monty_rng_normal(SEXP ptr, int n, cpp11::doubles r_mean,
 [[cpp11::register]]
 cpp11::sexp monty_rng_binomial(SEXP ptr, int n,
                                cpp11::doubles r_size, cpp11::doubles r_prob,
-                               int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_binomial<float, default_rng32>(ptr, n, r_size, r_prob, n_threads) :
-    monty_rng_binomial<double, default_rng64>(ptr, n, r_size, r_prob, n_threads);
+                               int n_threads) {
+  return monty_rng_binomial<double, default_rng>(ptr, n, r_size, r_prob, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_beta_binomial_ab(SEXP ptr, int n,
                                        cpp11::doubles r_size, cpp11::doubles r_a,
                                        cpp11::doubles r_b,
-                                       int n_threads, bool is_float) {
-  return is_float ?
-  monty_rng_beta_binomial_ab<float, default_rng32>(ptr, n, r_size, r_a, r_b, n_threads) :
-  monty_rng_beta_binomial_ab<double, default_rng64>(ptr, n, r_size, r_a, r_b, n_threads);
+                                       int n_threads) {
+  return monty_rng_beta_binomial_ab<double, default_rng>(ptr, n, r_size, r_a, r_b, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n,
                                          cpp11::doubles r_size, cpp11::doubles r_prob,
                                          cpp11::doubles r_rho,
-                                       int n_threads, bool is_float) {
-  return is_float ?
-  monty_rng_beta_binomial_prob<float, default_rng32>(ptr, n, r_size, r_prob, r_rho, n_threads) :
-  monty_rng_beta_binomial_prob<double, default_rng64>(ptr, n, r_size, r_prob, r_rho, n_threads);
+                                         int n_threads) {
+  return monty_rng_beta_binomial_prob<double, default_rng>(ptr, n, r_size, r_prob, r_rho, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_negative_binomial_prob(SEXP ptr, int n,
                                 cpp11::doubles r_size, cpp11::doubles r_prob,
-                                int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_negative_binomial_prob<float, default_rng32>(ptr, n, r_size, r_prob, n_threads) :
-    monty_rng_negative_binomial_prob<double, default_rng64>(ptr, n, r_size, r_prob, n_threads);
+                                int n_threads) {
+  return monty_rng_negative_binomial_prob<double, default_rng>(ptr, n, r_size, r_prob, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_negative_binomial_mu(SEXP ptr, int n,
                                            cpp11::doubles r_size, cpp11::doubles r_mu,
-                                           int n_threads, bool is_float) {
-  return is_float ?
-  monty_rng_negative_binomial_mu<float, default_rng32>(ptr, n, r_size, r_mu, n_threads) :
-  monty_rng_negative_binomial_mu<double, default_rng64>(ptr, n, r_size, r_mu, n_threads);
+                                           int n_threads) {
+  return monty_rng_negative_binomial_mu<double, default_rng>(ptr, n, r_size, r_mu, n_threads);
 }
 
 [[cpp11::register]]
@@ -988,74 +942,57 @@ cpp11::sexp monty_rng_hypergeometric(SEXP ptr, int n,
                                      cpp11::doubles r_n1,
                                      cpp11::doubles r_n2,
                                      cpp11::doubles r_k,
-                                     int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_hypergeometric<float, default_rng32>(ptr, n, r_n1, r_n2, r_k, n_threads) :
-    monty_rng_hypergeometric<double, default_rng64>(ptr, n, r_n1, r_n2, r_k, n_threads);
+                                     int n_threads) {
+  return monty_rng_hypergeometric<double, default_rng>(ptr, n, r_n1, r_n2, r_k, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_gamma_scale(SEXP ptr, int n,
                                   cpp11::doubles r_shape,
                                   cpp11::doubles r_scale,
-                                  int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_gamma_scale<float, default_rng32>(ptr, n, r_shape, r_scale, n_threads) :
-    monty_rng_gamma_scale<double, default_rng64>(ptr, n, r_shape, r_scale, n_threads);
+                                  int n_threads) {
+  return monty_rng_gamma_scale<double, default_rng>(ptr, n, r_shape, r_scale, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_gamma_rate(SEXP ptr, int n,
                                  cpp11::doubles r_shape,
                                  cpp11::doubles r_rate,
-                                 int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_gamma_rate<float, default_rng32>(ptr, n, r_shape, r_rate, n_threads) :
-    monty_rng_gamma_rate<double, default_rng64>(ptr, n, r_shape, r_rate, n_threads);
+                                 int n_threads) {
+  return monty_rng_gamma_rate<double, default_rng>(ptr, n, r_shape, r_rate, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_poisson(SEXP ptr, int n,
                               cpp11::doubles r_lambda,
-                              int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_poisson<float, default_rng32>(ptr, n, r_lambda, n_threads) :
-    monty_rng_poisson<double, default_rng64>(ptr, n, r_lambda, n_threads);
+                              int n_threads) {
+  return monty_rng_poisson<double, default_rng>(ptr, n, r_lambda, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_cauchy(SEXP ptr, int n,
                              cpp11::doubles r_location,
                              cpp11::doubles r_scale,
-                             int n_threads,
-                             bool is_float) {
-  return is_float ?
-    monty_rng_cauchy<float, default_rng32>(ptr, n, r_location, r_scale, n_threads) :
-    monty_rng_cauchy<double, default_rng64>(ptr, n, r_location, r_scale, n_threads);
+                             int n_threads) {
+  return monty_rng_cauchy<double, default_rng>(ptr, n, r_location, r_scale, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_beta(SEXP ptr, int n,
                            cpp11::doubles r_a,
                            cpp11::doubles r_b,
-                           int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_beta<float, default_rng32>(ptr, n, r_a, r_b, n_threads) :
-    monty_rng_beta<double, default_rng64>(ptr, n, r_a, r_b, n_threads);
+                           int n_threads) {
+  return monty_rng_beta<double, default_rng>(ptr, n, r_a, r_b, n_threads);
 }
 
 [[cpp11::register]]
 cpp11::sexp monty_rng_multinomial(SEXP ptr, int n,
                                   cpp11::doubles r_size, cpp11::doubles r_prob,
-                                  int n_threads, bool is_float) {
-  return is_float ?
-    monty_rng_multinomial<float, default_rng32>(ptr, n, r_size, r_prob, n_threads) :
-    monty_rng_multinomial<double, default_rng64>(ptr, n, r_size, r_prob, n_threads);
+                                  int n_threads) {
+  return monty_rng_multinomial<double, default_rng>(ptr, n, r_size, r_prob, n_threads);
 }
 
 [[cpp11::register]]
-cpp11::sexp monty_rng_state(SEXP ptr, bool is_float) {
-  return is_float ?
-    monty_rng_state<default_rng32>(ptr) :
-    monty_rng_state<default_rng64>(ptr);
+cpp11::sexp monty_rng_state(SEXP ptr) {
+  return monty_rng_state<default_rng>(ptr);
 }

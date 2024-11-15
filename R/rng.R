@@ -128,8 +128,7 @@ monty_rng <- R6::R6Class(
 
   private = list(
     ptr = NULL,
-    n_streams = NULL,
-    float = NULL
+    n_streams = NULL
   ),
 
   public = list(
@@ -141,40 +140,23 @@ monty_rng <- R6::R6Class(
     ##' @param seed The seed, as an integer, a raw vector or `NULL`.
     ##'   If an integer we will create a suitable seed via the "splitmix64"
     ##'   algorithm, if a raw vector it must the correct length (a multiple
-    ##'   of either 32 or 16 for `float = FALSE` or `float = TRUE`
-    ##'   respectively). If `NULL` then we create a seed using R's random
+    ##'   of 32). If `NULL` then we create a seed using R's random
     ##'   number generator.
     ##'
     ##' @param n_streams The number of streams to use (see Details)
     ##'
-    ##' @param real_type The type of floating point number to use. Currently
-    ##'   only `float` and `double` are supported (with `double` being
-    ##'   the default). This will have no (or negligible) impact on speed,
-    ##'   but exists to test the low-precision generators.
-    ##'
     ##' @param deterministic Logical, indicating if we should use
     ##'   "deterministic" mode where distributions return their
     ##'   expectations and the state is never changed.
-    initialize = function(seed = NULL, n_streams = 1L, real_type = "double",
+    initialize = function(seed = NULL, n_streams = 1L,
                           deterministic = FALSE) {
-      if (!(real_type %in% c("double", "float"))) {
-        stop("Invalid value for 'real_type': must be 'double' or 'float'")
-      }
-      private$float <- real_type == "float"
-      private$ptr <- monty_rng_alloc(seed, n_streams, deterministic,
-                                     private$float)
+      private$ptr <- monty_rng_alloc(seed, n_streams, deterministic)
       private$n_streams <- n_streams
 
-      if (real_type == "float") {
-        size_int_bits <- 32L
-        name <- "xoshiro128plus"
-      } else {
-        size_int_bits <- 64L
-        name <- "xoshiro256plus"
-      }
-      size_int_bits <- if (real_type == "float") 32L else 64L
+      size_int_bits <- 64L
+      name <- "xoshiro256plus"
+      size_int_bits <- 64L
       self$info <- list(
-        real_type = real_type,
         int_type = sprintf("uint%s_t", size_int_bits),
         name = name,
         deterministic = deterministic,
@@ -196,14 +178,14 @@ monty_rng <- R6::R6Class(
     ##'   each stream by advancing it to a state equivalent to
     ##'   2^128 numbers drawn from each stream.
     jump = function() {
-      monty_rng_jump(private$ptr, private$float)
+      monty_rng_jump(private$ptr)
       invisible(self)
     },
 
     ##' @description Longer than `$jump`, the `$long_jump` method is
     ##'   equivalent to 2^192 numbers drawn from each stream.
     long_jump = function() {
-      monty_rng_long_jump(private$ptr, private$float)
+      monty_rng_long_jump(private$ptr)
       invisible(self)
     },
 
@@ -213,7 +195,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     random_real = function(n, n_threads = 1L) {
-      monty_rng_random_real(private$ptr, n, n_threads, private$float)
+      monty_rng_random_real(private$ptr, n, n_threads)
     },
 
     ##' @description Generate `n` numbers from a standard normal distribution
@@ -226,8 +208,7 @@ monty_rng <- R6::R6Class(
     ##'   and `ziggurat` are supported, with the latter being considerably
     ##'   faster.
     random_normal = function(n, n_threads = 1L, algorithm = "box_muller") {
-      monty_rng_random_normal(private$ptr, n, n_threads, algorithm,
-                              private$float)
+      monty_rng_random_normal(private$ptr, n, n_threads, algorithm)
     },
 
     ##' @description Generate `n` numbers from a uniform distribution
@@ -240,7 +221,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     uniform = function(n, min, max, n_threads = 1L) {
-      monty_rng_uniform(private$ptr, n, min, max, n_threads, private$float)
+      monty_rng_uniform(private$ptr, n, min, max, n_threads)
     },
 
     ##' @description Generate `n` numbers from a normal distribution
@@ -257,8 +238,7 @@ monty_rng <- R6::R6Class(
     ##'   and `ziggurat` are supported, with the latter being considerably
     ##'   faster.
     normal = function(n, mean, sd, n_threads = 1L, algorithm = "box_muller") {
-      monty_rng_normal(private$ptr, n, mean, sd, n_threads, algorithm,
-                       private$float)
+      monty_rng_normal(private$ptr, n, mean, sd, n_threads, algorithm)
     },
 
     ##' @description Generate `n` numbers from a binomial distribution
@@ -272,7 +252,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     binomial = function(n, size, prob, n_threads = 1L) {
-      monty_rng_binomial(private$ptr, n, size, prob, n_threads, private$float)
+      monty_rng_binomial(private$ptr, n, size, prob, n_threads)
     },
     
     ##' @description Generate `n` numbers from a beta-binomial distribution
@@ -287,8 +267,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     beta_binomial_ab = function(n, size, a, b, n_threads = 1L) {
-      monty_rng_beta_binomial_ab(private$ptr, n, size, a, b, n_threads,
-                                 private$float)
+      monty_rng_beta_binomial_ab(private$ptr, n, size, a, b, n_threads)
     },
     
     ##' @description Generate `n` numbers from a beta-binomial distribution
@@ -304,8 +283,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     beta_binomial_prob = function(n, size, prob, rho, n_threads = 1L) {
-      monty_rng_beta_binomial_prob(private$ptr, n, size, prob, rho, n_threads,
-                                   private$float)
+      monty_rng_beta_binomial_prob(private$ptr, n, size, prob, rho, n_threads)
     },
 
     ##' @description Generate `n` numbers from a negative binomial distribution
@@ -320,8 +298,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     negative_binomial_prob = function(n, size, prob, n_threads = 1L) {
-      monty_rng_negative_binomial_prob(private$ptr, n, size, prob, n_threads,
-                                       private$float)
+      monty_rng_negative_binomial_prob(private$ptr, n, size, prob, n_threads)
     },
     
     ##' @description Generate `n` numbers from a negative binomial distribution
@@ -336,8 +313,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     negative_binomial_mu = function(n, size, mu, n_threads = 1L) {
-      monty_rng_negative_binomial_mu(private$ptr, n, size, mu, n_threads,
-                                     private$float)
+      monty_rng_negative_binomial_mu(private$ptr, n, size, mu, n_threads)
     },
 
     ##' @description Generate `n` numbers from a hypergeometric distribution
@@ -354,8 +330,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     hypergeometric = function(n, n1, n2, k, n_threads = 1L) {
-      monty_rng_hypergeometric(private$ptr, n, n1, n2, k, n_threads,
-                               private$float)
+      monty_rng_hypergeometric(private$ptr, n, n1, n2, k, n_threads)
     },
 
     ##' @description Generate `n` numbers from a gamma distribution
@@ -368,8 +343,7 @@ monty_rng <- R6::R6Class(
     ##''
     ##' @param n_threads Number of threads to use; see Details
     gamma_scale = function(n, shape, scale, n_threads = 1L) {
-      monty_rng_gamma_scale(private$ptr, n, shape, scale, n_threads,
-                            private$float)
+      monty_rng_gamma_scale(private$ptr, n, shape, scale, n_threads)
     },
 
     ##' @description Generate `n` numbers from a gamma distribution
@@ -382,8 +356,7 @@ monty_rng <- R6::R6Class(
     ##''
     ##' @param n_threads Number of threads to use; see Details
     gamma_rate = function(n, shape, rate, n_threads = 1L) {
-      monty_rng_gamma_rate(private$ptr, n, shape, rate, n_threads,
-                           private$float)
+      monty_rng_gamma_rate(private$ptr, n, shape, rate, n_threads)
     },
 
     ##' @description Generate `n` numbers from a Poisson distribution
@@ -395,7 +368,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     poisson = function(n, lambda, n_threads = 1L) {
-      monty_rng_poisson(private$ptr, n, lambda, n_threads, private$float)
+      monty_rng_poisson(private$ptr, n, lambda, n_threads)
     },
 
     ##' @description Generate `n` numbers from a exponential distribution
@@ -406,8 +379,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     exponential_rate = function(n, rate, n_threads = 1L) {
-      monty_rng_exponential_rate(private$ptr, n, rate, n_threads,
-                                 private$float)
+      monty_rng_exponential_rate(private$ptr, n, rate, n_threads)
     },
 
     ##' @description Generate `n` numbers from a exponential distribution
@@ -418,8 +390,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     exponential_mean = function(n, mean, n_threads = 1L) {
-      monty_rng_exponential_mean(private$ptr, n, mean, n_threads,
-                                 private$float)
+      monty_rng_exponential_mean(private$ptr, n, mean, n_threads)
     },
 
     ##' @description Generate `n` draws from a Cauchy distribution.
@@ -434,8 +405,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     cauchy = function(n, location, scale, n_threads = 1L) {
-      monty_rng_cauchy(private$ptr, n, location, scale, n_threads,
-                       private$float)
+      monty_rng_cauchy(private$ptr, n, location, scale, n_threads)
     },
 
     ##' @description Generate `n` draws from a multinomial distribution.
@@ -453,8 +423,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     multinomial = function(n, size, prob, n_threads = 1L) {
-      monty_rng_multinomial(private$ptr, n, size, prob, n_threads,
-                            private$float)
+      monty_rng_multinomial(private$ptr, n, size, prob, n_threads)
     },
 
     ##' @description Generate `n` numbers from a beta distribution
@@ -467,7 +436,7 @@ monty_rng <- R6::R6Class(
     ##'
     ##' @param n_threads Number of threads to use; see Details
     beta = function(n, a, b, n_threads = 1L) {
-      monty_rng_beta(private$ptr, n, a, b, n_threads, private$float)
+      monty_rng_beta(private$ptr, n, a, b, n_threads)
     },
 
     ##' @description
@@ -476,6 +445,6 @@ monty_rng <- R6::R6Class(
     ##' debugging as one cannot (yet) initialise a monty_rng object with this
     ##' state.
     state = function() {
-      monty_rng_state(private$ptr, private$float)
+      monty_rng_state(private$ptr)
     }
   ))
