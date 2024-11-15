@@ -1125,9 +1125,9 @@ test_that("can generate beta-binomial numbers", {
   n <- 100
   a <- 1.5
   b <- 8.5
-    
+
   yf <- monty_rng$new(1)$beta_binomial_ab(m, n, a, b)
-  
+
   expect_equal(mean(yf), n * a / (a + b), tolerance = 1e-3)
   expect_equal(var(yf),
                n * a * b * (a + b + n) / ((a + b)^2 * (a + b + 1)),
@@ -1251,4 +1251,27 @@ test_that("deterministic beta returns mean", {
   expect_equal(rng$beta(n, a, b), a / (a + b))
 
   expect_equal(rng$state(), state)
+})
+
+
+test_that("reference implementation of truncated normal is reasonable", {
+  min <- -1
+  max <- 2
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- replicate(10000, truncated_normal_r(min, max))
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+
+  min <- -1
+  max <- Inf
+  replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- replicate(10000, truncated_normal_r(min, max))
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
 })

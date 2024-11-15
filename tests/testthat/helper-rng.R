@@ -194,3 +194,62 @@ hypergeometric_r <- function(random_real) {
     x
   }
 }
+
+
+truncated_normal_r <- function(min, max) {
+  if (is.finite(min) && is.finite(max)) {
+    repeat {
+      z <- runif(1, min, max)
+      u <- runif(1)
+      z2 <- z * z
+      if (min > 0) {
+        p_accept <- exp((min^2 - z2) / 2)
+      } else if (max < 0) {
+        p_accept <- exp((max^2 - z2) / 2)
+      } else {
+        p_accept <- exp(-z^2 / 2)
+      }
+      if (u < p_accept) {
+        return(z)
+      }
+    }
+  } else if (is.infinite(min) && is.infinite(max)) {
+    return(rnorm(0, 1))
+  } else {
+    if (is.infinite(min)) {
+      min <- -max
+    }
+    repeat {
+      a_star <- (min + sqrt(min^2 + 4)) / 2
+      ## Sample from the "translated exponential distribution"
+      z <- rexp(1, a_star) + min
+      p_accept <- exp(-(z - a_star)^2 / 2)
+      u <- runif(1)
+      if (u < p_accept) {
+        return(z)
+      }
+    }
+  }
+}
+
+
+## density is easy unless we need the normalising constant, something
+## to decide on...
+
+## truncated_normal_d <- function(mu, sd, min, max) {
+
+##   (1 + erf((max - mu) / (sqrt(2) * sd))) / 2 - (1 + erf((min - mu) / (sqrt(2) * sd))) / 2
+
+##   (erf((max - mu) / (sqrt(2) * sd)) - erf((min - mu) / (sqrt(2) * sd))) / 2
+
+
+
+##   xx <- (x - mu) / sd
+##   (1 / (2 * sqrt(pi)) * exp(xx^2 / 2)) / ()
+
+
+## }
+
+## truncated_normal_density <- function(x, mu, sd, min, max) {
+##   if (x < min || x > max)
+## }

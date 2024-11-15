@@ -12,6 +12,7 @@
 #include "monty/random/hypergeometric.hpp"
 #include "monty/random/multinomial.hpp"
 #include "monty/random/negative_binomial.hpp"
+#include "monty/random/truncated_normal.hpp"
 #include "monty/random/normal.hpp"
 #include "monty/random/poisson.hpp"
 #include "monty/random/uniform.hpp"
