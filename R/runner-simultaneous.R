@@ -106,8 +106,15 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   density <- vnapply(state, function(x) x$chain$density)
   chain_state <- list(pars = pars, density = density, observation = NULL)
 
-  sampler_state <- lapply(state, function(x) x$sampler)
-  sampler$set_internal_state(sampler_state)
+  ## We have to (at least for now) just take the first sampler state.
+  ## This is not totally ideal, but most of the time the runner will
+  ## be the same in which case this is the same data replicated n
+  ## times.  We could warn, but as there's not a lot of better
+  ## alternatives for the user, let's just keep going.
+  sampler_state <- state[[1]]$sampler
+  if (!is.null(sampler_state)) {
+    sampler$set_internal_state(sampler_state)
+  }
 
   stopifnot(!model$properties$is_stochastic)
   ## Need to use model$rng_state$set to put state$model_rng into the model
@@ -150,13 +157,18 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   rng_state <- lapply(asplit(matrix(rng$state(), ncol = n_chains), 2),
                       as.vector)
 
+  sampler_state <- sampler$get_internal_state()
+  if (!is.null(sampler_state)) {
+    sampler_state <- rep(list(sampler_state), n_chains)
+  }
+
   ## TODO: observation finalisation; this will be weird
   internal <- list(
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
       chain = chain_state,
       rng = rng_state,
-      sampler = sampler$get_internal_state(),
+      sampler = sampler_state,
       simultaneous = TRUE,
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 
