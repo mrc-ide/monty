@@ -157,7 +157,6 @@ monty_rng <- R6::R6Class(
       name <- "xoshiro256plus"
       size_int_bits <- 64L
       self$info <- list(
-        real_type = real_type,
         int_type = sprintf("uint%s_t", size_int_bits),
         name = name,
         deterministic = deterministic,
