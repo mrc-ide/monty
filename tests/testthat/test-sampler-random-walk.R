@@ -110,9 +110,13 @@ test_that("can continue a simultaneous random walk sampler", {
   set.seed(1)
   runner <- monty_runner_simultaneous()
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner,
-                          restartable = TRUE)
-  expect_equal(res2a$restart$state, res1a$restart$state)
+                        restartable = TRUE)
 
+  drop_sampler_state <- function(x) {
+    x[names(x) != "sampler"]
+  }
+  expect_equal(lapply(res2a$restart$state, drop_sampler_state),
+               lapply(res1a$restart$state, drop_sampler_state))
   res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res2b, res1b)

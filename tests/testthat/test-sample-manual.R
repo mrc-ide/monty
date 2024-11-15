@@ -301,3 +301,26 @@ test_that("can use burnin/thinning_factor in manual sampling", {
 
   expect_equal(res2b$pars, res1$pars)
 })
+
+
+test_that("can continue a manually run manual chain", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  path_a <- withr::local_tempdir()
+  path_b <- withr::local_tempdir()
+
+  set.seed(1)
+  monty_sample_manual_prepare(model, sampler, 20, path_a)
+  monty_sample_manual_run(1, path_a)
+  res1a <- monty::monty_sample_manual_collect(path_a, restartable = TRUE)
+
+  monty_sample_manual_prepare_continue(res1a, 30, path_b)
+  monty_sample_manual_run(1, path_b)
+  res1b <- monty::monty_sample_manual_collect(path_b, samples = res1a)
+
+  set.seed(1)
+  res2 <- monty_sample(model, sampler, 50)
+
+  expect_equal(res1b, res2)
+})

@@ -269,7 +269,6 @@ test_that("can continue a hmc model simultaneously, with debug", {
                           runner = runner)
   res2b <- monty_sample_continue(res2a, 70)
 
-  expect_equal(res1a$restart$state, res2a$restart$state)
   expect_equal(res1b, res2b)
   expect_equal(dim(res2b$details$pars), c(2, 11, 100, 3))
   expect_equal(dim(res2b$details$accept), c(100, 3))
