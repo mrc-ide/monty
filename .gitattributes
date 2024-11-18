@@ -1,1 +1,3 @@
 R/import-*.R linguist-generated=true
+R/cpp11.R linguist-generated=true
+src/cpp11.cpp linguist-generated=true
