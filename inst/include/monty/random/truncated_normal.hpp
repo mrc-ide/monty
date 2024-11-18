@@ -54,10 +54,12 @@ real_type truncated_normal_standard_1_sided(rng_state_type& rng_state, real_type
 
 template <typename real_type>
 real_type truncated_normal_standard_mean(real_type min, real_type max) {
-  const auto z_min = 0.5 * (1 + std::erf(min / monty::math::sqrt(2)));
-  const auto z_max = 0.5 * (1 + std::erf(max / monty::math::sqrt(2)));
-  const auto z = z_max - z_min;
-  return (density::normal<real_type>(min, 0, 1, false) - density::normal<real_type>(max, 0, 1, false)) / z;
+  constexpr real_type m_1_sqrt_2 = 0.70710678118654746172; // 1 / sqrt(2)
+  const auto z_min = 0.5 * (1 + std::erf(min * m_1_sqrt_2));
+  const auto z_max = 0.5 * (1 + std::erf(max * m_1_sqrt_2));
+  const auto d_min = density::normal<real_type>(min, 0, 1, false);
+  const auto d_max = density::normal<real_type>(max, 0, 1, false);
+  return (d_min - d_max) / (z_max - z_min);
 }
 
 template <typename real_type, typename rng_state_type>
@@ -86,7 +88,9 @@ real_type truncated_normal_standard(rng_state_type& rng_state, real_type min, re
 
 template <typename real_type, typename rng_state_type>
 real_type truncated_normal(rng_state_type& rng_state, real_type mean, real_type sd, real_type min, real_type max) {
-  const auto z = truncated_normal_standard(rng_state, min, max);
+  const auto a = (min - mean) / sd;
+  const auto b = (max - mean) / sd;
+  const auto z = truncated_normal_standard(rng_state, a, b);
   return z * sd + mean;
 }
 

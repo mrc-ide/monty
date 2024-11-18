@@ -1307,3 +1307,41 @@ test_that("can generate from truncated normal, 1 sided", {
   })
   expect_gt(sum(res > 0.05), 5)
 })
+
+
+test_that("can handle other one sided distribution", {
+  min <- -1
+  max <- 2
+  r1 <- monty_rng$new(seed = 42)
+  r2 <- monty_rng$new(seed = 42)
+
+  min <- -1
+  max <- Inf
+  y1 <- r1$truncated_normal(10, 2, 3, -1, Inf)
+  y2 <- r2$truncated_normal(10, -2, 3, -Inf, 1)
+  expect_equal(y2, -y1)
+})
+
+
+test_that("can sample untruncated normals from truncated normal", {
+  r1 <- monty_rng$new(seed = 42)
+  r2 <- monty_rng$new(seed = 42)
+  y1 <- r1$truncated_normal(10, 2, 3, -Inf, Inf)
+  y2 <- r2$normal(10, 2, 3)
+  expect_identical(y1, y2)
+})
+
+
+test_that("can compute mean of truncated normal", {
+  mean <- 2
+  sd <- 3
+  min <- -1
+  max <- 2
+  r <- monty_rng$new(seed = 42, deterministic = TRUE)
+  s0 <- r$state()
+  y <- r$truncated_normal(1, mean, sd, min, max)
+  num <- integrate(function(x) x * dnorm(x, mean, sd), min, max)$value
+  den <- integrate(function(x) dnorm(x, mean, sd), min, max)$value
+  expect_equal(y, num / den)
+  expect_equal(r$state(), s0)
+})
