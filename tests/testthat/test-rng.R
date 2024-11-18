@@ -1284,7 +1284,25 @@ test_that("can generate from truncated normal", {
   res <- replicate(10, {
     cmp <- rnorm(10000)
     cmp <- cmp[cmp >= min & cmp <= max]
-    res <- replicate(10000, truncated_normal_r(min, max))
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+})
+
+
+test_that("can generate from truncated normal, 1 sided", {
+  set.seed(1)
+  min <- -1
+  max <- 2
+  r <- monty_rng$new()
+
+  min <- -1
+  max <- Inf
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
     suppressWarnings(ks.test(res, cmp)$p.value)
   })
   expect_gt(sum(res > 0.05), 5)
