@@ -1125,9 +1125,7 @@ test_that("can generate beta-binomial numbers", {
   n <- 100
   a <- 1.5
   b <- 8.5
-
   yf <- monty_rng$new(1)$beta_binomial_ab(m, n, a, b)
-
   expect_equal(mean(yf), n * a / (a + b), tolerance = 1e-3)
   expect_equal(var(yf),
                n * a * b * (a + b + n) / ((a + b)^2 * (a + b + 1)),

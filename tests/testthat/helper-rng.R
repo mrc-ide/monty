@@ -231,25 +231,3 @@ truncated_normal_r <- function(min, max) {
     }
   }
 }
-
-
-## density is easy unless we need the normalising constant, something
-## to decide on...
-
-## truncated_normal_d <- function(mu, sd, min, max) {
-
-##   (1 + erf((max - mu) / (sqrt(2) * sd))) / 2 - (1 + erf((min - mu) / (sqrt(2) * sd))) / 2
-
-##   (erf((max - mu) / (sqrt(2) * sd)) - erf((min - mu) / (sqrt(2) * sd))) / 2
-
-
-
-##   xx <- (x - mu) / sd
-##   (1 / (2 * sqrt(pi)) * exp(xx^2 / 2)) / ()
-
-
-## }
-
-## truncated_normal_density <- function(x, mu, sd, min, max) {
-##   if (x < min || x > max)
-## }

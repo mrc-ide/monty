@@ -10,7 +10,7 @@
 ##' This interface is subject to change in the near future, we do not
 ##' recommend its use in user code.
 ##'
-##' # Running multiple streams, perhaps in parallel:
+##' # Running multiple streams, perhaps in parallel
 ##'
 ##' The underlying random number generators are designed to work in
 ##'   parallel, and with random access to parameters (see
