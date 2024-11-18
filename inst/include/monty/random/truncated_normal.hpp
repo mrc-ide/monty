@@ -9,6 +9,11 @@
 #include "monty/random/uniform.hpp"
 #include "monty/random/math.hpp"
 
+// Method of Robert, from https://arxiv.org/pdf/0907.4010
+//
+// Other, possibly more efficient, methods are available, but this one
+// is pretty easy to implement.
+
 namespace monty {
 namespace random {
 
@@ -39,8 +44,7 @@ real_type truncated_normal_standard_1_sided(rng_state_type& rng_state, real_type
     const auto a_star = (min + monty::math::sqrt(min * min + 4)) / 2;
     z = monty::random::exponential_rate<real_type>(rng_state, a_star) + min;
     const auto u = random_real<real_type>(rng_state);
-    // TODO: check paper, this is a placeholder:
-    const auto p_accept = monty::math::log(a_star);
+    const auto p_accept = monty::math::exp(-(z - a_star) * (z - a_star) / 2);
     if (u < p_accept) {
       break;
     }
