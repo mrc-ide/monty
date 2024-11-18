@@ -155,6 +155,13 @@ extern "C" SEXP _monty_monty_rng_multinomial(SEXP ptr, SEXP n, SEXP r_size, SEXP
   END_CPP11
 }
 // random.cpp
+cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n, cpp11::doubles r_mean, cpp11::doubles r_sd, cpp11::doubles r_min, cpp11::doubles r_max, int n_threads);
+extern "C" SEXP _monty_monty_rng_truncated_normal(SEXP ptr, SEXP n, SEXP r_mean, SEXP r_sd, SEXP r_min, SEXP r_max, SEXP n_threads) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(monty_rng_truncated_normal(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_sd), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_max), cpp11::as_cpp<cpp11::decay_t<int>>(n_threads)));
+  END_CPP11
+}
+// random.cpp
 cpp11::sexp monty_rng_state(SEXP ptr);
 extern "C" SEXP _monty_monty_rng_state(SEXP ptr) {
   BEGIN_CPP11
@@ -240,6 +247,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_random_normal",           (DL_FUNC) &_monty_monty_rng_random_normal,           4},
     {"_monty_monty_rng_random_real",             (DL_FUNC) &_monty_monty_rng_random_real,             3},
     {"_monty_monty_rng_state",                   (DL_FUNC) &_monty_monty_rng_state,                   1},
+    {"_monty_monty_rng_truncated_normal",        (DL_FUNC) &_monty_monty_rng_truncated_normal,        7},
     {"_monty_monty_rng_uniform",                 (DL_FUNC) &_monty_monty_rng_uniform,                 5},
     {"_monty_test_rng_pointer_get",              (DL_FUNC) &_monty_test_rng_pointer_get,              2},
     {"_monty_test_xoshiro_run",                  (DL_FUNC) &_monty_test_xoshiro_run,                  1},

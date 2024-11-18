@@ -5,7 +5,12 @@
 ##'   primarily meant for debugging and testing the underlying C++
 ##'   rather than a source of random numbers from R.
 ##'
-##' @section Running multiple streams, perhaps in parallel:
+##' # Warning
+##'
+##' This interface is subject to change in the near future, we do not
+##' recommend its use in user code.
+##'
+##' # Running multiple streams, perhaps in parallel:
 ##'
 ##' The underlying random number generators are designed to work in
 ##'   parallel, and with random access to parameters (see
@@ -437,6 +442,24 @@ monty_rng <- R6::R6Class(
     ##' @param n_threads Number of threads to use; see Details
     beta = function(n, a, b, n_threads = 1L) {
       monty_rng_beta(private$ptr, n, a, b, n_threads)
+    },
+
+    ##' @description Generate `n` numbers from a truncated normal distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param mean The mean of the parent (untruncated) normal distribution
+    ##'
+    ##' @param sd The standard deviation of the parent (untruncated)
+    ##'   normal distribution.
+    ##'
+    ##' @param min The lower bound
+    ##'
+    ##' @param max The upper bound
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    truncated_normal = function(n, mean, sd, min, max, n_threads = 1L) {
+      monty_rng_truncated_normal(private$ptr, mean, sd, min, max, n_threads)
     },
 
     ##' @description

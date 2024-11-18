@@ -244,6 +244,11 @@ derivative <- list(
     b <- differentiate(call("lfactorial", k), name)
     c <- differentiate(call("lfactorial", maths$minus(n, k)), name)
     maths$minus(maths$minus(a, b), c)
+  },
+  erf = function(expr, name) {
+    x <- maths$rewrite(expr[[2]])
+    maths$times(differentiate(x, name),
+                quote(2 / sqrt(pi) * exp(-x^2)))
   }
 )
 
