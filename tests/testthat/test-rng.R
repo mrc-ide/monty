@@ -1252,29 +1252,6 @@ test_that("deterministic beta returns mean", {
 })
 
 
-test_that("reference implementation of truncated normal is reasonable", {
-  min <- -1
-  max <- 2
-  res <- replicate(10, {
-    cmp <- rnorm(10000)
-    cmp <- cmp[cmp >= min & cmp <= max]
-    res <- replicate(10000, truncated_normal_r(min, max))
-    suppressWarnings(ks.test(res, cmp)$p.value)
-  })
-  expect_gt(sum(res > 0.05), 5)
-
-  min <- -1
-  max <- Inf
-  replicate(10, {
-    cmp <- rnorm(10000)
-    cmp <- cmp[cmp >= min & cmp <= max]
-    res <- replicate(10000, truncated_normal_r(min, max))
-    suppressWarnings(ks.test(res, cmp)$p.value)
-  })
-  expect_gt(sum(res > 0.05), 5)
-})
-
-
 test_that("can generate from truncated normal", {
   set.seed(1)
   min <- -1
@@ -1344,4 +1321,36 @@ test_that("can compute mean of truncated normal", {
   den <- integrate(function(x) dnorm(x, mean, sd), min, max)$value
   expect_equal(y, num / den)
   expect_equal(r$state(), s0)
+})
+
+
+test_that("can generate from truncated normal from tails", {
+  set.seed(1)
+  min <- 2
+  max <- 4
+  r <- monty_rng$new()
+
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+})
+
+
+test_that("can generate from truncated normal from lower tail", {
+  set.seed(1)
+  min <- -6
+  max <- -1
+  r <- monty_rng$new()
+
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
 })

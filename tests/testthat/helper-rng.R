@@ -196,6 +196,7 @@ hypergeometric_r <- function(random_real) {
 }
 
 
+## Just here for debugging the truncated normal generator:
 truncated_normal_r <- function(min, max) {
   if (is.finite(min) && is.finite(max)) {
     repeat {

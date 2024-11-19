@@ -24,7 +24,7 @@ real_type truncated_normal_standard_2_sided(rng_state_type& rng_state, real_type
     z = uniform<real_type>(rng_state, min, max);
     const auto u = random_real<real_type>(rng_state);
     if (min > 0) {
-      p_accept = monty::math::exp((min * max - z * z) / 2);
+      p_accept = monty::math::exp((min * min - z * z) / 2);
     } else if (max < 0) {
       p_accept = monty::math::exp((max * max - z * z) / 2);
     } else {
