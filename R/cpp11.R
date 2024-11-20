@@ -84,6 +84,10 @@ monty_rng_multinomial <- function(ptr, n, r_size, r_prob, n_threads) {
   .Call(`_monty_monty_rng_multinomial`, ptr, n, r_size, r_prob, n_threads)
 }
 
+monty_rng_truncated_normal <- function(ptr, n, r_mean, r_sd, r_min, r_max, n_threads) {
+  .Call(`_monty_monty_rng_truncated_normal`, ptr, n, r_mean, r_sd, r_min, r_max, n_threads)
+}
+
 monty_rng_state <- function(ptr) {
   .Call(`_monty_monty_rng_state`, ptr)
 }

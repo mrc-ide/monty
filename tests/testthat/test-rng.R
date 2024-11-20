@@ -1125,9 +1125,7 @@ test_that("can generate beta-binomial numbers", {
   n <- 100
   a <- 1.5
   b <- 8.5
-    
   yf <- monty_rng$new(1)$beta_binomial_ab(m, n, a, b)
-  
   expect_equal(mean(yf), n * a / (a + b), tolerance = 1e-3)
   expect_equal(var(yf),
                n * a * b * (a + b + n) / ((a + b)^2 * (a + b + 1)),
@@ -1251,4 +1249,108 @@ test_that("deterministic beta returns mean", {
   expect_equal(rng$beta(n, a, b), a / (a + b))
 
   expect_equal(rng$state(), state)
+})
+
+
+test_that("can generate from truncated normal", {
+  set.seed(1)
+  min <- -1
+  max <- 2
+  r <- monty_rng$new()
+
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+})
+
+
+test_that("can generate from truncated normal, 1 sided", {
+  set.seed(1)
+  min <- -1
+  max <- 2
+  r <- monty_rng$new()
+
+  min <- -1
+  max <- Inf
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+})
+
+
+test_that("can handle other one sided distribution", {
+  min <- -1
+  max <- 2
+  r1 <- monty_rng$new(seed = 42)
+  r2 <- monty_rng$new(seed = 42)
+
+  min <- -1
+  max <- Inf
+  y1 <- r1$truncated_normal(10, 2, 3, -1, Inf)
+  y2 <- r2$truncated_normal(10, -2, 3, -Inf, 1)
+  expect_equal(y2, -y1)
+})
+
+
+test_that("can sample untruncated normals from truncated normal", {
+  r1 <- monty_rng$new(seed = 42)
+  r2 <- monty_rng$new(seed = 42)
+  y1 <- r1$truncated_normal(10, 2, 3, -Inf, Inf)
+  y2 <- r2$normal(10, 2, 3)
+  expect_identical(y1, y2)
+})
+
+
+test_that("can compute mean of truncated normal", {
+  mean <- 2
+  sd <- 3
+  min <- -1
+  max <- 2
+  r <- monty_rng$new(seed = 42, deterministic = TRUE)
+  s0 <- r$state()
+  y <- r$truncated_normal(1, mean, sd, min, max)
+  num <- integrate(function(x) x * dnorm(x, mean, sd), min, max)$value
+  den <- integrate(function(x) dnorm(x, mean, sd), min, max)$value
+  expect_equal(y, num / den)
+  expect_equal(r$state(), s0)
+})
+
+
+test_that("can generate from truncated normal from tails", {
+  set.seed(1)
+  min <- 2
+  max <- 4
+  r <- monty_rng$new()
+
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
+})
+
+
+test_that("can generate from truncated normal from lower tail", {
+  set.seed(1)
+  min <- -6
+  max <- -1
+  r <- monty_rng$new()
+
+  res <- replicate(10, {
+    cmp <- rnorm(10000)
+    cmp <- cmp[cmp >= min & cmp <= max]
+    res <- r$truncated_normal(10000, 0, 1, min, max)
+    suppressWarnings(ks.test(res, cmp)$p.value)
+  })
+  expect_gt(sum(res > 0.05), 5)
 })

@@ -97,6 +97,8 @@ distr_beta_binomial_ab <- distribution(
     mean = quote(size * a / (a + b))),
   cpp = list(density = "beta_binomial_ab", sample = "beta_binomial_ab"))
 
+## Cauchy missing here? What else?
+
 distr_exponential_rate <- distribution(
   name = "Exponential",
   variant = "rate",
@@ -204,6 +206,24 @@ distr_poisson <- distribution(
     mean = quote(lambda)),
   sample = function(rng, lambda) rng$poisson(1, lambda),
   cpp = list(density = "poisson", sample = "poisson"))
+
+distr_truncated_normal <- distribution(
+  name = "TruncatedNormal",
+  density = function(x, mean, sd, min, max) {
+  },
+  sample = function(rng, mean, sd, min, max) {
+    rng$truncated_normal(1, mean, sd, min, max)
+  },
+  ## These would be much simpler to do via the chain rule as a pair.
+  ## For now just omit
+  expr = list(
+    mean = NULL,
+    density = NULL),
+  domain = function(min, max) {
+    c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)
+  },
+  cpp = list(density = "truncated_normal",
+             sample = "truncated_normal"))
 
 distr_uniform <- distribution(
   name = "Uniform",

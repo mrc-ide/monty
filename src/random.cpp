@@ -811,6 +811,58 @@ cpp11::sexp monty_rng_beta(SEXP ptr, int n,
   return sexp_matrix(ret, n, n_streams);
 }
 
+template <typename real_type, typename T>
+cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
+                                       cpp11::doubles r_mean,
+                                       cpp11::doubles r_sd,
+                                       cpp11::doubles r_min,
+                                       cpp11::doubles r_max,
+                                       int n_threads) {
+  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  const int n_streams = rng->size();
+  cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
+  double * y = REAL(ret);
+
+  const double * mean = REAL(r_mean);
+  const double * sd = REAL(r_sd);
+  const double * min = REAL(r_min);
+  const double * max = REAL(r_max);
+
+  auto mean_vary = check_input_type(r_mean, n, n_streams, "mean");
+  auto sd_vary = check_input_type(r_sd, n, n_streams, "sd");
+  auto min_vary = check_input_type(r_min, n, n_streams, "min");
+  auto max_vary = check_input_type(r_max, n, n_streams, "max");
+
+  monty::utils::openmp_errors errors(n_streams);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) num_threads(n_threads)
+#endif
+  for (int i = 0; i < n_streams; ++i) {
+    try {
+      auto &state = rng->state(i);
+      auto y_i = y + n * i;
+      auto mean_i = mean_vary.generator ? mean + mean_vary.offset * i : mean;
+      auto sd_i = sd_vary.generator ? sd + sd_vary.offset * i : sd;
+      auto min_i = min_vary.generator ? min + min_vary.offset * i : min;
+      auto max_i = max_vary.generator ? max + max_vary.offset * i : max;
+      for (size_t j = 0; j < (size_t)n; ++j) {
+        auto mean_ij = mean_vary.draw ? mean_i[j] : mean_i[0];
+        auto sd_ij = sd_vary.draw ? sd_i[j] : sd_i[0];
+        auto min_ij = min_vary.draw ? min_i[j] : min_i[0];
+        auto max_ij = max_vary.draw ? max_i[j] : max_i[0];
+        y_i[j] = monty::random::truncated_normal<real_type>(state, mean_ij, sd_ij, min_ij, max_ij);
+      }
+    } catch (std::exception const& e) {
+      errors.capture(e, i);
+    }
+  }
+
+  errors.report("generators", 4, true);
+
+  return sexp_matrix(ret, n, n_streams);
+}
+
 template <typename T>
 cpp11::sexp monty_rng_state(SEXP ptr) {
   T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
@@ -990,6 +1042,16 @@ cpp11::sexp monty_rng_multinomial(SEXP ptr, int n,
                                   cpp11::doubles r_size, cpp11::doubles r_prob,
                                   int n_threads) {
   return monty_rng_multinomial<double, default_rng>(ptr, n, r_size, r_prob, n_threads);
+}
+
+[[cpp11::register]]
+cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
+                                       cpp11::doubles r_mean,
+                                       cpp11::doubles r_sd,
+                                       cpp11::doubles r_min,
+                                       cpp11::doubles r_max,
+                                       int n_threads) {
+  return monty_rng_truncated_normal<double, default_rng>(ptr, n, r_mean, r_sd, r_min, r_max, n_threads);
 }
 
 [[cpp11::register]]
