@@ -278,7 +278,7 @@ __host__ __device__ T cauchy(T x, T location, T scale, bool log) {
                 "cauchy should only be used with real types");
 #endif
   const auto ret = -monty::math::log(M_PI) - monty::math::log(scale) - 
-    monty::math::log(1 + ((x - scale) / scale)^2);
+    monty::math::log(1 + ((x - location) / scale)^2);
   return maybe_log(ret, log);
 }
 
