@@ -30,7 +30,7 @@ real_type truncated_normal_standard_2_sided(rng_state_type& rng_state, real_type
     } else {
       p_accept = monty::math::exp(-z * z / 2);
     }
-    if (u < p_accept) {
+    if (u <= p_accept) {
       break;
     }
   }
@@ -45,7 +45,7 @@ real_type truncated_normal_standard_1_sided(rng_state_type& rng_state, real_type
     z = monty::random::exponential_rate<real_type>(rng_state, a_star) + min;
     const auto u = random_real<real_type>(rng_state);
     const auto p_accept = monty::math::exp(-(z - a_star) * (z - a_star) / 2);
-    if (u < p_accept) {
+    if (u <= p_accept) {
       break;
     }
   }
