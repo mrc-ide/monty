@@ -264,6 +264,7 @@ dsl_distributions <- local({
     distr_negative_binomial_mu,
     distr_normal,
     distr_poisson,
+    distr_truncated_normal,
     distr_uniform)
   split(d, vapply(d, "[[", "", "name"))
 })
