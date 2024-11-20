@@ -125,26 +125,5 @@ real_type fintdiv(real_type x, real_type y) {
   return monty::math::floor(x / y);
 }
 
-// John D Cook, public domain
-template <typename T>
-T erf(T x) {
-  constexpr auto a1 =  0.254829592;
-  constexpr auto a2 = -0.284496736;
-  constexpr auto a3 =  1.421413741;
-  constexpr auto a4 = -1.453152027;
-  constexpr auto a5 =  1.061405429;
-  constexpr auto p  =  0.3275911;
-
-  // Save the sign of x
-  int sign = x >= 0;
-  x = abs(x);
-
-  // A&S formula 7.1.26
-  double t = 1.0 / (1.0 + p * x);
-  double y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * exp(-x * x);
-
-  return sign * y;
-}
-
 }
 }
