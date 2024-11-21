@@ -81,6 +81,11 @@ public:
     return state_[i];
   }
 
+  /// Return total number of elements in state
+  size_t state_size() const {
+    return size() * rng_state::size();
+  }
+
   /// Convert the random number state of all generators into a single
   /// vector. This can be used to save the state to restore using
   /// `import_state()`

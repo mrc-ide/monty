@@ -168,6 +168,14 @@ extern "C" SEXP _monty_monty_rng_state(SEXP ptr) {
     return cpp11::as_sexp(monty_rng_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
   END_CPP11
 }
+// random.cpp
+void monty_rng_set_state(SEXP ptr, cpp11::raws r_state);
+extern "C" SEXP _monty_monty_rng_set_state(SEXP ptr, SEXP r_state) {
+  BEGIN_CPP11
+    monty_rng_set_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::raws>>(r_state));
+    return R_NilValue;
+  END_CPP11
+}
 // random2.cpp
 cpp11::doubles cpp_monty_random_real(SEXP ptr);
 extern "C" SEXP _monty_cpp_monty_random_real(SEXP ptr) {
@@ -246,6 +254,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_poisson",                 (DL_FUNC) &_monty_monty_rng_poisson,                 4},
     {"_monty_monty_rng_random_normal",           (DL_FUNC) &_monty_monty_rng_random_normal,           4},
     {"_monty_monty_rng_random_real",             (DL_FUNC) &_monty_monty_rng_random_real,             3},
+    {"_monty_monty_rng_set_state",               (DL_FUNC) &_monty_monty_rng_set_state,               2},
     {"_monty_monty_rng_state",                   (DL_FUNC) &_monty_monty_rng_state,                   1},
     {"_monty_monty_rng_truncated_normal",        (DL_FUNC) &_monty_monty_rng_truncated_normal,        7},
     {"_monty_monty_rng_uniform",                 (DL_FUNC) &_monty_monty_rng_uniform,                 5},

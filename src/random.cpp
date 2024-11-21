@@ -882,6 +882,23 @@ cpp11::sexp monty_rng_state(SEXP ptr) {
   return ret;
 }
 
+
+template <typename T>
+void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+  T *rng = safely_read_externalptr<T>(ptr, "rng_set_state");
+
+  using int_type = typename T::int_type;
+  const auto len = rng->state_size() * sizeof(int_type);
+  if ((size_t)r_state.size() != len) {
+    cpp11::stop("'state' must be a raw vector of length %d (but was %d)",
+                len, r_state.size());
+  }
+  std::vector<int_type> state(len);
+  std::memcpy(state.data(), RAW(r_state), len);
+  rng->import_state(state);
+}
+
+
 [[cpp11::register]]
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
   return monty_rng_alloc<default_rng>(r_seed, n_streams, deterministic);
@@ -1066,4 +1083,9 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
 [[cpp11::register]]
 cpp11::sexp monty_rng_state(SEXP ptr) {
   return monty_rng_state<default_rng>(ptr);
+}
+
+[[cpp11::register]]
+void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+  return monty_rng_set_state<default_rng>(ptr, r_state);
 }

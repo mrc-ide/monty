@@ -13,9 +13,12 @@ numbers with the same RNG as monty uses internally.  This is
 primarily meant for debugging and testing the underlying C++
 rather than a source of random numbers from R.
 }
+\section{Warning}{
+This interface is subject to change in the near future, we do not
+recommend its use in user code.
+}
+
 \section{Running multiple streams, perhaps in parallel}{
-
-
 The underlying random number generators are designed to work in
 parallel, and with random access to parameters (see
 \code{vignette("rng")} for more details).  However, this is usually
@@ -156,7 +159,9 @@ rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
 \item \href{#method-monty_rng-cauchy}{\code{monty_rng$cauchy()}}
 \item \href{#method-monty_rng-multinomial}{\code{monty_rng$multinomial()}}
 \item \href{#method-monty_rng-beta}{\code{monty_rng$beta()}}
+\item \href{#method-monty_rng-truncated_normal}{\code{monty_rng$truncated_normal()}}
 \item \href{#method-monty_rng-state}{\code{monty_rng$state()}}
+\item \href{#method-monty_rng-set_state}{\code{monty_rng$set_state()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -652,16 +657,59 @@ Generate \code{n} numbers from a beta distribution
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-monty_rng-truncated_normal"></a>}}
+\if{latex}{\out{\hypertarget{method-monty_rng-truncated_normal}{}}}
+\subsection{Method \code{truncated_normal()}}{
+Generate \code{n} numbers from a truncated normal distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$truncated_normal(n, mean, sd, min, max, n_threads = 1L)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of samples to draw (per stream)}
+
+\item{\code{mean}}{The mean of the parent (untruncated) normal distribution}
+
+\item{\code{sd}}{The standard deviation of the parent (untruncated)
+normal distribution.}
+
+\item{\code{min}}{The lower bound}
+
+\item{\code{max}}{The upper bound}
+
+\item{\code{n_threads}}{Number of threads to use; see Details}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-monty_rng-state"></a>}}
 \if{latex}{\out{\hypertarget{method-monty_rng-state}{}}}
 \subsection{Method \code{state()}}{
 Returns the state of the random number stream. This returns a
-raw vector of length 32 * n_streams. It is primarily intended for
-debugging as one cannot (yet) initialise a monty_rng object with this
-state.
+raw vector of length 32 * \code{n_streams}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{monty_rng$state()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-monty_rng-set_state"></a>}}
+\if{latex}{\out{\hypertarget{method-monty_rng-set_state}{}}}
+\subsection{Method \code{set_state()}}{
+Sets the state of the random number stream.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$set_state(state)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{state}}{Raw vector of state, with length 32 * \code{n_streams}.}
+}
+\if{html}{\out{</div>}}
+}
 }
 }

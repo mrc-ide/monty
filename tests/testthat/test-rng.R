@@ -1354,3 +1354,26 @@ test_that("can generate from truncated normal from lower tail", {
   })
   expect_gt(sum(res > 0.05), 5)
 })
+
+
+test_that("can set state into rng", {
+  r1 <- monty_rng$new()
+  r2 <- monty_rng$new()
+
+  s1 <- r1$state()
+  r2$set_state(s1)
+
+  expect_equal(r2$random_real(10),
+               r1$random_real(10))
+})
+
+
+test_that("error if rng state wrong length", {
+  r <- monty_rng$new()
+  expect_error(
+    r$set_state(raw(4)),
+    "'state' must be a raw vector of length 32 (but was 4)")
+
+  expect_equal(r2$random_real(10),
+               r1$random_real(10))
+})
