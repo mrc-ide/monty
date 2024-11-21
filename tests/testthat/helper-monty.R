@@ -121,7 +121,7 @@ ex_stochastic <- function(n = 10, sd_sample = 1, sd_measure = 1) {
     env$rng$state()
   }
   set_rng_state <- function(rng_state) {
-    env$rng$state_set(rng_state)
+    env$rng$set_state(rng_state)
   }
   density <- function(x) {
     sum(dnorm(env$rng$normal(n, x, sd_sample), sd_measure, log = TRUE))
