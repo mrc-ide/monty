@@ -119,6 +119,8 @@ monty_model_combine <- function(a, b, properties = NULL,
     parts, properties)
   observer <- model_combine_observer(
     parts, parameters, properties, call)
+  restore <- model_combine_restore(
+    parts)
 
   data <- list(
     parts = unname(parts),
@@ -133,6 +135,7 @@ monty_model_combine <- function(a, b, properties = NULL,
          gradient = gradient,
          get_rng_state = stochastic$get_rng_state,
          set_rng_state = stochastic$set_rng_state,
+         restore = restore,
          observer = observer,
          direct_sample = direct_sample),
     properties)
@@ -454,4 +457,14 @@ model_combine_allow_multiple_parameters <- function(parts, properties,
     paste("Can't specify 'allow_multiple_parameters = TRUE' as this is",
           "not supported by both of your models"),
     call = call)
+}
+
+
+model_combine_restore <- function(parts) {
+  a <- parts[[1]]
+  b <- parts[[2]]
+  function() {
+    a$restore()
+    b$restore()
+  }
 }

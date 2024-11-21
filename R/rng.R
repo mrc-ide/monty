@@ -464,10 +464,15 @@ monty_rng <- R6::R6Class(
 
     ##' @description
     ##' Returns the state of the random number stream. This returns a
-    ##' raw vector of length 32 * n_streams. It is primarily intended for
-    ##' debugging as one cannot (yet) initialise a monty_rng object with this
-    ##' state.
+    ##' raw vector of length 32 * `n_streams`.
     state = function() {
       monty_rng_state(private$ptr)
+    },
+
+    ##' @description
+    ##' Sets the state of the random number stream.
+    ##' @param state Raw vector of state, with length 32 * `n_streams`.
+    set_state = function(state) {
+      monty_rng_set_state(private$ptr, state)
     }
   ))

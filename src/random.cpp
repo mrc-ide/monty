@@ -16,6 +16,15 @@
 using default_rng = monty::random::prng<monty::random::generator<double>>;
 
 template <typename T>
+T* safely_read_externalptr(SEXP ptr, const char * context) {
+  if (!R_ExternalPtrAddr(ptr)) {
+    cpp11::stop("Pointer has been serialised, cannot continue safely (%s)",
+                context);
+  }
+  return cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+}
+
+template <typename T>
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
   auto seed = monty::random::r::as_rng_seed<typename T::rng_state>(r_seed);
   T *rng = new T(n_streams, seed, deterministic);
@@ -24,13 +33,13 @@ SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
 
 template <typename T>
 void monty_rng_jump(SEXP ptr) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "jump");
   rng->jump();
 }
 
 template <typename T>
 void monty_rng_long_jump(SEXP ptr) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "long_jump");
   rng->long_jump();
 }
 
@@ -45,7 +54,7 @@ cpp11::sexp sexp_matrix(cpp11::sexp x, int n, int m) {
 
 template <typename real_type, typename T>
 cpp11::sexp monty_rng_random_real(SEXP ptr, int n, int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "random_real");
   const int n_streams = rng->size();
 
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
@@ -67,7 +76,7 @@ cpp11::sexp monty_rng_random_real(SEXP ptr, int n, int n_threads) {
 
 template <typename real_type, monty::random::algorithm::normal A, typename T>
 cpp11::sexp monty_rng_random_normal(SEXP ptr, int n, int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "random_normal");
   const int n_streams = rng->size();
 
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
@@ -178,7 +187,7 @@ cpp11::sexp monty_rng_uniform(SEXP ptr, int n,
                               cpp11::doubles r_min,
                               cpp11::doubles r_max,
                               int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "uniform");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -209,7 +218,7 @@ cpp11::sexp monty_rng_uniform(SEXP ptr, int n,
 template <typename real_type, typename T>
 cpp11::sexp monty_rng_exponential_rate(SEXP ptr, int n, cpp11::doubles r_rate,
                                        int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "exponential_rate");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -237,7 +246,7 @@ cpp11::sexp monty_rng_exponential_rate(SEXP ptr, int n, cpp11::doubles r_rate,
 template <typename real_type, typename T>
 cpp11::sexp monty_rng_exponential_mean(SEXP ptr, int n, cpp11::doubles r_mean,
                                        int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "exponential_mean");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -265,7 +274,7 @@ template <typename real_type, monty::random::algorithm::normal A, typename T>
 cpp11::sexp monty_rng_normal(SEXP ptr, int n,
                              cpp11::doubles r_mean, cpp11::doubles r_sd,
                              int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "normal");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -297,7 +306,7 @@ template <typename real_type, typename T>
 cpp11::sexp monty_rng_binomial(SEXP ptr, int n,
                                cpp11::doubles r_size, cpp11::doubles r_prob,
                                int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "binomial");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -339,7 +348,7 @@ cpp11::sexp monty_rng_beta_binomial_prob(SEXP ptr, int n,
                                          cpp11::doubles r_size, cpp11::doubles r_prob,
                                          cpp11::doubles r_rho,
                                          int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "beta_binomial_prob");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -385,7 +394,7 @@ cpp11::sexp monty_rng_beta_binomial_ab(SEXP ptr, int n,
                                        cpp11::doubles r_size, cpp11::doubles r_a,
                                        cpp11::doubles r_b,
                                        int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "beta_binomial_ab");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -430,7 +439,7 @@ template <typename real_type, typename T>
 cpp11::sexp monty_rng_negative_binomial_prob(SEXP ptr, int n,
                                 cpp11::doubles r_size, cpp11::doubles r_prob,
                                 int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "negative_binomial_prob");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -471,7 +480,7 @@ template <typename real_type, typename T>
 cpp11::sexp monty_rng_negative_binomial_mu(SEXP ptr, int n,
                                            cpp11::doubles r_size, cpp11::doubles r_mu,
                                            int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "negative_binomial_mu");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -511,7 +520,7 @@ cpp11::sexp monty_rng_negative_binomial_mu(SEXP ptr, int n,
 template <typename real_type, typename T>
 cpp11::sexp monty_rng_poisson(SEXP ptr, int n, cpp11::doubles r_lambda,
                               int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "poisson");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -549,7 +558,7 @@ cpp11::sexp monty_rng_multinomial(SEXP ptr, int n,
                                   cpp11::doubles r_size,
                                   cpp11::doubles r_prob,
                                   int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "multinomial");
   const int n_streams = rng->size();
 
   const double * size = REAL(r_size);
@@ -602,7 +611,7 @@ template <typename real_type, typename T>
 cpp11::sexp monty_rng_hypergeometric(SEXP ptr, int n,
                                      cpp11::doubles r_n1, cpp11::doubles r_n2,
                                      cpp11::doubles r_k, int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "hypergeometric");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -648,7 +657,7 @@ cpp11::sexp monty_rng_gamma_scale(SEXP ptr, int n,
                                   cpp11::doubles r_shape,
                                   cpp11::doubles r_scale,
                                   int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "gamma_scale");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -689,7 +698,7 @@ cpp11::sexp monty_rng_gamma_rate(SEXP ptr, int n,
                                  cpp11::doubles r_shape,
                                  cpp11::doubles r_rate,
                                  int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "gamma_rate");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -734,7 +743,7 @@ cpp11::sexp monty_rng_cauchy(SEXP ptr, int n,
                              cpp11::doubles r_location,
                              cpp11::doubles r_scale,
                              int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "cauchy");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -775,7 +784,7 @@ cpp11::sexp monty_rng_beta(SEXP ptr, int n,
                            cpp11::doubles r_a,
                            cpp11::doubles r_b,
                            int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "beta");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -818,7 +827,7 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
                                        cpp11::doubles r_min,
                                        cpp11::doubles r_max,
                                        int n_threads) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "truncated_normal");
   const int n_streams = rng->size();
   cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
   double * y = REAL(ret);
@@ -865,13 +874,30 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
 
 template <typename T>
 cpp11::sexp monty_rng_state(SEXP ptr) {
-  T *rng = cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
+  T *rng = safely_read_externalptr<T>(ptr, "rng_state");
   auto state = rng->export_state();
   size_t len = sizeof(typename T::int_type) * state.size();
   cpp11::writable::raws ret(len);
   std::memcpy(RAW(ret), state.data(), len);
   return ret;
 }
+
+
+template <typename T>
+void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+  T *rng = safely_read_externalptr<T>(ptr, "rng_set_state");
+
+  using int_type = typename T::int_type;
+  const auto len = rng->state_size() * sizeof(int_type);
+  if ((size_t)r_state.size() != len) {
+    cpp11::stop("'state' must be a raw vector of length %d (but was %d)",
+                len, r_state.size());
+  }
+  std::vector<int_type> state(len);
+  std::memcpy(state.data(), RAW(r_state), len);
+  rng->import_state(state);
+}
+
 
 [[cpp11::register]]
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
@@ -1057,4 +1083,9 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
 [[cpp11::register]]
 cpp11::sexp monty_rng_state(SEXP ptr) {
   return monty_rng_state<default_rng>(ptr);
+}
+
+[[cpp11::register]]
+void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+  return monty_rng_set_state<default_rng>(ptr, r_state);
 }
