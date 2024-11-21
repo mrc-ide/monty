@@ -1372,8 +1372,6 @@ test_that("error if rng state wrong length", {
   r <- monty_rng$new()
   expect_error(
     r$set_state(raw(4)),
-    "'state' must be a raw vector of length 32 (but was 4)")
-
-  expect_equal(r2$random_real(10),
-               r1$random_real(10))
+    "'state' must be a raw vector of length 32 (but was 4)",
+    fixed = TRUE)
 })

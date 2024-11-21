@@ -116,7 +116,6 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
   path <- sample_manual_path(path, chain_id)
 
   inputs <- readRDS(path$inputs)
-  inputs$model$restore()
   if (chain_id > inputs$n_chains) {
     cli::cli_abort("'chain_id' must be an integer in 1..{inputs$n_chains}")
   }
@@ -126,6 +125,12 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 
   restart <- inputs$restart
   is_continue <- is.list(restart)
+
+  if (is_continue) {
+    restart$model$restore()
+  } else {
+    inputs$model$restore()
+  }
 
   pb <- progress_bar(n_chains, steps$total, progress,
                      show_overall = FALSE, single_chain = TRUE)
