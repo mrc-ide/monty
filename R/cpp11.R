@@ -92,6 +92,10 @@ monty_rng_state <- function(ptr) {
   .Call(`_monty_monty_rng_state`, ptr)
 }
 
+monty_rng_set_state <- function(ptr, r_state) {
+  invisible(.Call(`_monty_monty_rng_set_state`, ptr, r_state))
+}
+
 cpp_monty_random_real <- function(ptr) {
   .Call(`_monty_cpp_monty_random_real`, ptr)
 }

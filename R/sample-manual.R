@@ -126,6 +126,12 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
   restart <- inputs$restart
   is_continue <- is.list(restart)
 
+  if (is_continue) {
+    restart$model$restore()
+  } else {
+    inputs$model$restore()
+  }
+
   pb <- progress_bar(n_chains, steps$total, progress,
                      show_overall = FALSE, single_chain = TRUE)
 

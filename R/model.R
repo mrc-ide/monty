@@ -199,6 +199,7 @@ monty_model <- function(model, properties = NULL) {
   observer <- validate_model_observer(model, properties, call)
   rng_state <- validate_model_rng_state(model, properties, call)
   parameter_groups <- validate_model_parameter_groups(model, properties, call)
+  restore <- validate_model_restore(model, properties, call)
 
   ## Update properties based on what we found:
   properties$has_gradient <- !is.null(gradient)
@@ -217,6 +218,7 @@ monty_model <- function(model, properties = NULL) {
               gradient = gradient,
               direct_sample = direct_sample,
               observer = observer,
+              restore = restore,
               rng_state = rng_state,
               properties = properties)
   class(ret) <- "monty_model"
@@ -536,6 +538,16 @@ validate_model_parameter_groups <- function(model, properties, call) {
                    call = call)
   }
   parameter_groups
+}
+
+
+validate_model_restore <- function(model, propertioes, call) {
+  restore <- model$restore
+  if (is.function(restore)) {
+    restore
+  } else {
+    function() {}
+  }
 }
 
 

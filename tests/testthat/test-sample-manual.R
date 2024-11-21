@@ -324,3 +324,21 @@ test_that("can continue a manually run manual chain", {
 
   expect_equal(res1b, res2)
 })
+
+
+test_that("can sample from models requiring restore", {
+  path <- withr::local_tempdir()
+  model <- ex_stochastic()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.1)
+
+  set.seed(1)
+  res1 <- monty_sample(model, sampler, 100,
+                       n_chains = 1, initial = 0)
+
+  set.seed(1)
+  monty_sample_manual_prepare(model, sampler, 100, path,
+                              n_chains = 1, initial = 0)
+  monty_sample_manual_run(1, path)
+  res2 <- monty_sample_manual_collect(path)
+  expect_equal(res2, res1)
+})

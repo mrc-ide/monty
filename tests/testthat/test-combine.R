@@ -363,3 +363,28 @@ test_that("can split prior from likelihood", {
     monty_model_split(a),
     "Cannot split this model as it is not a combined model")
 })
+
+
+test_that("can combine restore functions", {
+  a <- monty_model(list(parameters = "x",
+                        density = identity,
+                        restore = function(x) message("a")))
+  b <- monty_model(list(parameters = "x",
+                        density = identity,
+                        restore = function(x) message("b")))
+  c <- monty_model(list(parameters = "x",
+                        density = identity))
+  d <- monty_model(list(parameters = "x",
+                        density = identity))
+
+  ab <- monty_model_combine(a, b)
+  expect_equal(capture_messages(ab$restore()), c("a\n", "b\n"))
+  ba <- monty_model_combine(b, a)
+  expect_equal(capture_messages(ba$restore()), c("b\n", "a\n"))
+  ac <- monty_model_combine(a, c)
+  expect_equal(capture_messages(ac$restore()), "a\n")
+  ca <- monty_model_combine(c, a)
+  expect_equal(capture_messages(ca$restore()), "a\n")
+  cd <- monty_model_combine(c, d)
+  expect_equal(capture_messages(cd$restore()), character())
+})

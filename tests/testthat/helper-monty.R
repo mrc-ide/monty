@@ -112,6 +112,36 @@ ex_sir_filter_posterior <- function(...) {
 }
 
 
+## A silly stochastic model:
+ex_stochastic <- function(n = 10, sd_sample = 1, sd_measure = 1) {
+  env <- new.env()
+  env$rng <- monty_rng$new()
+
+  get_rng_state <- function() {
+    env$rng$state()
+  }
+  set_rng_state <- function(rng_state) {
+    env$rng$set_state(rng_state)
+  }
+  density <- function(x) {
+    sum(dnorm(env$rng$normal(n, x, sd_sample), sd_measure, log = TRUE))
+  }
+
+  restore <- function() {
+    env$rng <- monty_rng$new()
+  }
+
+  monty_model(
+    list(env = env,
+         density = density,
+         restore = restore,
+         parameters = "x",
+         set_rng_state = set_rng_state,
+         get_rng_state = get_rng_state),
+    monty_model_properties(is_stochastic = TRUE))
+}
+
+
 scrub_manual_info <- function(x) {
   x <- sub("Manual monty sampling at '.+",
            "Manual monty sampling at '<PATH>'",
