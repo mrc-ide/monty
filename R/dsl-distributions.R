@@ -105,7 +105,7 @@ distr_cauchy <- distribution(
   domain = c(-Inf, Inf),
   expr = list(
     density = quote(-log(pi) - log(scale) - 
-                      log(1 + ((x - location) / scale)^2)),
+                      log1p(((x - location) / scale)^2)),
     mean = NULL),
   sample = function(rng, location, scale) rng$cauchy(1, location, scale),
   cpp = list(density = "cauchy", sample = "cauchy"))
