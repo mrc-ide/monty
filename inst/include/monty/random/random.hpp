@@ -16,6 +16,7 @@
 #include "monty/random/normal.hpp"
 #include "monty/random/poisson.hpp"
 #include "monty/random/uniform.hpp"
+#include "monty/random/weibull.hpp"
 
 #include "monty/random/version.hpp"
 
