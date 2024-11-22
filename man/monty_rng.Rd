@@ -160,6 +160,7 @@ rng$multinomial(5, 10, c(0.1, 0.3, 0.5, 0.1))
 \item \href{#method-monty_rng-multinomial}{\code{monty_rng$multinomial()}}
 \item \href{#method-monty_rng-beta}{\code{monty_rng$beta()}}
 \item \href{#method-monty_rng-truncated_normal}{\code{monty_rng$truncated_normal()}}
+\item \href{#method-monty_rng-weibull}{\code{monty_rng$weibull()}}
 \item \href{#method-monty_rng-state}{\code{monty_rng$state()}}
 \item \href{#method-monty_rng-set_state}{\code{monty_rng$set_state()}}
 }
@@ -678,6 +679,29 @@ normal distribution.}
 \item{\code{min}}{The lower bound}
 
 \item{\code{max}}{The upper bound}
+
+\item{\code{n_threads}}{Number of threads to use; see Details}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-monty_rng-weibull"></a>}}
+\if{latex}{\out{\hypertarget{method-monty_rng-weibull}{}}}
+\subsection{Method \code{weibull()}}{
+Generate \code{n} numbers from a Weibull distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{monty_rng$weibull(n, shape, scale, n_threads = 1L)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{n}}{Number of samples to draw (per stream)}
+
+\item{\code{shape}}{The shape parameter}
+
+\item{\code{scale}}{The scale parameter}
 
 \item{\code{n_threads}}{Number of threads to use; see Details}
 }
