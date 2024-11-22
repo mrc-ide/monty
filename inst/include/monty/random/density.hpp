@@ -271,5 +271,16 @@ __host__ __device__ T truncated_normal(T x, T mu, T sd, T min, T max, bool log) 
   return log ? (d - monty::math::log(z)) : (monty::math::exp(d) / z);
 }
 
+template <typename T>
+__host__ __device__ T cauchy(T x, T location, T scale, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "cauchy should only be used with real types");
+#endif
+  const auto ret = -monty::math::log(M_PI) - monty::math::log(scale) - 
+    monty::math::log1p(((x - location) / scale)^2);
+  return maybe_log(ret, log);
+}
+
 }
 }

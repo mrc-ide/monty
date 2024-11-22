@@ -97,7 +97,18 @@ distr_beta_binomial_ab <- distribution(
     mean = quote(size * a / (a + b))),
   cpp = list(density = "beta_binomial_ab", sample = "beta_binomial_ab"))
 
-## Cauchy missing here? What else?
+distr_cauchy <- distribution(
+  name = "Cauchy",
+  density = function(x, location, scale) {
+    dcauchy(x, location, scale, log = TRUE)
+  },
+  domain = c(-Inf, Inf),
+  expr = list(
+    density = quote(-log(pi) - log(scale) - 
+                      log1p(((x - location) / scale)^2)),
+    mean = NULL),
+  sample = function(rng, location, scale) rng$cauchy(1, location, scale),
+  cpp = list(density = "cauchy", sample = "cauchy"))
 
 distr_exponential_rate <- distribution(
   name = "Exponential",
@@ -243,6 +254,7 @@ dsl_distributions <- local({
     distr_beta_binomial_prob,
     distr_beta_binomial_ab,
     distr_binomial,
+    distr_cauchy,
     distr_exponential_rate, # preferred form, listed first
     distr_exponential_mean,
     distr_gamma_rate,

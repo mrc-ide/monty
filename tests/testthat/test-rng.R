@@ -1191,6 +1191,13 @@ test_that("deterministic cauchy throws", {
 })
 
 
+test_that("cauchy density is correct", {
+  expect_equal(
+    eval(distr_cauchy$expr$density, list(x = 1:10, scale = 2, location = 3)), 
+    dcauchy(1:10, scale = 2, location = 3, log = TRUE))
+})
+
+
 test_that("regression tests of binomial issues", {
   rng <- monty_rng$new(1, seed = 42)
   ## all values 0..n represented:
