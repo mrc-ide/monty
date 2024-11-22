@@ -461,6 +461,19 @@ monty_rng <- R6::R6Class(
     truncated_normal = function(n, mean, sd, min, max, n_threads = 1L) {
       monty_rng_truncated_normal(private$ptr, n, mean, sd, min, max, n_threads)
     },
+    
+    ##' @description Generate `n` numbers from a Weibull distribution
+    ##'
+    ##' @param n Number of samples to draw (per stream)
+    ##'
+    ##' @param shape The shape parameter
+    ##'
+    ##' @param scale The scale parameter
+    ##'
+    ##' @param n_threads Number of threads to use; see Details
+    weibull = function(n, shape, scale, n_threads = 1L) {
+      monty_rng_weibull(private$ptr, n, shape, scale, n_threads)
+    },
 
     ##' @description
     ##' Returns the state of the random number stream. This returns a

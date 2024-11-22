@@ -248,6 +248,17 @@ distr_uniform <- distribution(
   },
   cpp = list(density = "uniform", sample = "uniform"))
 
+distr_weibull <- distribution(
+  name = "Weibull",
+  density = function(x, shape, scale) dweibull(x, shape, scale, log = TRUE),
+  domain = c(0, Inf),
+  sample = function(rng, shape, scale) rng$weibull(1, shape, scale),
+  expr = list(
+    density = quote(log(shape) + (shape - 1) * log(x) - shape * log(scale) - 
+                      (x / scale)^shape),
+    mean = quote(scale * gamma(1 + 1 / k))),
+  cpp = list(density = "weibull", sample = "weibull"))
+
 dsl_distributions <- local({
   d <- list(
     distr_beta,
@@ -265,7 +276,8 @@ dsl_distributions <- local({
     distr_normal,
     distr_poisson,
     distr_truncated_normal,
-    distr_uniform)
+    distr_uniform,
+    distr_weibull)
   split(d, vapply(d, "[[", "", "name"))
 })
 
