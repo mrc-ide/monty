@@ -13,7 +13,7 @@ namespace {
 
 template <typename real_type>
 void negative_binomial_validate(real_type size, real_type prob) {
-   if(!R_FINITE(size) || !R_FINITE(prob) || size <= 0 || prob <= 0 || prob > 1) {
+  if (!std::isfinite(size) || !std::isfinite(prob) || size <= 0 || prob <= 0 || prob > 1) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to negative_binomial with size = %g, prob = %g",
