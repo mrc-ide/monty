@@ -33,6 +33,19 @@ cpp11::doubles cpp_monty_random_real(SEXP ptr) {
 
 
 [[cpp11::register]]
+cpp11::doubles cpp_monty_random_real(SEXP ptr) {
+  default_rng64 *rng = cpp11::as_cpp<cpp11::external_pointer<default_rng64>>(ptr).get();
+  const int n = rng->size();
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n);
+  double *y = REAL(r_y);
+  for (int i = 0; i < n; ++i) {
+    y[i] = monty::random::random_real<double>(rng->state(i));
+  }
+  return r_y;
+}
+
+
+[[cpp11::register]]
 cpp11::doubles cpp_monty_random_binomial(cpp11::doubles r_size,
                                          cpp11::doubles r_prob,
                                          SEXP ptr) {
