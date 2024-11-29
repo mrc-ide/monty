@@ -98,7 +98,10 @@ monty_random_real <- function(state) {
 }
 
 
-##' @param n_samples The number of samples to take, **per stream**.  When this is
+##' @param n_samples The number of samples to take, **per stream**.
+##'   When using the multiple-sample interface, all other parameters
+##'   are held constant (per stream).
+##'
 ##' @export
 ##' @rdname monty_random_real
 monty_random_n_real <- function(n_samples, state) {
@@ -114,14 +117,50 @@ monty_random_n_real <- function(n_samples, state) {
 ##'
 ##' @param prob The probability of success on each trial
 ##'
-##' @param state
-##' @return
-##' @author Rich FitzJohn
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @examples
+##' state <- monty_random_create()
+##' monty_random_binomial(10, 0.3, state)
+##' table(monty_random_n_binomial(2000, 10, 0.3, state))
 monty_random_binomial <- function(size, prob, state) {
   cpp_monty_random_binomial(size, prob, state)
 }
 
 
+##' @export
+##' @rdname monty_random_binomial
+monty_random_n_binomial <- function(size, prob, state) {
+  cpp_monty_random_n_binomial(size, prob, state)
+}
+
+
+##' Sample from an exponential distribution.  There are two
+##' parameterisations here, one in terms of the rate of the
+##' exponential, and one in terms of the mean (or scale).
+##'
+##' @title Sample from exponential distribution
+##'
+##' @param rate The rate of the exponential
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_exponential
+##' @examples
+##' state <- monty_random_create()
+##' monty_random_exponential(0.2, state)
+##' summary(monty_random_n_exponential(2000, 0.2, state))
 monty_random_exponential_rate <- function(rate, state) {
   cpp_monty_random_exponential_rate(rate, state)
+}
+
+
+##' @export
+##' @rdname monty_random_exponential
+monty_random_n_exponential_rate <- function(size, rate) {
+  cpp_monty_random_n_exponential_rate(size, rate)
 }
