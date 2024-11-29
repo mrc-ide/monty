@@ -27,6 +27,29 @@ T* safely_read_externalptr(cpp11::sexp ptr, const char * context) {
   return cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
 }
 
+struct input {
+  const double * const data;
+  size_t len;
+  bool fixed;
+
+  input(cpp11::doubles r_data, size_t expected, const char *name) :
+    data(REAL(r_data)), len(r_data.size()), fixed(len == 1) {
+    if (!fixed && len != expected) {
+      if (expected == 1) {
+        cpp11::stop("Expected '%s' to have length %d, not %d",
+                    name, expected, len);
+      } else {
+        cpp11::stop("Expected '%s' to have length %d or 1, not %d",
+                    name, expected, len);
+      }
+    }
+  }
+
+  auto operator[](size_t i) const {
+    return data[fixed ? 0 : i];
+  }
+};
+
 bool preserve_stream_dimension(size_t n, cpp11::sexp ptr) {
   return n > 1 || INTEGER(ptr.attr("preserve_stream_dimension"))[0] == 1;
 }
@@ -55,10 +78,10 @@ cpp11::doubles monty_random_sample_1_1(Fn fn, cpp11::sexp ptr,
                                        const char * name_a) {
   auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
   const size_t n_streams = rng->size();
-  check_length(r_a, n_streams, name_a);
+  const auto a = input(r_a, n_streams, name_a);
+
   cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
 
-  const double * a = REAL(r_a);
   double * y = REAL(r_y);
   for (size_t i = 0; i < n_streams; ++i) {
     auto &state = rng->state(i);

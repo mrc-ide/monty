@@ -73,6 +73,18 @@ test_that("can sample from exponential distribution (rate)", {
 })
 
 
+test_that("...", {
+  s <- monty_random_create(seed = 42, n_streams = 3)
+  cmp <- monty_rng$new(seed = 42, n_streams = 3)
+  r <- c(0.1, 0.2, 0.3)
+
+
+  expect_equal(monty_random_exponential_rate(r, s),
+               cmp$exponential_rate(1, 0.5))
+
+})
+
+
 test_that("can sample from binomial distribution", {
   s <- monty_random_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
