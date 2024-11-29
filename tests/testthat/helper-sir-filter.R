@@ -15,8 +15,8 @@ sir_filter_monty <- function(data, n_particles, deterministic = FALSE,
       monty_rng$new(n_streams = n_streams, seed = rng_state)$state(),
       ncol = n_streams)
     env$rng <- list(
-      filter = monty_random_alloc(1, r[, 1], deterministic),
-      system = monty_random_alloc(n_particles, c(r[, -1]), deterministic))
+      filter = monty_random_create(1, r[, 1], deterministic),
+      system = monty_random_create(n_particles, c(r[, -1]), deterministic))
   }
 
   set_rng_state(seed)
