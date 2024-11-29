@@ -18,69 +18,224 @@ void check_length(T x, size_t len, const char * name) {
   }
 }
 
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_real(SEXP ptr) {
-  default_rng64 *rng = cpp11::as_cpp<cpp11::external_pointer<default_rng64>>(ptr).get();
-  const int n = rng->size();
-  cpp11::writable::doubles r_y = cpp11::writable::doubles(n);
-  double *y = REAL(r_y);
-  for (int i = 0; i < n; ++i) {
-    y[i] = monty::random::random_real<double>(rng->state(i));
+template <typename T>
+T* safely_read_externalptr(cpp11::sexp ptr, const char * context) {
+  if (!R_ExternalPtrAddr(ptr)) {
+    cpp11::stop("Pointer has been serialised, cannot continue safely (%s)",
+                context);
   }
-  return r_y;
+  return cpp11::as_cpp<cpp11::external_pointer<T>>(ptr).get();
 }
 
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_real(SEXP ptr) {
-  default_rng64 *rng = cpp11::as_cpp<cpp11::external_pointer<default_rng64>>(ptr).get();
-  const int n = rng->size();
-  cpp11::writable::doubles r_y = cpp11::writable::doubles(n);
-  double *y = REAL(r_y);
-  for (int i = 0; i < n; ++i) {
-    y[i] = monty::random::random_real<double>(rng->state(i));
-  }
-  return r_y;
+bool preserve_stream_dimension(size_t n, cpp11::sexp ptr) {
+  return n > 1 || INTEGER(ptr.attr("preserve_stream_dimension"))[0] == 1;
 }
 
+// Generic sampler functions for 0, 1, 2, ... parameters
+template <typename Fn>
+cpp11::doubles monty_random_sample_1_0(Fn fn, cpp11::sexp ptr,
+                                       const char * name_distribution) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
 
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_binomial(cpp11::doubles r_size,
-                                         cpp11::doubles r_prob,
-                                         SEXP ptr) {
-  default_rng64 *rng = cpp11::as_cpp<cpp11::external_pointer<default_rng64>>(ptr).get();
-  const int n = rng->size();
-  check_length(r_size, n, "size");
-  check_length(r_prob, n, "size");
-  const double * size = REAL(r_size);
-  const double * prob = REAL(r_prob);
-
-  cpp11::writable::doubles r_y = cpp11::writable::doubles(n);
-  double *y = REAL(r_y);
-  for (int i = 0; i < n; ++i) {
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
     auto &state = rng->state(i);
-    y[i] = monty::random::binomial<double>(state, size[i], prob[i]);
+    y[i] = fn(state);
+  }
+
+  return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_1_1(Fn fn, cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       const char * name_a) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  check_length(r_a, n_streams, name_a);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
+
+  const double * a = REAL(r_a);
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    y[i] = fn(state, a[i]);
+  }
+
+  return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_1_2(Fn fn, cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a, cpp11::doubles r_b,
+                                       const char * name_a, const char * name_b) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  check_length(r_a, n_streams, name_a);
+  check_length(r_b, n_streams, name_b);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
+
+  const double * a = REAL(r_a);
+  const double * b = REAL(r_b);
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    y[i] = fn(state, a[i], b[i]);
   }
 
   return r_y;
 }
 
 
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_exponential_rate(cpp11::doubles r_rate,
-                                                 SEXP ptr) {
-  default_rng64 *rng = cpp11::as_cpp<cpp11::external_pointer<default_rng64>>(ptr).get();
-  const int n = rng->size();
-  check_length(r_rate, n, "size");
-  const double * rate = REAL(r_rate);
-
-  cpp11::writable::doubles r_y = cpp11::writable::doubles(n);
-  double *y = REAL(r_y);
-  for (int i = 0; i < n; ++i) {
-    auto &state = rng->state(i);
-    y[i] = monty::random::exponential_rate<double>(state, rate[i]);
+void set_dimensions(size_t n_samples, size_t n_streams, cpp11::sexp ptr, cpp11::sexp ret) {
+  if (preserve_stream_dimension(n_streams, ptr)) {
+    ret.attr("dim") = cpp11::writable::integers{static_cast<int>(n_samples), static_cast<int>(n_streams)};
   }
 
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_n_0(Fn fn, size_t n_samples,
+                                       cpp11::sexp ptr,
+                                       const char * name_distribution) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_samples * n_streams);
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto& state_i = rng->state(i);
+      auto y_i = y + n_samples * i;
+      y_i[j] = fn(state_i);
+    }
+  }
+  set_dimensions(n_samples, n_streams, ptr, r_y);
   return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_n_1(Fn fn, size_t n_samples,
+                                       cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       const char * name_a) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  check_length(r_a, n_streams, name_a);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_samples * n_streams);
+
+  const double * a = REAL(r_a);
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto& state_i = rng->state(i);
+      auto y_i = y + n_samples * i;
+      y_i[j] = fn(state_i, a[i]);
+    }
+  }
+  set_dimensions(n_samples, n_streams, ptr, r_y);
+  return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_n_2(Fn fn, size_t n_samples,
+                                       cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       const char * name_a,
+                                       const char * name_b) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  check_length(r_a, n_streams, name_a);
+  check_length(r_b, n_streams, name_b);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_samples * n_streams);
+
+  double * y = REAL(r_y);
+  const double * a = REAL(r_a);
+  const double * b = REAL(r_b);
+  for (size_t i = 0; i < n_streams; ++i) {
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto& state_i = rng->state(i);
+      auto y_i = y + n_samples * i;
+      y_i[j] = fn(state_i, a[i], b[i]);
+    }
+  }
+  set_dimensions(n_samples, n_streams, ptr, r_y);
+  return r_y;
+}
+
+// Real functions that we export
+[[cpp11::register]]
+cpp11::sexp cpp_monty_random_state(cpp11::sexp ptr) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "state");
+  auto state = rng->export_state();
+  size_t len = sizeof(typename default_rng64::int_type) * state.size();
+  cpp11::writable::raws ret(len);
+  std::memcpy(RAW(ret), state.data(), len);
+  return ret;
+}
+
+[[cpp11::register]]
+void cpp_monty_random_set_state(cpp11::sexp ptr, cpp11::raws r_value) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "set_state");
+
+  using int_type = typename default_rng64::int_type;
+  const auto len = rng->state_size() * sizeof(int_type);
+  if ((size_t)r_value.size() != len) {
+    cpp11::stop("'value' must be a raw vector of length %d (but was %d)",
+                len, r_value.size());
+  }
+  std::vector<int_type> state(len);
+  std::memcpy(state.data(), RAW(r_value), len);
+  rng->import_state(state);
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_real(cpp11::sexp ptr) {
+  const auto fn = [](auto& state) { return monty::random::random_real<double>(state); };
+  return monty_random_sample_1_0(fn, ptr, "random_real");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_real(size_t n_samples, cpp11::sexp ptr) {
+  const auto fn = [](auto& state) { return monty::random::random_real<double>(state); };
+  return monty_random_sample_n_0(fn, n_samples, ptr, "random_real");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_exponential_rate(cpp11::doubles rate, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto rate) { return monty::random::exponential_rate<double>(state, rate); };
+  return monty_random_sample_1_1(fn, ptr, "exponential_rate",
+                                 rate, "rate");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_exponential_rate(size_t n_samples, cpp11::doubles rate, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto rate) { return monty::random::exponential_rate<double>(state, rate); };
+  return monty_random_sample_n_1(fn, n_samples, ptr, "exponential_rate",
+                                 rate, "rate");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_binomial(cpp11::doubles size,
+                                         cpp11::doubles prob,
+                                         cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob) { return monty::random::binomial<double>(state, size, prob); };
+  return monty_random_sample_1_2(fn, ptr, "binomial",
+                                 size, prob, "size", "prob");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_binomial(size_t n_samples,
+                                           cpp11::doubles size,
+                                           cpp11::doubles prob,
+                                           cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob) { return monty::random::binomial<double>(state, size, prob); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "binomial",
+                                 size, prob, "size", "prob");
 }

@@ -61,16 +61,60 @@ monty_random_create <- function(n_streams = 1L, seed = NULL,
                                 preserve_stream_dimension = FALSE) {
   assert_scalar_logical(deterministic)
   assert_scalar_logical(preserve_stream_dimension)
-  preserve_particle_dimension <- preserve_stream_dimension || n_streams > 1
+  preserve_stream_dimension <- preserve_stream_dimension || n_streams > 1
   ptr <- monty_rng_alloc(seed, n_streams, deterministic)
-  ret <- list(ptr = ptr,
-              n_streams = n_streams,
-              n_threads = n_threads,
-              deterministic = deterministic,
-              preserve_stream_dimension = preserve_stream_dimension)
-  class(ret) <- "monty_random_state"
-  ret
+  attr(ptr, "n_streams") <- n_streams
+  attr(ptr, "n_threads") <- n_threads
+  attr(ptr, "n_deterministic") <- deterministic
+  attr(ptr, "preserve_stream_dimension") <- preserve_stream_dimension
+  class(ptr) <- "monty_random_state"
+  ptr
 }
+
+
+##' Get and set internal random number state
+##'
+##' @title Get and set random number state
+##'
+##' @param state The random number state, from [monty_random_create]
+##'
+##' @return A vector of raws
+##' @export
+##' @examples
+##' s1 <- monty_random_create()
+##' r1 <- monty_random_state(s1)
+##'
+##' s2 <- monty_random_create(seed = r1)
+##' identical(r1, monty_random_state(s2))
+##' monty_random_real(s1)
+##' monty_random_real(s2)
+##'
+##' monty_random_set_state(s1, r1)
+##' monty_random_real(s1)
+##' monty_random_real(s1)
+##' monty_random_real(s2)
+monty_random_state <- function(state) {
+  cpp_monty_random_state(state)
+}
+
+
+##' @param value A vector of raw values, typically the result of
+##'   exporting a random state with `monty_random_state()`
+##'
+##' @export
+##' @rdname monty_random_state
+monty_random_set_state <- function(value, state) {
+  cpp_monty_random_set_state(state, value)
+}
+
+
+##' @export
+print.monty_random_state <- function(x, ...) {
+  cli::cli_h1("<monty_random_state>")
+  cli::cli_li("{attr(x, 'n_streams')} random number stream{?s}")
+  cli::cli_li("{attr(x, 'n_threads')} execution thread{?s}")
+}
+
 
 ##' Generate a random number uniformly sampled on the range 0 to 1;
 ##' this is the most basic of all random number functions in monty and
@@ -94,7 +138,7 @@ monty_random_create <- function(n_streams = 1L, seed = NULL,
 ##' monty_random_real(state)
 ##' monty_random_n_real(5, state)
 monty_random_real <- function(state) {
-  cpp_monty_random_real(state$ptr)
+  cpp_monty_random_real(state)
 }
 
 
@@ -105,7 +149,7 @@ monty_random_real <- function(state) {
 ##' @export
 ##' @rdname monty_random_real
 monty_random_n_real <- function(n_samples, state) {
-  cpp_monty_random_real(n_samples, state)
+  cpp_monty_random_n_real(n_samples, state)
 }
 
 
@@ -132,8 +176,8 @@ monty_random_binomial <- function(size, prob, state) {
 
 ##' @export
 ##' @rdname monty_random_binomial
-monty_random_n_binomial <- function(size, prob, state) {
-  cpp_monty_random_n_binomial(size, prob, state)
+monty_random_n_binomial <- function(n_samples, size, prob, state) {
+  cpp_monty_random_n_binomial(n_samples, size, prob, state)
 }
 
 
@@ -161,6 +205,6 @@ monty_random_exponential_rate <- function(rate, state) {
 
 ##' @export
 ##' @rdname monty_random_exponential
-monty_random_n_exponential_rate <- function(size, rate) {
-  cpp_monty_random_n_exponential_rate(size, rate)
+monty_random_n_exponential_rate <- function(n_samples, size, rate) {
+  cpp_monty_random_n_exponential_rate(n_samples, size, rate)
 }
