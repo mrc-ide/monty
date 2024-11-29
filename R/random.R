@@ -206,6 +206,27 @@ monty_random_n_real <- function(n_samples, state) {
 }
 
 
+##' Sample from the beta distribution
+##'
+##' @title Sample from beta distribution
+##'
+##' @param a,b The shape parameters
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_beta <- function(a, b, state) {
+  cpp_monty_random_beta(a, b, state)
+}
+
+
+##' @export
+##' @rdname monty_random_beta
+monty_random_n_beta <- function(n_samples, size, a, b) {
+  cpp_monty_random_n_beta(n_samples, size, a, b)
+}
+
+
 ##' Sample from the binomial distribution
 ##'
 ##' @title Sample from binomial distribution
@@ -260,4 +281,41 @@ monty_random_exponential_rate <- function(rate, state) {
 ##' @rdname monty_random_exponential
 monty_random_n_exponential_rate <- function(n_samples, rate, state) {
   cpp_monty_random_n_exponential_rate(n_samples, rate, state)
+}
+
+
+##' @param mean The mean of the exponential distribution (i.e., `1 / rate`)
+##' @export
+##' @rdname monty_random_exponential
+monty_random_exponential_mean <- function(mean, state) {
+  cpp_monty_random_exponential_mean(mean, state)
+}
+
+
+##' @export
+##' @rdname monty_random_exponential
+monty_random_n_exponential_mean <- function(n_samples, size, mean) {
+  cpp_monty_random_n_exponential_mean(n_samples, size, mean)
+}
+
+
+##' Sample from the Poisson distribution
+##'
+##' @title Sample from Poisson distribution
+##'
+##' @param lambda The mean (zero or more, length 1 or n). Only valid for
+##' lambda <= 10^7
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_poisson <- function(lambda, state) {
+  cpp_monty_random_poisson(lambda, state)
+}
+
+
+##' @export
+##' @rdname monty_random_poisson
+monty_random_n_poisson <- function(n_samples, size, lambda) {
+  cpp_monty_random_n_poisson(n_samples, size, lambda)
 }
