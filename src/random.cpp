@@ -358,7 +358,6 @@ cpp11::doubles cpp_monty_random_exponential_rate(cpp11::doubles rate, cpp11::sex
                                  rate, "rate");
 }
 
-// exponential_rate
 [[cpp11::register]]
 cpp11::doubles cpp_monty_random_n_exponential_rate(size_t n_samples, cpp11::doubles rate, cpp11::sexp ptr) {
   const auto fn = [](auto& state, auto rate) { return monty::random::exponential_rate<double>(state, rate); };
@@ -366,10 +365,18 @@ cpp11::doubles cpp_monty_random_n_exponential_rate(size_t n_samples, cpp11::doub
                                  rate, "rate");
 }
 
+// exponential_mean
 [[cpp11::register]]
 cpp11::doubles cpp_monty_random_exponential_mean(cpp11::doubles mean, cpp11::sexp ptr) {
   const auto fn = [](auto& state, auto mean) { return monty::random::exponential_mean<double>(state, mean); };
   return monty_random_sample_1_1(fn, ptr, "exponential_mean",
+                                 mean, "mean");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_exponential_mean(size_t n_samples, cpp11::doubles mean, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean) { return monty::random::exponential_mean<double>(state, mean); };
+  return monty_random_sample_n_1(fn, n_samples, ptr, "exponential_mean",
                                  mean, "mean");
 }
 

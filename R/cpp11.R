@@ -36,6 +36,10 @@ cpp_monty_random_exponential_mean <- function(mean, ptr) {
   .Call(`_monty_cpp_monty_random_exponential_mean`, mean, ptr)
 }
 
+cpp_monty_random_n_exponential_mean <- function(n_samples, mean, ptr) {
+  .Call(`_monty_cpp_monty_random_n_exponential_mean`, n_samples, mean, ptr)
+}
+
 cpp_monty_random_poisson <- function(lambda, ptr) {
   .Call(`_monty_cpp_monty_random_poisson`, lambda, ptr)
 }

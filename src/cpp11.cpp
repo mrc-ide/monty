@@ -72,6 +72,13 @@ extern "C" SEXP _monty_cpp_monty_random_exponential_mean(SEXP mean, SEXP ptr) {
   END_CPP11
 }
 // random.cpp
+cpp11::doubles cpp_monty_random_n_exponential_mean(size_t n_samples, cpp11::doubles mean, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_exponential_mean(SEXP n_samples, SEXP mean, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_exponential_mean(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
 cpp11::doubles cpp_monty_random_poisson(cpp11::doubles lambda, cpp11::sexp ptr);
 extern "C" SEXP _monty_cpp_monty_random_poisson(SEXP lambda, SEXP ptr) {
   BEGIN_CPP11
@@ -485,6 +492,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_beta_binomial_prob",     (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_prob,     5},
     {"_monty_cpp_monty_random_n_binomial",               (DL_FUNC) &_monty_cpp_monty_random_n_binomial,               4},
     {"_monty_cpp_monty_random_n_cauchy",                 (DL_FUNC) &_monty_cpp_monty_random_n_cauchy,                 4},
+    {"_monty_cpp_monty_random_n_exponential_mean",       (DL_FUNC) &_monty_cpp_monty_random_n_exponential_mean,       3},
     {"_monty_cpp_monty_random_n_exponential_rate",       (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate,       3},
     {"_monty_cpp_monty_random_n_gamma_rate",             (DL_FUNC) &_monty_cpp_monty_random_n_gamma_rate,             4},
     {"_monty_cpp_monty_random_n_gamma_scale",            (DL_FUNC) &_monty_cpp_monty_random_n_gamma_scale,            4},
