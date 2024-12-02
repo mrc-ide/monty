@@ -120,7 +120,7 @@ print.monty_random_state <- function(x, ...) {
 ##' Generate a random number uniformly sampled on the range 0 to 1;
 ##' this is the most basic of all random number functions in monty and
 ##' all other algorithms are composed from this.  Quite often, you
-##' will want a number on [0, 1] (e.g., for a Bernoulli trial), and
+##' will want a number on $\[0, 1\]$ (e.g., for a Bernoulli trial), and
 ##' this function is the most efficient way of generating one.
 ##'
 ##' @title Sample from Uniform(0, 1)
