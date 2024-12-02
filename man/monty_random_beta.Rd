@@ -7,12 +7,12 @@
 \usage{
 monty_random_beta(a, b, state)
 
-monty_random_n_beta(n_samples, size, a, b)
+monty_random_n_beta(n_samples, a, b, state)
 }
 \arguments{
 \item{a, b}{The shape parameters}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters

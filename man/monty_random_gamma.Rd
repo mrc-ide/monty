@@ -22,13 +22,13 @@ monty_random_n_gamma_rate(n_samples, shape, rate, state)
 \item{scale}{Scale
 '}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
 
-\item{n_threads}{Number of threads to use; see Details}
+\item{rate}{Rate}
 }
 \value{
 A vector of random numbers, the same length as the number

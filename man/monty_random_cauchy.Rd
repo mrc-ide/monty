@@ -2,9 +2,12 @@
 % Please edit documentation in R/random.R
 \name{monty_random_cauchy}
 \alias{monty_random_cauchy}
+\alias{monty_random_n_cauchy}
 \title{Sample from Cauchy distribution}
 \usage{
 monty_random_cauchy(location, scale, state)
+
+monty_random_n_cauchy(n_samples, location, scale, state)
 }
 \arguments{
 \item{location}{Location of the distribution (the same as the
@@ -13,7 +16,11 @@ median and mode)}
 \item{scale}{A scale parameter which specifies the half-width at
 half-maximum (HWHM)}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
+
+\item{n_samples}{The number of samples to take, \strong{per stream}.
+When using the multiple-sample interface, all other parameters
+are held constant (per stream).}
 }
 \value{
 A vector of random numbers, the same length as the number

@@ -5,14 +5,16 @@
 \alias{monty_random_n_uniform}
 \title{Sample from uniform distribution}
 \usage{
-monty_random_uniform(size, min, max)
+monty_random_uniform(min, max, state)
 
-monty_random_n_uniform(n_samples, size, min, max)
+monty_random_n_uniform(n_samples, min, max, state)
 }
 \arguments{
 \item{min}{The minimum value of the uniform distribution}
 
 \item{max}{The maximum value of the uniform distribution}
+
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters

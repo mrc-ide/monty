@@ -245,8 +245,8 @@ monty_random_exponential_mean <- function(mean, state) {
 
 ##' @export
 ##' @rdname monty_random_exponential
-monty_random_n_exponential_mean <- function(n_samples, size, mean) {
-  cpp_monty_random_n_exponential_mean(n_samples, size, mean)
+monty_random_n_exponential_mean <- function(n_samples, mean, state) {
+  cpp_monty_random_n_exponential_mean(n_samples, mean, state)
 }
 
 
@@ -288,8 +288,8 @@ monty_random_beta <- function(a, b, state) {
 
 ##' @export
 ##' @rdname monty_random_beta
-monty_random_n_beta <- function(n_samples, size, a, b) {
-  cpp_monty_random_n_beta(n_samples, size, a, b)
+monty_random_n_beta <- function(n_samples, a, b, state) {
+  cpp_monty_random_n_beta(n_samples, a, b, state)
 }
 
 
@@ -340,7 +340,7 @@ monty_random_cauchy <- function(location, scale, state) {
 
 
 ##' @export
-##' @rdname monty_random_binomial
+##' @rdname monty_random_cauchy
 monty_random_n_cauchy <- function(n_samples, location, scale, state) {
   cpp_monty_random_n_cauchy(n_samples, location, scale, state)
 }
@@ -355,7 +355,7 @@ monty_random_n_cauchy <- function(n_samples, location, scale, state) {
 ##'
 ##' @param scale Scale
 ##''
-##' @param n_threads Number of threads to use; see Details
+##'
 ##' @inheritParams monty_random_real
 ##' @inherit monty_random_real return
 ##'
@@ -373,6 +373,7 @@ monty_random_n_gamma_scale <- function(n_samples, shape, scale, state) {
 }
 
 
+##' @param rate Rate
 ##' @export
 ##' @rdname monty_random_gamma
 monty_random_gamma_rate <- function(shape, rate, state) {
@@ -415,6 +416,9 @@ monty_random_n_negative_binomial_prob <- function(n_samples, size, prob,
 }
 
 
+
+##' @param mu The mean (zero or more)
+##'
 ##' @inheritParams monty_random_real
 ##' @inherit monty_random_real return
 ##'
@@ -447,15 +451,15 @@ monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
 ##' @inherit monty_random_real return
 ##'
 ##' @export
-monty_random_normal <- function(size, mean, sd) {
-  cpp_monty_random_normal(size, mean, sd)
+monty_random_normal <- function(mean, sd, state) {
+  cpp_monty_random_normal(mean, sd, state)
 }
 
 
 ##' @export
 ##' @rdname monty_random_normal
-monty_random_n_normal <- function(n_samples, size, mean, sd) {
-  cpp_monty_random_n_normal(n_samples, size, mean, sd)
+monty_random_n_normal <- function(n_samples, mean, sd, state) {
+  cpp_monty_random_n_normal(n_samples, mean, sd, state)
 }
 
 
@@ -471,15 +475,15 @@ monty_random_n_normal <- function(n_samples, size, mean, sd) {
 ##' @inherit monty_random_real return
 ##'
 ##' @export
-monty_random_uniform <- function(size, min, max) {
-  cpp_monty_random_uniform(size, min, max)
+monty_random_uniform <- function(min, max, state) {
+  cpp_monty_random_uniform(min, max, state)
 }
 
 
 ##' @export
 ##' @rdname monty_random_uniform
-monty_random_n_uniform <- function(n_samples, size, min, max) {
-  cpp_monty_random_n_uniform(n_samples, size, min, max)
+monty_random_n_uniform <- function(n_samples, min, max, state) {
+  cpp_monty_random_n_uniform(n_samples, min, max, state)
 }
 
 

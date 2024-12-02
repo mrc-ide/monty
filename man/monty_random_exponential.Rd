@@ -13,7 +13,7 @@ monty_random_n_exponential_rate(n_samples, rate, state)
 
 monty_random_exponential_mean(mean, state)
 
-monty_random_n_exponential_mean(n_samples, size, mean)
+monty_random_n_exponential_mean(n_samples, mean, state)
 }
 \arguments{
 \item{rate}{The rate of the exponential}

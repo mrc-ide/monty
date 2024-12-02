@@ -22,11 +22,13 @@ monty_random_n_negative_binomial_mu(n_samples, size, mu, state)
 \item{prob}{The probability of success on each trial (between 0
 and 1)}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
+
+\item{mu}{The mean (zero or more)}
 }
 \value{
 A vector of random numbers, the same length as the number

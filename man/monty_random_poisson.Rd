@@ -13,7 +13,7 @@ monty_random_n_poisson(n_samples, lambda, state)
 \item{lambda}{The mean (zero or more, length 1 or n). Only valid for
 lambda <= 10^7}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
