@@ -3,11 +3,14 @@
 \name{monty_random_binomial}
 \alias{monty_random_binomial}
 \alias{monty_random_n_binomial}
+\alias{monty_random_n_cauchy}
 \title{Sample from binomial distribution}
 \usage{
 monty_random_binomial(size, prob, state)
 
 monty_random_n_binomial(n_samples, size, prob, state)
+
+monty_random_n_cauchy(n_samples, location, scale, state)
 }
 \arguments{
 \item{size}{The number of trials}

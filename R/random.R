@@ -342,7 +342,7 @@ monty_random_cauchy <- function(location, scale, state) {
 ##' @export
 ##' @rdname monty_random_binomial
 monty_random_n_cauchy <- function(n_samples, location, scale, state) {
-  cpp_monty_random_cauchy(n_samples, location, scale, state)
+  cpp_monty_random_n_cauchy(n_samples, location, scale, state)
 }
 
 
@@ -407,9 +407,6 @@ monty_random_negative_binomial_prob <- function(size, prob, state) {
 }
 
 
-##' @inheritParams monty_random_real
-##' @inherit monty_random_real return
-##'
 ##' @export
 ##' @rdname monty_random_negative_binomial
 monty_random_n_negative_binomial_prob <- function(n_samples, size, prob,
@@ -438,64 +435,160 @@ monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
 }
 
 
+##' Sample from a normal distribution
+##'
+##' @title Sample from normal distribution
+##'
+##' @param mean The mean of the normal distribution
+##'
+##' @param sd The standard deviation of the normal distribution
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
 monty_random_normal <- function(size, mean, sd) {
   cpp_monty_random_normal(size, mean, sd)
 }
 
 
+##' @export
+##' @rdname monty_random_normal
 monty_random_n_normal <- function(n_samples, size, mean, sd) {
   cpp_monty_random_n_normal(n_samples, size, mean, sd)
 }
 
 
+##' Sample from a uniform distribution
+##'
+##' @title Sample from uniform distribution
+##'
+##' @param min The minimum value of the uniform distribution
+##'
+##' @param max The maximum value of the uniform distribution
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
 monty_random_uniform <- function(size, min, max) {
   cpp_monty_random_uniform(size, min, max)
 }
 
 
+##' @export
+##' @rdname monty_random_uniform
 monty_random_n_uniform <- function(n_samples, size, min, max) {
   cpp_monty_random_n_uniform(n_samples, size, min, max)
 }
 
 
+##' Sample from a beta-binomial distribution.  There are two
+##' parameterisations available one in terms of probability and
+##' dispersion and the other in terms of two shape parameters.
+##'
+##' @title Sample from beta-binomial distribution
+##'
+##' @param size The number of trials (zero or more)
+##'
+##' @param prob The mean probability of success on each trial (between
+##'   0 and 1)
+##'
+##' @param rho The dispersion parameter (between 0 and 1)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @rdname monty_random_beta_binomial
+##' @export
 monty_random_beta_binomial_prob <- function(size, prob, rho, state) {
   cpp_monty_random_beta_binomial_prob(size, prob, rho, state)
 }
 
 
+##' @export
+##' @rdname monty_random_beta_binomial
 monty_random_n_beta_binomial_prob <- function(n_samples, size, prob, rho,
                                               state) {
   cpp_monty_random_n_beta_binomial_prob(n_samples, size, prob, rho, state)
 }
 
 
+##' @param a The first shape parameter (zero or more)
+##'
+##' @param b The second shape parameter (zero or more)
+##'
+##' @export
+##' @rdname monty_random_beta_binomial
 monty_random_beta_binomial_ab <- function(size, a, b, state) {
   cpp_monty_random_beta_binomial_ab(size, a, b, state)
 }
 
 
+##' @export
+##' @rdname monty_random_beta_binomial
 monty_random_n_beta_binomial_ab <- function(n_samples, size, a, b, state) {
   cpp_monty_random_n_beta_binomial_ab(n_samples, size, a, b, state)
 }
 
 
-monty_random_hypergeometric <- function(size, n1, n2, k, state) {
-  cpp_monty_random_hypergeometric(size, n1, n2, k, state)
+##' Sample from a hypergeometric distribution.
+##'
+##' @title Sample from hypergeometric distribution
+##'
+##' @param n1 The number of white balls in the urn (called n in
+##'   R's [rhyper])
+##'
+##' @param n2 The number of black balls in the urn (called m in
+##'   R's [rhyper])
+##'
+##' @param k The number of balls to draw
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_hypergeometric <- function(n1, n2, k, state) {
+  cpp_monty_random_hypergeometric(n1, n2, k, state)
 }
 
 
-monty_random_n_hypergeometric <- function(n_samples, size, n1, n2, k, state) {
-  cpp_monty_random_n_hypergeometric(n_samples, size, n1, n2, k, state)
+##' @export
+##' @rdname monty_random_hypergeometric
+monty_random_n_hypergeometric <- function(n_samples, n1, n2, k, state) {
+  cpp_monty_random_n_hypergeometric(n_samples, n1, n2, k, state)
 }
 
 
-monty_random_truncated_normal <- function(size, mean, sd, min, max, state) {
-  cpp_monty_random_truncated_normal(size, mean, sd, min, max, state)
+##' Sample from a truncated normal distribution
+##'
+##' @title Sample from truncated normal
+##'
+##' @param mean The mean of the **parent** (untruncated) normal
+##'   distribution (this is not necessarily the mean of the truncated
+##'   distribution, unless the `min` and `max` are symmetrically
+##'   placed around `mean`)
+##'
+##' @param sd The standard deviation of the **parent** distribution
+##'   (this is not the same as the standard deviation of the truncated
+##'   distribution with finite bounds).
+##'
+##' @param min The lower bound (can be `-Inf`).
+##'
+##' @param max The upper bound (can be `Inf`).
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_truncated_normal <- function(mean, sd, min, max, state) {
+  cpp_monty_random_truncated_normal(mean, sd, min, max, state)
 }
 
 
-monty_random_n_truncated_normal <- function(n_samples, size, mean, sd, min, max,
+##' @export
+##' @rdname monty_random_truncated_normal
+monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max,
                                             state) {
-  cpp_monty_random_n_truncated_normal(n_samples, size, mean, sd, min, max,
-                                      state)
+  cpp_monty_random_n_truncated_normal(n_samples, mean, sd, min, max, state)
 }
