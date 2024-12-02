@@ -121,10 +121,7 @@ print.monty_random_state <- function(x, ...) {
 ##' this is the most basic of all random number functions in monty and
 ##' all other algorithms are composed from this.  Quite often, you
 ##' will want a number on [0, 1] (e.g., for a Bernoulli trial), and
-##' this function is the most efficient way of generating one (though
-##' the difference between this and [monty_random_uniform()] with `min
-##' = 0` and `max = 1` is very marginal, especially when called from
-##' R).
+##' this function is the most efficient way of generating one.
 ##'
 ##' @title Sample from Uniform(0, 1)
 ##'
@@ -206,6 +203,6 @@ monty_random_exponential_rate <- function(rate, state) {
 
 ##' @export
 ##' @rdname monty_random_exponential
-monty_random_n_exponential_rate <- function(n_samples, size, rate) {
-  cpp_monty_random_n_exponential_rate(n_samples, size, rate)
+monty_random_n_exponential_rate <- function(n_samples, rate) {
+  cpp_monty_random_n_exponential_rate(n_samples, rate)
 }

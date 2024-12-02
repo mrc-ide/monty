@@ -25,9 +25,7 @@ Generate a random number uniformly sampled on the range 0 to 1;
 this is the most basic of all random number functions in monty and
 all other algorithms are composed from this.  Quite often, you
 will want a number on \link{0, 1} (e.g., for a Bernoulli trial), and
-this function is the most efficient way of generating one (though
-the difference between this and \code{\link[=monty_random_uniform]{monty_random_uniform()}} with \code{min = 0} and \code{max = 1} is very marginal, especially when called from
-R).
+this function is the most efficient way of generating one.
 }
 \examples{
 state <- monty_random_create()
