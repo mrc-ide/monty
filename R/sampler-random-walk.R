@@ -92,7 +92,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
     } else {
       density_next <- model$density(pars_next)
     }
-    accept <- density_next - state$density > log(rng$random_real(1))
+    accept <- density_next - state$density > log(monty_random_real(rng))
     state <- update_state(state, pars_next, density_next, accept,
                           model, rng)
     state
@@ -185,15 +185,15 @@ is_parameters_in_domain <- function(x, domain) {
 
 make_rerun <- function(every, random, is_stochastic) {
   if (!is_stochastic && !is.finite(every)) {
-    function(rng) rep(FALSE, rng$size())
+    function(rng) rep(FALSE, length(rng))
   } else if (random) {
-    function(rng) rng$random_real(1) < 1 / every
+    function(rng) monty_random_real(rng) < 1 / every
   } else {
     i <- 0L
     env <- environment()
     function(rng) {
       env$i <- i + 1L
-      rep(i %% every == 0, rng$size())
+      rep(i %% every == 0, length(rng))
     }
   }
 }

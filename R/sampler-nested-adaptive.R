@@ -187,7 +187,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
         density_by_group_next <- attr(density_next, "by_group")
       }
       
-      u <- rng$random_real(1)
+      u <- monty_random_real(rng)
       accept_prob_base <- pmin(1, exp(density_next - state$density))
       accept <- u < accept_prob_base
       
@@ -246,7 +246,7 @@ monty_sampler_nested_adaptive <- function(initial_vcv,
     }
     
     n_groups <- max(model$parameter_groups)
-    u <- rng$random_real(n_groups)
+    u <- monty_random_n_real(n_groups, rng)
     accept_prob_groups <- 
       pmin(array(1, dim2(density_by_group_next)),
            exp(density_by_group_next - internal$density_by_group))

@@ -26,10 +26,10 @@ test_that("can sample from a simple model", {
   expect_s3_class(m, "monty_model")
   expect_true(m$properties$has_direct_sample)
 
-  r <- monty_rng$new(seed = 42)
-  cmp <- r$normal(1, 0, 1)
+  r <- monty_rng_create(seed = 42)
+  cmp <- monty_random_normal(0, 1, r)
 
-  r <- monty_rng$new(seed = 42)
+  r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
 })
 
@@ -39,10 +39,10 @@ test_that("can sample from a model with assignments", {
     mu <- 5
     a ~ Normal(mu, 1)
   })
-  r <- monty_rng$new(seed = 42)
-  cmp <- r$normal(1, 5, 1)
+  r <- monty_rng_create(seed = 42)
+  cmp <- monty_random_normal(5, 1, r)
 
-  r <- monty_rng$new(seed = 42)
+  r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
 })
 

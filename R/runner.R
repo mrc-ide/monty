@@ -107,7 +107,7 @@ monty_runner_parallel <- function(n_workers) {
     ## heavy R6 object as that already has the logic in for doing
     ## state sync, but this can all be done transparently later.
     pars_list <- asplit(pars, MARGIN = 2)
-    rng_state <- lapply(rng, function(r) r$state())
+    rng_state <- lapply(rng, function(r) monty_rng_state(r))
 
     args <- list(model = model,
                  sampler = sampler,
@@ -149,7 +149,7 @@ monty_runner_parallel <- function(n_workers) {
 
 monty_run_chain_parallel <- function(chain_id, pars, model, sampler, steps,
                                      rng) {
-  rng <- monty_rng$new(rng)
+  rng <- monty_rng_create(rng)
   progress <- progress_bar_none()$update
   monty_run_chain(chain_id, pars, model, sampler, steps, progress, rng)
 }
@@ -188,7 +188,7 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
 monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
-  rng <- monty_rng$new(seed = state$rng)
+  rng <- monty_rng_create(seed = state$rng)
   sampler$set_internal_state(state$sampler)
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
@@ -246,7 +246,7 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
       chain = chain_state,
-      rng = rng$state(),
+      rng = monty_rng_state(rng),
       sampler = sampler$get_internal_state(),
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 

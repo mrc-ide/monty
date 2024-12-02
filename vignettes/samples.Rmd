@@ -32,8 +32,8 @@ banana <- function(sd = 0.5) {
   monty_model(list(
     parameters = c("alpha", "beta"),
     direct_sample = function(rng) {
-      beta <- rng$random_normal(1)
-      alpha <- rng$normal(1, beta^2, sd)
+      beta <- monty_random_normal(0, 1, rng)
+      alpha <- monty_random_normal(beta^2, sd, rng)
       c(alpha, beta)
     },
     density = function(x) {

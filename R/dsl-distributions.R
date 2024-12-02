@@ -50,7 +50,7 @@ distr_beta <- distribution(
   name = "Beta",
   density = function(x, a, b) dbeta(x, a, b, log = TRUE),
   domain = c(0, 1),
-  sample = function(rng, a, b) rng$beta(1, a, b),
+  sample = "monty_random_beta",
   expr = list(
     density = quote((a - 1) * log(x) + (b - 1) * log(1 - x) - lbeta(a, b)),
     mean = quote(a / (a + b))),
@@ -60,7 +60,7 @@ distr_binomial <- distribution(
   name = "Binomial",
   density = function(x, size, prob) dbinom(x, size, prob, log = TRUE),
   domain = c(0, Inf), # size?
-  sample = function(rng, size, prob) rng$binomial(1, size, prob),
+  sample = "monty_random_binomial",
   expr = list(
     density = quote(lchoose(size, x) + x * log(prob) +
                     (size - x) * log(1 - prob)),
@@ -75,7 +75,7 @@ distr_beta_binomial_prob <- distribution(
       lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
       lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))},
   domain = c(0, Inf), # size?
-  sample = function(rng, size, prob, rho) rng$beta_binomial_prob(1, size, prob, rho),
+  sample = "monty_random_beta_binomial_prob",
   expr = list(
     density = quote(
       lchoose(size, x) + 
@@ -90,7 +90,7 @@ distr_beta_binomial_ab <- distribution(
   density = function(x, size, a, b) {
     lchoose(size, x) + lbeta(x + a, size - x + b) - lbeta(a, b)},
   domain = c(0, Inf), # size?
-  sample = function(rng, size, a, b) rng$beta_binomial_ab(1, size, a, b),
+  sample = "monty_random_beta_binomial_ab",
   expr = list(
     density = quote(lchoose(size, x) + lbeta(x + a, size - x + b) - 
                       lbeta(a, b)),
@@ -107,7 +107,7 @@ distr_cauchy <- distribution(
     density = quote(-log(pi) - log(scale) - 
                       log1p(((x - location) / scale)^2)),
     mean = NULL),
-  sample = function(rng, location, scale) rng$cauchy(1, location, scale),
+  sample = "monty_random_cauchy",
   cpp = list(density = "cauchy", sample = "cauchy"))
 
 distr_exponential_rate <- distribution(
@@ -115,7 +115,7 @@ distr_exponential_rate <- distribution(
   variant = "rate",
   density = function(x, rate) dexp(x, rate, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, rate) rng$exponential_rate(1, rate),
+  sample = "monty_random_exponential_rate",
   expr = list(
     density = quote(log(rate) - rate * x),
     mean = quote(1 / rate)),
@@ -126,7 +126,7 @@ distr_exponential_mean <- distribution(
   variant = "mean",
   density = function(x, mean) dexp(x, 1 / mean, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, mean) rng$exponential_mean(1, mean),
+  sample = "monty_random_exponential_mean",
   expr = list(
     density = quote(-log(mean) - x / mean),
     mean = quote(mean)),
@@ -137,7 +137,7 @@ distr_gamma_rate <- distribution(
   variant = "rate",
   density = function(x, shape, rate) dgamma(x, shape, rate = rate, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, shape, rate) rng$gamma_rate(1, shape, rate),
+  sample = "monty_random_gamma_rate",
   expr = list(
     density = quote((shape - 1) * log(x) - rate * x -
                     lgamma(shape) + shape * log(rate)),
@@ -151,7 +151,7 @@ distr_gamma_scale <- distribution(
     dgamma(x, shape, scale = scale, log = TRUE)
   },
   domain = c(0, Inf),
-  sample = function(rng, shape, scale) rng$gamma_scale(1, shape, scale),
+  sample = "monty_random_gamma_scale",
   expr = list(
     density = quote((shape - 1) * log(x) - x / scale -
                     lgamma(shape) - shape * log(scale)),
@@ -162,7 +162,7 @@ distr_hypergeometric <- distribution(
   name = "Hypergeometric",
   density = function(x, m, n, k) dhyper(x, n1, n2, k, log = TRUE),
   domain = c(0, Inf), # the true version here is quite complex
-  sample = function(rng, n1, n2, k) rng$hypergeometric(1, n1, n2, k),
+  sample = "monty_random_hypergeometric",
   expr = list(
     density = quote(lchoose(n1, x) + lchoose(n2, k - x) - lchoose(n1 + n2, k)),
     mean = quote(k * n1 / (n1 + n2))),
@@ -175,7 +175,7 @@ distr_negative_binomial_prob <- distribution(
     dnbinom(x, size, prob = prob, log = TRUE)
   },
   domain = c(0, Inf),
-  sample = function(rng, size, prob) rng$negative_binomial_prob(1, size, prob),
+  sample = "monty_random_negative_binomial_prob",
   expr = list(
     density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
                       x * log(1 - prob) + size * log(prob)),
@@ -190,7 +190,7 @@ distr_negative_binomial_mu <- distribution(
     dnbinom(x, size, mu = mu, log = TRUE)
   },
   domain = c(0, Inf),
-  sample = function(rng, size, mu) rng$negative_binomial_mu(1, size, mu),
+  sample = "monty_random_negative_binomial_mu",
   expr = list(
     density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
                       size * log(size) + x * log(mu) -
@@ -205,7 +205,7 @@ distr_normal <- distribution(
   expr = list(
     density = quote(-(x - mean)^2 / (2 * sd^2) - log(2 * pi) / 2 - log(sd)),
     mean = quote(mean)),
-  sample = function(rng, mean, sd) rng$normal(1, mean, sd),
+  sample = "monty_random_normal",
   cpp = list(density = "normal", sample = "normal"))
 
 distr_poisson <- distribution(
@@ -215,16 +215,14 @@ distr_poisson <- distribution(
   expr = list(
     density = quote(x * log(lambda) - lambda - lfactorial(x)),
     mean = quote(lambda)),
-  sample = function(rng, lambda) rng$poisson(1, lambda),
+  sample = "monty_random_poisson",
   cpp = list(density = "poisson", sample = "poisson"))
 
 distr_truncated_normal <- distribution(
   name = "TruncatedNormal",
   density = function(x, mean, sd, min, max) {
   },
-  sample = function(rng, mean, sd, min, max) {
-    rng$truncated_normal(1, mean, sd, min, max)
-  },
+  sample = "monty_random_truncated_normal",
   ## These would be much simpler to do via the chain rule as a pair.
   ## For now just omit
   expr = list(
@@ -239,7 +237,7 @@ distr_truncated_normal <- distribution(
 distr_uniform <- distribution(
   name = "Uniform",
   density = function(x, min, max) dunif(x, min, max, log = TRUE),
-  sample = function(rng, min, max) rng$uniform(1, min, max),
+  sample = "monty_random_uniform",
   expr = list(
     density = quote(if (x < min || x > max) -Inf else -log(max - min)),
     mean = quote((max - min) / 2)),

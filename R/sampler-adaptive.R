@@ -227,7 +227,7 @@ monty_sampler_adaptive <- function(initial_vcv,
       make_random_walk_proposal(proposal_vcv, model$domain, boundaries)
     pars_next <- proposal(state$pars, rng)
 
-    u <- rng$random_real(1)
+    u <- monty_random_real(rng)
     reject_some <- boundaries == "reject" &&
       !all(i <- is_parameters_in_domain(pars_next, model$domain))
     if (reject_some) {

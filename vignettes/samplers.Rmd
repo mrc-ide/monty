@@ -48,7 +48,7 @@ image(a, b, z, xlab = "alpha", ylab = "beta")
 In this particular case we can also easily generate samples, so we know what a good sampler will produce:
 
 ```{r}
-rng <- monty_rng$new()
+rng <- monty_rng_create()
 s <- vapply(seq(200), function(x) m$direct_sample(rng), numeric(2))
 image(a, b, z, xlab = "alpha", ylab = "beta")
 points(s[1, ], s[2, ], pch = 19, col = "#00000055")
