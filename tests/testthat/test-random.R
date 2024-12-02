@@ -71,6 +71,11 @@ test_that("can get and set rng state", {
   cmp$set_state(rev(r))
   expect_equal(monty_random_state(s), rev(r))
   expect_equal(monty_random_real(s), drop(cmp$random_real(1)))
+
+  expect_error(
+    monty_random_set_state(r[-1], s),
+    "'value' must be a raw vector of length 320 (but was 319)",
+    fixed = TRUE)
 })
 
 
@@ -109,4 +114,32 @@ test_that("can sample from binomial distribution", {
                cmp$binomial(1, 10, 0.3))
   expect_equal(monty_random_n_binomial(10, 7, 0.3, s),
                cmp$binomial(10, 7, 0.3))
+})
+
+
+test_that("protect against pointer serialisation", {
+  s <- monty_random_create(seed = 42)
+  s2 <- unserialize(serialize(s, NULL))
+  expect_error(
+    monty_random_real(s2),
+    "Pointer has been serialised, cannot continue safely (random_real)",
+    fixed = TRUE)
+})
+
+
+test_that("validate input size with single stream", {
+  s <- monty_random_create(seed = 42)
+  expect_error(monty_random_binomial(10, numeric(0), s),
+               "Expected 'prob' to have length 1, not 0")
+  expect_error(monty_random_binomial(10, c(0.1, 0.2), s),
+               "Expected 'prob' to have length 1, not 2")
+})
+
+
+test_that("validate input size with multiple streams", {
+  s <- monty_random_create(seed = 42, n_streams = 3)
+  expect_error(monty_random_binomial(10, numeric(0), s),
+               "Expected 'prob' to have length 3 or 1, not 0")
+  expect_error(monty_random_binomial(10, c(0.1, 0.2), s),
+               "Expected 'prob' to have length 3 or 1, not 2")
 })

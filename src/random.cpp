@@ -10,15 +10,6 @@
 using default_rng64 = monty::random::prng<monty::random::generator<double>>;
 
 template <typename T>
-void check_length(T x, size_t len, const char * name) {
-  const size_t len_given = Rf_length(x);
-  if (len_given != len) {
-    cpp11::stop("Expected '%s' to have length %d, not %d",
-                name, len, len_given);
-  }
-}
-
-template <typename T>
 T* safely_read_externalptr(cpp11::sexp ptr, const char * context) {
   if (!R_ExternalPtrAddr(ptr)) {
     cpp11::stop("Pointer has been serialised, cannot continue safely (%s)",
