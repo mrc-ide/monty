@@ -206,55 +206,6 @@ monty_random_n_real <- function(n_samples, state) {
 }
 
 
-##' Sample from the beta distribution
-##'
-##' @title Sample from beta distribution
-##'
-##' @param a,b The shape parameters
-##'
-##' @inheritParams monty_random_real
-##' @inherit monty_random_real return
-##' @export
-monty_random_beta <- function(a, b, state) {
-  cpp_monty_random_beta(a, b, state)
-}
-
-
-##' @export
-##' @rdname monty_random_beta
-monty_random_n_beta <- function(n_samples, size, a, b) {
-  cpp_monty_random_n_beta(n_samples, size, a, b)
-}
-
-
-##' Sample from the binomial distribution
-##'
-##' @title Sample from binomial distribution
-##'
-##' @param size The number of trials
-##'
-##' @param prob The probability of success on each trial
-##'
-##' @inheritParams monty_random_real
-##' @inherit monty_random_real return
-##'
-##' @export
-##' @examples
-##' state <- monty_rng_create()
-##' monty_random_binomial(10, 0.3, state)
-##' table(monty_random_n_binomial(2000, 10, 0.3, state))
-monty_random_binomial <- function(size, prob, state) {
-  cpp_monty_random_binomial(size, prob, state)
-}
-
-
-##' @export
-##' @rdname monty_random_binomial
-monty_random_n_binomial <- function(n_samples, size, prob, state) {
-  cpp_monty_random_n_binomial(n_samples, size, prob, state)
-}
-
-
 ##' Sample from an exponential distribution.  There are two
 ##' parameterisations here, one in terms of the rate of the
 ##' exponential, and one in terms of the mean (or scale).
@@ -316,6 +267,235 @@ monty_random_poisson <- function(lambda, state) {
 
 ##' @export
 ##' @rdname monty_random_poisson
-monty_random_n_poisson <- function(n_samples, size, lambda) {
-  cpp_monty_random_n_poisson(n_samples, size, lambda)
+monty_random_n_poisson <- function(n_samples, lambda, state) {
+  cpp_monty_random_n_poisson(n_samples, lambda, state)
+}
+
+
+##' Sample from the beta distribution
+##'
+##' @title Sample from beta distribution
+##'
+##' @param a,b The shape parameters
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_beta <- function(a, b, state) {
+  cpp_monty_random_beta(a, b, state)
+}
+
+
+##' @export
+##' @rdname monty_random_beta
+monty_random_n_beta <- function(n_samples, size, a, b) {
+  cpp_monty_random_n_beta(n_samples, size, a, b)
+}
+
+
+##' Sample from the binomial distribution
+##'
+##' @title Sample from binomial distribution
+##'
+##' @param size The number of trials
+##'
+##' @param prob The probability of success on each trial
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @examples
+##' state <- monty_random_create()
+##' monty_random_binomial(10, 0.3, state)
+##' table(monty_random_n_binomial(2000, 10, 0.3, state))
+monty_random_binomial <- function(size, prob, state) {
+  cpp_monty_random_binomial(size, prob, state)
+}
+
+
+##' @export
+##' @rdname monty_random_binomial
+monty_random_n_binomial <- function(n_samples, size, prob, state) {
+  cpp_monty_random_n_binomial(n_samples, size, prob, state)
+}
+
+
+##' Sample from the Cauchy distribution
+##'
+##' @title Sample from Cauchy distribution
+##'
+##' @param location Location of the distribution (the same as the
+##'   median and mode)
+##'
+##' @param scale A scale parameter which specifies the half-width at
+##'   half-maximum (HWHM)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_cauchy <- function(location, scale, state) {
+  cpp_monty_random_cauchy(location, scale, state)
+}
+
+
+##' @export
+##' @rdname monty_random_binomial
+monty_random_n_cauchy <- function(n_samples, location, scale, state) {
+  cpp_monty_random_cauchy(n_samples, location, scale, state)
+}
+
+
+##' Sample from a gamma distribution.  There are two parameterisations
+##' here, one in terms of rate, and one in terms of scale.
+##'
+##' @description Sample from gamma distribution
+##'
+##' @param shape Shape
+##'
+##' @param scale Scale
+##''
+##' @param n_threads Number of threads to use; see Details
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_gamma
+monty_random_gamma_scale <- function(shape, scale, state) {
+  cpp_monty_random_gamma_scale(shape, scale, state)
+}
+
+
+##' @export
+##' @rdname monty_random_gamma
+monty_random_n_gamma_scale <- function(n_samples, shape, scale, state) {
+  cpp_monty_random_n_gamma_scale(n_samples, shape, scale, state)
+}
+
+
+##' @export
+##' @rdname monty_random_gamma
+monty_random_gamma_rate <- function(shape, rate, state) {
+  cpp_monty_random_gamma_rate(shape, rate, state)
+}
+
+
+##' @export
+##' @rdname monty_random_gamma
+monty_random_n_gamma_rate <- function(n_samples, shape, rate, state) {
+  cpp_monty_random_n_gamma_rate(n_samples, shape, rate, state)
+}
+
+
+##' Sample from a negative binomial distribution
+##'
+##' @title Sample from negative binomial distribution
+##'
+##' @param size The target number of successful trials
+##'   (zero or more)
+##'
+##' @param prob The probability of success on each trial (between 0
+##'   and 1)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_negative_binomial_prob <- function(size, prob, state) {
+  cpp_monty_random_negative_binomial_prob(size, prob, state)
+}
+
+
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_n_negative_binomial_prob <- function(n_samples, size, prob,
+                                                  state) {
+  cpp_monty_random_n_negative_binomial_prob(n_samples, size, prob, state)
+}
+
+
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_negative_binomial_mu <- function(size, mu, state) {
+  cpp_monty_random_negative_binomial_mu(size, mu, state)
+}
+
+
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
+  cpp_monty_random_n_negative_binomial_mu(n_samples, size, mu, state)
+}
+
+
+monty_random_normal <- function(size, mean, sd) {
+  cpp_monty_random_normal(size, mean, sd)
+}
+
+
+monty_random_n_normal <- function(n_samples, size, mean, sd) {
+  cpp_monty_random_n_normal(n_samples, size, mean, sd)
+}
+
+
+monty_random_uniform <- function(size, min, max) {
+  cpp_monty_random_uniform(size, min, max)
+}
+
+
+monty_random_n_uniform <- function(n_samples, size, min, max) {
+  cpp_monty_random_n_uniform(n_samples, size, min, max)
+}
+
+
+monty_random_beta_binomial_prob <- function(size, prob, rho, state) {
+  cpp_monty_random_beta_binomial_prob(size, prob, rho, state)
+}
+
+
+monty_random_n_beta_binomial_prob <- function(n_samples, size, prob, rho,
+                                              state) {
+  cpp_monty_random_n_beta_binomial_prob(n_samples, size, prob, rho, state)
+}
+
+
+monty_random_beta_binomial_ab <- function(size, a, b, state) {
+  cpp_monty_random_beta_binomial_ab(size, a, b, state)
+}
+
+
+monty_random_n_beta_binomial_ab <- function(n_samples, size, a, b, state) {
+  cpp_monty_random_n_beta_binomial_ab(n_samples, size, a, b, state)
+}
+
+
+monty_random_hypergeometric <- function(size, n1, n2, k, state) {
+  cpp_monty_random_hypergeometric(size, n1, n2, k, state)
+}
+
+
+monty_random_n_hypergeometric <- function(n_samples, size, n1, n2, k, state) {
+  cpp_monty_random_n_hypergeometric(n_samples, size, n1, n2, k, state)
+}
+
+
+monty_random_truncated_normal <- function(size, mean, sd, min, max, state) {
+  cpp_monty_random_truncated_normal(size, mean, sd, min, max, state)
+}
+
+
+monty_random_n_truncated_normal <- function(n_samples, size, mean, sd, min, max,
+                                            state) {
+  cpp_monty_random_n_truncated_normal(n_samples, size, mean, sd, min, max,
+                                      state)
 }
