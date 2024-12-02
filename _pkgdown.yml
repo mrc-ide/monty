@@ -74,9 +74,9 @@ reference:
   - title: Random numbers
   - subsection: Create and manage random number state
     contents:
-    - monty_random_create
-    - monty_random_state
-    - monty_random_set_state
+    - monty_rng_create
+    - monty_rng_state
+    - monty_rng_set_state
   - subsection: Distribution functions
     contents:
     - monty_random_real

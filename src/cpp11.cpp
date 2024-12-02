@@ -6,17 +6,17 @@
 #include <R_ext/Visibility.h>
 
 // random.cpp
-cpp11::sexp cpp_monty_random_state(cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_state(SEXP ptr) {
+cpp11::sexp cpp_monty_rng_state(cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_rng_state(SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_state(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_rng_state(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-void cpp_monty_random_set_state(cpp11::sexp ptr, cpp11::raws r_value);
-extern "C" SEXP _monty_cpp_monty_random_set_state(SEXP ptr, SEXP r_value) {
+void cpp_monty_rng_set_state(cpp11::sexp ptr, cpp11::raws r_value);
+extern "C" SEXP _monty_cpp_monty_rng_set_state(SEXP ptr, SEXP r_value) {
   BEGIN_CPP11
-    cpp_monty_random_set_state(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::raws>>(r_value));
+    cpp_monty_rng_set_state(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::raws>>(r_value));
     return R_NilValue;
   END_CPP11
 }
@@ -219,17 +219,17 @@ extern "C" SEXP _monty_monty_rng_truncated_normal(SEXP ptr, SEXP n, SEXP r_mean,
   END_CPP11
 }
 // random_legacy.cpp
-cpp11::sexp monty_rng_state(SEXP ptr);
-extern "C" SEXP _monty_monty_rng_state(SEXP ptr) {
+cpp11::sexp monty_legacy_rng_state(SEXP ptr);
+extern "C" SEXP _monty_monty_legacy_rng_state(SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(monty_rng_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
+    return cpp11::as_sexp(monty_legacy_rng_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
   END_CPP11
 }
 // random_legacy.cpp
-void monty_rng_set_state(SEXP ptr, cpp11::raws r_state);
-extern "C" SEXP _monty_monty_rng_set_state(SEXP ptr, SEXP r_state) {
+void monty_legacy_rng_set_state(SEXP ptr, cpp11::raws r_state);
+extern "C" SEXP _monty_monty_legacy_rng_set_state(SEXP ptr, SEXP r_state) {
   BEGIN_CPP11
-    monty_rng_set_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::raws>>(r_state));
+    monty_legacy_rng_set_state(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr), cpp11::as_cpp<cpp11::decay_t<cpp11::raws>>(r_state));
     return R_NilValue;
   END_CPP11
 }
@@ -271,8 +271,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_exponential_rate", (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate, 3},
     {"_monty_cpp_monty_random_n_real",             (DL_FUNC) &_monty_cpp_monty_random_n_real,             2},
     {"_monty_cpp_monty_random_real",               (DL_FUNC) &_monty_cpp_monty_random_real,               1},
-    {"_monty_cpp_monty_random_set_state",          (DL_FUNC) &_monty_cpp_monty_random_set_state,          2},
-    {"_monty_cpp_monty_random_state",              (DL_FUNC) &_monty_cpp_monty_random_state,              1},
+    {"_monty_cpp_monty_rng_set_state",             (DL_FUNC) &_monty_cpp_monty_rng_set_state,             2},
+    {"_monty_cpp_monty_rng_state",                 (DL_FUNC) &_monty_cpp_monty_rng_state,                 1},
+    {"_monty_monty_legacy_rng_set_state",          (DL_FUNC) &_monty_monty_legacy_rng_set_state,          2},
+    {"_monty_monty_legacy_rng_state",              (DL_FUNC) &_monty_monty_legacy_rng_state,              1},
     {"_monty_monty_rng_alloc",                     (DL_FUNC) &_monty_monty_rng_alloc,                     3},
     {"_monty_monty_rng_beta",                      (DL_FUNC) &_monty_monty_rng_beta,                      5},
     {"_monty_monty_rng_beta_binomial_ab",          (DL_FUNC) &_monty_monty_rng_beta_binomial_ab,          6},
@@ -295,8 +297,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_poisson",                   (DL_FUNC) &_monty_monty_rng_poisson,                   4},
     {"_monty_monty_rng_random_normal",             (DL_FUNC) &_monty_monty_rng_random_normal,             4},
     {"_monty_monty_rng_random_real",               (DL_FUNC) &_monty_monty_rng_random_real,               3},
-    {"_monty_monty_rng_set_state",                 (DL_FUNC) &_monty_monty_rng_set_state,                 2},
-    {"_monty_monty_rng_state",                     (DL_FUNC) &_monty_monty_rng_state,                     1},
     {"_monty_monty_rng_truncated_normal",          (DL_FUNC) &_monty_monty_rng_truncated_normal,          7},
     {"_monty_monty_rng_uniform",                   (DL_FUNC) &_monty_monty_rng_uniform,                   5},
     {"_monty_test_rng_pointer_get",                (DL_FUNC) &_monty_test_rng_pointer_get,                2},

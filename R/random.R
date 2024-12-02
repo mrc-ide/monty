@@ -46,17 +46,17 @@
 ##'   to ensure that the rank of the result does not change with the
 ##'   number of streams (see Details).
 ##'
-##' @return An object of class `monty_random_state`, which can be
+##' @return An object of class `monty_rng_state`, which can be
 ##'   passed as the `state` argument to random-number producing
 ##'   functions, such as [monty_random_real]
 ##'
 ##' @export
 ##' @examples
-##' state <- monty_random_create()
+##' state <- monty_rng_create()
 ##' state
 ##'
 ##' monty_random_real(state)
-monty_random_create <- function(n_streams = 1L, seed = NULL,
+monty_rng_create <- function(n_streams = 1L, seed = NULL,
                                 n_threads = 1L, deterministic = FALSE,
                                 preserve_stream_dimension = FALSE) {
   assert_scalar_logical(deterministic)
@@ -67,7 +67,7 @@ monty_random_create <- function(n_streams = 1L, seed = NULL,
   attr(ptr, "n_threads") <- n_threads
   attr(ptr, "n_deterministic") <- deterministic
   attr(ptr, "preserve_stream_dimension") <- preserve_stream_dimension
-  class(ptr) <- "monty_random_state"
+  class(ptr) <- "monty_rng_state"
   ptr
 }
 
@@ -76,41 +76,41 @@ monty_random_create <- function(n_streams = 1L, seed = NULL,
 ##'
 ##' @title Get and set random number state
 ##'
-##' @param state The random number state, from [monty_random_create]
+##' @param state The random number state, from [monty_rng_create]
 ##'
 ##' @return A vector of raws
 ##' @export
 ##' @examples
-##' s1 <- monty_random_create()
-##' r1 <- monty_random_state(s1)
+##' s1 <- monty_rng_create()
+##' r1 <- monty_rng_state(s1)
 ##'
-##' s2 <- monty_random_create(seed = r1)
-##' identical(r1, monty_random_state(s2))
+##' s2 <- monty_rng_create(seed = r1)
+##' identical(r1, monty_rng_state(s2))
 ##' monty_random_real(s1)
 ##' monty_random_real(s2)
 ##'
-##' monty_random_set_state(r1, s1)
+##' monty_rng_set_state(r1, s1)
 ##' monty_random_real(s1)
 ##' monty_random_real(s1)
 ##' monty_random_real(s2)
-monty_random_state <- function(state) {
-  cpp_monty_random_state(state)
+monty_rng_state <- function(state) {
+  cpp_monty_rng_state(state)
 }
 
 
 ##' @param value A vector of raw values, typically the result of
-##'   exporting a random state with `monty_random_state()`
+##'   exporting a random state with `monty_rng_state()`
 ##'
 ##' @export
-##' @rdname monty_random_state
-monty_random_set_state <- function(value, state) {
-  cpp_monty_random_set_state(state, value)
+##' @rdname monty_rng_state
+monty_rng_set_state <- function(value, state) {
+  cpp_monty_rng_set_state(state, value)
 }
 
 
 ##' @export
-print.monty_random_state <- function(x, ...) {
-  cli::cli_h1("<monty_random_state>")
+print.monty_rng_state <- function(x, ...) {
+  cli::cli_h1("<monty_rng_state>")
   cli::cli_li("{attr(x, 'n_streams')} random number stream{?s}")
   cli::cli_li("{attr(x, 'n_threads')} execution thread{?s}")
   invisible(x)
@@ -125,14 +125,14 @@ print.monty_random_state <- function(x, ...) {
 ##'
 ##' @title Sample from Uniform(0, 1)
 ##'
-##' @param state The random number state, from [monty_random_create]
+##' @param state The random number state, from [monty_rng_create]
 ##'
 ##' @return A vector of random numbers, the same length as the number
 ##'   of streams in `state`.
 ##'
 ##' @export
 ##' @examples
-##' state <- monty_random_create()
+##' state <- monty_rng_create()
 ##' monty_random_real(state)
 ##' monty_random_n_real(5, state)
 monty_random_real <- function(state) {
@@ -164,7 +164,7 @@ monty_random_n_real <- function(n_samples, state) {
 ##'
 ##' @export
 ##' @examples
-##' state <- monty_random_create()
+##' state <- monty_rng_create()
 ##' monty_random_binomial(10, 0.3, state)
 ##' table(monty_random_n_binomial(2000, 10, 0.3, state))
 monty_random_binomial <- function(size, prob, state) {
@@ -193,7 +193,7 @@ monty_random_n_binomial <- function(n_samples, size, prob, state) {
 ##' @export
 ##' @rdname monty_random_exponential
 ##' @examples
-##' state <- monty_random_create()
+##' state <- monty_rng_create()
 ##' monty_random_exponential_rate(0.2, state)
 ##' summary(monty_random_n_exponential_rate(2000, 0.2, state))
 monty_random_exponential_rate <- function(rate, state) {

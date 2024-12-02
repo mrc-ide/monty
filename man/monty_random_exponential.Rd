@@ -12,7 +12,7 @@ monty_random_n_exponential_rate(n_samples, rate, state)
 \arguments{
 \item{rate}{The rate of the exponential}
 
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
@@ -28,7 +28,7 @@ parameterisations here, one in terms of the rate of the
 exponential, and one in terms of the mean (or scale).
 }
 \examples{
-state <- monty_random_create()
+state <- monty_rng_create()
 monty_random_exponential_rate(0.2, state)
 summary(monty_random_n_exponential_rate(2000, 0.2, state))
 }

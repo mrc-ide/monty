@@ -10,7 +10,7 @@ monty_random_real(state)
 monty_random_n_real(n_samples, state)
 }
 \arguments{
-\item{state}{The random number state, from \link{monty_random_create}}
+\item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
@@ -28,7 +28,7 @@ will want a number on $[0, 1]$ (e.g., for a Bernoulli trial), and
 this function is the most efficient way of generating one.
 }
 \examples{
-state <- monty_random_create()
+state <- monty_rng_create()
 monty_random_real(state)
 monty_random_n_real(5, state)
 }

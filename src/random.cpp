@@ -179,7 +179,7 @@ cpp11::doubles monty_random_sample_n_2(Fn fn, size_t n_samples,
 
 // Real functions that we export
 [[cpp11::register]]
-cpp11::sexp cpp_monty_random_state(cpp11::sexp ptr) {
+cpp11::sexp cpp_monty_rng_state(cpp11::sexp ptr) {
   auto * rng = safely_read_externalptr<default_rng64>(ptr, "state");
   auto state = rng->export_state();
   size_t len = sizeof(typename default_rng64::int_type) * state.size();
@@ -189,7 +189,7 @@ cpp11::sexp cpp_monty_random_state(cpp11::sexp ptr) {
 }
 
 [[cpp11::register]]
-void cpp_monty_random_set_state(cpp11::sexp ptr, cpp11::raws r_value) {
+void cpp_monty_rng_set_state(cpp11::sexp ptr, cpp11::raws r_value) {
   auto * rng = safely_read_externalptr<default_rng64>(ptr, "set_state");
 
   using int_type = typename default_rng64::int_type;
