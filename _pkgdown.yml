@@ -79,9 +79,12 @@ reference:
     - monty_random_set_state
   - subsection: Distribution functions
     contents:
-    - monty_random_real, monty_random_n_real
-    - monty_random_binomial, monty_random_n_binomial
-    - monty_random_exponential_rate, monty_random_n_exponential_rate
+    - monty_random_real
+    - monty_random_n_real
+    - monty_random_binomial
+    - monty_random_n_binomial
+    - monty_random_exponential_rate
+    - monty_random_n_exponential_rate
   - subsection: Legacy interface
     desc: >-
       Functions imported from dust; these will be retired soon
