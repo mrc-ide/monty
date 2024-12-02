@@ -7,7 +7,7 @@
 \usage{
 monty_random_exponential_rate(rate, state)
 
-monty_random_n_exponential_rate(n_samples, rate)
+monty_random_n_exponential_rate(n_samples, rate, state)
 }
 \arguments{
 \item{rate}{The rate of the exponential}
@@ -29,6 +29,6 @@ exponential, and one in terms of the mean (or scale).
 }
 \examples{
 state <- monty_random_create()
-monty_random_exponential(0.2, state)
-summary(monty_random_n_exponential(2000, 0.2, state))
+monty_random_exponential_rate(0.2, state)
+summary(monty_random_n_exponential_rate(2000, 0.2, state))
 }

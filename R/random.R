@@ -89,7 +89,7 @@ monty_random_create <- function(n_streams = 1L, seed = NULL,
 ##' monty_random_real(s1)
 ##' monty_random_real(s2)
 ##'
-##' monty_random_set_state(s1, r1)
+##' monty_random_set_state(r1, s1)
 ##' monty_random_real(s1)
 ##' monty_random_real(s1)
 ##' monty_random_real(s2)
@@ -194,8 +194,8 @@ monty_random_n_binomial <- function(n_samples, size, prob, state) {
 ##' @rdname monty_random_exponential
 ##' @examples
 ##' state <- monty_random_create()
-##' monty_random_exponential(0.2, state)
-##' summary(monty_random_n_exponential(2000, 0.2, state))
+##' monty_random_exponential_rate(0.2, state)
+##' summary(monty_random_n_exponential_rate(2000, 0.2, state))
 monty_random_exponential_rate <- function(rate, state) {
   cpp_monty_random_exponential_rate(rate, state)
 }

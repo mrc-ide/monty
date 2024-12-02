@@ -30,7 +30,7 @@ identical(r1, monty_random_state(s2))
 monty_random_real(s1)
 monty_random_real(s2)
 
-monty_random_set_state(s1, r1)
+monty_random_set_state(r1, s1)
 monty_random_real(s1)
 monty_random_real(s1)
 monty_random_real(s2)
