@@ -58,6 +58,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
   ## We may want to warn if users provide an odd number of rungs as we
   ## do a different number of swaps on even/odd steps.  Marc to check
   ## if this would affect efficiency of the sampler.
+  #browser()
   assert_scalar_size(n_rungs, allow_zero = FALSE)
 
   ## Use a fixed schedule for now, later we'll need to allow this to
