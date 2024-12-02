@@ -76,6 +76,10 @@ monty_rng_cauchy <- function(ptr, n, r_location, r_scale, n_threads) {
   .Call(`_monty_monty_rng_cauchy`, ptr, n, r_location, r_scale, n_threads)
 }
 
+monty_rng_weibull <- function(ptr, n, r_shape, r_scale, n_threads) {
+  .Call(`_monty_monty_rng_weibull`, ptr, n, r_shape, r_scale, n_threads)
+}
+
 monty_rng_beta <- function(ptr, n, r_a, r_b, n_threads) {
   .Call(`_monty_monty_rng_beta`, ptr, n, r_a, r_b, n_threads)
 }

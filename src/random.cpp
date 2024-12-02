@@ -1097,6 +1097,14 @@ cpp11::sexp monty_rng_cauchy(SEXP ptr, int n,
 }
 
 [[cpp11::register]]
+cpp11::sexp monty_rng_weibull(SEXP ptr, int n,
+                              cpp11::doubles r_shape,
+                              cpp11::doubles r_scale,
+                              int n_threads) {
+  return monty_rng_weibull<double, default_rng>(ptr, n, r_shape, r_scale, n_threads);
+}
+
+[[cpp11::register]]
 cpp11::sexp monty_rng_beta(SEXP ptr, int n,
                            cpp11::doubles r_a,
                            cpp11::doubles r_b,
