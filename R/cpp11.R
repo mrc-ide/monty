@@ -88,10 +88,6 @@ monty_rng_cauchy <- function(ptr, n, r_location, r_scale, n_threads) {
   .Call(`_monty_monty_rng_cauchy`, ptr, n, r_location, r_scale, n_threads)
 }
 
-monty_rng_weibull <- function(ptr, n, r_shape, r_scale, n_threads) {
-  .Call(`_monty_monty_rng_weibull`, ptr, n, r_shape, r_scale, n_threads)
-}
-
 monty_rng_beta <- function(ptr, n, r_a, r_b, n_threads) {
   .Call(`_monty_monty_rng_beta`, ptr, n, r_a, r_b, n_threads)
 }
@@ -102,6 +98,10 @@ monty_rng_multinomial <- function(ptr, n, r_size, r_prob, n_threads) {
 
 monty_rng_truncated_normal <- function(ptr, n, r_mean, r_sd, r_min, r_max, n_threads) {
   .Call(`_monty_monty_rng_truncated_normal`, ptr, n, r_mean, r_sd, r_min, r_max, n_threads)
+}
+
+monty_rng_weibull <- function(ptr, n, r_shape, r_scale, n_threads) {
+  .Call(`_monty_monty_rng_weibull`, ptr, n, r_shape, r_scale, n_threads)
 }
 
 monty_rng_state <- function(ptr) {

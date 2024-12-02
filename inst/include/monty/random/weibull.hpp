@@ -34,7 +34,7 @@ real_type weibull(rng_state_type& rng_state, real_type shape, real_type scale) {
     return scale * std::tgamma(1 + 1 / shape);
   }
   const real_type u = random_real<real_type>(rng_state);
-  return scale * (-monty::math::log(1 - u))^(1 / shape);
+  return scale * monty::math::pow(-monty::math::log(1 - u), 1 / shape);
 }
 
 }
