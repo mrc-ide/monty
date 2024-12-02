@@ -203,6 +203,6 @@ monty_random_exponential_rate <- function(rate, state) {
 
 ##' @export
 ##' @rdname monty_random_exponential
-monty_random_n_exponential_rate <- function(n_samples, rate) {
-  cpp_monty_random_n_exponential_rate(n_samples, rate)
+monty_random_n_exponential_rate <- function(n_samples, rate, state) {
+  cpp_monty_random_n_exponential_rate(n_samples, rate, state)
 }
