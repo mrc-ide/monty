@@ -149,7 +149,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       all(internal$state$pars[, 1] == state$pars),
       all(internal$state$density[1] == state$density))
 
-    browser()
+    #browser()
     ## Update step, later this will propose/accept hot chain differently
     state <- sampler$step(internal$state, internal$model, rng)
 
@@ -190,6 +190,10 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     internal$even_step <- !internal$even_step
     internal$state <- state
 
+    a <- state$density
+    b <- beta*model$density(state$pars) + (1-beta)*internal$base$density(state$pars)
+    print(setequal(a,b))
+    
     list(pars = state$pars[, 1], density = state$density[[1]])
   }
 
