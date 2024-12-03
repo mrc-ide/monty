@@ -38,7 +38,9 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     n_sets <- if (internal$multiple_parameters) ncol(pars) else 1L
     n_pars <- if (internal$multiple_parameters) nrow(pars) else length(pars)
     if (is.null(vcv)) {
-      internal$sample_momentum <- function(rng) monty_random_n_real(n_pars, rng)
+      internal$sample_momentum <- function(rng) {
+        monty_random_n_normal(n_pars, 0, 1, rng)
+      }
     } else {
       vcv <- sampler_validate_vcv(vcv, pars)
       internal$sample_momentum <- make_rmvnorm(vcv, centred = TRUE)

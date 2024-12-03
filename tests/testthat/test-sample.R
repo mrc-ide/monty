@@ -236,7 +236,7 @@ test_that("generate initial conditions that fall within the domain", {
 
   m <- monty_model(list(
     parameters = "x",
-    direct_sample = function(rng) rng$normal(1, -2, 1),
+    direct_sample = function(rng) monty_random_normal(-2, 1, rng),
     density = function(x) dexp(x, log = TRUE),
     domain = rbind(c(0, Inf))))
 

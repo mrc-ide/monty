@@ -125,7 +125,7 @@ ex_stochastic <- function(n = 10, sd_sample = 1, sd_measure = 1) {
     monty_rng_state(env$rng)
   }
   set_rng_state <- function(rng_state) {
-    monty_rng_set_state(rng_state, rng)
+    monty_rng_set_state(rng_state, env$rng)
   }
   density <- function(x) {
     r <- monty_random_n_normal(n, x, sd_sample, env$rng)

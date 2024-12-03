@@ -79,7 +79,7 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
                                           steps, progress, rng_state) {
   r_rng_state <- get_r_rng_state()
   n_chains <- length(rng_state)
-  rng <- monty_rng_create(unlist(rng_state), n_streams = n_chains)
+  rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
   chain_state <- sampler$initialise(pars, model, rng)
 
@@ -98,7 +98,7 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   ## could move this elsewhere if we change the interface for the
   ## sequential version too?
   rng_state <- unlist(lapply(state, "[[", "rng"))
-  rng <- monty_rng_create(unlist(rng_state), n_streams = n_chains)
+  rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
   ## This is the inverse of restart_data really
   pars <- matrix(vapply(state, function(x) x$chain$pars, numeric(n_pars)),

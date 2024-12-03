@@ -238,7 +238,7 @@ test_that("can run sampler with reflecting boundaries", {
            0.5
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }))
 
   s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
@@ -278,7 +278,7 @@ test_that("can run sampler with rejecting boundaries", {
            0.5
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }))
 
   s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
@@ -301,7 +301,7 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
            ifelse(abs(x) > 1, NA_real_, log(0.5))
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }),
     monty_model_properties(allow_multiple_parameters = TRUE))
 
