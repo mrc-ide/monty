@@ -168,6 +168,17 @@ distr_hypergeometric <- distribution(
     mean = quote(k * n1 / (n1 + n2))),
   cpp = list(density = "hypergeometric", sample = "hypergeometric"))
 
+distr_log_normal <- distribution(
+  name = "LogNormal",
+  density = function(x, meanlog, sdlog) dlnorm(x, meanlog, sdlog, log = TRUE),
+  domain = c(0, Inf),
+  expr = list(
+    density = quote(-(log(x) - meanlog)^2 / (2 * sdlog^2) - log(2 * pi) / 2 - 
+                      log(sdlog) - log(x)),
+    mean = quote(exp(meanlog + sdlog^2 / 2))),
+  sample = function(rng, meanlog, sdlog) rng$lognormal(1, meanlog, sdlog),
+  cpp = list(density = "normal", sample = "normal"))
+
 distr_negative_binomial_prob <- distribution(
   name = "NegativeBinomial",
   variant = "prob",
