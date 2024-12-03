@@ -108,12 +108,64 @@ monty_rng_set_state <- function(value, state) {
 }
 
 
+##' Jump random number state.  There are two "lengths" of jumps; a
+##' normal jump and a long jump.  The normal jump is the distance
+##' between streams within a random number state, so if you have a
+##' multi-stream rng this shifts states left.  The long jump is used
+##' to create distributed states.  We will properly explain all this
+##' once the interface stabilises.
+##'
+##' @title Jump random number state
+##'
+##' @param state Either a `monty_rng_state` object (created via
+##'   [monty_rng_create]) or a raw vector suitable for creating
+##'   one.
+##'
+##' @param n The number of jumps to take (integer, 1 or more)
+##'
+##' @return The `monty_rng_state` object (modified in place) or a
+##'   raw vector, matching the input argument `state`.
+##'
+##' @export
+monty_rng_jump <- function(state, n = 1) {
+  if (is.raw(state)) {
+    rng <- monty_rng_create(state, length(state) %/% 32)
+    monty_rng_state(monty_rng_jump(rng, n))
+  } else {
+    assert_is(state, "monty_rng_state")
+    assert_scalar_size(n, allow_zero = FALSE)
+    cpp_monty_rng_jump(state, n)
+  }
+}
+
+
+##' @export
+##' @rdname monty_rng_jump
+monty_rng_long_jump <- function(state, n = 1) {
+  if (is.raw(state)) {
+    rng <- monty_rng_create(state, length(state) %/% 32)
+    monty_rng_state(monty_rng_jump(rng, n))
+  } else {
+    assert_is(state, "monty_rng_state")
+    assert_scalar_size(n, allow_zero = FALSE)
+    cpp_monty_rng_long_jump(state, n)
+  }
+}
+
+
+
 ##' @export
 print.monty_rng_state <- function(x, ...) {
   cli::cli_h1("<monty_rng_state>")
-  cli::cli_li("{attr(x, 'n_streams')} random number stream{?s}")
+  cli::cli_li("{length(x)} random number stream{?s}")
   cli::cli_li("{attr(x, 'n_threads')} execution thread{?s}")
   invisible(x)
+}
+
+
+##' @export
+length.monty_rng_state <- function(x) {
+  attr(x, "n_streams")
 }
 
 

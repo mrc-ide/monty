@@ -18,6 +18,12 @@ test_that("can print rng state", {
 })
 
 
+test_that("can get the length of rng state as the number of streams", {
+  expect_equal(length(monty_rng_create()), 1)
+  expect_equal(length(monty_rng_create(n_streams = 3)), 3)
+})
+
+
 test_that("can generate a random number from multiple streams at once", {
   s <- monty_rng_create(seed = 42, n_streams = 10)
   cmp <- monty_rng$new(seed = 42, n_streams = 10)
@@ -76,6 +82,30 @@ test_that("can get and set rng state", {
     monty_rng_set_state(r[-1], s),
     "'value' must be a raw vector of length 320 (but was 319)",
     fixed = TRUE)
+})
+
+
+test_that("can jump", {
+  r1 <- monty_rng_create(n_streams = 1, seed = 1)
+  r2 <- monty_rng_create(n_streams = 5, seed = 1)
+  s2 <- matrix(monty_rng_state(r2), ncol = 5)
+  expect_equal(monty_rng_state(r1), s2[, 1])
+  expect_null(monty_rng_jump(r1))
+  expect_equal(monty_rng_state(r1), s2[, 2])
+  expect_null(monty_rng_jump(r1, 3))
+  expect_equal(monty_rng_state(r1), s2[, 5])
+})
+
+
+## This test is not great, but it will end up done properly once we
+## replace things in the reference tests and harmonise the pointer
+## interface with this new one.
+test_that("Can long jump", {
+  r <- monty_rng_create(seed = 1L)
+  s <- monty_rng_distributed_state(seed = 1L, n_nodes = 2)
+  expect_equal(monty_rng_state(r), s[[1]])
+  monty_rng_long_jump(r)
+  expect_equal(monty_rng_state(r), s[[2]])
 })
 
 

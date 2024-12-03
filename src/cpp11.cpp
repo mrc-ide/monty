@@ -21,6 +21,22 @@ extern "C" SEXP _monty_cpp_monty_rng_set_state(SEXP ptr, SEXP r_value) {
   END_CPP11
 }
 // random.cpp
+void cpp_monty_rng_jump(cpp11::sexp ptr, int n);
+extern "C" SEXP _monty_cpp_monty_rng_jump(SEXP ptr, SEXP n) {
+  BEGIN_CPP11
+    cpp_monty_rng_jump(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n));
+    return R_NilValue;
+  END_CPP11
+}
+// random.cpp
+void cpp_monty_rng_long_jump(cpp11::sexp ptr, int n);
+extern "C" SEXP _monty_cpp_monty_rng_long_jump(SEXP ptr, SEXP n) {
+  BEGIN_CPP11
+    cpp_monty_rng_long_jump(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr), cpp11::as_cpp<cpp11::decay_t<int>>(n));
+    return R_NilValue;
+  END_CPP11
+}
+// random.cpp
 cpp11::doubles cpp_monty_random_real(cpp11::sexp ptr);
 extern "C" SEXP _monty_cpp_monty_random_real(SEXP ptr) {
   BEGIN_CPP11
@@ -271,6 +287,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_exponential_rate", (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate, 3},
     {"_monty_cpp_monty_random_n_real",             (DL_FUNC) &_monty_cpp_monty_random_n_real,             2},
     {"_monty_cpp_monty_random_real",               (DL_FUNC) &_monty_cpp_monty_random_real,               1},
+    {"_monty_cpp_monty_rng_jump",                  (DL_FUNC) &_monty_cpp_monty_rng_jump,                  2},
+    {"_monty_cpp_monty_rng_long_jump",             (DL_FUNC) &_monty_cpp_monty_rng_long_jump,             2},
     {"_monty_cpp_monty_rng_set_state",             (DL_FUNC) &_monty_cpp_monty_rng_set_state,             2},
     {"_monty_cpp_monty_rng_state",                 (DL_FUNC) &_monty_cpp_monty_rng_state,                 1},
     {"_monty_monty_legacy_rng_set_state",          (DL_FUNC) &_monty_monty_legacy_rng_set_state,          2},

@@ -203,6 +203,23 @@ void cpp_monty_rng_set_state(cpp11::sexp ptr, cpp11::raws r_value) {
   rng->import_state(state);
 }
 
+
+[[cpp11::register]]
+void cpp_monty_rng_jump(cpp11::sexp ptr, int n) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "jump");
+  for (int i = 0; i < n; ++i) {
+    rng->jump();
+  }
+}
+
+[[cpp11::register]]
+void cpp_monty_rng_long_jump(cpp11::sexp ptr, int n) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "long_jump");
+  for (int i = 0; i < n; ++i) {
+    rng->long_jump();
+  }
+}
+
 [[cpp11::register]]
 cpp11::doubles cpp_monty_random_real(cpp11::sexp ptr) {
   const auto fn = [](auto& state) { return monty::random::random_real<double>(state); };

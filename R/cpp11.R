@@ -8,6 +8,14 @@ cpp_monty_rng_set_state <- function(ptr, r_value) {
   invisible(.Call(`_monty_cpp_monty_rng_set_state`, ptr, r_value))
 }
 
+cpp_monty_rng_jump <- function(ptr, n) {
+  invisible(.Call(`_monty_cpp_monty_rng_jump`, ptr, n))
+}
+
+cpp_monty_rng_long_jump <- function(ptr, n) {
+  invisible(.Call(`_monty_cpp_monty_rng_long_jump`, ptr, n))
+}
+
 cpp_monty_random_real <- function(ptr) {
   .Call(`_monty_cpp_monty_random_real`, ptr)
 }
