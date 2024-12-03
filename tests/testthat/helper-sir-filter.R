@@ -5,8 +5,8 @@ sir_filter_monty <- function(data, n_particles, deterministic = FALSE,
   base <- list(N = 1000, I0 = 10, beta = 0.2, gamma = 0.1, exp_noise = 1e6)
 
   get_rng_state <- function() {
-    c(monty_rng_state(env$rng$filter$ptr),
-      monty_rng_state(env$rng$system$ptr))
+    c(monty_rng_state(env$rng$filter),
+      monty_rng_state(env$rng$system))
   }
 
   set_rng_state <- function(rng_state) {
@@ -15,8 +15,8 @@ sir_filter_monty <- function(data, n_particles, deterministic = FALSE,
       monty_rng$new(n_streams = n_streams, seed = rng_state)$state(),
       ncol = n_streams)
     env$rng <- list(
-      filter = monty_random_alloc(1, r[, 1], deterministic),
-      system = monty_random_alloc(n_particles, c(r[, -1]), deterministic))
+      filter = monty_rng_create(1, r[, 1], deterministic),
+      system = monty_rng_create(n_particles, c(r[, -1]), deterministic))
   }
 
   set_rng_state(seed)

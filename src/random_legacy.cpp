@@ -32,13 +32,13 @@ SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
 }
 
 template <typename T>
-void monty_rng_jump(SEXP ptr) {
+void monty_legacy_rng_jump(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "jump");
   rng->jump();
 }
 
 template <typename T>
-void monty_rng_long_jump(SEXP ptr) {
+void monty_legacy_rng_long_jump(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "long_jump");
   rng->long_jump();
 }
@@ -873,7 +873,7 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
 }
 
 template <typename T>
-cpp11::sexp monty_rng_state(SEXP ptr) {
+cpp11::sexp monty_legacy_rng_state(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "rng_state");
   auto state = rng->export_state();
   size_t len = sizeof(typename T::int_type) * state.size();
@@ -884,7 +884,7 @@ cpp11::sexp monty_rng_state(SEXP ptr) {
 
 
 template <typename T>
-void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+void monty_legacy_rng_set_state(SEXP ptr, cpp11::raws r_state) {
   T *rng = safely_read_externalptr<T>(ptr, "rng_set_state");
 
   using int_type = typename T::int_type;
@@ -905,13 +905,13 @@ SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
 }
 
 [[cpp11::register]]
-void monty_rng_jump(SEXP ptr) {
-  monty_rng_jump<default_rng>(ptr);
+void monty_legacy_rng_jump(SEXP ptr) {
+  monty_legacy_rng_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]
-void monty_rng_long_jump(SEXP ptr) {
-  monty_rng_long_jump<default_rng>(ptr);
+void monty_legacy_rng_long_jump(SEXP ptr) {
+  monty_legacy_rng_long_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]
@@ -1081,11 +1081,11 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
 }
 
 [[cpp11::register]]
-cpp11::sexp monty_rng_state(SEXP ptr) {
-  return monty_rng_state<default_rng>(ptr);
+cpp11::sexp monty_legacy_rng_state(SEXP ptr) {
+  return monty_legacy_rng_state<default_rng>(ptr);
 }
 
 [[cpp11::register]]
-void monty_rng_set_state(SEXP ptr, cpp11::raws r_state) {
-  return monty_rng_set_state<default_rng>(ptr, r_state);
+void monty_legacy_rng_set_state(SEXP ptr, cpp11::raws r_state) {
+  return monty_legacy_rng_set_state<default_rng>(ptr, r_state);
 }

@@ -72,10 +72,24 @@ reference:
     - with_trace_random
 
   - title: Random numbers
+  - subsection: Create and manage random number state
+    contents:
+    - monty_rng_create
+    - monty_rng_state
+    - monty_rng_set_state
+    - monty_rng_jump
+    - monty_rng_long_jump
+  - subsection: Distribution functions
+    contents:
+    - monty_random_real
+    - monty_random_n_real
+    - monty_random_binomial
+    - monty_random_n_binomial
+    - monty_random_exponential_rate
+    - monty_random_n_exponential_rate
+  - subsection: Legacy interface
     desc: >-
-      Utilities for working with random numbers. This code is all
-      imported from dust, and we'll change it to better suit the needs
-      in this package.
+      Functions imported from dust; these will be retired soon
     contents:
     - monty_rng
     - monty_rng_distributed_pointer
