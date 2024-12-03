@@ -306,7 +306,7 @@ monty_random_n_beta <- function(n_samples, a, b, state) {
 ##'
 ##' @export
 ##' @examples
-##' state <- monty_random_create()
+##' state <- monty_rng_create()
 ##' monty_random_binomial(10, 0.3, state)
 ##' table(monty_random_n_binomial(2000, 10, 0.3, state))
 monty_random_binomial <- function(size, prob, state) {

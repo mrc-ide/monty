@@ -171,7 +171,7 @@ test_that("validate input size with multiple streams", {
 
 
 test_that("can sample from exponential distribution (rate)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_exponential_rate(0.5, s),
                cmp$exponential_rate(1, 0.5))
@@ -181,7 +181,7 @@ test_that("can sample from exponential distribution (rate)", {
 
 
 test_that("can sample from exponential distribution (mean)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_exponential_mean(0.5, s),
                cmp$exponential_mean(1, 0.5))
@@ -191,7 +191,7 @@ test_that("can sample from exponential distribution (mean)", {
 
 
 test_that("can sample from poisson distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_poisson(0.5, s),
                cmp$poisson(1, 0.5))
@@ -201,7 +201,7 @@ test_that("can sample from poisson distribution", {
 
 
 test_that("can sample from beta distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_beta(2, 3.1, s),
                cmp$beta(1, 2, 3.1))
@@ -211,7 +211,7 @@ test_that("can sample from beta distribution", {
 
 
 test_that("can sample from cauchy distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_cauchy(-1.5, 5, s),
                cmp$cauchy(1, -1.5, 5))
@@ -221,7 +221,7 @@ test_that("can sample from cauchy distribution", {
 
 
 test_that("can sample from gamma distribution (scale)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_gamma_scale(2, 5, s),
                cmp$gamma_scale(1, 2, 5))
@@ -231,7 +231,7 @@ test_that("can sample from gamma distribution (scale)", {
 
 
 test_that("can sample from gamma distribution (rate)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_gamma_rate(2, 5, s),
                cmp$gamma_rate(1, 2, 5))
@@ -241,7 +241,7 @@ test_that("can sample from gamma distribution (rate)", {
 
 
 test_that("can sample from negative binomial distribution (prob)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_negative_binomial_prob(200, 0.05, s),
                cmp$negative_binomial_prob(1, 200, 0.05))
@@ -251,7 +251,7 @@ test_that("can sample from negative binomial distribution (prob)", {
 
 
 test_that("can sample from negative binomial distribution (mu)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_negative_binomial_mu(200, 65.1, s),
                cmp$negative_binomial_mu(1, 200, 65.1))
@@ -261,7 +261,7 @@ test_that("can sample from negative binomial distribution (mu)", {
 
 
 test_that("can sample from normal distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_normal(-1.5, 5, s),
                cmp$normal(1, -1.5, 5))
@@ -271,7 +271,7 @@ test_that("can sample from normal distribution", {
 
 
 test_that("can sample from uniform distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_uniform(-1.5, 5, s),
                cmp$uniform(1, -1.5, 5))
@@ -281,7 +281,7 @@ test_that("can sample from uniform distribution", {
 
 
 test_that("can sample from beta binomial distribution (prob)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_beta_binomial_prob(100, 0.3, 0.125, s),
                cmp$beta_binomial_prob(1, 100, 0.3, 0.125))
@@ -291,7 +291,7 @@ test_that("can sample from beta binomial distribution (prob)", {
 
 
 test_that("can sample from beta binomial distribution (ab)", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_beta_binomial_ab(100, 1.5, 8.5, s),
                cmp$beta_binomial_ab(1, 100, 1.5, 8.5))
@@ -301,7 +301,7 @@ test_that("can sample from beta binomial distribution (ab)", {
 
 
 test_that("can sample from hypergeometric distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_hypergeometric(7, 10, 8, s),
                cmp$hypergeometric(1, 7, 10, 8))
@@ -311,7 +311,7 @@ test_that("can sample from hypergeometric distribution", {
 
 
 test_that("can sample from truncated normal distribution", {
-  s <- monty_random_create(seed = 42)
+  s <- monty_rng_create(seed = 42)
   cmp <- monty_rng$new(seed = 42)
   expect_equal(monty_random_truncated_normal(1, 4, -2, 3, s),
                cmp$truncated_normal(1, 1, 4, -2, 3))
