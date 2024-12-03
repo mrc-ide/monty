@@ -183,14 +183,14 @@ monty_rng <- R6::R6Class(
     ##'   each stream by advancing it to a state equivalent to
     ##'   2^128 numbers drawn from each stream.
     jump = function() {
-      monty_rng_jump(private$ptr)
+      monty_legacy_rng_jump(private$ptr)
       invisible(self)
     },
 
     ##' @description Longer than `$jump`, the `$long_jump` method is
     ##'   equivalent to 2^192 numbers drawn from each stream.
     long_jump = function() {
-      monty_rng_long_jump(private$ptr)
+      monty_legacy_rng_long_jump(private$ptr)
       invisible(self)
     },
 
@@ -479,13 +479,13 @@ monty_rng <- R6::R6Class(
     ##' Returns the state of the random number stream. This returns a
     ##' raw vector of length 32 * `n_streams`.
     state = function() {
-      monty_rng_state(private$ptr)
+      monty_legacy_rng_state(private$ptr)
     },
 
     ##' @description
     ##' Sets the state of the random number stream.
     ##' @param state Raw vector of state, with length 32 * `n_streams`.
     set_state = function(state) {
-      monty_rng_set_state(private$ptr, state)
+      monty_legacy_rng_set_state(private$ptr, state)
     }
   ))
