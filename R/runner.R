@@ -149,7 +149,7 @@ monty_runner_parallel <- function(n_workers) {
 
 monty_run_chain_parallel <- function(chain_id, pars, model, sampler, steps,
                                      rng) {
-  rng <- monty_rng_create(rng)
+  rng <- monty_rng_create(seed = rng)
   progress <- progress_bar_none()$update
   monty_run_chain(chain_id, pars, model, sampler, steps, progress, rng)
 }
