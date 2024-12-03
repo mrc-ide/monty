@@ -77,6 +77,8 @@ reference:
     - monty_rng_create
     - monty_rng_state
     - monty_rng_set_state
+    - monty_rng_jump
+    - monty_rng_long_jump
   - subsection: Distribution functions
     contents:
     - monty_random_real
