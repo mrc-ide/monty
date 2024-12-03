@@ -86,18 +86,18 @@ extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP determi
   END_CPP11
 }
 // random_legacy.cpp
-void monty_rng_jump(SEXP ptr);
-extern "C" SEXP _monty_monty_rng_jump(SEXP ptr) {
+void monty_legacy_rng_jump(SEXP ptr);
+extern "C" SEXP _monty_monty_legacy_rng_jump(SEXP ptr) {
   BEGIN_CPP11
-    monty_rng_jump(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr));
+    monty_legacy_rng_jump(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr));
     return R_NilValue;
   END_CPP11
 }
 // random_legacy.cpp
-void monty_rng_long_jump(SEXP ptr);
-extern "C" SEXP _monty_monty_rng_long_jump(SEXP ptr) {
+void monty_legacy_rng_long_jump(SEXP ptr);
+extern "C" SEXP _monty_monty_legacy_rng_long_jump(SEXP ptr) {
   BEGIN_CPP11
-    monty_rng_long_jump(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr));
+    monty_legacy_rng_long_jump(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr));
     return R_NilValue;
   END_CPP11
 }
@@ -291,6 +291,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_rng_long_jump",             (DL_FUNC) &_monty_cpp_monty_rng_long_jump,             2},
     {"_monty_cpp_monty_rng_set_state",             (DL_FUNC) &_monty_cpp_monty_rng_set_state,             2},
     {"_monty_cpp_monty_rng_state",                 (DL_FUNC) &_monty_cpp_monty_rng_state,                 1},
+    {"_monty_monty_legacy_rng_jump",               (DL_FUNC) &_monty_monty_legacy_rng_jump,               1},
+    {"_monty_monty_legacy_rng_long_jump",          (DL_FUNC) &_monty_monty_legacy_rng_long_jump,          1},
     {"_monty_monty_legacy_rng_set_state",          (DL_FUNC) &_monty_monty_legacy_rng_set_state,          2},
     {"_monty_monty_legacy_rng_state",              (DL_FUNC) &_monty_monty_legacy_rng_state,              1},
     {"_monty_monty_rng_alloc",                     (DL_FUNC) &_monty_monty_rng_alloc,                     3},
@@ -304,8 +306,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_gamma_rate",                (DL_FUNC) &_monty_monty_rng_gamma_rate,                5},
     {"_monty_monty_rng_gamma_scale",               (DL_FUNC) &_monty_monty_rng_gamma_scale,               5},
     {"_monty_monty_rng_hypergeometric",            (DL_FUNC) &_monty_monty_rng_hypergeometric,            6},
-    {"_monty_monty_rng_jump",                      (DL_FUNC) &_monty_monty_rng_jump,                      1},
-    {"_monty_monty_rng_long_jump",                 (DL_FUNC) &_monty_monty_rng_long_jump,                 1},
     {"_monty_monty_rng_multinomial",               (DL_FUNC) &_monty_monty_rng_multinomial,               5},
     {"_monty_monty_rng_negative_binomial_mu",      (DL_FUNC) &_monty_monty_rng_negative_binomial_mu,      5},
     {"_monty_monty_rng_negative_binomial_prob",    (DL_FUNC) &_monty_monty_rng_negative_binomial_prob,    5},

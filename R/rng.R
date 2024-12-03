@@ -183,14 +183,14 @@ monty_rng <- R6::R6Class(
     ##'   each stream by advancing it to a state equivalent to
     ##'   2^128 numbers drawn from each stream.
     jump = function() {
-      monty_rng_jump(private$ptr)
+      monty_legacy_rng_jump(private$ptr)
       invisible(self)
     },
 
     ##' @description Longer than `$jump`, the `$long_jump` method is
     ##'   equivalent to 2^192 numbers drawn from each stream.
     long_jump = function() {
-      monty_rng_long_jump(private$ptr)
+      monty_legacy_rng_long_jump(private$ptr)
       invisible(self)
     },
 

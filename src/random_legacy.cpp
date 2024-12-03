@@ -32,13 +32,13 @@ SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
 }
 
 template <typename T>
-void monty_rng_jump(SEXP ptr) {
+void monty_legacy_rng_jump(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "jump");
   rng->jump();
 }
 
 template <typename T>
-void monty_rng_long_jump(SEXP ptr) {
+void monty_legacy_rng_long_jump(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "long_jump");
   rng->long_jump();
 }
@@ -905,13 +905,13 @@ SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
 }
 
 [[cpp11::register]]
-void monty_rng_jump(SEXP ptr) {
-  monty_rng_jump<default_rng>(ptr);
+void monty_legacy_rng_jump(SEXP ptr) {
+  monty_legacy_rng_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]
-void monty_rng_long_jump(SEXP ptr) {
-  monty_rng_long_jump<default_rng>(ptr);
+void monty_legacy_rng_long_jump(SEXP ptr) {
+  monty_legacy_rng_long_jump<default_rng>(ptr);
 }
 
 [[cpp11::register]]

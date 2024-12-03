@@ -44,12 +44,12 @@ monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }
 
-monty_rng_jump <- function(ptr) {
-  invisible(.Call(`_monty_monty_rng_jump`, ptr))
+monty_legacy_rng_jump <- function(ptr) {
+  invisible(.Call(`_monty_monty_legacy_rng_jump`, ptr))
 }
 
-monty_rng_long_jump <- function(ptr) {
-  invisible(.Call(`_monty_monty_rng_long_jump`, ptr))
+monty_legacy_rng_long_jump <- function(ptr) {
+  invisible(.Call(`_monty_monty_legacy_rng_long_jump`, ptr))
 }
 
 monty_rng_random_real <- function(ptr, n, n_threads) {
