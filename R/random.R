@@ -123,18 +123,20 @@ monty_rng_set_state <- function(value, state) {
 ##'
 ##' @param n The number of jumps to take (integer, 1 or more)
 ##'
-##' @return The `monty_rng_state` object (modified in place) or a
-##'   raw vector, matching the input argument `state`.
+##' @return The `monty_rng_state` object (invisibly, modified in
+##'   place) or a raw vector, matching the input argument `state`
+##'   (visibly).
 ##'
 ##' @export
 monty_rng_jump <- function(state, n = 1) {
   if (is.raw(state)) {
-    rng <- monty_rng_create(state, length(state) %/% 32)
+    rng <- monty_rng_create(seed = state, n_streams = length(state) %/% 32)
     monty_rng_state(monty_rng_jump(rng, n))
   } else {
     assert_is(state, "monty_rng_state")
     assert_scalar_size(n, allow_zero = FALSE)
     cpp_monty_rng_jump(state, n)
+    invisible(state)
   }
 }
 
@@ -143,12 +145,13 @@ monty_rng_jump <- function(state, n = 1) {
 ##' @rdname monty_rng_jump
 monty_rng_long_jump <- function(state, n = 1) {
   if (is.raw(state)) {
-    rng <- monty_rng_create(state, length(state) %/% 32)
-    monty_rng_state(monty_rng_jump(rng, n))
+    rng <- monty_rng_create(seed = state, n_streams = length(state) %/% 32)
+    monty_rng_state(monty_rng_long_jump(rng, n))
   } else {
     assert_is(state, "monty_rng_state")
     assert_scalar_size(n, allow_zero = FALSE)
     cpp_monty_rng_long_jump(state, n)
+    invisible(state)
   }
 }
 

@@ -17,8 +17,9 @@ one.}
 \item{n}{The number of jumps to take (integer, 1 or more)}
 }
 \value{
-The \code{monty_rng_state} object (modified in place) or a
-raw vector, matching the input argument \code{state}.
+The \code{monty_rng_state} object (invisibly, modified in
+place) or a raw vector, matching the input argument \code{state}
+(visibly).
 }
 \description{
 Jump random number state.  There are two "lengths" of jumps; a

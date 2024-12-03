@@ -88,12 +88,15 @@ test_that("can get and set rng state", {
 test_that("can jump", {
   r1 <- monty_rng_create(n_streams = 1, seed = 1)
   r2 <- monty_rng_create(n_streams = 5, seed = 1)
+  s1 <- monty_rng_state(r1)
   s2 <- matrix(monty_rng_state(r2), ncol = 5)
   expect_equal(monty_rng_state(r1), s2[, 1])
-  expect_null(monty_rng_jump(r1))
+  monty_rng_jump(r1)
   expect_equal(monty_rng_state(r1), s2[, 2])
-  expect_null(monty_rng_jump(r1, 3))
+  monty_rng_jump(r1, 3)
   expect_equal(monty_rng_state(r1), s2[, 5])
+  expect_equal(monty_rng_jump(s1), s2[, 2])
+  expect_equal(monty_rng_jump(s1, 4), s2[, 5])
 })
 
 
@@ -102,10 +105,12 @@ test_that("can jump", {
 ## interface with this new one.
 test_that("Can long jump", {
   r <- monty_rng_create(seed = 1L)
-  s <- monty_rng_distributed_state(seed = 1L, n_nodes = 2)
+  s <- monty_rng_distributed_state(seed = 1L, n_nodes = 5)
   expect_equal(monty_rng_state(r), s[[1]])
   monty_rng_long_jump(r)
   expect_equal(monty_rng_state(r), s[[2]])
+  expect_equal(monty_rng_long_jump(s[[1]]), s[[2]])
+  expect_equal(monty_rng_long_jump(s[[1]], 4), s[[5]])
 })
 
 
