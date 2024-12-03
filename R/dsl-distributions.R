@@ -271,6 +271,7 @@ dsl_distributions <- local({
     distr_gamma_rate,
     distr_gamma_scale,
     distr_hypergeometric,
+    distr_log_normal,
     distr_negative_binomial_prob,
     distr_negative_binomial_mu,
     distr_normal,
