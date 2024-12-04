@@ -130,6 +130,9 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     internal$state <- state
     internal$accept_swap <- integer(n_rungs)
 
+    density <- internal$model$model$last_density()
+    internal$last <- internal$model$model$last_density()
+
     list(pars = state$pars[, 1], density = state$density[[1]])
   }
 
@@ -149,12 +152,22 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       all(internal$state$pars[, 1] == state$pars),
       all(internal$state$density[1] == state$density))
 
-    #browser()
     ## Update step, later this will propose/accept hot chain differently
     state <- sampler$step(internal$state, internal$model, rng)
 
     ## We can get the uncorrected densities from before here:
     density <- internal$model$model$last_density()
+
+    ## In the case where we did not accept points, last_density holds
+    ## the density of the proposed point and not that of the retained
+    ## point.  We need to put the versions from the previous step back
+    ## here.
+    not_accepted <- density$pars != state$pars
+    if (any(not_accepted)) {
+      density$pars[, not_accepted] <- internal$last$pars[, not_accepted, drop = FALSE]
+      density$base[not_accepted] <- internal$last$base[not_accepted]
+      density$target[not_accepted] <- internal$last$target[not_accepted]
+    }
 
     ## communication step
     i1 <- swap[[internal$even_step + 1]]
@@ -173,6 +186,17 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     u <- rng$random_real(length(i1))
     accept <- log(u) < alpha
 
+    ## a <- state$density
+    ## b <- beta * model$density(state$pars) + (1-beta) * internal$base$density(state$pars)
+
+    ## internal$base$density(state$pars) - density$base
+
+    ## a - (beta * density$target + (1 - beta) * density$base)
+
+    ## ## browser()
+
+    ## internal$base$density(state$pars)
+
     if (any(accept)) {
       i_to <- c(i1[accept], i2[accept])
       i_from <- c(i2[accept], i1[accept])
@@ -180,8 +204,13 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       d_target <- density$target[i_from]
       d_base <- density$base[i_from]
       state$density[i_to] <- beta[i_to] * d_target + (1 - beta[i_to]) * d_base
+      ## We may not have to keep track of pars eventually?
+      density$pars[, i_to] <- density$pars[, i_from] # same as state$pars
+      density$base[i_to] <- d_base
+      density$target[i_to] <- d_target
     }
     internal$accept_swap[i1] <- internal$accept_swap[i1] + accept
+    internal$last <- density
 
     ## For observations here we'll need to pass the swap back into
     ## 'internal$model', so that it knows if it was index 1 or 2 that
@@ -191,8 +220,15 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     internal$state <- state
 
     a <- state$density
-    b <- beta*model$density(state$pars) + (1-beta)*internal$base$density(state$pars)
-    print(setequal(a,b))
+    b <- beta * model$density(state$pars) + (1-beta) * internal$base$density(state$pars)
+
+    ## density$base - internal$base$density(state$pars)
+
+    ## ## Wrong for element 10...
+    if (!isTRUE(all.equal(a, b))) {
+      browser()
+    }
+    ## print(setequal(a,b))
     
     list(pars = state$pars[, 1], density = state$density[[1]])
   }
@@ -225,7 +261,7 @@ parallel_tempering_scale <- function(target, base, beta) {
   density <- function(x) {
     d_target <- target$density(x)
     d_base <- base$density(x)
-    env$density <- list(target = d_target, base = d_base)
+    env$density <- list(pars = x, target = d_target, base = d_base)
     ## equivalently
     ##
     ## > beta * (d_target - d_base) * d_base
