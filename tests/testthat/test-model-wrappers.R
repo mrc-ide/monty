@@ -62,8 +62,8 @@ test_that("can compute gradient where enabled", {
 
 test_that("can directly sample from a model", {
   m <- ex_simple_gamma1()
-  r1 <- monty_rng$new(seed = 42)
-  r2 <- monty_rng$new(seed = 42)
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
 
   expect_equal(monty_model_direct_sample(m, r1),
                m$direct_sample(r2))

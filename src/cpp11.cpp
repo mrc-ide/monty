@@ -65,6 +65,48 @@ extern "C" SEXP _monty_cpp_monty_random_n_exponential_rate(SEXP n_samples, SEXP 
   END_CPP11
 }
 // random.cpp
+cpp11::doubles cpp_monty_random_exponential_mean(cpp11::doubles mean, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_exponential_mean(SEXP mean, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_exponential_mean(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_exponential_mean(size_t n_samples, cpp11::doubles mean, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_exponential_mean(SEXP n_samples, SEXP mean, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_exponential_mean(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_poisson(cpp11::doubles lambda, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_poisson(SEXP lambda, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_poisson(size_t n_samples, cpp11::doubles lambda, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_poisson(SEXP n_samples, SEXP lambda, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_poisson(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_beta(cpp11::doubles a, cpp11::doubles b, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_beta(SEXP a, SEXP b, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_beta(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_beta(size_t n_samples, cpp11::doubles a, cpp11::doubles b, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_beta(SEXP n_samples, SEXP a, SEXP b, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_beta(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
 cpp11::doubles cpp_monty_random_binomial(cpp11::doubles size, cpp11::doubles prob, cpp11::sexp ptr);
 extern "C" SEXP _monty_cpp_monty_random_binomial(SEXP size, SEXP prob, SEXP ptr) {
   BEGIN_CPP11
@@ -76,6 +118,160 @@ cpp11::doubles cpp_monty_random_n_binomial(size_t n_samples, cpp11::doubles size
 extern "C" SEXP _monty_cpp_monty_random_n_binomial(SEXP n_samples, SEXP size, SEXP prob, SEXP ptr) {
   BEGIN_CPP11
     return cpp11::as_sexp(cpp_monty_random_n_binomial(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_cauchy(cpp11::doubles location, cpp11::doubles scale, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_cauchy(SEXP location, SEXP scale, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_cauchy(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(location), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_cauchy(size_t n_samples, cpp11::doubles location, cpp11::doubles scale, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_cauchy(SEXP n_samples, SEXP location, SEXP scale, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_cauchy(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(location), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_gamma_scale(cpp11::doubles shape, cpp11::doubles scale, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_gamma_scale(SEXP shape, SEXP scale, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_gamma_scale(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_gamma_scale(size_t n_samples, cpp11::doubles shape, cpp11::doubles scale, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_gamma_scale(SEXP n_samples, SEXP shape, SEXP scale, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_gamma_scale(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_gamma_rate(cpp11::doubles shape, cpp11::doubles rate, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_gamma_rate(SEXP shape, SEXP rate, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_gamma_rate(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rate), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_gamma_rate(size_t n_samples, cpp11::doubles shape, cpp11::doubles rate, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_gamma_rate(SEXP n_samples, SEXP shape, SEXP rate, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_gamma_rate(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rate), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_negative_binomial_prob(cpp11::doubles size, cpp11::doubles prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_negative_binomial_prob(SEXP size, SEXP prob, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_negative_binomial_prob(size_t n_samples, cpp11::doubles size, cpp11::doubles prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_negative_binomial_prob(SEXP n_samples, SEXP size, SEXP prob, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_negative_binomial_mu(cpp11::doubles size, cpp11::doubles mu, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_negative_binomial_mu(SEXP size, SEXP mu, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_negative_binomial_mu(size_t n_samples, cpp11::doubles size, cpp11::doubles mu, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_negative_binomial_mu(SEXP n_samples, SEXP size, SEXP mu, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_normal(cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_normal(SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_normal(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_normal(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_normal(SEXP n_samples, SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_normal(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_uniform(cpp11::doubles min, cpp11::doubles max, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_uniform(SEXP min, SEXP max, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_uniform(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(max), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_uniform(size_t n_samples, cpp11::doubles min, cpp11::doubles max, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_uniform(SEXP n_samples, SEXP min, SEXP max, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_uniform(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(max), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_beta_binomial_prob(cpp11::doubles size, cpp11::doubles prob, cpp11::doubles rho, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_beta_binomial_prob(SEXP size, SEXP prob, SEXP rho, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_beta_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rho), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_beta_binomial_prob(size_t n_samples, cpp11::doubles size, cpp11::doubles prob, cpp11::doubles rho, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_beta_binomial_prob(SEXP n_samples, SEXP size, SEXP prob, SEXP rho, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_beta_binomial_prob(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rho), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_beta_binomial_ab(cpp11::doubles size, cpp11::doubles a, cpp11::doubles b, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_beta_binomial_ab(SEXP size, SEXP a, SEXP b, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_beta_binomial_ab(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_beta_binomial_ab(size_t n_samples, cpp11::doubles size, cpp11::doubles a, cpp11::doubles b, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_beta_binomial_ab(SEXP n_samples, SEXP size, SEXP a, SEXP b, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_beta_binomial_ab(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_hypergeometric(cpp11::doubles n1, cpp11::doubles n2, cpp11::doubles k, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_hypergeometric(SEXP n1, SEXP n2, SEXP k, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_hypergeometric(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(n1), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(n2), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(k), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_hypergeometric(size_t n_samples, cpp11::doubles n1, cpp11::doubles n2, cpp11::doubles k, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_hypergeometric(SEXP n_samples, SEXP n1, SEXP n2, SEXP k, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_hypergeometric(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(n1), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(n2), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(k), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_truncated_normal(cpp11::doubles mean, cpp11::doubles sd, cpp11::doubles min, cpp11::doubles max, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_truncated_normal(SEXP mean, SEXP sd, SEXP min, SEXP max, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_truncated_normal(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(max), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_truncated_normal(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::doubles min, cpp11::doubles max, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_truncated_normal(SEXP n_samples, SEXP mean, SEXP sd, SEXP min, SEXP max, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_truncated_normal(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(max), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random_legacy.cpp
@@ -288,45 +484,73 @@ extern "C" SEXP _monty_test_xoshiro_run(SEXP obj) {
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_monty_cpp_monty_random_binomial",           (DL_FUNC) &_monty_cpp_monty_random_binomial,           3},
-    {"_monty_cpp_monty_random_exponential_rate",   (DL_FUNC) &_monty_cpp_monty_random_exponential_rate,   2},
-    {"_monty_cpp_monty_random_n_binomial",         (DL_FUNC) &_monty_cpp_monty_random_n_binomial,         4},
-    {"_monty_cpp_monty_random_n_exponential_rate", (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate, 3},
-    {"_monty_cpp_monty_random_n_real",             (DL_FUNC) &_monty_cpp_monty_random_n_real,             2},
-    {"_monty_cpp_monty_random_real",               (DL_FUNC) &_monty_cpp_monty_random_real,               1},
-    {"_monty_cpp_monty_rng_jump",                  (DL_FUNC) &_monty_cpp_monty_rng_jump,                  2},
-    {"_monty_cpp_monty_rng_long_jump",             (DL_FUNC) &_monty_cpp_monty_rng_long_jump,             2},
-    {"_monty_cpp_monty_rng_set_state",             (DL_FUNC) &_monty_cpp_monty_rng_set_state,             2},
-    {"_monty_cpp_monty_rng_state",                 (DL_FUNC) &_monty_cpp_monty_rng_state,                 1},
-    {"_monty_monty_legacy_rng_jump",               (DL_FUNC) &_monty_monty_legacy_rng_jump,               1},
-    {"_monty_monty_legacy_rng_long_jump",          (DL_FUNC) &_monty_monty_legacy_rng_long_jump,          1},
-    {"_monty_monty_legacy_rng_set_state",          (DL_FUNC) &_monty_monty_legacy_rng_set_state,          2},
-    {"_monty_monty_legacy_rng_state",              (DL_FUNC) &_monty_monty_legacy_rng_state,              1},
-    {"_monty_monty_rng_alloc",                     (DL_FUNC) &_monty_monty_rng_alloc,                     3},
-    {"_monty_monty_rng_beta",                      (DL_FUNC) &_monty_monty_rng_beta,                      5},
-    {"_monty_monty_rng_beta_binomial_ab",          (DL_FUNC) &_monty_monty_rng_beta_binomial_ab,          6},
-    {"_monty_monty_rng_beta_binomial_prob",        (DL_FUNC) &_monty_monty_rng_beta_binomial_prob,        6},
-    {"_monty_monty_rng_binomial",                  (DL_FUNC) &_monty_monty_rng_binomial,                  5},
-    {"_monty_monty_rng_cauchy",                    (DL_FUNC) &_monty_monty_rng_cauchy,                    5},
-    {"_monty_monty_rng_exponential_mean",          (DL_FUNC) &_monty_monty_rng_exponential_mean,          4},
-    {"_monty_monty_rng_exponential_rate",          (DL_FUNC) &_monty_monty_rng_exponential_rate,          4},
-    {"_monty_monty_rng_gamma_rate",                (DL_FUNC) &_monty_monty_rng_gamma_rate,                5},
-    {"_monty_monty_rng_gamma_scale",               (DL_FUNC) &_monty_monty_rng_gamma_scale,               5},
-    {"_monty_monty_rng_hypergeometric",            (DL_FUNC) &_monty_monty_rng_hypergeometric,            6},
-    {"_monty_monty_rng_multinomial",               (DL_FUNC) &_monty_monty_rng_multinomial,               5},
-    {"_monty_monty_rng_negative_binomial_mu",      (DL_FUNC) &_monty_monty_rng_negative_binomial_mu,      5},
-    {"_monty_monty_rng_negative_binomial_prob",    (DL_FUNC) &_monty_monty_rng_negative_binomial_prob,    5},
-    {"_monty_monty_rng_normal",                    (DL_FUNC) &_monty_monty_rng_normal,                    6},
-    {"_monty_monty_rng_pointer_init",              (DL_FUNC) &_monty_monty_rng_pointer_init,              4},
-    {"_monty_monty_rng_pointer_sync",              (DL_FUNC) &_monty_monty_rng_pointer_sync,              2},
-    {"_monty_monty_rng_poisson",                   (DL_FUNC) &_monty_monty_rng_poisson,                   4},
-    {"_monty_monty_rng_random_normal",             (DL_FUNC) &_monty_monty_rng_random_normal,             4},
-    {"_monty_monty_rng_random_real",               (DL_FUNC) &_monty_monty_rng_random_real,               3},
-    {"_monty_monty_rng_truncated_normal",          (DL_FUNC) &_monty_monty_rng_truncated_normal,          7},
-    {"_monty_monty_rng_uniform",                   (DL_FUNC) &_monty_monty_rng_uniform,                   5},
-    {"_monty_monty_rng_weibull",                   (DL_FUNC) &_monty_monty_rng_weibull,                   5},
-    {"_monty_test_rng_pointer_get",                (DL_FUNC) &_monty_test_rng_pointer_get,                2},
-    {"_monty_test_xoshiro_run",                    (DL_FUNC) &_monty_test_xoshiro_run,                    1},
+    {"_monty_cpp_monty_random_beta",                     (DL_FUNC) &_monty_cpp_monty_random_beta,                     3},
+    {"_monty_cpp_monty_random_beta_binomial_ab",         (DL_FUNC) &_monty_cpp_monty_random_beta_binomial_ab,         4},
+    {"_monty_cpp_monty_random_beta_binomial_prob",       (DL_FUNC) &_monty_cpp_monty_random_beta_binomial_prob,       4},
+    {"_monty_cpp_monty_random_binomial",                 (DL_FUNC) &_monty_cpp_monty_random_binomial,                 3},
+    {"_monty_cpp_monty_random_cauchy",                   (DL_FUNC) &_monty_cpp_monty_random_cauchy,                   3},
+    {"_monty_cpp_monty_random_exponential_mean",         (DL_FUNC) &_monty_cpp_monty_random_exponential_mean,         2},
+    {"_monty_cpp_monty_random_exponential_rate",         (DL_FUNC) &_monty_cpp_monty_random_exponential_rate,         2},
+    {"_monty_cpp_monty_random_gamma_rate",               (DL_FUNC) &_monty_cpp_monty_random_gamma_rate,               3},
+    {"_monty_cpp_monty_random_gamma_scale",              (DL_FUNC) &_monty_cpp_monty_random_gamma_scale,              3},
+    {"_monty_cpp_monty_random_hypergeometric",           (DL_FUNC) &_monty_cpp_monty_random_hypergeometric,           4},
+    {"_monty_cpp_monty_random_n_beta",                   (DL_FUNC) &_monty_cpp_monty_random_n_beta,                   4},
+    {"_monty_cpp_monty_random_n_beta_binomial_ab",       (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_ab,       5},
+    {"_monty_cpp_monty_random_n_beta_binomial_prob",     (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_prob,     5},
+    {"_monty_cpp_monty_random_n_binomial",               (DL_FUNC) &_monty_cpp_monty_random_n_binomial,               4},
+    {"_monty_cpp_monty_random_n_cauchy",                 (DL_FUNC) &_monty_cpp_monty_random_n_cauchy,                 4},
+    {"_monty_cpp_monty_random_n_exponential_mean",       (DL_FUNC) &_monty_cpp_monty_random_n_exponential_mean,       3},
+    {"_monty_cpp_monty_random_n_exponential_rate",       (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate,       3},
+    {"_monty_cpp_monty_random_n_gamma_rate",             (DL_FUNC) &_monty_cpp_monty_random_n_gamma_rate,             4},
+    {"_monty_cpp_monty_random_n_gamma_scale",            (DL_FUNC) &_monty_cpp_monty_random_n_gamma_scale,            4},
+    {"_monty_cpp_monty_random_n_hypergeometric",         (DL_FUNC) &_monty_cpp_monty_random_n_hypergeometric,         5},
+    {"_monty_cpp_monty_random_n_negative_binomial_mu",   (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_mu,   4},
+    {"_monty_cpp_monty_random_n_negative_binomial_prob", (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_prob, 4},
+    {"_monty_cpp_monty_random_n_normal",                 (DL_FUNC) &_monty_cpp_monty_random_n_normal,                 4},
+    {"_monty_cpp_monty_random_n_poisson",                (DL_FUNC) &_monty_cpp_monty_random_n_poisson,                3},
+    {"_monty_cpp_monty_random_n_real",                   (DL_FUNC) &_monty_cpp_monty_random_n_real,                   2},
+    {"_monty_cpp_monty_random_n_truncated_normal",       (DL_FUNC) &_monty_cpp_monty_random_n_truncated_normal,       6},
+    {"_monty_cpp_monty_random_n_uniform",                (DL_FUNC) &_monty_cpp_monty_random_n_uniform,                4},
+    {"_monty_cpp_monty_random_negative_binomial_mu",     (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_mu,     3},
+    {"_monty_cpp_monty_random_negative_binomial_prob",   (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_prob,   3},
+    {"_monty_cpp_monty_random_normal",                   (DL_FUNC) &_monty_cpp_monty_random_normal,                   3},
+    {"_monty_cpp_monty_random_poisson",                  (DL_FUNC) &_monty_cpp_monty_random_poisson,                  2},
+    {"_monty_cpp_monty_random_real",                     (DL_FUNC) &_monty_cpp_monty_random_real,                     1},
+    {"_monty_cpp_monty_random_truncated_normal",         (DL_FUNC) &_monty_cpp_monty_random_truncated_normal,         5},
+    {"_monty_cpp_monty_random_uniform",                  (DL_FUNC) &_monty_cpp_monty_random_uniform,                  3},
+    {"_monty_cpp_monty_rng_jump",                        (DL_FUNC) &_monty_cpp_monty_rng_jump,                        2},
+    {"_monty_cpp_monty_rng_long_jump",                   (DL_FUNC) &_monty_cpp_monty_rng_long_jump,                   2},
+    {"_monty_cpp_monty_rng_set_state",                   (DL_FUNC) &_monty_cpp_monty_rng_set_state,                   2},
+    {"_monty_cpp_monty_rng_state",                       (DL_FUNC) &_monty_cpp_monty_rng_state,                       1},
+    {"_monty_monty_legacy_rng_jump",                     (DL_FUNC) &_monty_monty_legacy_rng_jump,                     1},
+    {"_monty_monty_legacy_rng_long_jump",                (DL_FUNC) &_monty_monty_legacy_rng_long_jump,                1},
+    {"_monty_monty_legacy_rng_set_state",                (DL_FUNC) &_monty_monty_legacy_rng_set_state,                2},
+    {"_monty_monty_legacy_rng_state",                    (DL_FUNC) &_monty_monty_legacy_rng_state,                    1},
+    {"_monty_monty_rng_alloc",                           (DL_FUNC) &_monty_monty_rng_alloc,                           3},
+    {"_monty_monty_rng_beta",                            (DL_FUNC) &_monty_monty_rng_beta,                            5},
+    {"_monty_monty_rng_beta_binomial_ab",                (DL_FUNC) &_monty_monty_rng_beta_binomial_ab,                6},
+    {"_monty_monty_rng_beta_binomial_prob",              (DL_FUNC) &_monty_monty_rng_beta_binomial_prob,              6},
+    {"_monty_monty_rng_binomial",                        (DL_FUNC) &_monty_monty_rng_binomial,                        5},
+    {"_monty_monty_rng_cauchy",                          (DL_FUNC) &_monty_monty_rng_cauchy,                          5},
+    {"_monty_monty_rng_exponential_mean",                (DL_FUNC) &_monty_monty_rng_exponential_mean,                4},
+    {"_monty_monty_rng_exponential_rate",                (DL_FUNC) &_monty_monty_rng_exponential_rate,                4},
+    {"_monty_monty_rng_gamma_rate",                      (DL_FUNC) &_monty_monty_rng_gamma_rate,                      5},
+    {"_monty_monty_rng_gamma_scale",                     (DL_FUNC) &_monty_monty_rng_gamma_scale,                     5},
+    {"_monty_monty_rng_hypergeometric",                  (DL_FUNC) &_monty_monty_rng_hypergeometric,                  6},
+    {"_monty_monty_rng_multinomial",                     (DL_FUNC) &_monty_monty_rng_multinomial,                     5},
+    {"_monty_monty_rng_negative_binomial_mu",            (DL_FUNC) &_monty_monty_rng_negative_binomial_mu,            5},
+    {"_monty_monty_rng_negative_binomial_prob",          (DL_FUNC) &_monty_monty_rng_negative_binomial_prob,          5},
+    {"_monty_monty_rng_normal",                          (DL_FUNC) &_monty_monty_rng_normal,                          6},
+    {"_monty_monty_rng_pointer_init",                    (DL_FUNC) &_monty_monty_rng_pointer_init,                    4},
+    {"_monty_monty_rng_pointer_sync",                    (DL_FUNC) &_monty_monty_rng_pointer_sync,                    2},
+    {"_monty_monty_rng_poisson",                         (DL_FUNC) &_monty_monty_rng_poisson,                         4},
+    {"_monty_monty_rng_random_normal",                   (DL_FUNC) &_monty_monty_rng_random_normal,                   4},
+    {"_monty_monty_rng_random_real",                     (DL_FUNC) &_monty_monty_rng_random_real,                     3},
+    {"_monty_monty_rng_truncated_normal",                (DL_FUNC) &_monty_monty_rng_truncated_normal,                7},
+    {"_monty_monty_rng_uniform",                         (DL_FUNC) &_monty_monty_rng_uniform,                         5},
+    {"_monty_monty_rng_weibull",                         (DL_FUNC) &_monty_monty_rng_weibull,                         5},
+    {"_monty_test_rng_pointer_get",                      (DL_FUNC) &_monty_test_rng_pointer_get,                      2},
+    {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          1},
     {NULL, NULL, 0}
 };
 }

@@ -270,7 +270,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
                     "element, but yours had {nrow(pars)} row{?s}")),
         arg = "initial", call = call)
     }
-    i <- ceiling(vnapply(rng, function(r) r$random_real(1)) * ncol(pars))
+    i <- ceiling(vnapply(rng, function(r) monty_random_real(r)) * ncol(pars))
     initial <- pars[, i, drop = FALSE]
   } else if (is.list(initial)) {
     if (length(initial) != n_chains) {
@@ -419,7 +419,7 @@ append_chains <- function(prev, curr, observer = NULL) {
 
 initial_rng <- function(n_chains, seed = NULL) {
   lapply(monty_rng_distributed_state(n_nodes = n_chains, seed = seed),
-         function(s) monty_rng$new(seed = s))
+         function(s) monty_rng_create(seed = s))
 }
 
 

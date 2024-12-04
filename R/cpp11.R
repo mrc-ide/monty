@@ -32,12 +32,124 @@ cpp_monty_random_n_exponential_rate <- function(n_samples, rate, ptr) {
   .Call(`_monty_cpp_monty_random_n_exponential_rate`, n_samples, rate, ptr)
 }
 
+cpp_monty_random_exponential_mean <- function(mean, ptr) {
+  .Call(`_monty_cpp_monty_random_exponential_mean`, mean, ptr)
+}
+
+cpp_monty_random_n_exponential_mean <- function(n_samples, mean, ptr) {
+  .Call(`_monty_cpp_monty_random_n_exponential_mean`, n_samples, mean, ptr)
+}
+
+cpp_monty_random_poisson <- function(lambda, ptr) {
+  .Call(`_monty_cpp_monty_random_poisson`, lambda, ptr)
+}
+
+cpp_monty_random_n_poisson <- function(n_samples, lambda, ptr) {
+  .Call(`_monty_cpp_monty_random_n_poisson`, n_samples, lambda, ptr)
+}
+
+cpp_monty_random_beta <- function(a, b, ptr) {
+  .Call(`_monty_cpp_monty_random_beta`, a, b, ptr)
+}
+
+cpp_monty_random_n_beta <- function(n_samples, a, b, ptr) {
+  .Call(`_monty_cpp_monty_random_n_beta`, n_samples, a, b, ptr)
+}
+
 cpp_monty_random_binomial <- function(size, prob, ptr) {
   .Call(`_monty_cpp_monty_random_binomial`, size, prob, ptr)
 }
 
 cpp_monty_random_n_binomial <- function(n_samples, size, prob, ptr) {
   .Call(`_monty_cpp_monty_random_n_binomial`, n_samples, size, prob, ptr)
+}
+
+cpp_monty_random_cauchy <- function(location, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_cauchy`, location, scale, ptr)
+}
+
+cpp_monty_random_n_cauchy <- function(n_samples, location, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_n_cauchy`, n_samples, location, scale, ptr)
+}
+
+cpp_monty_random_gamma_scale <- function(shape, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_gamma_scale`, shape, scale, ptr)
+}
+
+cpp_monty_random_n_gamma_scale <- function(n_samples, shape, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_n_gamma_scale`, n_samples, shape, scale, ptr)
+}
+
+cpp_monty_random_gamma_rate <- function(shape, rate, ptr) {
+  .Call(`_monty_cpp_monty_random_gamma_rate`, shape, rate, ptr)
+}
+
+cpp_monty_random_n_gamma_rate <- function(n_samples, shape, rate, ptr) {
+  .Call(`_monty_cpp_monty_random_n_gamma_rate`, n_samples, shape, rate, ptr)
+}
+
+cpp_monty_random_negative_binomial_prob <- function(size, prob, ptr) {
+  .Call(`_monty_cpp_monty_random_negative_binomial_prob`, size, prob, ptr)
+}
+
+cpp_monty_random_n_negative_binomial_prob <- function(n_samples, size, prob, ptr) {
+  .Call(`_monty_cpp_monty_random_n_negative_binomial_prob`, n_samples, size, prob, ptr)
+}
+
+cpp_monty_random_negative_binomial_mu <- function(size, mu, ptr) {
+  .Call(`_monty_cpp_monty_random_negative_binomial_mu`, size, mu, ptr)
+}
+
+cpp_monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, ptr) {
+  .Call(`_monty_cpp_monty_random_n_negative_binomial_mu`, n_samples, size, mu, ptr)
+}
+
+cpp_monty_random_normal <- function(mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_normal`, mean, sd, ptr)
+}
+
+cpp_monty_random_n_normal <- function(n_samples, mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_n_normal`, n_samples, mean, sd, ptr)
+}
+
+cpp_monty_random_uniform <- function(min, max, ptr) {
+  .Call(`_monty_cpp_monty_random_uniform`, min, max, ptr)
+}
+
+cpp_monty_random_n_uniform <- function(n_samples, min, max, ptr) {
+  .Call(`_monty_cpp_monty_random_n_uniform`, n_samples, min, max, ptr)
+}
+
+cpp_monty_random_beta_binomial_prob <- function(size, prob, rho, ptr) {
+  .Call(`_monty_cpp_monty_random_beta_binomial_prob`, size, prob, rho, ptr)
+}
+
+cpp_monty_random_n_beta_binomial_prob <- function(n_samples, size, prob, rho, ptr) {
+  .Call(`_monty_cpp_monty_random_n_beta_binomial_prob`, n_samples, size, prob, rho, ptr)
+}
+
+cpp_monty_random_beta_binomial_ab <- function(size, a, b, ptr) {
+  .Call(`_monty_cpp_monty_random_beta_binomial_ab`, size, a, b, ptr)
+}
+
+cpp_monty_random_n_beta_binomial_ab <- function(n_samples, size, a, b, ptr) {
+  .Call(`_monty_cpp_monty_random_n_beta_binomial_ab`, n_samples, size, a, b, ptr)
+}
+
+cpp_monty_random_hypergeometric <- function(n1, n2, k, ptr) {
+  .Call(`_monty_cpp_monty_random_hypergeometric`, n1, n2, k, ptr)
+}
+
+cpp_monty_random_n_hypergeometric <- function(n_samples, n1, n2, k, ptr) {
+  .Call(`_monty_cpp_monty_random_n_hypergeometric`, n_samples, n1, n2, k, ptr)
+}
+
+cpp_monty_random_truncated_normal <- function(mean, sd, min, max, ptr) {
+  .Call(`_monty_cpp_monty_random_truncated_normal`, mean, sd, min, max, ptr)
+}
+
+cpp_monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max, ptr) {
+  .Call(`_monty_cpp_monty_random_n_truncated_normal`, n_samples, mean, sd, min, max, ptr)
 }
 
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {

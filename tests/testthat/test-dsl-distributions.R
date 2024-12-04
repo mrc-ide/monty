@@ -55,41 +55,15 @@ test_that("can compute density for exponential distribution", {
 })
 
 
-test_that("can sample from exponential distribution", {
-  r1 <- monty_rng$new(1)
-  r2 <- monty_rng$new(1)
-  expect_equal(distr_exponential_rate$sample(r1, 0.4),
-               r2$exponential_rate(1, 0.4))
-  expect_equal(distr_exponential_mean$sample(r1, 0.4),
-               r2$exponential_mean(1, 0.4))
-})
-
-
 test_that("can compute density for normal distribution", {
   expect_equal(distr_normal$density(0, 1, 2),
                dnorm(0, 1, 2, log = TRUE))
 })
 
 
-test_that("can sample from normal distribution", {
-  r1 <- monty_rng$new(1)
-  r2 <- monty_rng$new(1)
-  expect_equal(distr_normal$sample(r1, 1, 2),
-               r2$normal(1, 1, 2))
-})
-
-
 test_that("can compute density for uniform distribution", {
   expect_equal(distr_uniform$density(1, 2, 3),
                dunif(1, 2, 3, log = TRUE))
-})
-
-
-test_that("can sample from uniform distribution", {
-  r1 <- monty_rng$new(1)
-  r2 <- monty_rng$new(1)
-  expect_equal(distr_uniform$sample(r1, 2, 3),
-               r2$uniform(1, 2, 3))
 })
 
 

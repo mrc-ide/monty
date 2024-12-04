@@ -26,22 +26,22 @@ make_rmvnorm <- function(vcv, centred = FALSE) {
     sd <- sqrt(drop(vcv))
     if (centred) {
       function(rng) {
-        rng$random_normal(1) * sd
+        monty_random_normal(0, sd, rng)
       }
     } else {
       function(x, rng) {
-        x + rng$random_normal(1) * sd
+        x + monty_random_normal(0, sd, rng)
       }
     }
   } else if (is.matrix(vcv)) {
     r <- chol_pivot(vcv)
     if (centred) {
       function(rng) {
-        drop(rng$random_normal(n) %*% r)
+        drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
       }
     } else {
       function(x, rng) {
-        x + drop(rng$random_normal(n) %*% r)
+        x + drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
       }
     }
   } else {
@@ -50,12 +50,12 @@ make_rmvnorm <- function(vcv, centred = FALSE) {
     r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
     if (centred) {
       function(rng) {
-        mu <- rng$random_normal(n)
+        mu <- monty_random_n_normal(n, 0, 1, rng)
         vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
       }
     } else {
       function(x, rng) {
-        mu <- rng$random_normal(n) # + x perhaps?
+        mu <- monty_random_n_normal(n, 0, 1, rng) # + x perhaps?
         x + vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
       }
     }

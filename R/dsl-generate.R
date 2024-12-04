@@ -107,7 +107,7 @@ dsl_generate_sample_stochastic <- function(expr, meta) {
   lhs <- bquote(.(meta[["pars"]])[[.(expr$name)]])
   args <- lapply(expr$distribution$args, dsl_generate_density_rewrite_lookup,
                  "pars", meta)
-  rhs <- rlang::call2(expr$distribution$sample, quote(rng), !!!args)
+  rhs <- rlang::call2(expr$distribution$sample, !!!args, quote(rng))
   rlang::call2("<-", lhs, rhs)
 }
 

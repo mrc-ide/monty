@@ -83,10 +83,38 @@ reference:
     contents:
     - monty_random_real
     - monty_random_n_real
-    - monty_random_binomial
-    - monty_random_n_binomial
     - monty_random_exponential_rate
     - monty_random_n_exponential_rate
+    - monty_random_exponential_mean
+    - monty_random_n_exponential_mean
+    - monty_random_poisson
+    - monty_random_n_poisson
+    - monty_random_beta
+    - monty_random_n_beta
+    - monty_random_binomial
+    - monty_random_n_binomial
+    - monty_random_cauchy
+    - monty_random_n_cauchy
+    - monty_random_gamma_scale
+    - monty_random_n_gamma_scale
+    - monty_random_gamma_rate
+    - monty_random_n_gamma_rate
+    - monty_random_negative_binomial_prob
+    - monty_random_n_negative_binomial_prob
+    - monty_random_negative_binomial_mu
+    - monty_random_n_negative_binomial_mu
+    - monty_random_normal
+    - monty_random_n_normal
+    - monty_random_uniform
+    - monty_random_n_uniform
+    - monty_random_beta_binomial_prob
+    - monty_random_n_beta_binomial_prob
+    - monty_random_beta_binomial_ab
+    - monty_random_n_beta_binomial_ab
+    - monty_random_hypergeometric
+    - monty_random_n_hypergeometric
+    - monty_random_truncated_normal
+    - monty_random_n_truncated_normal
   - subsection: Legacy interface
     desc: >-
       Functions imported from dust; these will be retired soon

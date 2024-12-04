@@ -101,6 +101,58 @@ cpp11::doubles monty_random_sample_1_2(Fn fn, cpp11::sexp ptr,
   return r_y;
 }
 
+template <typename Fn>
+cpp11::doubles monty_random_sample_1_3(Fn fn, cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       cpp11::doubles r_c,
+                                       const char * name_a,
+                                       const char * name_b,
+                                       const char * name_c) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  auto a = input(r_a, n_streams, name_a);
+  auto b = input(r_b, n_streams, name_b);
+  auto c = input(r_c, n_streams, name_c);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
+
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    y[i] = fn(state, a[i], b[i], c[i]);
+  }
+
+  return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_1_4(Fn fn, cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       cpp11::doubles r_c,
+                                       cpp11::doubles r_d,
+                                       const char * name_a,
+                                       const char * name_b,
+                                       const char * name_c,
+                                       const char * name_d) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  auto a = input(r_a, n_streams, name_a);
+  auto b = input(r_b, n_streams, name_b);
+  auto c = input(r_c, n_streams, name_c);
+  auto d = input(r_d, n_streams, name_d);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams);
+
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    y[i] = fn(state, a[i], b[i], c[i], d[i]);
+  }
+
+  return r_y;
+}
 
 void set_dimensions(size_t n_samples, size_t n_streams, cpp11::sexp ptr, cpp11::sexp ret) {
   if (preserve_stream_dimension(n_streams, ptr)) {
@@ -177,6 +229,67 @@ cpp11::doubles monty_random_sample_n_2(Fn fn, size_t n_samples,
   return r_y;
 }
 
+template <typename Fn>
+cpp11::doubles monty_random_sample_n_3(Fn fn, size_t n_samples,
+                                       cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       cpp11::doubles r_c,
+                                       const char * name_a,
+                                       const char * name_b,
+                                       const char * name_c) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  auto a = input(r_a, n_streams, name_a);
+  auto b = input(r_b, n_streams, name_b);
+  auto c = input(r_c, n_streams, name_c);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_samples * n_streams);
+
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto& state_i = rng->state(i);
+      auto y_i = y + n_samples * i;
+      y_i[j] = fn(state_i, a[i], b[i], c[i]);
+    }
+  }
+  set_dimensions(n_samples, n_streams, ptr, r_y);
+  return r_y;
+}
+
+template <typename Fn>
+cpp11::doubles monty_random_sample_n_4(Fn fn, size_t n_samples,
+                                       cpp11::sexp ptr,
+                                       const char * name_distribution,
+                                       cpp11::doubles r_a,
+                                       cpp11::doubles r_b,
+                                       cpp11::doubles r_c,
+                                       cpp11::doubles r_d,
+                                       const char * name_a,
+                                       const char * name_b,
+                                       const char * name_c,
+                                       const char * name_d) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, name_distribution);
+  const size_t n_streams = rng->size();
+  auto a = input(r_a, n_streams, name_a);
+  auto b = input(r_b, n_streams, name_b);
+  auto c = input(r_c, n_streams, name_c);
+  auto d = input(r_d, n_streams, name_d);
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_samples * n_streams);
+
+  double * y = REAL(r_y);
+  for (size_t i = 0; i < n_streams; ++i) {
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto& state_i = rng->state(i);
+      auto y_i = y + n_samples * i;
+      y_i[j] = fn(state_i, a[i], b[i], c[i], d[i]);
+    }
+  }
+  set_dimensions(n_samples, n_streams, ptr, r_y);
+  return r_y;
+}
+
 // Real functions that we export
 [[cpp11::register]]
 cpp11::sexp cpp_monty_rng_state(cpp11::sexp ptr) {
@@ -220,6 +333,9 @@ void cpp_monty_rng_long_jump(cpp11::sexp ptr, int n) {
   }
 }
 
+//// 0-arg functions
+
+// real
 [[cpp11::register]]
 cpp11::doubles cpp_monty_random_real(cpp11::sexp ptr) {
   const auto fn = [](auto& state) { return monty::random::random_real<double>(state); };
@@ -232,6 +348,9 @@ cpp11::doubles cpp_monty_random_n_real(size_t n_samples, cpp11::sexp ptr) {
   return monty_random_sample_n_0(fn, n_samples, ptr, "random_real");
 }
 
+//// 1-arg functions
+
+// exponential_rate
 [[cpp11::register]]
 cpp11::doubles cpp_monty_random_exponential_rate(cpp11::doubles rate, cpp11::sexp ptr) {
   const auto fn = [](auto& state, auto rate) { return monty::random::exponential_rate<double>(state, rate); };
@@ -244,6 +363,54 @@ cpp11::doubles cpp_monty_random_n_exponential_rate(size_t n_samples, cpp11::doub
   const auto fn = [](auto& state, auto rate) { return monty::random::exponential_rate<double>(state, rate); };
   return monty_random_sample_n_1(fn, n_samples, ptr, "exponential_rate",
                                  rate, "rate");
+}
+
+// exponential_mean
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_exponential_mean(cpp11::doubles mean, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean) { return monty::random::exponential_mean<double>(state, mean); };
+  return monty_random_sample_1_1(fn, ptr, "exponential_mean",
+                                 mean, "mean");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_exponential_mean(size_t n_samples, cpp11::doubles mean, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean) { return monty::random::exponential_mean<double>(state, mean); };
+  return monty_random_sample_n_1(fn, n_samples, ptr, "exponential_mean",
+                                 mean, "mean");
+}
+
+// poisson
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_poisson(cpp11::doubles lambda, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto lambda) { return monty::random::poisson<double>(state, lambda); };
+  return monty_random_sample_1_1(fn, ptr, "poisson",
+                                 lambda, "lambda");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_poisson(size_t n_samples, cpp11::doubles lambda, cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto lambda) { return monty::random::poisson<double>(state, lambda); };
+  return monty_random_sample_n_1(fn, n_samples, ptr, "poisson",
+                                 lambda, "lambda");
+}
+
+//// 2-arg functions
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_beta(cpp11::doubles a,
+                                     cpp11::doubles b,
+                                     cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto a, auto b) { return monty::random::beta<double>(state, a, b); };
+  return monty_random_sample_1_2(fn, ptr, "beta", a, b, "a", "b");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_beta(size_t n_samples,
+                                       cpp11::doubles a,
+                                       cpp11::doubles b,
+                                       cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto a, auto b) { return monty::random::beta<double>(state, a, b); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "beta", a, b, "a", "b");
 }
 
 [[cpp11::register]]
@@ -264,3 +431,241 @@ cpp11::doubles cpp_monty_random_n_binomial(size_t n_samples,
   return monty_random_sample_n_2(fn, n_samples, ptr, "binomial",
                                  size, prob, "size", "prob");
 }
+
+// cauchy
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_cauchy(cpp11::doubles location,
+                                       cpp11::doubles scale,
+                                       cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto location, auto scale) { return monty::random::cauchy<double>(state, location, scale); };
+  return monty_random_sample_1_2(fn, ptr, "cauchy",
+                                 location, scale, "location", "scale");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_cauchy(size_t n_samples,
+                                         cpp11::doubles location,
+                                         cpp11::doubles scale,
+                                         cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto location, auto scale) { return monty::random::cauchy<double>(state, location, scale); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "cauchy",
+                                 location, scale, "location", "scale");
+}
+
+// gamma_scale
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_gamma_scale(cpp11::doubles shape,
+                                            cpp11::doubles scale,
+                                            cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::gamma_scale<double>(state, shape, scale); };
+  return monty_random_sample_1_2(fn, ptr, "gamma_scale",
+                                 shape, scale, "shape", "scale");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_gamma_scale(size_t n_samples,
+                                              cpp11::doubles shape,
+                                              cpp11::doubles scale,
+                                              cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::gamma_scale<double>(state, shape, scale); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "gamma_scale",
+                                 shape, scale, "shape", "scale");
+}
+
+// gamma_rate
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_gamma_rate(cpp11::doubles shape,
+                                           cpp11::doubles rate,
+                                           cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto rate) { return monty::random::gamma_rate<double>(state, shape, rate); };
+  return monty_random_sample_1_2(fn, ptr, "gamma_rate",
+                                 shape, rate, "shape", "rate");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_gamma_rate(size_t n_samples,
+                                             cpp11::doubles shape,
+                                             cpp11::doubles rate,
+                                             cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto rate) { return monty::random::gamma_rate<double>(state, shape, rate); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "gamma_rate",
+                                 shape, rate, "shape", "rate");
+}
+
+// negative_binomial_prob
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_negative_binomial_prob(cpp11::doubles size,
+                                                       cpp11::doubles prob,
+                                                       cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob) { return monty::random::negative_binomial_prob<double>(state, size, prob); };
+  return monty_random_sample_1_2(fn, ptr, "negative_binomial_prob",
+                                 size, prob, "size", "prob");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_negative_binomial_prob(size_t n_samples,
+                                                         cpp11::doubles size,
+                                                         cpp11::doubles prob,
+                                                         cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob) { return monty::random::negative_binomial_prob<double>(state, size, prob); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "negative_binomial_prob",
+                                 size, prob, "size", "prob");
+}
+
+// negative_binomial_mu
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_negative_binomial_mu(cpp11::doubles size,
+                                                     cpp11::doubles mu,
+                                                     cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto mu) { return monty::random::negative_binomial_mu<double>(state, size, mu); };
+  return monty_random_sample_1_2(fn, ptr, "negative_binomial_mu",
+                                 size, mu, "size", "mu");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_negative_binomial_mu(size_t n_samples,
+                                                       cpp11::doubles size,
+                                                       cpp11::doubles mu,
+                                                       cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto mu) { return monty::random::negative_binomial_mu<double>(state, size, mu); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "negative_binomial_mu",
+                                 size, mu, "size", "mu");
+}
+
+// normal
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_normal(cpp11::doubles mean,
+                                       cpp11::doubles sd,
+                                       cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
+  return monty_random_sample_1_2(fn, ptr, "normal",
+                                 mean, sd, "mean", "sd");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_normal(size_t n_samples,
+                                         cpp11::doubles mean,
+                                         cpp11::doubles sd,
+                                         cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "normal",
+                                 mean, sd, "mean", "sd");
+}
+
+// uniform
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_uniform(cpp11::doubles min,
+                                        cpp11::doubles max,
+                                        cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto min, auto max) { return monty::random::uniform<double>(state, min, max); };
+  return monty_random_sample_1_2(fn, ptr, "uniform",
+                                 min, max, "min", "max");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_uniform(size_t n_samples,
+                                          cpp11::doubles min,
+                                          cpp11::doubles max,
+                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto min, auto max) { return monty::random::uniform<double>(state, min, max); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "uniform",
+                                 min, max, "min", "max");
+}
+
+//// 3-arg functions
+
+// beta_binomial_prob
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_beta_binomial_prob(cpp11::doubles size,
+                                                   cpp11::doubles prob,
+                                                   cpp11::doubles rho,
+                                                   cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob, auto rho) { return monty::random::beta_binomial_prob<double>(state, size, prob, rho); };
+  return monty_random_sample_1_3(fn, ptr, "beta_binomial_prob",
+                                 size, prob, rho, "size", "prob", "rho");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_beta_binomial_prob(size_t n_samples,
+                                                     cpp11::doubles size,
+                                                     cpp11::doubles prob,
+                                                     cpp11::doubles rho,
+                                                     cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob, auto rho) { return monty::random::beta_binomial_prob<double>(state, size, prob, rho); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "beta_binomial_prob",
+                                 size, prob, rho, "size", "prob", "rho");
+}
+
+// beta_binomial_ab
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_beta_binomial_ab(cpp11::doubles size,
+                                                 cpp11::doubles a,
+                                                 cpp11::doubles b,
+                                                 cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto a, auto b) { return monty::random::beta_binomial_ab<double>(state, size, a, b); };
+  return monty_random_sample_1_3(fn, ptr, "beta_binomial_ab",
+                                 size, a, b, "size", "a", "b");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_beta_binomial_ab(size_t n_samples,
+                                                   cpp11::doubles size,
+                                                   cpp11::doubles a,
+                                                   cpp11::doubles b,
+                                                   cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto a, auto b) { return monty::random::beta_binomial_ab<double>(state, size, a, b); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "beta_binomial_ab",
+                                 size, a, b, "size", "a", "b");
+}
+
+// hypergeometric
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_hypergeometric(cpp11::doubles n1,
+                                               cpp11::doubles n2,
+                                               cpp11::doubles k,
+                                               cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto n1, auto n2, auto k) { return monty::random::hypergeometric<double>(state, n1, n2, k); };
+  return monty_random_sample_1_3(fn, ptr, "hypergeometric",
+                                 n1, n2, k, "n1", "n2", "k");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_hypergeometric(size_t n_samples,
+                                                 cpp11::doubles n1,
+                                                 cpp11::doubles n2,
+                                                 cpp11::doubles k,
+                                                 cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto n1, auto n2, auto k) { return monty::random::hypergeometric<double>(state, n1, n2, k); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "hypergeometric",
+                                 n1, n2, k, "n1", "n2", "k");
+}
+
+
+//// 4-arg functions
+
+// truncated_normal
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_truncated_normal(cpp11::doubles mean,
+                                                 cpp11::doubles sd,
+                                                 cpp11::doubles min,
+                                                 cpp11::doubles max,
+                                                 cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean, auto sd, auto min, auto max) { return monty::random::truncated_normal<double>(state, mean, sd, min, max); };
+  return monty_random_sample_1_4(fn, ptr, "truncated_normal",
+                                 mean, sd, min, max, "mean", "sd", "min", "max");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_truncated_normal(size_t n_samples,
+                                                   cpp11::doubles mean,
+                                                   cpp11::doubles sd,
+                                                   cpp11::doubles min,
+                                                   cpp11::doubles max,
+                                                   cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto mean, auto sd, auto min, auto max) { return monty::random::truncated_normal<double>(state, mean, sd, min, max); };
+  return monty_random_sample_n_4(fn, n_samples, ptr, "truncated_normal",
+                                 mean, sd, min, max, "mean", "sd", "min", "max");
+}
+
+// Other
+// multinomial
