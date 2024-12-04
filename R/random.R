@@ -206,6 +206,93 @@ monty_random_n_real <- function(n_samples, state) {
 }
 
 
+##' Sample from an exponential distribution.  There are two
+##' parameterisations here, one in terms of the rate of the
+##' exponential, and one in terms of the mean (or scale).
+##'
+##' @title Sample from exponential distribution
+##'
+##' @param rate The rate of the exponential
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_exponential
+##' @examples
+##' state <- monty_rng_create()
+##' monty_random_exponential_rate(0.2, state)
+##' summary(monty_random_n_exponential_rate(2000, 0.2, state))
+monty_random_exponential_rate <- function(rate, state) {
+  cpp_monty_random_exponential_rate(rate, state)
+}
+
+
+##' @export
+##' @rdname monty_random_exponential
+monty_random_n_exponential_rate <- function(n_samples, rate, state) {
+  cpp_monty_random_n_exponential_rate(n_samples, rate, state)
+}
+
+
+##' @param mean The mean of the exponential distribution (i.e., `1 / rate`)
+##' @export
+##' @rdname monty_random_exponential
+monty_random_exponential_mean <- function(mean, state) {
+  cpp_monty_random_exponential_mean(mean, state)
+}
+
+
+##' @export
+##' @rdname monty_random_exponential
+monty_random_n_exponential_mean <- function(n_samples, mean, state) {
+  cpp_monty_random_n_exponential_mean(n_samples, mean, state)
+}
+
+
+##' Sample from the Poisson distribution
+##'
+##' @title Sample from Poisson distribution
+##'
+##' @param lambda The mean (zero or more, length 1 or n). Only valid for
+##' lambda <= 10^7
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_poisson <- function(lambda, state) {
+  cpp_monty_random_poisson(lambda, state)
+}
+
+
+##' @export
+##' @rdname monty_random_poisson
+monty_random_n_poisson <- function(n_samples, lambda, state) {
+  cpp_monty_random_n_poisson(n_samples, lambda, state)
+}
+
+
+##' Sample from the beta distribution
+##'
+##' @title Sample from beta distribution
+##'
+##' @param a,b The shape parameters
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_beta <- function(a, b, state) {
+  cpp_monty_random_beta(a, b, state)
+}
+
+
+##' @export
+##' @rdname monty_random_beta
+monty_random_n_beta <- function(n_samples, a, b, state) {
+  cpp_monty_random_n_beta(n_samples, a, b, state)
+}
+
+
 ##' Sample from the binomial distribution
 ##'
 ##' @title Sample from binomial distribution
@@ -234,30 +321,278 @@ monty_random_n_binomial <- function(n_samples, size, prob, state) {
 }
 
 
-##' Sample from an exponential distribution.  There are two
-##' parameterisations here, one in terms of the rate of the
-##' exponential, and one in terms of the mean (or scale).
+##' Sample from the Cauchy distribution
 ##'
-##' @title Sample from exponential distribution
+##' @title Sample from Cauchy distribution
 ##'
-##' @param rate The rate of the exponential
+##' @param location Location of the distribution (the same as the
+##'   median and mode)
+##'
+##' @param scale A scale parameter which specifies the half-width at
+##'   half-maximum (HWHM)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_cauchy <- function(location, scale, state) {
+  cpp_monty_random_cauchy(location, scale, state)
+}
+
+
+##' @export
+##' @rdname monty_random_cauchy
+monty_random_n_cauchy <- function(n_samples, location, scale, state) {
+  cpp_monty_random_n_cauchy(n_samples, location, scale, state)
+}
+
+
+##' Sample from a gamma distribution.  There are two parameterisations
+##' here, one in terms of rate, and one in terms of scale.
+##'
+##' @description Sample from gamma distribution
+##'
+##' @param shape Shape
+##'
+##' @param scale Scale
+##''
 ##'
 ##' @inheritParams monty_random_real
 ##' @inherit monty_random_real return
 ##'
 ##' @export
-##' @rdname monty_random_exponential
-##' @examples
-##' state <- monty_rng_create()
-##' monty_random_exponential_rate(0.2, state)
-##' summary(monty_random_n_exponential_rate(2000, 0.2, state))
-monty_random_exponential_rate <- function(rate, state) {
-  cpp_monty_random_exponential_rate(rate, state)
+##' @rdname monty_random_gamma
+monty_random_gamma_scale <- function(shape, scale, state) {
+  cpp_monty_random_gamma_scale(shape, scale, state)
 }
 
 
 ##' @export
-##' @rdname monty_random_exponential
-monty_random_n_exponential_rate <- function(n_samples, rate, state) {
-  cpp_monty_random_n_exponential_rate(n_samples, rate, state)
+##' @rdname monty_random_gamma
+monty_random_n_gamma_scale <- function(n_samples, shape, scale, state) {
+  cpp_monty_random_n_gamma_scale(n_samples, shape, scale, state)
+}
+
+
+##' @param rate Rate
+##' @export
+##' @rdname monty_random_gamma
+monty_random_gamma_rate <- function(shape, rate, state) {
+  cpp_monty_random_gamma_rate(shape, rate, state)
+}
+
+
+##' @export
+##' @rdname monty_random_gamma
+monty_random_n_gamma_rate <- function(n_samples, shape, rate, state) {
+  cpp_monty_random_n_gamma_rate(n_samples, shape, rate, state)
+}
+
+
+##' Sample from a negative binomial distribution
+##'
+##' @title Sample from negative binomial distribution
+##'
+##' @param size The target number of successful trials
+##'   (zero or more)
+##'
+##' @param prob The probability of success on each trial (between 0
+##'   and 1)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_negative_binomial_prob <- function(size, prob, state) {
+  cpp_monty_random_negative_binomial_prob(size, prob, state)
+}
+
+
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_n_negative_binomial_prob <- function(n_samples, size, prob,
+                                                  state) {
+  cpp_monty_random_n_negative_binomial_prob(n_samples, size, prob, state)
+}
+
+
+
+##' @param mu The mean (zero or more)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_negative_binomial_mu <- function(size, mu, state) {
+  cpp_monty_random_negative_binomial_mu(size, mu, state)
+}
+
+
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_negative_binomial
+monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
+  cpp_monty_random_n_negative_binomial_mu(n_samples, size, mu, state)
+}
+
+
+##' Sample from a normal distribution
+##'
+##' @title Sample from normal distribution
+##'
+##' @param mean The mean of the normal distribution
+##'
+##' @param sd The standard deviation of the normal distribution
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_normal <- function(mean, sd, state) {
+  cpp_monty_random_normal(mean, sd, state)
+}
+
+
+##' @export
+##' @rdname monty_random_normal
+monty_random_n_normal <- function(n_samples, mean, sd, state) {
+  cpp_monty_random_n_normal(n_samples, mean, sd, state)
+}
+
+
+##' Sample from a uniform distribution
+##'
+##' @title Sample from uniform distribution
+##'
+##' @param min The minimum value of the uniform distribution
+##'
+##' @param max The maximum value of the uniform distribution
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_uniform <- function(min, max, state) {
+  cpp_monty_random_uniform(min, max, state)
+}
+
+
+##' @export
+##' @rdname monty_random_uniform
+monty_random_n_uniform <- function(n_samples, min, max, state) {
+  cpp_monty_random_n_uniform(n_samples, min, max, state)
+}
+
+
+##' Sample from a beta-binomial distribution.  There are two
+##' parameterisations available one in terms of probability and
+##' dispersion and the other in terms of two shape parameters.
+##'
+##' @title Sample from beta-binomial distribution
+##'
+##' @param size The number of trials (zero or more)
+##'
+##' @param prob The mean probability of success on each trial (between
+##'   0 and 1)
+##'
+##' @param rho The dispersion parameter (between 0 and 1)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @rdname monty_random_beta_binomial
+##' @export
+monty_random_beta_binomial_prob <- function(size, prob, rho, state) {
+  cpp_monty_random_beta_binomial_prob(size, prob, rho, state)
+}
+
+
+##' @export
+##' @rdname monty_random_beta_binomial
+monty_random_n_beta_binomial_prob <- function(n_samples, size, prob, rho,
+                                              state) {
+  cpp_monty_random_n_beta_binomial_prob(n_samples, size, prob, rho, state)
+}
+
+
+##' @param a The first shape parameter (zero or more)
+##'
+##' @param b The second shape parameter (zero or more)
+##'
+##' @export
+##' @rdname monty_random_beta_binomial
+monty_random_beta_binomial_ab <- function(size, a, b, state) {
+  cpp_monty_random_beta_binomial_ab(size, a, b, state)
+}
+
+
+##' @export
+##' @rdname monty_random_beta_binomial
+monty_random_n_beta_binomial_ab <- function(n_samples, size, a, b, state) {
+  cpp_monty_random_n_beta_binomial_ab(n_samples, size, a, b, state)
+}
+
+
+##' Sample from a hypergeometric distribution.
+##'
+##' @title Sample from hypergeometric distribution
+##'
+##' @param n1 The number of white balls in the urn (called n in
+##'   R's [rhyper])
+##'
+##' @param n2 The number of black balls in the urn (called m in
+##'   R's [rhyper])
+##'
+##' @param k The number of balls to draw
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_hypergeometric <- function(n1, n2, k, state) {
+  cpp_monty_random_hypergeometric(n1, n2, k, state)
+}
+
+
+##' @export
+##' @rdname monty_random_hypergeometric
+monty_random_n_hypergeometric <- function(n_samples, n1, n2, k, state) {
+  cpp_monty_random_n_hypergeometric(n_samples, n1, n2, k, state)
+}
+
+
+##' Sample from a truncated normal distribution
+##'
+##' @title Sample from truncated normal
+##'
+##' @param mean The mean of the **parent** (untruncated) normal
+##'   distribution (this is not necessarily the mean of the truncated
+##'   distribution, unless the `min` and `max` are symmetrically
+##'   placed around `mean`)
+##'
+##' @param sd The standard deviation of the **parent** distribution
+##'   (this is not the same as the standard deviation of the truncated
+##'   distribution with finite bounds).
+##'
+##' @param min The lower bound (can be `-Inf`).
+##'
+##' @param max The upper bound (can be `Inf`).
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_truncated_normal <- function(mean, sd, min, max, state) {
+  cpp_monty_random_truncated_normal(mean, sd, min, max, state)
+}
+
+
+##' @export
+##' @rdname monty_random_truncated_normal
+monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max,
+                                            state) {
+  cpp_monty_random_n_truncated_normal(n_samples, mean, sd, min, max, state)
 }

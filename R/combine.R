@@ -184,7 +184,7 @@ monty_model_combine <- function(a, b, properties = NULL,
 ##'
 ##' @export
 monty_model_split <- function(model, prior_first = FALSE) {
-  require_monty_model(model, arg = name, call = call)
+  require_monty_model(model, arg = "model", call = call)
 
   if (!inherits(model$model$data, "_combined_model")) {
     cli::cli_abort(
