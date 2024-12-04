@@ -5,20 +5,20 @@
 \alias{monty_random_n_weibull}
 \title{Sample from Weibull}
 \usage{
-monty_random_weibull(mean, sd, min, max, state)
+monty_random_weibull(shape, scale, state)
 
 monty_random_n_weibull(n_samples, shape, scale, state)
 }
 \arguments{
+\item{shape}{Shape}
+
+\item{scale}{Scale}
+
 \item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
-
-\item{shape}{Shape}
-
-\item{scale}{Scale}
 }
 \value{
 A vector of random numbers, the same length as the number
