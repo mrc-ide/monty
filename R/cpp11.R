@@ -120,6 +120,14 @@ cpp_monty_random_n_uniform <- function(n_samples, min, max, ptr) {
   .Call(`_monty_cpp_monty_random_n_uniform`, n_samples, min, max, ptr)
 }
 
+cpp_monty_random_weibull <- function(shape, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_weibull`, shape, scale, ptr)
+}
+
+cpp_monty_random_n_weibull <- function(n_samples, shape, scale, ptr) {
+  .Call(`_monty_cpp_monty_random_n_weibull`, n_samples, shape, scale, ptr)
+}
+
 cpp_monty_random_beta_binomial_prob <- function(size, prob, rho, ptr) {
   .Call(`_monty_cpp_monty_random_beta_binomial_prob`, size, prob, rho, ptr)
 }

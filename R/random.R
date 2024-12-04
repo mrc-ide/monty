@@ -596,3 +596,27 @@ monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max,
                                             state) {
   cpp_monty_random_n_truncated_normal(n_samples, mean, sd, min, max, state)
 }
+
+
+##' Sample from a Weibull distribution
+##'
+##' @title Sample from Weibull
+##'
+##' @param shape Shape
+##'
+##' @param scale Scale
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_weibull <- function(mean, sd, min, max, state) {
+  cpp_monty_random_weibull(shape, scale, state)
+}
+
+
+##' @export
+##' @rdname monty_random_weibull
+monty_random_n_weibull <- function(n_samples, shape, scale, state) {
+  cpp_monty_random_n_weibull(n_samples, shape, scale, state)
+}

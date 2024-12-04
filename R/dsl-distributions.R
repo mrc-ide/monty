@@ -250,7 +250,7 @@ distr_weibull <- distribution(
   name = "Weibull",
   density = function(x, shape, scale) dweibull(x, shape, scale, log = TRUE),
   domain = c(0, Inf),
-  sample = function(rng, shape, scale) rng$weibull(1, shape, scale),
+  sample = "monty_random_weibull",
   expr = list(
     density = quote(log(shape) + (shape - 1) * log(x) - shape * log(scale) - 
                       (x / scale)^shape),
