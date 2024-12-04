@@ -596,3 +596,27 @@ monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max,
                                             state) {
   cpp_monty_random_n_truncated_normal(n_samples, mean, sd, min, max, state)
 }
+
+
+##' Sample from a log-normal distribution
+##'
+##' @title Sample from log-normal
+##'
+##' @param meanlog The mean of the distribution on the log scale
+##'
+##' @param sd The standard deviation of the distribution on the log scale
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_log_normal <- function(meanlog, sdlog, state) {
+  cpp_monty_random_log_normal(meanlog, sdlog, state)
+}
+
+
+##' @export
+##' @rdname monty_random_log_normal
+monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
+  cpp_monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
+}

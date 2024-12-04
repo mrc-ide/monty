@@ -176,8 +176,8 @@ distr_log_normal <- distribution(
     density = quote(-(log(x) - meanlog)^2 / (2 * sdlog^2) - log(2 * pi) / 2 - 
                       log(sdlog) - log(x)),
     mean = quote(exp(meanlog + sdlog^2 / 2))),
-  sample = function(rng, meanlog, sdlog) rng$lognormal(1, meanlog, sdlog),
-  cpp = list(density = "normal", sample = "normal"))
+  sample = "monty_random_log_normal",
+  cpp = list(density = "log_normal", sample = "log_normal"))
 
 distr_negative_binomial_prob <- distribution(
   name = "NegativeBinomial",
