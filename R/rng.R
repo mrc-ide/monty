@@ -461,7 +461,7 @@ monty_rng <- R6::R6Class(
     truncated_normal = function(n, mean, sd, min, max, n_threads = 1L) {
       monty_rng_truncated_normal(private$ptr, n, mean, sd, min, max, n_threads)
     },
-    
+
     ##' @description
     ##' Returns the state of the random number stream. This returns a
     ##' raw vector of length 32 * `n_streams`.
