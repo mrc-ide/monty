@@ -3,11 +3,17 @@
 \name{monty_random_exponential_rate}
 \alias{monty_random_exponential_rate}
 \alias{monty_random_n_exponential_rate}
+\alias{monty_random_exponential_mean}
+\alias{monty_random_n_exponential_mean}
 \title{Sample from exponential distribution}
 \usage{
 monty_random_exponential_rate(rate, state)
 
 monty_random_n_exponential_rate(n_samples, rate, state)
+
+monty_random_exponential_mean(mean, state)
+
+monty_random_n_exponential_mean(n_samples, mean, state)
 }
 \arguments{
 \item{rate}{The rate of the exponential}
@@ -17,6 +23,8 @@ monty_random_n_exponential_rate(n_samples, rate, state)
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
+
+\item{mean}{The mean of the exponential distribution (i.e., \code{1 / rate})}
 }
 \value{
 A vector of random numbers, the same length as the number

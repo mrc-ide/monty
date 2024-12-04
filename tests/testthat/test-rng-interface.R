@@ -83,10 +83,10 @@ test_that("Create pointer with a long jump", {
   s1 <- monty_rng_pointer$new(1, 4, 1)$state()
   s2 <- monty_rng_pointer$new(1, 4, 2)$state()
 
-  cmp <- monty_rng$new(1, 4)
-  expect_equal(s0, cmp$state())
-  expect_equal(s1, cmp$long_jump()$state())
-  expect_equal(s2, cmp$long_jump()$state())
+  cmp <- monty_rng_create(seed = 1, n_streams = 4)
+  expect_equal(s0, monty_rng_state(cmp))
+  expect_equal(s1, monty_rng_long_jump(s0))
+  expect_equal(s2, monty_rng_long_jump(s0, 2))
 })
 
 

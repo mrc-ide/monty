@@ -26,11 +26,11 @@ error will be thrown if it is not possible.
 \examples{
 m <- monty_example("banana")
 
-r <- monty_rng$new()
+r <- monty_rng_create()
 monty_model_direct_sample(m, r)
 monty_model_direct_sample(m, r, named = TRUE)
 
-r <- monty_rng$new(n_streams = 3)
+r <- monty_rng_create(n_streams = 3)
 monty_model_direct_sample(m, r)
 monty_model_direct_sample(m, r, named = TRUE)
 }

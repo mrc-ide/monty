@@ -48,8 +48,8 @@ monty_example_banana <- function(sigma = 0.5) {
     list(
       parameters = c("alpha", "beta"),
       direct_sample = function(rng) {
-        beta <- rng$random_normal(1)
-        alpha <- rng$normal(1, beta^2, sigma)
+        beta <- monty_random_normal(0, 1, rng)
+        alpha <- monty_random_normal(beta^2, sigma, rng)
         if (length(alpha) == 1) {
           c(alpha, beta)
         } else {

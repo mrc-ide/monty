@@ -99,7 +99,7 @@ test_that("can build nested proposal functions", {
   expect_null(f$base)
   expect_true(is.function(f$groups))
 
-  r <- monty_rng$new(seed = 1)
+  r <- monty_rng_create(seed = 1)
   y <- replicate(10000, f$groups(rep(0, 4), r))
   v <- var(t(y))
   cmp <- rbind(c(1, 1, 0, 0),
@@ -123,13 +123,13 @@ test_that("can build nested proposal functions with base components", {
   expect_true(is.function(f$base))
   expect_true(is.function(f$groups))
 
-  r <- monty_rng$new(seed = 1)
+  r <- monty_rng_create(seed = 1)
   y <- replicate(20000, f$base(1:6, r))
   expect_equal(y[3:6, ], matrix(3:6, 4, 20000))
   expect_equal(var(t(y[1:2, ])), vcv$base, tolerance = 0.01)
 
-  r1 <- monty_rng$new(seed = 1)
-  r2 <- monty_rng$new(seed = 1)
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
   expect_equal(
     replicate(100, f$groups(1:6, r1)[3:6]),
     replicate(100, g$groups(3:6, r2)))

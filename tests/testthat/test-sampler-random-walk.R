@@ -14,7 +14,7 @@ test_that("validate sampler against model on initialisation", {
   state <- list(pars = 1, density = -Inf)
   sampler1 <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
-  r <- monty_rng$new()
+  r <- monty_rng_create()
 
   expect_no_error(sampler1$initialise(1, m, r))
   expect_error(
@@ -74,7 +74,7 @@ test_that("can run multiple samples at once", {
   p <- matrix(runif(5), 1)
   ## TODO: we need a much better rng support here; we'll need to make
   ## a tweak to the rng code to to a long jump between each chain.
-  r <- monty_rng$new(n_streams = 5)
+  r <- monty_rng_create(n_streams = 5)
   state0 <- sampler$initialise(p, m, r)
   state1 <- sampler$step(state0, m, r)
 
@@ -194,7 +194,7 @@ test_that("can reflect parameters in matrix form", {
 
 
   mvn <- make_rmvnorm(diag(3) * c(4, 8, 16), centred = TRUE)
-  r <- monty_rng$new(seed = 42)
+  r <- monty_rng_create(seed = 42)
   x <- replicate(10, mvn(r))
   x_min <- c(-2, -Inf, -1)
   x_max <- c(2, Inf, 1)
@@ -214,9 +214,9 @@ test_that("Can create a reflected random walk proposal", {
 
   expect_equal(body(p2), body(p1))
 
-  r1 <- monty_rng$new(seed = 42)
-  r2 <- monty_rng$new(seed = 42)
-  r3 <- monty_rng$new(seed = 42)
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
+  r3 <- monty_rng_create(seed = 42)
 
   x1 <- replicate(10, p1(x, r1))
   x2 <- replicate(10, p2(x, r2))
@@ -238,7 +238,7 @@ test_that("can run sampler with reflecting boundaries", {
            0.5
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }))
 
   s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
@@ -278,7 +278,7 @@ test_that("can run sampler with rejecting boundaries", {
            0.5
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }))
 
   s1 <- monty_sampler_random_walk(matrix(0.5, 1, 1), boundaries = "ignore")
@@ -301,7 +301,7 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
            ifelse(abs(x) > 1, NA_real_, log(0.5))
          },
          direct_sample = function(rng) {
-           rng$uniform(1, -1, 1)
+           monty_random_uniform(-1, 1, rng)
          }),
     monty_model_properties(allow_multiple_parameters = TRUE))
 
