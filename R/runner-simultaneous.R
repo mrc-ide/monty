@@ -36,7 +36,7 @@ monty_runner_simultaneous <- function(progress = NULL) {
     validate_suitable(model)
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
-    rng_state <- lapply(rng, function(r) r$state())
+    rng_state <- lapply(rng, function(r) monty_rng_state(r))
     ## TODO: get the rng state back into 'rng' here, or (better) look
     ## at if we should just be using seed instead here perhaps?
     ## > rng_state <- matrix(res$internal$state$rng, ncol = n_chains)
@@ -79,7 +79,7 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
                                           steps, progress, rng_state) {
   r_rng_state <- get_r_rng_state()
   n_chains <- length(rng_state)
-  rng <- monty_rng$new(unlist(rng_state), n_chains)
+  rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
   chain_state <- sampler$initialise(pars, model, rng)
 
@@ -98,7 +98,7 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   ## could move this elsewhere if we change the interface for the
   ## sequential version too?
   rng_state <- unlist(lapply(state, "[[", "rng"))
-  rng <- monty_rng$new(unlist(rng_state), n_chains)
+  rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
   ## This is the inverse of restart_data really
   pars <- matrix(vapply(state, function(x) x$chain$pars, numeric(n_pars)),
@@ -154,8 +154,8 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   ## This simplifies handling later; we might want to make a new
   ## version of asplit that does not leave stray attributes on later
   ## though?
-  rng_state <- lapply(asplit(matrix(rng$state(), ncol = n_chains), 2),
-                      as.vector)
+  rng_state <- matrix(monty_rng_state(rng), ncol = n_chains)
+  rng_state <- lapply(asplit(rng_state, 2), as.vector)
 
   sampler_state <- sampler$get_internal_state()
   if (!is.null(sampler_state)) {

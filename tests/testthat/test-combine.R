@@ -13,15 +13,15 @@ test_that("can combine a model with direct_sample and one without", {
   a <- monty_model(list(
     parameters = "x",
     density = function(x) dnorm(x, log = TRUE),
-    direct_sample = function(rng) rng$random_normal(1)))
+    direct_sample = function(rng) monty_random_normal(0, 1, rng)))
   b <- monty_model(list(
     parameters = "x",
     density = function(x) dexp(x, log = TRUE)))
   ab <- a + b
   expect_equal(ab$properties, a$properties)
 
-  r1 <- monty_rng$new(seed = 42)
-  r2 <- monty_rng$new(seed = 42)
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
   expect_equal(ab$direct_sample(r1), a$direct_sample(r2))
 })
 
@@ -69,11 +69,14 @@ test_that("direct sampling may reorder parameters", {
   b <- monty_model(list(
     parameters = c("x", "y"),
     density = function(x) sum(dnorm(x, sd = c(1, 10), log = TRUE)),
-    direct_sample = function(rng) rng$normal(2, 0, c(1, 10))))
+    direct_sample = function(rng) {
+      c(monty_random_normal(0, 1, rng),
+        monty_random_normal(0, 10, rng))
+    }))
   ab <- a + b
   expect_true(ab$properties$has_direct_sample)
-  r1 <- monty_rng$new(seed = 1)
-  r2 <- monty_rng$new(seed = 1)
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
   expect_equal(ab$direct_sample(r1),
                b$direct_sample(r2)[2:1]) # reversed, to align parameters
 })

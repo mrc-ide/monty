@@ -50,8 +50,8 @@ test_that("warn if model uses R's rng", {
 
 test_that("sample initial state if not provided, with a single chain", {
   m <- ex_simple_gamma1()
-  g1 <- monty_rng$new(seed = 42)
-  g2 <- monty_rng$new(seed = 42)
+  g1 <- monty_rng_create(seed = 42)
+  g2 <- monty_rng_create(seed = 42)
 
   res <- initial_parameters(NULL, m, list(g1))
   expect_equal(res, matrix(m$direct_sample(g2), 1, 1))
@@ -61,9 +61,9 @@ test_that("sample initial state if not provided, with a single chain", {
 test_that("sample initial state if not provided, with multiple chains", {
   m <- ex_simple_gamma1()
   g1 <- initial_rng(3, 42)
-  g21 <- monty_rng$new(seed = 42)
-  g22 <- monty_rng$new(seed = 42)$long_jump()
-  g23 <- monty_rng$new(seed = 42)$long_jump()$long_jump()
+  g21 <- monty_rng_create(seed = 42)
+  g22 <- monty_rng_long_jump(monty_rng_create(seed = 42))
+  g23 <- monty_rng_long_jump(monty_rng_create(seed = 42), 2)
 
   res <- initial_parameters(NULL, m, g1)
   expect_equal(dim(res), c(1, 3))
@@ -132,7 +132,7 @@ test_that("sample from previous samples", {
 
   cmp <- tail_and_pool(samples$pars, 0.05, 20)
   r2 <- initial_rng(6, seed = 42)
-  i <- ceiling(vnapply(r2, function(r) r$random_real(1)) * ncol(cmp))
+  i <- ceiling(vnapply(r2, function(r) monty_random_real(r)) * ncol(cmp))
   expect_equal(initial, cmp[, i, drop = FALSE])
 })
 
@@ -231,19 +231,19 @@ test_that("continuing requires that we have a samples object", {
 
 
 test_that("generate initial conditions that fall within the domain", {
-  x <- monty_rng$new(seed = 1)$normal(20, -2, 1)
+  x <- monty_random_n_normal(20, -2, 1, monty_rng_create(seed = 1))
   n <- which(x > 0)[1] # 5
 
   m <- monty_model(list(
     parameters = "x",
-    direct_sample = function(rng) rng$normal(1, -2, 1),
+    direct_sample = function(rng) monty_random_normal(-2, 1, rng),
     density = function(x) dexp(x, log = TRUE),
     domain = rbind(c(0, Inf))))
 
-  r <- monty_rng$new(seed = 1)
+  r <- monty_rng_create(seed = 1)
   expect_equal(direct_sample_within_domain(m, r), x[n])
 
-  r <- monty_rng$new(seed = 1)
+  r <- monty_rng_create(seed = 1)
   expect_error(
     direct_sample_within_domain(m, r, n - 1),
     "Failed to sample initial conditions within \\d+ attempts")

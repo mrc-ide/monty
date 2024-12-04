@@ -76,7 +76,7 @@ sample_manual_prepare <- function(model, sampler, steps, path, initial,
 
   rng <- initial_rng(n_chains, seed = seed)
   pars <- initial_parameters(initial, model, rng, environment())
-  rng_state <- lapply(rng, function(r) r$state())
+  rng_state <- lapply(rng, function(r) monty_rng_state(r))
 
   dat <- list(pars = pars,
               model = model,
@@ -147,7 +147,7 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
       pars <- inputs$pars
       model <- inputs$model
       sampler <- inputs$sampler
-      rng <- monty_rng$new(seed = inputs$rng_state[[chain_id]])
+      rng <- monty_rng_create(seed = inputs$rng_state[[chain_id]])
       res <- monty_run_chain(chain_id, pars[, chain_id], model, sampler, steps,
                              pb$update, rng)
     }

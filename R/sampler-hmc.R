@@ -38,7 +38,9 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     n_sets <- if (internal$multiple_parameters) ncol(pars) else 1L
     n_pars <- if (internal$multiple_parameters) nrow(pars) else length(pars)
     if (is.null(vcv)) {
-      internal$sample_momentum <- function(rng) rng$random_normal(n_pars)
+      internal$sample_momentum <- function(rng) {
+        monty_random_n_normal(n_pars, 0, 1, rng)
+      }
     } else {
       vcv <- sampler_validate_vcv(vcv, pars)
       internal$sample_momentum <- make_rmvnorm(vcv, centred = TRUE)
@@ -108,7 +110,7 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
     ## Accept or reject the state at end of trajectory, returning
     ## either the position at the end of the trajectory or the initial
     ## position
-    u <- rng$random_real(1)
+    u <- monty_random_real(rng)
     accept <- u < exp(density_next - state$density + energy - energy_next)
 
     if (debug) {

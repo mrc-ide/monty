@@ -8,7 +8,7 @@ ex_simple_gamma1 <- function(shape = 1, rate = 1) {
       list(
         parameters = "gamma",
         direct_sample = function(rng) {
-          rng$gamma_scale(1, shape = shape, scale = 1 / rate)
+          monty_random_gamma_scale(shape = shape, scale = 1 / rate, rng)
         },
         density = function(x) {
           drop(dgamma(x, shape = shape, rate = rate, log = TRUE))
@@ -28,7 +28,11 @@ ex_simple_nested <- function(n_groups) {
     monty_model(list(
       parameters = paste0("mu_", i),
       direct_sample = function(rng) {
-        rng$normal(n_groups, i, 1)
+        ## TODO: this is not great, we should allow coersion here in
+        ## the C++ code nicely.
+        vnapply(as.numeric(seq_len(n_groups)), function(i) {
+          monty_random_normal(i, i, rng)
+        })
       },
       density = function(x, by_group = FALSE) {
         z <- dnorm(x, 2^i, 1, log = TRUE)
@@ -52,8 +56,8 @@ ex_simple_nested_with_base <- function(n_groups) {
     monty_model(list(
       parameters = c("sigma", paste0("mu_", seq_len(n_groups))),
       direct_sample = function(rng) {
-        sigma <- rng$uniform(1, 0, 10)
-        c(sigma, rng$normal(n_groups, 0, sigma))
+        sigma <- monty_random_uniform(0, 10, rng)
+        c(sigma, monty_random_n_normal(n_groups, 0, sigma, rng))
       },
       density = function(x, by_group = FALSE) {
         density1 <- function(y) {
@@ -115,20 +119,21 @@ ex_sir_filter_posterior <- function(...) {
 ## A silly stochastic model:
 ex_stochastic <- function(n = 10, sd_sample = 1, sd_measure = 1) {
   env <- new.env()
-  env$rng <- monty_rng$new()
+  env$rng <- monty_rng_create()
 
   get_rng_state <- function() {
-    env$rng$state()
+    monty_rng_state(env$rng)
   }
   set_rng_state <- function(rng_state) {
-    env$rng$set_state(rng_state)
+    monty_rng_set_state(rng_state, env$rng)
   }
   density <- function(x) {
-    sum(dnorm(env$rng$normal(n, x, sd_sample), sd_measure, log = TRUE))
+    r <- monty_random_n_normal(n, x, sd_sample, env$rng)
+    sum(dnorm(r, sd_measure, log = TRUE))
   }
 
   restore <- function() {
-    env$rng <- monty_rng$new()
+    env$rng <- monty_rng_create()
   }
 
   monty_model(

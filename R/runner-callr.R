@@ -103,7 +103,7 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
   }
 
   run <- function(pars, model, sampler, steps, rng) {
-    seed <- unlist(lapply(rng, function(r) r$state()))
+    seed <- unlist(lapply(rng, function(r) monty_rng_state(r)))
     n_chains <- length(rng)
     path <- tempfile()
     sample_manual_prepare(

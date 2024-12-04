@@ -152,7 +152,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
         density_by_group_next <- attr(density_next, "by_group")
       }
 
-      accept <- density_next - state$density > log(rng$random_real(1))
+      accept <- density_next - state$density > log(monty_random_real(rng))
       if (any(accept)) {
         if (!all(accept)) {
           ## Retain some older parameters
@@ -206,7 +206,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
     }
 
     accept <- density_by_group_next - internal$density_by_group >
-      log(rng$random_real(dim2(density_by_group_next)[1]))
+      log(monty_random_n_real(dim2(density_by_group_next)[1], rng))
 
     if (any(accept)) {
       if (!all(accept)) {
