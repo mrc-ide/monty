@@ -872,47 +872,6 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
   return sexp_matrix(ret, n, n_streams);
 }
 
-template <typename real_type, typename T>
-cpp11::sexp monty_rng_weibull(SEXP ptr, int n,
-                              cpp11::doubles r_shape,
-                              cpp11::doubles r_scale,
-                              int n_threads) {
-  T *rng = safely_read_externalptr<T>(ptr, "weibull");
-  const int n_streams = rng->size();
-  cpp11::writable::doubles ret = cpp11::writable::doubles(n * n_streams);
-  double * y = REAL(ret);
-  
-  const double * shape = REAL(r_shape);
-  const double * scale = REAL(r_scale);
-  auto shape_vary = check_input_type(r_shape, n, n_streams, "shape");
-  auto scale_vary = check_input_type(r_scale, n, n_streams, "scale");
-  
-  monty::utils::openmp_errors errors(n_streams);
-  
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) num_threads(n_threads)
-#endif
-  for (int i = 0; i < n_streams; ++i) {
-    try {
-      auto &state = rng->state(i);
-      auto y_i = y + n * i;
-      auto shape_i = shape_vary.generator ? shape + shape_vary.offset * i : shape;
-      auto scale_i = scale_vary.generator ? scale + scale_vary.offset * i : scale;
-      for (size_t j = 0; j < (size_t)n; ++j) {
-        auto shape_ij = shape_vary.draw ? shape_i[j] : shape_i[0];
-        auto scale_ij = scale_vary.draw ? scale_i[j] : scale_i[0];
-        y_i[j] = monty::random::weibull<real_type>(state, shape_ij, scale_ij);
-      }
-    } catch (std::exception const& e) {
-      errors.capture(e, i);
-    }
-  }
-  
-  errors.report("generators", 4, true);
-  
-  return sexp_matrix(ret, n, n_streams);
-}
-
 template <typename T>
 cpp11::sexp monty_legacy_rng_state(SEXP ptr) {
   T *rng = safely_read_externalptr<T>(ptr, "rng_state");
@@ -1119,14 +1078,6 @@ cpp11::sexp monty_rng_truncated_normal(SEXP ptr, int n,
                                        cpp11::doubles r_max,
                                        int n_threads) {
   return monty_rng_truncated_normal<double, default_rng>(ptr, n, r_mean, r_sd, r_min, r_max, n_threads);
-}
-
-[[cpp11::register]]
-cpp11::sexp monty_rng_weibull(SEXP ptr, int n,
-                              cpp11::doubles r_shape,
-                              cpp11::doubles r_scale,
-                              int n_threads) {
-  return monty_rng_weibull<double, default_rng>(ptr, n, r_shape, r_scale, n_threads);
 }
 
 [[cpp11::register]]
