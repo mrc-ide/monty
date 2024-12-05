@@ -260,7 +260,7 @@ test_that("Short circuit exit does not update rng state", {
 
 test_that("normal (box_muller) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2))
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "box_muller")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -268,10 +268,8 @@ test_that("normal (box_muller) agrees with stats::rnorm", {
 
 
 test_that("normal (polar) agrees with stats::rnorm", {
-  skip("refactor")
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2))
-  ans <- monty_rng$new(2)$random_normal(n, algorithm = "polar")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "polar")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -279,9 +277,8 @@ test_that("normal (polar) agrees with stats::rnorm", {
 
 
 test_that("normal (ziggurat) agrees with stats::rnorm", {
-  skip("refactor")
   n <- 100000
-  ans <- monty_rng$new(2)$random_normal(n, algorithm = "ziggurat")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "ziggurat")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -294,23 +291,21 @@ test_that("normal scales draws", {
   sd <- pi
   rng1 <- monty_rng_create(seed = 1)
   rng2 <- monty_rng_create(seed = 1)
-  expect_equal(monty_random_n_normal(n, mean, sd, rng1),
-               mean + sd * monty_random_n_normal(n, 0, 1, rng2))
-  skip("refactor")
-  expect_equal(rng1$normal(n, mean, sd, algorithm = "polar"),
-               mean + sd * rng2$random_normal(n, algorithm = "polar"))
-  expect_equal(rng1$normal(n, mean, sd, algorithm = "ziggurat"),
-               mean + sd * rng2$random_normal(n, algorithm = "ziggurat"))
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "box_muller"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "box_muller"))
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "polar"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "polar"))
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "ziggurat"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "ziggurat"))
 })
 
 
 test_that("Prevent unknown normal algorithms", {
-  skip("refactor")
   expect_error(
-    monty_rng$new(2)$random_normal(10, algorithm = "monty_python"),
+    monty_random_normal(0, 1, monty_rng_create(2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
   expect_error(
-    monty_rng$new(2)$normal(10, 0, 1, algorithm = "monty_python"),
+    monty_random_n_normal(5, 0, 1, monty_rng_create(2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
 })
 
@@ -740,34 +735,6 @@ test_that("deterministic rnorm returns mean", {
     mapply(monty_random_normal, mu, sd, MoreArgs = list(state = rng)),
     mu)
   expect_equal(monty_rng_state(rng), state)
-})
-
-
-test_that("Parameter expansion", {
-  skip("refactor")
-  rng <- monty_rng$new(1, 10)
-
-  m <- matrix(as.numeric(1:30), 3, 10)
-  rng <- monty_rng$new(1, 10)
-  expect_equal(floor(rng$uniform(3, m, m + 1)), m)
-
-  expect_equal(floor(rng$uniform(3, m[, 1], m[, 1] + 1)),
-               matrix(as.numeric(1:3), 3, 10))
-  expect_equal(floor(rng$uniform(3, 1, 2)),
-               matrix(1, 3, 10))
-  m1 <- m[1, , drop = FALSE]
-  expect_equal(floor(rng$uniform(3, m1, m1 + 1)),
-               m1[c(1, 1, 1), ])
-
-  expect_error(
-    rng$uniform(3, c(1, 2, 3, 4), 10),
-    "If 'min' is a vector, it must have 1 or 3 elements")
-  expect_error(
-    rng$uniform(3, m[, 1:2], 10),
-    "If 'min' is a matrix, it must have 10 columns")
-  expect_error(
-    rng$uniform(3, m[1:2, ], 10),
-    "If 'min' is a matrix, it must have 1 or 3 rows")
 })
 
 
