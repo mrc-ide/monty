@@ -285,6 +285,19 @@ test_that("normal (ziggurat) agrees with stats::rnorm", {
 })
 
 
+test_that("can draw normals with different algorithms", {
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
+
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "box_muller")),
+               monty_random_n_normal(3, 0, 1, r2, "box_muller"))
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "polar")),
+               monty_random_n_normal(3, 0, 1, r2, "polar"))
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "ziggurat")),
+               monty_random_n_normal(3, 0, 1, r2, "ziggurat"))
+})
+
+
 test_that("normal scales draws", {
   n <- 100
   mean <- exp(1)
