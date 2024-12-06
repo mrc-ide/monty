@@ -447,19 +447,36 @@ monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
 ##'
 ##' @param sd The standard deviation of the normal distribution
 ##'
+##' @param algorithm The algorithm to use for the normal samples;
+##'   currently `box_muller`, `polar` and and `ziggurat` are
+##'   supported, with the latter being considerably faster.  The
+##'   default may change in a future version.
+##'
 ##' @inheritParams monty_random_real
 ##' @inherit monty_random_real return
 ##'
 ##' @export
-monty_random_normal <- function(mean, sd, state) {
-  cpp_monty_random_normal(mean, sd, state)
+monty_random_normal <- function(mean, sd, state, algorithm = "box_muller") {
+  switch(algorithm,
+         box_muller = cpp_monty_random_normal_box_muller(mean, sd, state),
+         polar = cpp_monty_random_normal_polar(mean, sd, state),
+         ziggurat = cpp_monty_random_normal_ziggurat(mean, sd, state),
+         cli::cli_abort("Unknown normal algorithm '{algorithm}'"))
 }
 
 
 ##' @export
 ##' @rdname monty_random_normal
-monty_random_n_normal <- function(n_samples, mean, sd, state) {
-  cpp_monty_random_n_normal(n_samples, mean, sd, state)
+monty_random_n_normal <- function(n_samples, mean, sd, state,
+                                  algorithm = "box_muller") {
+  switch(algorithm,
+         box_muller =
+           cpp_monty_random_n_normal_box_muller(n_samples, mean, sd, state),
+         polar =
+           cpp_monty_random_n_normal_polar(n_samples, mean, sd, state),
+         ziggurat =
+           cpp_monty_random_n_normal_ziggurat(n_samples, mean, sd, state),
+         cli::cli_abort("Unknown normal algorithm '{algorithm}'"))
 }
 
 
