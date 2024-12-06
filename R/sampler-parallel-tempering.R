@@ -247,7 +247,17 @@ parallel_tempering_scale <- function(target, base, beta) {
     ## >         ^^^^^^^^^^^^^^^^^
     ##           likelihood           ^^^^^^
     ##                                prior
-    beta * d_target + (1 - beta) * d_base
+    ret <- beta * d_target + (1 - beta) * d_base
+    ## We might have -Inf for the log density of the target model in
+    ## the hottest chain (beta of 1) but finite log density for the
+    ## base model, which means we do 0 * -Inf which is NaN, rather
+    ## than -Inf. This check could be made more or less complicated;
+    ## we could only consider the first and last chains (where
+    ## multiplication by zero happens) and we could only consider
+    ## cases where either component is -Inf.  This, however, works and
+    ## is fast (fixes NaN and also NA_real_).
+    ret[is.na(ret)] <- -Inf
+    ret
   }
 
   properties <- target$properties
