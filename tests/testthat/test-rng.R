@@ -1363,6 +1363,47 @@ test_that("can generate from truncated normal from lower tail", {
 })
 
 
+test_that("can draw log-normal random numbers", {
+  meanlog <- 1.5
+  sdlog <- 0.5
+  n <- 10000000
+  
+  ans1 <- 
+    monty_random_n_log_normal(n, meanlog, sdlog, monty_rng_create(seed = 1))
+  ans2 <- 
+    monty_random_n_log_normal(n, meanlog, sdlog, monty_rng_create(seed = 1))
+  expect_identical(ans1, ans2)
+  
+  expect_equal(mean(ans1), exp(meanlog + sdlog^2 / 2), tolerance = 1e-3)
+  true_var <- (exp(sdlog^2) - 1) * exp(2 * meanlog + sdlog^2)
+  expect_equal(var(ans1), true_var, tolerance = 1e-2)
+})
+
+
+test_that("deterministic log-normal returns mean", {
+  n_reps <- 10
+  meanlog <- as.numeric(sample(seq(-10, 10), n_reps, replace = TRUE))
+  sdlog <- as.numeric(sample(10, n_reps, replace = TRUE))
+  
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  
+  expect_equal(
+    mapply(monty_random_log_normal, meanlog, sdlog, MoreArgs = list(rng)),
+    exp(meanlog + sdlog^2 / 2))
+  expect_equal(monty_rng_state(rng), state)
+})
+
+
+test_that("weibull random numbers prevent bad inputs", {
+  r <- monty_rng_create(seed = 1)
+  
+  expect_error(
+    monty_random_log_normal(1.1, -5.1, r),
+    "Invalid call to log_normal with meanlog = -1.1, sdlog = -5.1")
+})
+
+
 test_that("can set state into rng", {
   r1 <- monty_rng$new()
   r2 <- monty_rng$new()
