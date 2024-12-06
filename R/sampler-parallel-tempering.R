@@ -5,7 +5,7 @@
 ##' [monty_sampler_random_walk] as the underlying sampler, but we will
 ##' make this configurable in a future version.
 ##'
-##' We implement the sampler based on https://arxiv.org/pdf/1905.02939
+##' We implement the sampler based on https://doi.org/10.1111/rssb.12464
 ##'
 ##' # Efficiency of the sampler
 ##'
@@ -19,7 +19,7 @@
 ##' 1. **Your model is parallelisable**.  If your underlying model can
 ##' run very efficiently in parallel then it may not take much longer
 ##' in "wall time" to run the extra copies of the calculations.  In
-##' this case, you'll stil be using much more CPU time but will be
+##' this case, you'll still be using much more CPU time but will be
 ##' able to take advantage of extra cores to get more effective
 ##' sampling if the parallel tempering sampler mixes better than the
 ##' underlying sampler.
@@ -129,6 +129,9 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     internal$state <- state
     internal$accept_swap <- integer(n_rungs)
 
+    density <- internal$model$model$last_density()
+    internal$last <- internal$model$model$last_density()
+
     list(pars = state$pars[, 1], density = state$density[[1]])
   }
 
@@ -140,7 +143,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
   ## might define a base R6 class that everything can inherit from?
   ##
   ## Alternatively, initialise could pass back internal state and we
-  ## could recieve it here; that might be nicer, actually.
+  ## could receive it here; that might be nicer, actually.
   step <- function(state, model, rng) {
     ## Make sure we're in sync.  This could be an assignment or an
     ## assertion.
@@ -154,11 +157,22 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     ## We can get the uncorrected densities from before here:
     density <- internal$model$model$last_density()
 
+    ## In the case where we did not accept points, last_density holds
+    ## the density of the proposed point and not that of the retained
+    ## point.  We need to put the versions from the previous step back
+    ## here.
+    not_accepted <- density$pars != state$pars
+    if (any(not_accepted)) {
+      density$pars[, not_accepted] <- internal$last$pars[, not_accepted]
+      density$base[not_accepted] <- internal$last$base[not_accepted]
+      density$target[not_accepted] <- internal$last$target[not_accepted]
+    }
+
     ## communication step
     i1 <- swap[[internal$even_step + 1]]
     i2 <- i1 + 1L
 
-    ## Equation (6) in section 2.3 of https://arxiv.org/pdf/1905.02939
+    ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
     ##
     ## TODO: Marc to check and perhaps harmonise names
     ## TODO: Marc: I have reversed the i's on beta here, seems required?
@@ -167,7 +181,9 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     ## scaled by beta.
     alpha <- pmin(
       0,
-      (beta[i1] - beta[i2]) * (density$target[i2] - density$target[i1]))
+      (beta[i2] - beta[i1]) * ((density$target[i1] - density$base[i1]) -
+                               (density$target[i2]) - density$base[i2]))
+
     u <- rng$random_real(length(i1))
     accept <- log(u) < alpha
 
@@ -177,9 +193,14 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
       state$pars[, i_to] <- state$pars[, i_from]
       d_target <- density$target[i_from]
       d_base <- density$base[i_from]
-      state$density[i_to] <- beta[i_to] * d_target * (1 - beta[i_to]) * d_base
+      state$density[i_to] <- beta[i_to] * d_target + (1 - beta[i_to]) * d_base
+      ## We may not have to keep track of pars eventually?
+      density$pars[, i_to] <- density$pars[, i_from] # same as state$pars
+      density$base[i_to] <- d_base
+      density$target[i_to] <- d_target
     }
     internal$accept_swap[i1] <- internal$accept_swap[i1] + accept
+    internal$last <- density
 
     ## For observations here we'll need to pass the swap back into
     ## 'internal$model', so that it knows if it was index 1 or 2 that
@@ -219,7 +240,7 @@ parallel_tempering_scale <- function(target, base, beta) {
   density <- function(x) {
     d_target <- target$density(x)
     d_base <- base$density(x)
-    env$density <- list(target = d_target, base = d_base)
+    env$density <- list(pars = x, target = d_target, base = d_base)
     ## equivalently
     ##
     ## > beta * (d_target - d_base) * d_base
