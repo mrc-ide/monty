@@ -604,7 +604,7 @@ monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max,
 ##'
 ##' @param meanlog The mean of the distribution on the log scale
 ##'
-##' @param sd The standard deviation of the distribution on the log scale
+##' @param sdlog The standard deviation of the distribution on the log scale
 ##'
 ##' @inheritParams monty_random_real
 ##' @inherit monty_random_real return

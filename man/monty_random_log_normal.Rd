@@ -12,13 +12,13 @@ monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
 \arguments{
 \item{meanlog}{The mean of the distribution on the log scale}
 
+\item{sdlog}{The standard deviation of the distribution on the log scale}
+
 \item{state}{The random number state, from \link{monty_rng_create}}
 
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
-
-\item{sd}{The standard deviation of the distribution on the log scale}
 }
 \value{
 A vector of random numbers, the same length as the number
