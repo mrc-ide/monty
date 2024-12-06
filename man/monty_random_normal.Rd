@@ -16,14 +16,14 @@ monty_random_n_normal(n_samples, mean, sd, state, algorithm = "box_muller")
 
 \item{state}{The random number state, from \link{monty_rng_create}}
 
-\item{n_samples}{The number of samples to take, \strong{per stream}.
-When using the multiple-sample interface, all other parameters
-are held constant (per stream).}
-
-\item{algorthim}{The algorithm to use for the normal samples;
+\item{algorithm}{The algorithm to use for the normal samples;
 currently \code{box_muller}, \code{polar} and and \code{ziggurat} are
 supported, with the latter being considerably faster.  The
 default may change in a future version.}
+
+\item{n_samples}{The number of samples to take, \strong{per stream}.
+When using the multiple-sample interface, all other parameters
+are held constant (per stream).}
 }
 \value{
 A vector of random numbers, the same length as the number

@@ -447,7 +447,7 @@ monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, state) {
 ##'
 ##' @param sd The standard deviation of the normal distribution
 ##'
-##' @param algorthim The algorithm to use for the normal samples;
+##' @param algorithm The algorithm to use for the normal samples;
 ##'   currently `box_muller`, `polar` and and `ziggurat` are
 ##'   supported, with the latter being considerably faster.  The
 ##'   default may change in a future version.
