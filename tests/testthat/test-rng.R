@@ -269,7 +269,7 @@ test_that("normal (box_muller) agrees with stats::rnorm", {
 
 test_that("normal (polar) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "polar")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "polar")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -278,7 +278,7 @@ test_that("normal (polar) agrees with stats::rnorm", {
 
 test_that("normal (ziggurat) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "ziggurat")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "ziggurat")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -483,14 +483,13 @@ test_that("negative seed values result in sensible state", {
 
 
 test_that("multinomial algorithm is correct", {
-  skip("refactor")
   set.seed(1)
   prob <- runif(10)
   prob <- prob / sum(prob)
   size <- 20
   n <- 5
 
-  r <- monty_rng_create(seed = 1)
+  r <- monty_rng$new(seed = 1)
   res <- monty_rng$new(1, seed = 1L)$multinomial(n, size, prob)
 
   ## Separate implementation of the core algorithm:
@@ -512,7 +511,6 @@ test_that("multinomial algorithm is correct", {
 
 
 test_that("multinomial expectation is correct", {
-  skip("refactor")
   p <- runif(10)
   p <- p / sum(p)
   n <- 10000
@@ -524,7 +522,6 @@ test_that("multinomial expectation is correct", {
 
 
 test_that("multinomial allows zero probs", {
-  skip("refactor")
   p <- runif(10)
   p[4] <- 0
   p <- p / sum(p)
@@ -538,7 +535,6 @@ test_that("multinomial allows zero probs", {
 
 
 test_that("multinomial allows non-normalised prob", {
-  skip("refactor")
   p <- runif(10, 0, 10)
   n <- 50
   res1 <- monty_rng$new(1, seed = 1L)$multinomial(n, 100, p)
@@ -548,7 +544,6 @@ test_that("multinomial allows non-normalised prob", {
 
 
 test_that("Invalid prob throws an error", {
-  skip("refactor")
   r <- monty_rng$new(1, seed = 1L)
   expect_error(
     r$multinomial(1, 10, c(0, 0, 0)),
@@ -560,7 +555,6 @@ test_that("Invalid prob throws an error", {
 
 
 test_that("Can vary parameters for multinomial, single generator", {
-  skip("refactor")
   np <- 7L
   ng <- 1L
   size <- 13
@@ -589,7 +583,6 @@ test_that("Can vary parameters for multinomial, single generator", {
 
 
 test_that("Can vary parameters by generator for multinomial", {
-  skip("refactor")
   np <- 7L
   ng <- 3L
   size <- 13
@@ -609,7 +602,6 @@ test_that("Can vary parameters by generator for multinomial", {
 
 
 test_that("Can vary parameters for multinomial, multiple generators", {
-  skip("refactor")
   np <- 7L
   ng <- 3L
   size <- 13
