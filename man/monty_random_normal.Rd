@@ -5,9 +5,9 @@
 \alias{monty_random_n_normal}
 \title{Sample from normal distribution}
 \usage{
-monty_random_normal(mean, sd, state)
+monty_random_normal(mean, sd, state, algorithm = "box_muller")
 
-monty_random_n_normal(n_samples, mean, sd, state)
+monty_random_n_normal(n_samples, mean, sd, state, algorithm = "box_muller")
 }
 \arguments{
 \item{mean}{The mean of the normal distribution}
@@ -19,6 +19,11 @@ monty_random_n_normal(n_samples, mean, sd, state)
 \item{n_samples}{The number of samples to take, \strong{per stream}.
 When using the multiple-sample interface, all other parameters
 are held constant (per stream).}
+
+\item{algorthim}{The algorithm to use for the normal samples;
+currently \code{box_muller}, \code{polar} and and \code{ziggurat} are
+supported, with the latter being considerably faster.  The
+default may change in a future version.}
 }
 \value{
 A vector of random numbers, the same length as the number
