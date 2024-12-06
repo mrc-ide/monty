@@ -10,6 +10,7 @@
 #include "monty/random/exponential.hpp"
 #include "monty/random/gamma.hpp"
 #include "monty/random/hypergeometric.hpp"
+#include "monty/random/log_normal.hpp"
 #include "monty/random/multinomial.hpp"
 #include "monty/random/negative_binomial.hpp"
 #include "monty/random/truncated_normal.hpp"

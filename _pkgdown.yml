@@ -115,6 +115,8 @@ reference:
     - monty_random_n_hypergeometric
     - monty_random_truncated_normal
     - monty_random_n_truncated_normal
+    - monty_random_log_normal
+    - monty_random_n_log_normal
   - subsection: Legacy interface
     desc: >-
       Functions imported from dust; these will be retired soon
