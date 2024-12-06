@@ -731,7 +731,6 @@ test_that("deterministic rnorm returns mean", {
 
 
 test_that("We can load the example rng package", {
-  skip("refactor")
   skip_for_compilation()
   skip_on_os("windows")
 
@@ -742,7 +741,7 @@ test_that("We can load the example rng package", {
 
   pkg <- pkgload::load_all(tmp, export_all = FALSE, quiet = TRUE)
   ans <- pkg$env$random_normal(10, 0, 1, 42)
-  cmp <- monty_rng$new(42)$normal(10, 0, 1)
+  cmp <- monty_random_n_normal(10, 0, 1, monty_rng_create(seed = 42))
   expect_equal(ans, cmp)
 
   pkgload::unload("rnguse")
@@ -751,7 +750,6 @@ test_that("We can load the example rng package", {
 
 
 test_that("We can compile the standalone program", {
-  skip("refactor")
   skip_for_compilation()
   skip_on_os("windows")
 
@@ -774,7 +772,8 @@ test_that("We can compile the standalone program", {
                  stdout = TRUE)
   ans <- as.numeric(sub("[0-9]: ", "", res))
 
-  cmp <- colSums(monty_rng$new(42, 5)$uniform(10, 0, 1))
+  r <- monty_rng_create(seed = 42, n_streams = 5)
+  cmp <- colSums(monty_random_n_uniform(10, 0, 1, r))
   expect_equal(ans, cmp)
 })
 
