@@ -1395,12 +1395,12 @@ test_that("deterministic log-normal returns mean", {
 })
 
 
-test_that("weibull random numbers prevent bad inputs", {
+test_that("log-normal random numbers prevent bad inputs", {
   r <- monty_rng_create(seed = 1)
   
   expect_error(
     monty_random_log_normal(1.1, -5.1, r),
-    "Invalid call to log_normal with meanlog = -1.1, sdlog = -5.1")
+    "Invalid call to log_normal with meanlog = 1.1, sdlog = -5.1")
 })
 
 
