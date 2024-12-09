@@ -619,6 +619,26 @@ cpp11::doubles cpp_monty_random_n_uniform(size_t n_samples,
                                  min, max, "min", "max");
 }
 
+// weibull
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_weibull(cpp11::doubles shape,
+                                        cpp11::doubles scale,
+                                        cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::weibull<double>(state, shape, scale); };
+  return monty_random_sample_1_2(fn, ptr, "weibull",
+                                 shape, scale, "shape", "scale");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_weibull(size_t n_samples,
+                                          cpp11::doubles shape,
+                                          cpp11::doubles scale,
+                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::weibull<double>(state, shape, scale); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "weibull",
+                                 shape, scale, "shape", "scale");
+}
+
 //// 3-arg functions
 
 // beta_binomial_prob

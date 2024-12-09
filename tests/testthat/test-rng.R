@@ -1360,3 +1360,47 @@ test_that("can generate from truncated normal from lower tail", {
   })
   expect_gt(sum(res > 0.05), 5)
 })
+
+
+test_that("can draw weibull random numbers", {
+  shape <- 5
+  scale <- 3
+  n <- 10000000
+  
+  ans1 <- monty_random_n_weibull(n, shape, scale, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_weibull(n, shape, scale, monty_rng_create(seed = 1))
+  expect_identical(ans1, ans2)
+  
+  expect_equal(mean(ans1), scale * gamma(1 + 1 / shape), tolerance = 1e-3)
+  true_var <- scale^2 * (gamma(1 + 2 / shape) - gamma(1 + 1 / shape)^2)
+  expect_equal(var(ans1), true_var, tolerance = 1e-3)
+})
+
+
+test_that("deterministic weibull returns mean", {
+  n_reps <- 10
+  shape <- as.numeric(sample(10, n_reps, replace = TRUE))
+  scale <- as.numeric(sample(10, n_reps, replace = TRUE))
+  
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  
+  expect_equal(
+    mapply(monty_random_weibull, shape, scale, MoreArgs = list(rng)),
+    scale * gamma(1 + 1 / shape))
+  expect_equal(monty_rng_state(rng), state)
+})
+
+
+test_that("weibull random numbers prevent bad inputs", {
+  r <- monty_rng_create(seed = 1)
+  expect_equal(monty_random_weibull(0, 0, r), 0)
+  expect_equal(monty_random_weibull(Inf, Inf, r), Inf)
+  
+  expect_error(
+    monty_random_weibull(-1.1, 5.1, r),
+    "Invalid call to Weibull with shape = -1.1, scale = 5.1")
+  expect_error(
+    monty_random_weibull(5.1, -1.1, r),
+    "Invalid call to Weibull with shape = 5.1, scale = -1.1")
+})
