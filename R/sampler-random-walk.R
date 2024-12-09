@@ -122,7 +122,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
 
 
 make_random_walk_proposal <- function(vcv, domain, boundaries) {
-  mvn <- make_rmvnorm(vcv, centred = TRUE)
+  mvn <- make_rmvnorm(vcv)
   if (boundaries != "reflect" || !any(is.finite(domain))) {
     return(function(x, rng) {
       x + mvn(rng)

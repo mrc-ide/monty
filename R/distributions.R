@@ -19,28 +19,37 @@ chol_pivot <- function(x) {
 ## * make_random_walk_proposal does not use centred, but could
 
 
-make_rmvnorm <- function(vcv, centred = FALSE) {
-  stopifnot(centred)
+make_rmvnorm <- function(vcv) {
   n <- nrow(vcv)
-  if (n == 1) {
+  if (is.matrix(vcv)) {
     ## Special case for transformations in single-dimensional case; no
     ## need to work with matrix multiplication or decompositions here.
-    sd <- sqrt(drop(vcv))
-    function(rng) {
-      monty_random_normal(0, sd, rng)
-    }
-  } else if (is.matrix(vcv)) {
-    r <- chol_pivot(vcv)
-    function(rng) {
-      drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
+    if (n == 1) {
+      sd <- sqrt(drop(vcv))
+      function(rng) {
+        monty_random_normal(0, sd, rng)
+      }
+    } else {
+      r <- chol_pivot(vcv)
+      function(rng) {
+        drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
+      }
     }
   } else {
     stopifnot(length(dim(vcv)) == 3)
     m <- dim(vcv)[[3]]
-    r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
-    function(rng) {
-      mu <- monty_random_n_normal(n, 0, 1, rng)
-      vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
+    browser()
+    ## OK, the issue here is what we do if the number of streams and
+    ## vcv don't match; we do need to use a different approach, and
+    ## this is best done in C code.
+    if (n == 1) {
+      sd <- sqrt(drop(vcv))
+    } else {
+      r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
+      function(rng) {
+        mu <- monty_random_n_normal(n * m, 0, 1, rng)
+        vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
+      }
     }
   }
 }
