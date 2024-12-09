@@ -260,7 +260,7 @@ test_that("Short circuit exit does not update rng state", {
 
 test_that("normal (box_muller) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(2), "box_muller")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "box_muller")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -315,10 +315,10 @@ test_that("normal scales draws", {
 
 test_that("Prevent unknown normal algorithms", {
   expect_error(
-    monty_random_normal(0, 1, monty_rng_create(2), "monty_python"),
+    monty_random_normal(0, 1, monty_rng_create(seed = 2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
   expect_error(
-    monty_random_n_normal(5, 0, 1, monty_rng_create(2), "monty_python"),
+    monty_random_n_normal(5, 0, 1, monty_rng_create(seed = 2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
 })
 
