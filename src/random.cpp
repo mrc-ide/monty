@@ -533,23 +533,70 @@ cpp11::doubles cpp_monty_random_n_negative_binomial_mu(size_t n_samples,
 }
 
 // normal
-[[cpp11::register]]
+template <typename monty::random::algorithm::normal A>
 cpp11::doubles cpp_monty_random_normal(cpp11::doubles mean,
                                        cpp11::doubles sd,
                                        cpp11::sexp ptr) {
-  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double, A>(state, mean, sd); };
   return monty_random_sample_1_2(fn, ptr, "normal",
                                  mean, sd, "mean", "sd");
 }
 
-[[cpp11::register]]
+template <typename monty::random::algorithm::normal A>
 cpp11::doubles cpp_monty_random_n_normal(size_t n_samples,
                                          cpp11::doubles mean,
                                          cpp11::doubles sd,
                                          cpp11::sexp ptr) {
-  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double, A>(state, mean, sd); };
   return monty_random_sample_n_2(fn, n_samples, ptr, "normal",
                                  mean, sd, "mean", "sd");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_normal_box_muller(cpp11::doubles mean,
+                                                  cpp11::doubles sd,
+                                                  cpp11::sexp ptr) {
+  return cpp_monty_random_normal<monty::random::algorithm::normal::box_muller>(mean, sd, ptr);
+}
+
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_normal_polar(cpp11::doubles mean,
+                                             cpp11::doubles sd,
+                                             cpp11::sexp ptr) {
+  return cpp_monty_random_normal<monty::random::algorithm::normal::polar>(mean, sd, ptr);
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_normal_ziggurat(cpp11::doubles mean,
+                                                cpp11::doubles sd,
+                                                cpp11::sexp ptr) {
+  return cpp_monty_random_normal<monty::random::algorithm::normal::ziggurat>(mean, sd, ptr);
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_normal_box_muller(size_t n_samples,
+                                                    cpp11::doubles mean,
+                                                    cpp11::doubles sd,
+                                                    cpp11::sexp ptr) {
+  return cpp_monty_random_n_normal<monty::random::algorithm::normal::box_muller>(n_samples, mean, sd, ptr);
+}
+
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_normal_polar(size_t n_samples,
+                                               cpp11::doubles mean,
+                                               cpp11::doubles sd,
+                                               cpp11::sexp ptr) {
+  return cpp_monty_random_n_normal<monty::random::algorithm::normal::polar>(n_samples, mean, sd, ptr);
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_normal_ziggurat(size_t n_samples,
+                                                  cpp11::doubles mean,
+                                                  cpp11::doubles sd,
+                                                  cpp11::sexp ptr) {
+  return cpp_monty_random_n_normal<monty::random::algorithm::normal::ziggurat>(n_samples, mean, sd, ptr);
 }
 
 // uniform
