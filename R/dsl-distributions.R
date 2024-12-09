@@ -168,6 +168,17 @@ distr_hypergeometric <- distribution(
     mean = quote(k * n1 / (n1 + n2))),
   cpp = list(density = "hypergeometric", sample = "hypergeometric"))
 
+distr_log_normal <- distribution(
+  name = "LogNormal",
+  density = function(x, meanlog, sdlog) dlnorm(x, meanlog, sdlog, log = TRUE),
+  domain = c(0, Inf),
+  expr = list(
+    density = quote(-(log(x) - meanlog)^2 / (2 * sdlog^2) - log(2 * pi) / 2 - 
+                      log(sdlog) - log(x)),
+    mean = quote(exp(meanlog + sdlog^2 / 2))),
+  sample = "monty_random_log_normal",
+  cpp = list(density = "log_normal", sample = "log_normal"))
+
 distr_negative_binomial_prob <- distribution(
   name = "NegativeBinomial",
   variant = "prob",
@@ -269,6 +280,7 @@ dsl_distributions <- local({
     distr_gamma_rate,
     distr_gamma_scale,
     distr_hypergeometric,
+    distr_log_normal,
     distr_negative_binomial_prob,
     distr_negative_binomial_mu,
     distr_normal,

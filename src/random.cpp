@@ -639,6 +639,26 @@ cpp11::doubles cpp_monty_random_n_weibull(size_t n_samples,
                                  shape, scale, "shape", "scale");
 }
 
+// log_normal
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_log_normal(cpp11::doubles meanlog,
+                                           cpp11::doubles sdlog,
+                                           cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto meanlog, auto sdlog) { return monty::random::log_normal<double>(state, meanlog, sdlog); };
+  return monty_random_sample_1_2(fn, ptr, "log_normal",
+                                 meanlog, sdlog, "meanlog", "sdlog");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_log_normal(size_t n_samples,
+                                             cpp11::doubles meanlog,
+                                             cpp11::doubles sdlog,
+                                             cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto meanlog, auto sdlog) { return monty::random::log_normal<double>(state, meanlog, sdlog); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "log_normal",
+                                 meanlog, sdlog, "meanlog", "sdlog");
+}
+
 //// 3-arg functions
 
 // beta_binomial_prob

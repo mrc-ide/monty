@@ -144,6 +144,14 @@ cpp_monty_random_n_weibull <- function(n_samples, shape, scale, ptr) {
   .Call(`_monty_cpp_monty_random_n_weibull`, n_samples, shape, scale, ptr)
 }
 
+cpp_monty_random_log_normal <- function(meanlog, sdlog, ptr) {
+  .Call(`_monty_cpp_monty_random_log_normal`, meanlog, sdlog, ptr)
+}
+
+cpp_monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, ptr) {
+  .Call(`_monty_cpp_monty_random_n_log_normal`, n_samples, meanlog, sdlog, ptr)
+}
+
 cpp_monty_random_beta_binomial_prob <- function(size, prob, rho, ptr) {
   .Call(`_monty_cpp_monty_random_beta_binomial_prob`, size, prob, rho, ptr)
 }

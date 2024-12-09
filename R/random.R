@@ -637,3 +637,27 @@ monty_random_weibull <- function(shape, scale, state) {
 monty_random_n_weibull <- function(n_samples, shape, scale, state) {
   cpp_monty_random_n_weibull(n_samples, shape, scale, state)
 }
+
+
+##' Sample from a log-normal distribution
+##'
+##' @title Sample from log-normal
+##'
+##' @param meanlog The mean of the distribution on the log scale
+##'
+##' @param sdlog The standard deviation of the distribution on the log scale
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+monty_random_log_normal <- function(meanlog, sdlog, state) {
+  cpp_monty_random_log_normal(meanlog, sdlog, state)
+}
+
+
+##' @export
+##' @rdname monty_random_log_normal
+monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
+  cpp_monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
+}
