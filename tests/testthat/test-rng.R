@@ -502,7 +502,6 @@ test_that("multinomial algorithm is correct", {
   size <- 20
   n <- 5
 
-  r <- monty_rng$new(seed = 1)
   res <- monty_rng$new(1, seed = 1L)$multinomial(n, size, prob)
 
   ## Separate implementation of the core algorithm:
