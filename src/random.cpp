@@ -533,70 +533,23 @@ cpp11::doubles cpp_monty_random_n_negative_binomial_mu(size_t n_samples,
 }
 
 // normal
-template <typename monty::random::algorithm::normal A>
+[[cpp11::register]]
 cpp11::doubles cpp_monty_random_normal(cpp11::doubles mean,
                                        cpp11::doubles sd,
                                        cpp11::sexp ptr) {
-  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double, A>(state, mean, sd); };
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
   return monty_random_sample_1_2(fn, ptr, "normal",
                                  mean, sd, "mean", "sd");
 }
 
-template <typename monty::random::algorithm::normal A>
+[[cpp11::register]]
 cpp11::doubles cpp_monty_random_n_normal(size_t n_samples,
                                          cpp11::doubles mean,
                                          cpp11::doubles sd,
                                          cpp11::sexp ptr) {
-  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double, A>(state, mean, sd); };
+  const auto fn = [](auto& state, auto mean, auto sd) { return monty::random::normal<double>(state, mean, sd); };
   return monty_random_sample_n_2(fn, n_samples, ptr, "normal",
                                  mean, sd, "mean", "sd");
-}
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_normal_box_muller(cpp11::doubles mean,
-                                                  cpp11::doubles sd,
-                                                  cpp11::sexp ptr) {
-  return cpp_monty_random_normal<monty::random::algorithm::normal::box_muller>(mean, sd, ptr);
-}
-
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_normal_polar(cpp11::doubles mean,
-                                             cpp11::doubles sd,
-                                             cpp11::sexp ptr) {
-  return cpp_monty_random_normal<monty::random::algorithm::normal::polar>(mean, sd, ptr);
-}
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_normal_ziggurat(cpp11::doubles mean,
-                                                cpp11::doubles sd,
-                                                cpp11::sexp ptr) {
-  return cpp_monty_random_normal<monty::random::algorithm::normal::ziggurat>(mean, sd, ptr);
-}
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_n_normal_box_muller(size_t n_samples,
-                                                    cpp11::doubles mean,
-                                                    cpp11::doubles sd,
-                                                    cpp11::sexp ptr) {
-  return cpp_monty_random_n_normal<monty::random::algorithm::normal::box_muller>(n_samples, mean, sd, ptr);
-}
-
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_n_normal_polar(size_t n_samples,
-                                               cpp11::doubles mean,
-                                               cpp11::doubles sd,
-                                               cpp11::sexp ptr) {
-  return cpp_monty_random_n_normal<monty::random::algorithm::normal::polar>(n_samples, mean, sd, ptr);
-}
-
-[[cpp11::register]]
-cpp11::doubles cpp_monty_random_n_normal_ziggurat(size_t n_samples,
-                                                  cpp11::doubles mean,
-                                                  cpp11::doubles sd,
-                                                  cpp11::sexp ptr) {
-  return cpp_monty_random_n_normal<monty::random::algorithm::normal::ziggurat>(n_samples, mean, sd, ptr);
 }
 
 // uniform
@@ -617,6 +570,26 @@ cpp11::doubles cpp_monty_random_n_uniform(size_t n_samples,
   const auto fn = [](auto& state, auto min, auto max) { return monty::random::uniform<double>(state, min, max); };
   return monty_random_sample_n_2(fn, n_samples, ptr, "uniform",
                                  min, max, "min", "max");
+}
+
+// weibull
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_weibull(cpp11::doubles shape,
+                                        cpp11::doubles scale,
+                                        cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::weibull<double>(state, shape, scale); };
+  return monty_random_sample_1_2(fn, ptr, "weibull",
+                                 shape, scale, "shape", "scale");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_weibull(size_t n_samples,
+                                          cpp11::doubles shape,
+                                          cpp11::doubles scale,
+                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto shape, auto scale) { return monty::random::weibull<double>(state, shape, scale); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "weibull",
+                                 shape, scale, "shape", "scale");
 }
 
 // log_normal

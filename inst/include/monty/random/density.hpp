@@ -283,6 +283,17 @@ __host__ __device__ T cauchy(T x, T location, T scale, bool log) {
 }
 
 template <typename T>
+__host__ __device__ T weibull(T x, T shape, T scale, bool log) {
+#ifndef __CUDA_ARCH__
+  static_assert(std::is_floating_point<T>::value,
+                "weibull should only be used with real types");
+#endif
+  const auto ret = monty::math::log(shape) + (shape - 1) * monty::math::log(x) -
+    shape * monty::math::log(scale) - (x / scale)^shape;
+  return maybe_log(ret, log);
+}
+
+template <typename T>
 __host__ __device__ T log_normal(T x, T mulog, T sdlog, bool log) {
   const auto d = normal(monty::math::log(x), mulog, sdlog);
   
