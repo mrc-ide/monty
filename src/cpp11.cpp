@@ -191,17 +191,45 @@ extern "C" SEXP _monty_cpp_monty_random_n_negative_binomial_mu(SEXP n_samples, S
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_normal(cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_normal(SEXP mean, SEXP sd, SEXP ptr) {
+cpp11::doubles cpp_monty_random_normal_box_muller(cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_normal_box_muller(SEXP mean, SEXP sd, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_normal(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_normal_box_muller(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_n_normal(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_n_normal(SEXP n_samples, SEXP mean, SEXP sd, SEXP ptr) {
+cpp11::doubles cpp_monty_random_normal_polar(cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_normal_polar(SEXP mean, SEXP sd, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_n_normal(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_normal_polar(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_normal_ziggurat(cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_normal_ziggurat(SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_normal_ziggurat(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_normal_box_muller(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_normal_box_muller(SEXP n_samples, SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_normal_box_muller(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_normal_polar(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_normal_polar(SEXP n_samples, SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_normal_polar(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_normal_ziggurat(size_t n_samples, cpp11::doubles mean, cpp11::doubles sd, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_normal_ziggurat(SEXP n_samples, SEXP mean, SEXP sd, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_normal_ziggurat(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
@@ -515,14 +543,18 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_log_normal",             (DL_FUNC) &_monty_cpp_monty_random_n_log_normal,             4},
     {"_monty_cpp_monty_random_n_negative_binomial_mu",   (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_mu,   4},
     {"_monty_cpp_monty_random_n_negative_binomial_prob", (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_prob, 4},
-    {"_monty_cpp_monty_random_n_normal",                 (DL_FUNC) &_monty_cpp_monty_random_n_normal,                 4},
+    {"_monty_cpp_monty_random_n_normal_box_muller",      (DL_FUNC) &_monty_cpp_monty_random_n_normal_box_muller,      4},
+    {"_monty_cpp_monty_random_n_normal_polar",           (DL_FUNC) &_monty_cpp_monty_random_n_normal_polar,           4},
+    {"_monty_cpp_monty_random_n_normal_ziggurat",        (DL_FUNC) &_monty_cpp_monty_random_n_normal_ziggurat,        4},
     {"_monty_cpp_monty_random_n_poisson",                (DL_FUNC) &_monty_cpp_monty_random_n_poisson,                3},
     {"_monty_cpp_monty_random_n_real",                   (DL_FUNC) &_monty_cpp_monty_random_n_real,                   2},
     {"_monty_cpp_monty_random_n_truncated_normal",       (DL_FUNC) &_monty_cpp_monty_random_n_truncated_normal,       6},
     {"_monty_cpp_monty_random_n_uniform",                (DL_FUNC) &_monty_cpp_monty_random_n_uniform,                4},
     {"_monty_cpp_monty_random_negative_binomial_mu",     (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_mu,     3},
     {"_monty_cpp_monty_random_negative_binomial_prob",   (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_prob,   3},
-    {"_monty_cpp_monty_random_normal",                   (DL_FUNC) &_monty_cpp_monty_random_normal,                   3},
+    {"_monty_cpp_monty_random_normal_box_muller",        (DL_FUNC) &_monty_cpp_monty_random_normal_box_muller,        3},
+    {"_monty_cpp_monty_random_normal_polar",             (DL_FUNC) &_monty_cpp_monty_random_normal_polar,             3},
+    {"_monty_cpp_monty_random_normal_ziggurat",          (DL_FUNC) &_monty_cpp_monty_random_normal_ziggurat,          3},
     {"_monty_cpp_monty_random_poisson",                  (DL_FUNC) &_monty_cpp_monty_random_poisson,                  2},
     {"_monty_cpp_monty_random_real",                     (DL_FUNC) &_monty_cpp_monty_random_real,                     1},
     {"_monty_cpp_monty_random_truncated_normal",         (DL_FUNC) &_monty_cpp_monty_random_truncated_normal,         5},
