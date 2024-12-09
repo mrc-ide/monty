@@ -4,12 +4,6 @@
 ## This is complicated by wanting to cache the results of the vcv
 ## decomposition where possible.
 
-## Not in base R
-rmvnorm <- function(x, vcv, rng) {
-  make_rmvnorm(vcv)(x, rng)
-}
-
-
 ## This is the form of the Cholesky factorisation of a matrix we use
 ## in the multivariate normal sampling.
 chol_pivot <- function(x) {
@@ -18,46 +12,35 @@ chol_pivot <- function(x) {
 }
 
 
+## There are three uses of this; two use centred and one does not.
+##
+## * monty_example_gaussian uses centrered
+## * sampler_hmc also uses centred
+## * make_random_walk_proposal does not use centred, but could
+
+
 make_rmvnorm <- function(vcv, centred = FALSE) {
+  stopifnot(centred)
   n <- nrow(vcv)
   if (n == 1) {
     ## Special case for transformations in single-dimensional case; no
     ## need to work with matrix multiplication or decompositions here.
     sd <- sqrt(drop(vcv))
-    if (centred) {
-      function(rng) {
-        monty_random_normal(0, sd, rng)
-      }
-    } else {
-      function(x, rng) {
-        x + monty_random_normal(0, sd, rng)
-      }
+    function(rng) {
+      monty_random_normal(0, sd, rng)
     }
   } else if (is.matrix(vcv)) {
     r <- chol_pivot(vcv)
-    if (centred) {
-      function(rng) {
-        drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
-      }
-    } else {
-      function(x, rng) {
-        x + drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
-      }
+    function(rng) {
+      drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
     }
   } else {
     stopifnot(length(dim(vcv)) == 3)
     m <- dim(vcv)[[3]]
     r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
-    if (centred) {
-      function(rng) {
-        mu <- monty_random_n_normal(n, 0, 1, rng)
-        vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
-      }
-    } else {
-      function(x, rng) {
-        mu <- monty_random_n_normal(n, 0, 1, rng) # + x perhaps?
-        x + vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
-      }
+    function(rng) {
+      mu <- monty_random_n_normal(n, 0, 1, rng)
+      vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
     }
   }
 }

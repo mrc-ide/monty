@@ -122,15 +122,17 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
 
 
 make_random_walk_proposal <- function(vcv, domain, boundaries) {
-  mvn <- make_rmvnorm(vcv)
+  mvn <- make_rmvnorm(vcv, centred = TRUE)
   if (boundaries != "reflect" || !any(is.finite(domain))) {
-    return(mvn)
+    return(function(x, rng) {
+      x + mvn(rng)
+    })
   }
 
   x_min <- domain[, 1]
   x_max <- domain[, 2]
   function(x, rng) {
-    reflect_proposal(mvn(x, rng), x_min, x_max)
+    reflect_proposal(x + mvn(rng), x_min, x_max)
   }
 }
 
