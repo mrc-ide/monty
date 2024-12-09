@@ -104,12 +104,28 @@ cpp_monty_random_n_negative_binomial_mu <- function(n_samples, size, mu, ptr) {
   .Call(`_monty_cpp_monty_random_n_negative_binomial_mu`, n_samples, size, mu, ptr)
 }
 
-cpp_monty_random_normal <- function(mean, sd, ptr) {
-  .Call(`_monty_cpp_monty_random_normal`, mean, sd, ptr)
+cpp_monty_random_normal_box_muller <- function(mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_normal_box_muller`, mean, sd, ptr)
 }
 
-cpp_monty_random_n_normal <- function(n_samples, mean, sd, ptr) {
-  .Call(`_monty_cpp_monty_random_n_normal`, n_samples, mean, sd, ptr)
+cpp_monty_random_normal_polar <- function(mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_normal_polar`, mean, sd, ptr)
+}
+
+cpp_monty_random_normal_ziggurat <- function(mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_normal_ziggurat`, mean, sd, ptr)
+}
+
+cpp_monty_random_n_normal_box_muller <- function(n_samples, mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_n_normal_box_muller`, n_samples, mean, sd, ptr)
+}
+
+cpp_monty_random_n_normal_polar <- function(n_samples, mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_n_normal_polar`, n_samples, mean, sd, ptr)
+}
+
+cpp_monty_random_n_normal_ziggurat <- function(n_samples, mean, sd, ptr) {
+  .Call(`_monty_cpp_monty_random_n_normal_ziggurat`, n_samples, mean, sd, ptr)
 }
 
 cpp_monty_random_uniform <- function(min, max, ptr) {

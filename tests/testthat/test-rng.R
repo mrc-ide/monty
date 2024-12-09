@@ -1,7 +1,7 @@
 test_that("can generate random numbers", {
-  ans1 <- monty_rng$new(1)$random_real(100)
-  ans2 <- monty_rng$new(1)$random_real(100)
-  ans3 <- monty_rng$new(2)$random_real(100)
+  ans1 <- monty_random_n_real(100, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_real(100, monty_rng_create(seed = 1))
+  ans3 <- monty_random_n_real(100, monty_rng_create(seed = 2))
   expect_equal(length(ans1), 100)
   expect_identical(ans1, ans2)
   expect_false(any(ans1 == ans3))
@@ -12,15 +12,15 @@ test_that("Create interleaved rng", {
   n <- 128
   seed <- 1
 
-  rng1 <- monty_rng$new(seed, 1L)
-  rng2 <- monty_rng$new(seed, 2L)
-  rng3 <- monty_rng$new(seed, 4L)
-  rng4 <- monty_rng$new(seed, 8L)
+  rng1 <- monty_rng_create(seed = seed, n_streams = 1L)
+  rng2 <- monty_rng_create(seed = seed, n_streams = 2L)
+  rng3 <- monty_rng_create(seed = seed, n_streams = 4L)
+  rng4 <- monty_rng_create(seed = seed, n_streams = 8L)
 
-  ans1 <- rng1$random_real(n)
-  ans2 <- rng2$random_real(n)
-  ans3 <- rng3$random_real(n)
-  ans4 <- rng4$random_real(n)
+  ans1 <- monty_random_n_real(n, rng1)
+  ans2 <- monty_random_n_real(n, rng2)
+  ans3 <- monty_random_n_real(n, rng3)
+  ans4 <- monty_random_n_real(n, rng4)
 
   ## We can find elements from the each rng through the larger
   ## sequences:
@@ -31,18 +31,18 @@ test_that("Create interleaved rng", {
   expect_identical(ans2, ans4[, 1:2])
   expect_identical(ans3, ans4[, 1:4])
 
-  expect_equal(rng1$size(), 1)
-  expect_equal(rng2$size(), 2)
-  expect_equal(rng3$size(), 4)
-  expect_equal(rng4$size(), 8)
+  expect_equal(length(rng1), 1)
+  expect_equal(length(rng2), 2)
+  expect_equal(length(rng3), 4)
+  expect_equal(length(rng4), 8)
 })
 
 
 test_that("run uniform random numbers", {
-  ans1 <- monty_rng$new(1L)$random_real(100)
-  ans2 <- monty_rng$new(1L)$random_real(100)
-  ans3 <- monty_rng$new(1L)$uniform(100, 0, 1)
-  ans4 <- monty_rng$new(2L)$uniform(100, 0, 1)
+  ans1 <- monty_random_n_real(100, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_real(100, monty_rng_create(seed = 1))
+  ans3 <- monty_random_n_uniform(100, 0, 1, monty_rng_create(seed = 1))
+  ans4 <- monty_random_n_uniform(100, 0, 1, monty_rng_create(seed = 2))
 
   expect_true(all(ans1 >= 0))
   expect_true(all(ans1 <= 1))
@@ -53,7 +53,7 @@ test_that("run uniform random numbers", {
 
 
 test_that("run uniform random numbers with odd bounds", {
-  ans <- monty_rng$new(1L)$uniform(100, -100, 100)
+  ans <- monty_random_n_uniform(100, -100, 100, monty_rng_create(seed = 1))
   expect_true(any(ans > 0))
   expect_true(any(ans < 0))
   expect_true(all(ans >= -100))
@@ -65,7 +65,7 @@ test_that("distribution of uniform numbers", {
   m <- 100000
   a <- exp(1)
   b <- pi
-  ans <- monty_rng$new(1)$uniform(m, a, b)
+  ans <- monty_random_n_uniform(m, a, b, monty_rng_create(seed = 1))
   expect_equal(mean(ans), (a + b) / 2, tolerance = 1e-3)
   expect_equal(var(ans), (b - a)^2 / 12, tolerance = 1e-2)
 })
@@ -76,8 +76,8 @@ test_that("run binomial random numbers", {
   n <- 100
   p <- 0.1
 
-  ans1 <- monty_rng$new(1)$binomial(m, n, p)
-  ans2 <- monty_rng$new(1)$binomial(m, n, p)
+  ans1 <- monty_random_n_binomial(m, n, p, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_binomial(m, n, p, monty_rng_create(seed = 1))
   expect_identical(ans1, ans2)
 
   ## Should do this with much more statistical rigour, but this looks
@@ -92,11 +92,11 @@ test_that("binomial numbers run the short circuit path", {
   n <- 100
   p <- 0.1
 
-  expect_identical(monty_rng$new(1)$binomial(m, 0, p),
+  expect_identical(monty_random_n_binomial(m, 0, p, monty_rng_create(seed = 1)),
                    rep(0, m))
-  expect_identical(monty_rng$new(1)$binomial(m, n, 0),
+  expect_identical(monty_random_n_binomial(m, n, 0, monty_rng_create(seed = 1)),
                    rep(0, m))
-  expect_identical(monty_rng$new(1)$binomial(m, n, 1),
+  expect_identical(monty_random_n_binomial(m, n, 1, monty_rng_create(seed = 1)),
                    rep(as.numeric(n), m))
 })
 
@@ -106,7 +106,7 @@ test_that("binomial numbers on the 'small' path", {
   n <- 20
   p <- 0.2
 
-  ans1 <- monty_rng$new(1)$binomial(m, n, p)
+  ans1 <- monty_random_n_binomial(m, n, p, monty_rng_create(seed = 1))
   expect_equal(mean(ans1), n * p, tolerance = 1e-3)
   expect_equal(var(ans1), n * p * (1 - p), tolerance = 1e-2)
 })
@@ -117,8 +117,8 @@ test_that("binomial numbers and their complement are the same (np small)", {
   n <- 20
   p <- 0.2
 
-  ans1 <- monty_rng$new(1)$binomial(m, n, p)
-  ans2 <- monty_rng$new(1)$binomial(m, n, 1 - p)
+  ans1 <- monty_random_n_binomial(m, n, p, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_binomial(m, n, 1 - p, monty_rng_create(seed = 1))
   expect_equal(ans1, n - ans2)
 })
 
@@ -128,56 +128,56 @@ test_that("binomial numbers and their complement are the same (np large)", {
   n <- 200
   p <- 0.2
 
-  ans1 <- monty_rng$new(1)$binomial(m, n, p)
-  ans2 <- monty_rng$new(1)$binomial(m, n, 1 - p)
+  ans1 <- monty_random_n_binomial(m, n, p, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_binomial(m, n, 1 - p, monty_rng_create(seed = 1))
   expect_equal(ans1, n - ans2)
 })
 
 
 test_that("Binomial random numbers prevent bad inputs", {
   skip_on_cran() # potentially system dependent
-  r <- monty_rng$new(1)
-  r$binomial(1, 0, 0)
+  r <- monty_rng_create(seed = 1)
+  monty_random_binomial(0, 0, r)
   expect_error(
-    r$binomial(1, 1, -1),
+    monty_random_binomial(1, -1, r),
     "Invalid call to binomial with n = 1, p = -1")
   expect_error(
-    r$binomial(1, 1, 0 - 1e-8),
+    monty_random_binomial(1, 0 - 1e-8, r),
     "Invalid call to binomial with n = 1, p = -1e-08")
   expect_error(
-    r$binomial(1, 1, 2),
+    monty_random_binomial(1, 2, r),
     "Invalid call to binomial with n = 1, p = 2")
   ## TODO: this is not a great error here, but there's not much that
   ## can be done without a lot of faff with the underlying print
   expect_error(
-    r$binomial(1, 1, 1 + 1e-8),
+    monty_random_binomial(1, 1 + 1e-8, r),
     "Invalid call to binomial with n = 1, p = 1")
   expect_error(
-    r$binomial(1, -1, 0.5),
+    monty_random_binomial(-1, 0.5, r),
     "Invalid call to binomial with n = -1, p = 0.5")
   expect_error(
-    r$binomial(1, 1, NaN),
+    monty_random_binomial(1, NaN, r),
     "Invalid call to binomial with n = 1, p = .+")
   expect_error(
-    r$binomial(1, NaN, 1),
+    monty_random_binomial(NaN, 1, r),
     "Invalid call to binomial with n = .+, p = 1")
 })
 
 
 test_that("avoid integer overflow in binomial draws with very large n", {
-  r <- monty_rng$new(1, seed = 1L)
+  r <- monty_rng_create(seed = 1)
   n <- 2^33
-  expect_equal(r$binomial(1, n, 0), 0)
-  expect_equal(r$binomial(1, n, 1), n)
+  expect_equal(monty_random_binomial(n, 0, r), 0)
+  expect_equal(monty_random_binomial(n, 1, r), n)
 
   p1 <- 2.5e-10
-  m1 <- r$binomial(1000000, n, p1)
+  m1 <- monty_random_n_binomial(1000000, n, p1, r)
   expect_equal(mean(m1), n * p1, tolerance = 1e-3)
   mt1 <- tabulate(m1)
   expect_false(any(mt1) == 0)
 
   p2 <- 0.1
-  m2 <- r$binomial(1000000, n, p2)
+  m2 <- monty_random_n_binomial(1000000, n, p2, r)
   mt2 <- tabulate(m2)
   expect_equal(mean(m2), n * p2, tolerance = 1e-3)
   expect_false(any(mt1) == 0)
@@ -188,9 +188,9 @@ test_that("poisson numbers", {
   n <- 100000
   lambda <- 5
 
-  ans1 <- monty_rng$new(1)$poisson(n, lambda)
-  ans2 <- monty_rng$new(1)$poisson(n, lambda)
-  ans3 <- monty_rng$new(2)$poisson(n, lambda)
+  ans1 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans3 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 2))
   expect_identical(ans1, ans2)
   expect_false(all(ans1 == ans3))
 
@@ -203,9 +203,9 @@ test_that("Big poisson numbers", {
   n <- 100000
   lambda <- 20
 
-  ans1 <- monty_rng$new(1)$poisson(n, lambda)
-  ans2 <- monty_rng$new(1)$poisson(n, lambda)
-  ans3 <- monty_rng$new(2)$poisson(n, lambda)
+  ans1 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans3 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 2))
   expect_identical(ans1, ans2)
   expect_false(all(ans1 == ans3))
 
@@ -217,8 +217,8 @@ test_that("Big poisson numbers", {
 test_that("big poisson numbers at edge of transition are ok", {
   n <- 100000
   lambda <- 1e8 - 1
-  rng <- monty_rng$new(1)
-  ans <- rng$poisson(n, lambda)
+  rng <- monty_rng_create(seed = 1)
+  ans <- monty_random_n_poisson(n, lambda, rng)
   expect_equal(mean(ans), lambda, tolerance = 1e-2)
   expect_equal(var(ans), lambda, tolerance = 1e-2)
 })
@@ -228,9 +228,9 @@ test_that("Very big poisson numbers", {
   n <- 100000
   lambda <- 1e12
 
-  ans1 <- monty_rng$new(1)$poisson(n, lambda)
-  ans2 <- monty_rng$new(1)$poisson(n, lambda)
-  ans3 <- monty_rng$new(2)$poisson(n, lambda)
+  ans1 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 1))
+  ans3 <- monty_random_n_poisson(n, lambda, monty_rng_create(seed = 2))
   expect_identical(ans1, ans2)
   expect_false(all(ans1 == ans3))
 
@@ -241,25 +241,26 @@ test_that("Very big poisson numbers", {
 
 test_that("Poisson numbers only valid for 0 <= lambda < Inf", {
   n <- 100
-  expect_error(monty_rng$new(1)$poisson(n, -1),
+  r <- monty_rng_create()
+  expect_error(monty_random_poisson(-1, r),
                "Invalid call to Poisson")
-  expect_error(monty_rng$new(1)$poisson(n, Inf),
+  expect_error(monty_random_poisson(Inf, r),
                "Invalid call to Poisson")
 })
 
 
 test_that("Short circuit exit does not update rng state", {
-  rng <- monty_rng$new(1)
-  s <- rng$state()
-  ans <- rng$poisson(100, 0)
+  rng <- monty_rng_create(seed = 1)
+  s <- monty_rng_state(rng)
+  ans <- monty_random_n_poisson(100, 0, rng)
   expect_equal(ans, rep(0, 100))
-  expect_identical(rng$state(), s)
+  expect_identical(monty_rng_state(rng), s)
 })
 
 
 test_that("normal (box_muller) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_rng$new(2)$random_normal(n)
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "box_muller")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -268,7 +269,7 @@ test_that("normal (box_muller) agrees with stats::rnorm", {
 
 test_that("normal (polar) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_rng$new(2)$random_normal(n, algorithm = "polar")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "polar")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -277,10 +278,23 @@ test_that("normal (polar) agrees with stats::rnorm", {
 
 test_that("normal (ziggurat) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_rng$new(2)$random_normal(n, algorithm = "ziggurat")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "ziggurat")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
+})
+
+
+test_that("can draw normals with different algorithms", {
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
+
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "box_muller")),
+               monty_random_n_normal(3, 0, 1, r2, "box_muller"))
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "polar")),
+               monty_random_n_normal(3, 0, 1, r2, "polar"))
+  expect_equal(replicate(3, monty_random_normal(0, 1, r1, "ziggurat")),
+               monty_random_n_normal(3, 0, 1, r2, "ziggurat"))
 })
 
 
@@ -288,23 +302,23 @@ test_that("normal scales draws", {
   n <- 100
   mean <- exp(1)
   sd <- pi
-  rng1 <- monty_rng$new(1)
-  rng2 <- monty_rng$new(1)
-  expect_equal(rng1$normal(n, mean, sd),
-               mean + sd * rng2$random_normal(n))
-  expect_equal(rng1$normal(n, mean, sd, algorithm = "polar"),
-               mean + sd * rng2$random_normal(n, algorithm = "polar"))
-  expect_equal(rng1$normal(n, mean, sd, algorithm = "ziggurat"),
-               mean + sd * rng2$random_normal(n, algorithm = "ziggurat"))
+  rng1 <- monty_rng_create(seed = 1)
+  rng2 <- monty_rng_create(seed = 1)
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "box_muller"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "box_muller"))
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "polar"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "polar"))
+  expect_equal(monty_random_n_normal(n, mean, sd, rng1, "ziggurat"),
+               mean + sd * monty_random_n_normal(n, 0, 1, rng2, "ziggurat"))
 })
 
 
 test_that("Prevent unknown normal algorithms", {
   expect_error(
-    monty_rng$new(2)$random_normal(10, algorithm = "monty_python"),
+    monty_random_normal(0, 1, monty_rng_create(seed = 2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
   expect_error(
-    monty_rng$new(2)$normal(10, 0, 1, algorithm = "monty_python"),
+    monty_random_n_normal(5, 0, 1, monty_rng_create(seed = 2), "monty_python"),
     "Unknown normal algorithm 'monty_python'")
 })
 
@@ -312,7 +326,7 @@ test_that("Prevent unknown normal algorithms", {
 test_that("rexp agrees with stats::rexp", {
   n <- 100000
   rate <- 0.04
-  ans <- monty_rng$new(2)$exponential_rate(n, rate)
+  ans <- monty_random_n_exponential_rate(n, rate, monty_rng_create(seed = 2))
   expect_equal(mean(ans), 1 / rate, tolerance = 1e-2)
   expect_equal(var(ans), 1 / rate^2, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pexp", rate)$p.value, 0.1)
@@ -320,12 +334,12 @@ test_that("rexp agrees with stats::rexp", {
 
 
 test_that("continue stream", {
-  rng1 <- monty_rng$new(1)
-  rng2 <- monty_rng$new(1)
+  rng1 <- monty_rng_create(seed = 1)
+  rng2 <- monty_rng_create(seed = 1)
 
-  y1 <- rng1$uniform(100, 0, 1)
-  y2_1 <- rng2$uniform(50, 0, 1)
-  y2_2 <- rng2$uniform(50, 0, 1)
+  y1 <- monty_random_n_uniform(100, 0, 1, rng1)
+  y2_1 <- monty_random_n_uniform(50, 0, 1, rng2)
+  y2_2 <- monty_random_n_uniform(50, 0, 1, rng2)
   y2 <- c(y2_1, y2_2)
   expect_identical(y1, y2)
 })
@@ -333,13 +347,13 @@ test_that("continue stream", {
 
 test_that("jump", {
   seed <- 1
-  rng1a <- monty_rng$new(seed)
-  rng1b <- monty_rng$new(seed)$jump()
-  rng2 <- monty_rng$new(seed, 2L)
+  rng1a <- monty_rng_create(seed = seed)
+  rng1b <- monty_rng_jump(monty_rng_create(seed = seed))
+  rng2 <- monty_rng_create(seed = seed, n_streams = 2L)
 
-  r2 <- rng2$random_real(10)
-  r1a <- rng1a$random_real(10)
-  r1b <- rng1b$random_real(10)
+  r2 <- monty_random_n_real(10, rng2)
+  r1a <- monty_random_n_real(10, rng1a)
+  r1b <- monty_random_n_real(10, rng1b)
 
   expect_equal(cbind(r1a, r1b, deparse.level = 0), r2)
 })
@@ -347,15 +361,15 @@ test_that("jump", {
 
 test_that("long jump", {
   seed <- 1
-  rng1 <- monty_rng$new(seed)
-  rng2 <- monty_rng$new(seed)$jump()
-  rng3 <- monty_rng$new(seed)$long_jump()
-  rng4 <- monty_rng$new(seed)$long_jump()$jump()
+  rng1 <- monty_rng_create(seed = seed)
+  rng2 <- monty_rng_jump(monty_rng_create(seed = seed))
+  rng3 <- monty_rng_long_jump(monty_rng_create(seed = seed))
+  rng4 <- monty_rng_jump(monty_rng_long_jump(monty_rng_create(seed = seed)))
 
-  r1 <- rng1$random_real(20)
-  r2 <- rng2$random_real(20)
-  r3 <- rng3$random_real(20)
-  r4 <- rng4$random_real(20)
+  r1 <- monty_random_n_real(20, rng1)
+  r2 <- monty_random_n_real(20, rng2)
+  r3 <- monty_random_n_real(20, rng3)
+  r4 <- monty_random_n_real(20, rng4)
 
   expect_true(all(r1 != r2))
   expect_true(all(r1 != r3))
@@ -368,97 +382,97 @@ test_that("long jump", {
 
 test_that("get state", {
   seed <- 1
-  rng1 <- monty_rng$new(seed)
-  rng2 <- monty_rng$new(seed)
-  rng3 <- monty_rng$new(seed, 2L)
+  rng1 <- monty_rng_create(seed = seed)
+  rng2 <- monty_rng_create(seed = seed)
+  rng3 <- monty_rng_create(seed = seed, n_streams = 2)
 
-  s1 <- rng1$state()
+  s1 <- monty_rng_state(rng1)
   expect_type(s1, "raw")
   expect_equal(length(s1), 32)
 
-  s2 <- rng2$state()
+  s2 <- monty_rng_state(rng2)
   expect_identical(s2, s1)
 
-  s3 <- rng3$state()
+  s3 <- monty_rng_state(rng3)
   expect_equal(length(s3), 64)
   expect_identical(s3[seq_len(32)], s1)
-  expect_identical(s3[-seq_len(32)], rng2$jump()$state())
+  expect_identical(s3[-seq_len(32)], monty_rng_state(monty_rng_jump(rng2)))
 })
 
 
 test_that("initialise single rng with binary state", {
   seed <- 42
-  rng1 <- monty_rng$new(seed)
-  state <- rng1$state()
-  rng2 <- monty_rng$new(state)
-  expect_identical(rng1$state(), rng2$state())
-  r1 <- rng1$random_real(10)
-  r2 <- rng2$random_real(10)
+  rng1 <- monty_rng_create(seed = seed)
+  state <- monty_rng_state(rng1)
+  rng2 <- monty_rng_create(seed = state)
+  expect_identical(monty_rng_state(rng1), monty_rng_state(rng2))
+  r1 <- monty_random_n_real(10, rng1)
+  r2 <- monty_random_n_real(10, rng2)
   expect_identical(r1, r2)
-  expect_identical(rng1$state(), rng2$state())
+  expect_identical(monty_rng_state(rng1), monty_rng_state(rng2))
 })
 
 
 test_that("initialise parallel rng with binary state", {
   seed <- 42
-  rng1 <- monty_rng$new(seed, 5L)
-  state <- rng1$state()
-  rng2 <- monty_rng$new(state, 5L)
-  r1 <- rng1$random_real(10)
-  r2 <- rng2$random_real(10)
+  rng1 <- monty_rng_create(seed = seed, n_streams = 5)
+  state <- monty_rng_state(rng1)
+  rng2 <- monty_rng_create(seed = state, n_streams = 5)
+  r1 <- monty_random_n_real(10, rng1)
+  r2 <- monty_random_n_real(10, rng2)
   expect_identical(r1, r2)
-  expect_identical(rng1$state(), rng2$state())
+  expect_identical(monty_rng_state(rng1), monty_rng_state(rng2))
 })
 
 
 test_that("initialise parallel rng with single binary state and jump", {
   seed <- 42
-  rng1 <- monty_rng$new(seed, 1L)
-  rng2 <- monty_rng$new(seed, 2L)
-  state <- rng1$state()
-  rng3 <- monty_rng$new(state, 2L)
-  expect_identical(rng3$state(), rng2$state())
+  rng1 <- monty_rng_create(seed = seed, n_streams = 1)
+  rng2 <- monty_rng_create(seed = seed, n_streams = 2)
+  state <- monty_rng_state(rng1)
+  rng3 <- monty_rng_create(seed = state, n_streams = 2)
+  expect_identical(monty_rng_state(rng3), monty_rng_state(rng2))
 })
 
 
 test_that("initialise parallel rng with binary state and drop", {
   seed <- 42
-  rng10 <- monty_rng$new(seed, 10L)
-  rng5 <- monty_rng$new(rng10$state(), 5L)
-  len <- 5 * rng5$info$size_state_bytes
-  expect_identical(rng5$state(), rng10$state()[seq_len(len)])
+  rng10 <- monty_rng_create(seed = seed, n_streams = 10)
+  rng5 <- monty_rng_create(seed = seed, n_streams = 5)
+  len <- 5 * 32
+  expect_identical(monty_rng_state(rng5), monty_rng_state(rng10)[seq_len(len)])
 })
 
 
 test_that("require that raw vector is of sensible size", {
-  expect_error(monty_rng$new(raw()),
+  expect_error(monty_rng_create(seed = raw()),
                "Expected raw vector of length as multiple of 32 for 'seed'")
-  expect_error(monty_rng$new(raw(31)),
+  expect_error(monty_rng_create(seed = raw(31)),
                "Expected raw vector of length as multiple of 32 for 'seed'")
-  expect_error(monty_rng$new(raw(63)),
+  expect_error(monty_rng_create(seed = raw(63)),
                "Expected raw vector of length as multiple of 32 for 'seed'")
 })
 
 
 test_that("initialise with NULL, generating a seed from R", {
   set.seed(1)
-  rng1 <- monty_rng$new(NULL)
+  rng1 <- monty_rng_create(seed = NULL)
   set.seed(1)
-  rng2 <- monty_rng$new(NULL)
-  rng3 <- monty_rng$new(NULL)
+  rng2 <- monty_rng_create(seed = NULL)
+  rng3 <- monty_rng_create(seed = NULL)
   set.seed(1)
 
-  expect_identical(rng2$state(), rng1$state())
-  expect_false(identical(rng3$state(), rng2$state()))
+  expect_identical(monty_rng_state(rng2), monty_rng_state(rng1))
+  expect_false(identical(monty_rng_state(rng3), monty_rng_state(rng2)))
 })
 
 
 test_that("can't create rng with silly things", {
   expect_error(
-    monty_rng$new(mtcars),
+    monty_rng_create(seed = mtcars),
     "Invalid type for 'seed'")
   expect_error(
-    monty_rng$new(function(x) 2),
+    monty_rng_create(seed = function(x) 2),
     "Invalid type for 'seed'")
 })
 
@@ -467,9 +481,9 @@ test_that("negative seed values result in sensible state", {
   ## Don't end up with all-zero state, and treat different negative
   ## numbers as different (don't truncate to zero or anything
   ## pathalogical)
-  s0 <- monty_rng$new(0)$state()
-  s1 <- monty_rng$new(-1)$state()
-  s10 <- monty_rng$new(-10)$state()
+  s0 <- monty_rng_state(monty_rng_create(seed = 0))
+  s1 <- monty_rng_state(monty_rng_create(seed = -1))
+  s10 <- monty_rng_state(monty_rng_create(seed = -10))
 
   expect_false(all(s0 == as.raw(0)))
   expect_false(all(s1 == as.raw(0)))
@@ -641,12 +655,14 @@ test_that("deterministic rbinom returns mean", {
   n <- as.numeric(sample(10, m, replace = TRUE))
   p <- runif(m)
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
 
-  expect_equal(rng$binomial(m, n, p), n * p)
+  expect_equal(
+    mapply(monty_random_binomial, n, p, MoreArgs = list(state = rng)),
+    n * p)
 
-  expect_equal(rng$state(), state)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -654,25 +670,24 @@ test_that("deterministic rbinom accepts non-integer size", {
   m <- 10
   n <- runif(m, 0, 10)
   p <- runif(m)
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
-  expect_equal(rng$binomial(m, n, p), n * p)
-  expect_equal(rng$state(), state)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  expect_equal(
+    mapply(monty_random_binomial, n, p, MoreArgs = list(state = rng)),
+    n * p)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
 test_that("deterministic rbinom allow small negative innacuracies", {
-  m <- 10
-  n <- runif(m, 0, 10)
-  p <- runif(m)
-  rng <- monty_rng$new(1, deterministic = TRUE)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
 
   eps <- .Machine$double.eps
 
-  expect_identical(rng$binomial(1, 0, 0.5), 0.0)
-  expect_identical(rng$binomial(1, -eps, 0.5), 0.0)
+  expect_identical(monty_random_binomial(0, 0.5, rng), 0.0)
+  expect_identical(monty_random_binomial(-eps, 0.5, rng), 0.0)
 
-  expect_error(rng$binomial(1, -sqrt(eps * 1.1), 0.5),
+  expect_error(monty_random_binomial(-sqrt(eps * 1.1), 0.5, rng),
                "Invalid call to binomial with n = -")
 })
 
@@ -684,10 +699,10 @@ test_that("deterministic rpois returns mean", {
     runif(m, 0, 10),
     runif(m, 10, 1000),
     runif(m, 1e10, 1e12))
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
-  expect_equal(rng$poisson(3 * m, lambda), lambda)
-  expect_equal(rng$state(), state)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  expect_equal(vnapply(lambda, monty_random_poisson, rng), lambda)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -695,20 +710,22 @@ test_that("deterministic runif returns mean", {
   m <- 10
   l <- runif(m, -10, 10)
   u <- l + runif(m, 0, 10)
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
-  expect_equal(rng$uniform(m, l, u), (l + u) / 2)
-  expect_equal(rng$state(), state)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  expect_equal(
+    mapply(monty_random_uniform, l, u, MoreArgs = list(state = rng)),
+    (l + u) / 2)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
 test_that("deterministic rexp returns mean", {
   m <- 10
   rate <- runif(m, 0, 10)
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
-  expect_equal(rng$exponential_rate(m, rate), 1 / rate)
-  expect_equal(rng$state(), state)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  expect_equal(vnapply(rate, monty_random_exponential_rate, rng), 1 / rate)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -716,37 +733,12 @@ test_that("deterministic rnorm returns mean", {
   m <- 10
   mu <- runif(m, -10, 10)
   sd <- runif(m, 0, 10)
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
-  expect_equal(rng$normal(m, mu, sd), mu)
-  expect_equal(rng$state(), state)
-})
-
-
-test_that("Parameter expansion", {
-  rng <- monty_rng$new(1, 10)
-
-  m <- matrix(as.numeric(1:30), 3, 10)
-  rng <- monty_rng$new(1, 10)
-  expect_equal(floor(rng$uniform(3, m, m + 1)), m)
-
-  expect_equal(floor(rng$uniform(3, m[, 1], m[, 1] + 1)),
-               matrix(as.numeric(1:3), 3, 10))
-  expect_equal(floor(rng$uniform(3, 1, 2)),
-               matrix(1, 3, 10))
-  m1 <- m[1, , drop = FALSE]
-  expect_equal(floor(rng$uniform(3, m1, m1 + 1)),
-               m1[c(1, 1, 1), ])
-
-  expect_error(
-    rng$uniform(3, c(1, 2, 3, 4), 10),
-    "If 'min' is a vector, it must have 1 or 3 elements")
-  expect_error(
-    rng$uniform(3, m[, 1:2], 10),
-    "If 'min' is a matrix, it must have 10 columns")
-  expect_error(
-    rng$uniform(3, m[1:2, ], 10),
-    "If 'min' is a matrix, it must have 1 or 3 rows")
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  expect_equal(
+    mapply(monty_random_normal, mu, sd, MoreArgs = list(state = rng)),
+    mu)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -761,7 +753,7 @@ test_that("We can load the example rng package", {
 
   pkg <- pkgload::load_all(tmp, export_all = FALSE, quiet = TRUE)
   ans <- pkg$env$random_normal(10, 0, 1, 42)
-  cmp <- monty_rng$new(42)$normal(10, 0, 1)
+  cmp <- monty_random_n_normal(10, 0, 1, monty_rng_create(seed = 42))
   expect_equal(ans, cmp)
 
   pkgload::unload("rnguse")
@@ -792,7 +784,8 @@ test_that("We can compile the standalone program", {
                  stdout = TRUE)
   ans <- as.numeric(sub("[0-9]: ", "", res))
 
-  cmp <- colSums(monty_rng$new(42, 5)$uniform(10, 0, 1))
+  r <- monty_rng_create(seed = 42, n_streams = 5)
+  cmp <- colSums(monty_random_n_uniform(10, 0, 1, r))
   expect_equal(ans, cmp)
 })
 
@@ -862,22 +855,22 @@ test_that("hypergeometric reference implementation agrees with R", {
 ## Found by Charlie, this overflowed and generated garbage answers
 ## below 0.14.x
 test_that("avoid integer overflow", {
-  r1 <- monty_rng$new(seed = 1)
-  r2 <- monty_rng$new(seed = 1)
-  hypergeometric <- hypergeometric_r(function() r1$random_real(1))
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
+  hypergeometric <- hypergeometric_r(function() monty_random_real(r1))
   n1 <- 4334282
   n2 <- 5665718
   size <- 750
   ans1 <- replicate(100, hypergeometric(n1, n2, size))
-  ans2 <- r2$hypergeometric(100, n1, n2, size)
+  ans2 <- monty_random_n_hypergeometric(100, n1, n2, size, r2)
   expect_equal(ans1, ans2)
 })
 
 
 test_that("rng agrees with hypergeometric reference implementation", {
-  rng1 <- monty_rng$new(seed = 1L)
-  rng2 <- monty_rng$new(seed = 1L)
-  hypergeometric <- hypergeometric_r(function() rng1$random_real(1))
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
+  hypergeometric <- hypergeometric_r(function() monty_random_real(rng1))
 
   ## Same three cases as above:
   ## Case 1, use HIP (inversion) algorithm
@@ -885,7 +878,7 @@ test_that("rng agrees with hypergeometric reference implementation", {
   n <- 10
   k <- 8
   r1 <- replicate(500, hypergeometric(m, n, k))
-  r2 <- rng2$hypergeometric(500, m, n, k)
+  r2 <- monty_random_n_hypergeometric(500, m, n, k, rng2)
   expect_equal(r1, r2)
 
   ## Case 1a, HIP but sample exactly half
@@ -893,7 +886,7 @@ test_that("rng agrees with hypergeometric reference implementation", {
   n <- 5
   k <- 5
   r1 <- replicate(500, hypergeometric(m, n, k))
-  r2 <- rng2$hypergeometric(500, m, n, k)
+  r2 <- monty_random_n_hypergeometric(500, m, n, k, rng2)
   expect_equal(r1, r2)
 
   ## Case 2, use H2PE algorithm, simple exit
@@ -901,7 +894,7 @@ test_that("rng agrees with hypergeometric reference implementation", {
   n <- 100
   k <- 80
   r1 <- replicate(500, hypergeometric(m, n, k))
-  r2 <- rng2$hypergeometric(500, m, n, k)
+  r2 <- monty_random_n_hypergeometric(500, m, n, k, rng2)
   expect_equal(r1, r2)
 
   ## Case 3, use H2PE algorithm, squeezing exit
@@ -909,7 +902,7 @@ test_that("rng agrees with hypergeometric reference implementation", {
   n <- 1000
   k <- 800
   r1 <- replicate(500, hypergeometric(m, n, k))
-  r2 <- rng2$hypergeometric(500, m, n, k)
+  r2 <- monty_random_n_hypergeometric(500, m, n, k, rng2)
   expect_equal(r1, r2)
 })
 
@@ -919,10 +912,15 @@ test_that("symmetry property around n1/n2 and k holds", {
   n2 <- 15
   k <- 5
   n <- n1 + n2
-  r1 <- monty_rng$new(seed = 1L)$hypergeometric(500, n1, n2, k)
-  r2 <- monty_rng$new(seed = 1L)$hypergeometric(500, n2, n1, k)
-  r3 <- monty_rng$new(seed = 1L)$hypergeometric(500, n1, n2, n - k)
-  r4 <- monty_rng$new(seed = 1L)$hypergeometric(500, n2, n1, n - k)
+  rng <- function() {
+    monty_rng_create(seed = 11)
+  }
+
+  r1 <- monty_random_n_hypergeometric(500, n1, n2, k, rng())
+  r2 <- monty_random_n_hypergeometric(500, n2, n1, k, rng())
+  r3 <- monty_random_n_hypergeometric(500, n1, n2, n - k, rng())
+  r4 <- monty_random_n_hypergeometric(500, n2, n1, n - k, rng())
+
   expect_equal(r2, k - r1)
   expect_equal(r3, n1 - r1)
   expect_equal(r4, r1 + n2 - k)
@@ -936,88 +934,76 @@ test_that("deterministic hypergeometric returns mean", {
   n <- n1 + n2
   k <- floor(runif(n_reps, 0, n))
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
 
-  expect_equal(rng$hypergeometric(n_reps, n1, n2, k), k * n1 / n)
+  expect_equal(
+    mapply(monty_random_hypergeometric, n1, n2, k, MoreArgs = list(rng)),
+    k * n1 / n)
 
-  expect_equal(rng$state(), state)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
 test_that("hypergeometric random numbers prevent bad inputs", {
-  r <- monty_rng$new(1)
-  expect_equal(r$hypergeometric(1, 0, 0, 0), 0)
+  r <- monty_rng_create(seed = 1)
+  expect_equal(monty_random_hypergeometric(0, 0, 0, r), 0)
 
   expect_error(
-    r$hypergeometric(1, -1, 5, 2),
+    monty_random_hypergeometric(-1, 5, 2, r),
     "Invalid call to hypergeometric with n1 = -1, n2 = 5, k = 2")
   expect_error(
-    r$hypergeometric(1, 5, -1, 2),
+    monty_random_hypergeometric(5, -1, 2, r),
     "Invalid call to hypergeometric with n1 = 5, n2 = -1, k = 2")
   expect_error(
-    r$hypergeometric(1, 5, 3, -2),
+    monty_random_hypergeometric(5, 3, -2, r),
     "Invalid call to hypergeometric with n1 = 5, n2 = 3, k = -2")
   expect_error(
-    r$hypergeometric(1, 5, 3, 10),
+    monty_random_hypergeometric(5, 3, 10, r),
     "Invalid call to hypergeometric with n1 = 5, n2 = 3, k = 10")
 })
 
 
 test_that("fast exits do not draw random numbers", {
-  r <- monty_rng$new(1)
-  s <- r$state()
+  r <- monty_rng_create(seed = 1)
+  s <- monty_rng_state(r)
 
   ## If there's nothing sampled from nothing, return nothing
-  expect_equal(r$hypergeometric(1, 0, 0, 0), 0)
+  expect_equal(monty_random_hypergeometric(0, 0, 0, r), 0)
   ## If there's nothing sampled from something, return nothing
-  expect_equal(r$hypergeometric(1, 10, 5, 0), 0)
+  expect_equal(monty_random_hypergeometric(10, 5, 0, r), 0)
   ## If there's nothing to choose from, take the only option
-  expect_equal(r$hypergeometric(1, 10, 0, 2), 2)
-  expect_equal(r$hypergeometric(1, 0, 10, 2), 0)
+  expect_equal(monty_random_hypergeometric(10, 0, 2, r), 2)
+  expect_equal(monty_random_hypergeometric(0, 10, 2, r), 0)
   ## If we select everything, return everything
-  expect_equal(r$hypergeometric(1, 10, 5, 15), 10)
-  expect_equal(r$hypergeometric(1, 5, 10, 15), 5)
+  expect_equal(monty_random_hypergeometric(10, 5, 15, r), 10)
+  expect_equal(monty_random_hypergeometric(5, 10, 15, r), 5)
 
-  expect_identical(r$state(), s)
-})
-
-
-test_that("numbers on different streams behave as expected", {
-  r <- monty_rng$new(2, seed = 1)
-  m <- 9
-  n <- 3
-  k <- 7
-  res <- r$hypergeometric(10, m, n, k)
-  expect_equal(dim(res), c(10, 2))
-  expect_equal(res[, 1],
-               monty_rng$new(1, seed = 1)$hypergeometric(10, m, n, k))
-  expect_equal(res[, 2],
-               monty_rng$new(1, seed = 1)$jump()$hypergeometric(10, m, n, k))
+  expect_identical(monty_rng_state(r), s)
 })
 
 
 test_that("gamma for a = 1 is the same as exponential", {
-  rng1 <- monty_rng$new(seed = 1L)
-  rng2 <- monty_rng$new(seed = 1L)
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
 
   n <- 10
   b <- 3
 
-  gamma <- rng1$gamma_scale(n, 1, b)
-  exp <- rng2$exponential_rate(n, 1 / b)
+  gamma <- monty_random_n_gamma_scale(n, 1, b, rng1)
+  exp <- monty_random_n_exponential_rate(n, 1 / b, rng2)
 
   expect_equal(gamma, exp)
 })
 
 
 test_that("gamma_rate follows from gamma_scale", {
-  rng1 <- monty_rng$new(seed = 1L)
-  rng2 <- monty_rng$new(seed = 1L)
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
   b <- 3
   expect_identical(
-    rng1$gamma_rate(100, 5, 1 / b),
-    rng2$gamma_scale(100, 5, b))
+    monty_random_n_gamma_rate(100, 5, 1 / b, rng1),
+    monty_random_n_gamma_scale(100, 5, b, rng2))
 })
 
 
@@ -1027,8 +1013,8 @@ test_that("can draw gamma random numbers", {
   b <- 3
   n <- 10000000
 
-  ans1 <- monty_rng$new(1)$gamma_scale(n, a, b)
-  ans2 <- monty_rng$new(1)$gamma_scale(n, a, b)
+  ans1 <- monty_random_n_gamma_scale(n, a, b, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_gamma_scale(n, a, b, monty_rng_create(seed = 1))
   expect_identical(ans1, ans2)
 
   expect_equal(mean(ans1), a * b, tolerance = 1e-3)
@@ -1037,8 +1023,8 @@ test_that("can draw gamma random numbers", {
   ## when a < 1
   a <- 0.5
 
-  ans3 <- monty_rng$new(1)$gamma_scale(n, a, b)
-  ans4 <- monty_rng$new(1)$gamma_scale(n, a, b)
+  ans3 <- monty_random_n_gamma_scale(n, a, b, monty_rng_create(seed = 1))
+  ans4 <- monty_random_n_gamma_scale(n, a, b, monty_rng_create(seed = 1))
   expect_identical(ans3, ans4)
 
   expect_equal(mean(ans3), a * b, tolerance = 1e-3)
@@ -1051,25 +1037,26 @@ test_that("deterministic gamma returns mean", {
   a <- as.numeric(sample(10, n_reps, replace = TRUE))
   b <- as.numeric(sample(10, n_reps, replace = TRUE))
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
 
-  expect_equal(rng$gamma_scale(n_reps, a, b), a * b)
-
-  expect_equal(rng$state(), state)
+  expect_equal(
+    mapply(monty_random_gamma_scale, a, b, MoreArgs = list(rng)),
+    a * b)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
 test_that("gamma random numbers prevent bad inputs", {
-  r <- monty_rng$new(1)
-  expect_equal(r$gamma_scale(1, 0, 0), 0)
-  expect_equal(r$gamma_scale(1, Inf, Inf), Inf)
+  r <- monty_rng_create(seed = 1)
+  expect_equal(monty_random_gamma_scale(0, 0, r), 0)
+  expect_equal(monty_random_gamma_scale(Inf, Inf, r), Inf)
 
   expect_error(
-    r$gamma_scale(1, -1.1, 5.1),
+    monty_random_gamma_scale(-1.1, 5.1, r),
     "Invalid call to gamma with shape = -1.1, scale = 5.1")
   expect_error(
-    r$gamma_scale(1, 5.1, -1.1),
+    monty_random_gamma_scale(5.1, -1.1, r),
     "Invalid call to gamma with shape = 5.1, scale = -1.1")
 })
 
@@ -1078,7 +1065,8 @@ test_that("can generate negative binomial numbers", {
   m <- 1000000
   n <- 958
   p <- 0.004145
-  yf <- monty_rng$new(1)$negative_binomial_prob(m, n, p)
+  r <- monty_rng_create(seed = 1)
+  yf <- monty_random_n_negative_binomial_prob(m, n, p, r)
 
   expect_equal(mean(yf), (1 - p) * n / p, tolerance = 1e-3)
   expect_equal(var(yf), ((1 - p) * n) / p^2, tolerance = 1e-2)
@@ -1086,13 +1074,14 @@ test_that("can generate negative binomial numbers", {
 
 
 test_that("negative_binomial_mu follows from negative_binomial_prob", {
-  rng1 <- monty_rng$new(seed = 1L)
-  rng2 <- monty_rng$new(seed = 1L)
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
   prob <- 0.3
   size <- 20
+  mu <- size * (1 - prob) / prob
   expect_identical(
-    rng1$negative_binomial_mu(100, size, size * (1 - prob) / prob),
-    rng2$negative_binomial_prob(100, size, prob))
+    monty_random_n_negative_binomial_mu(100, size, mu, rng1),
+    monty_random_n_negative_binomial_prob(100, size, prob, rng2))
 })
 
 
@@ -1101,21 +1090,24 @@ test_that("deterministic negative binomial returns mean", {
   p <- as.numeric(sample(10, m, replace = TRUE)) / 10
   n <- as.numeric(sample(10, m, replace = TRUE))
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  expect_equal(rng$negative_binomial_prob(m, n, p), (1 - p) * n / p)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  expect_equal(
+    mapply(monty_random_negative_binomial_prob, n, p, MoreArgs = list(rng)),
+    (1 - p) * n / p)
 })
 
 
 test_that("negative binomial prevents bad inputs", {
-  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, 0),
+  r <- monty_rng_create(seed = 1)
+  expect_error(monty_random_negative_binomial_prob(10, 0, r),
                "Invalid call to negative_binomial with size = 10, prob = 0")
-  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 0, 0.5),
+  expect_error(monty_random_negative_binomial_prob(0, 0.5, r),
                "Invalid call to negative_binomial with size = 0, prob = 0.5")
-  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, 1.5),
+  expect_error(monty_random_negative_binomial_prob(10, 1.5, r),
                "Invalid call to negative_binomial with size = 10, prob = 1.5")
-  expect_error(monty_rng$new(1)$negative_binomial_prob(1, 10, Inf),
+  expect_error(monty_random_negative_binomial_prob(10, Inf, r),
                "Invalid call to negative_binomial with size = 10, prob = inf")
-  expect_error(monty_rng$new(1)$negative_binomial_prob(1, Inf, 0.4),
+  expect_error(monty_random_negative_binomial_prob(Inf, 0.4, r),
                "Invalid call to negative_binomial with size = inf, prob = 0.4")
 })
 
@@ -1125,7 +1117,8 @@ test_that("can generate beta-binomial numbers", {
   n <- 100
   a <- 1.5
   b <- 8.5
-  yf <- monty_rng$new(1)$beta_binomial_ab(m, n, a, b)
+  r <- monty_rng_create(seed = 1)
+  yf <- monty_random_n_beta_binomial_ab(m, n, a, b, r)
   expect_equal(mean(yf), n * a / (a + b), tolerance = 1e-3)
   expect_equal(var(yf),
                n * a * b * (a + b + n) / ((a + b)^2 * (a + b + 1)),
@@ -1134,14 +1127,16 @@ test_that("can generate beta-binomial numbers", {
 
 
 test_that("beta_binomial_prob follows from beta_binomial_ab", {
-  rng1 <- monty_rng$new(seed = 1L)
-  rng2 <- monty_rng$new(seed = 1L)
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
   size <- 20
   a <- 2
   b <- 5
+  prob <- a / (a + b)
+  rho <- 1 / (a + b + 1)
   expect_identical(
-    rng1$beta_binomial_prob(100, size, a / (a + b), 1 / (a + b + 1)),
-    rng2$beta_binomial_ab(100, size, a, b))
+    monty_random_n_beta_binomial_prob(100, size, prob, rho, rng1),
+    monty_random_n_beta_binomial_ab(100, size, a, b, rng2))
 })
 
 
@@ -1151,24 +1146,26 @@ test_that("deterministic beta-binomial returns mean", {
   a <- runif(m, 0, 10)
   b <- runif(m, 0, 10)
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-
-  expect_equal(rng$beta_binomial_ab(m, n, a, b), n * a / (a + b))
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  expect_equal(
+    mapply(monty_random_beta_binomial_ab, n, a, b, MoreArgs = list(rng)),
+    n * a / (a + b))
 })
 
 
 test_that("beta-binomial prevents bad inputs", {
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, -1, 2, 5),
+  r <- monty_rng_create(seed = 1)
+  expect_error(monty_random_beta_binomial_ab(-1, 2, 5, r),
                "Invalid call to beta_binomial with size = -1, a = 2, b = 5")
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 0, 5),
+  expect_error(monty_random_beta_binomial_ab(10, 0, 5, r),
                "Invalid call to beta_binomial with size = 10, a = 0, b = 5")
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 2, 0),
+  expect_error(monty_random_beta_binomial_ab(10, 2, 0, r),
                "Invalid call to beta_binomial with size = 10, a = 2, b = 0")
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, Inf, 2, 5),
+  expect_error(monty_random_beta_binomial_ab(Inf, 2, 5, r),
                "Invalid call to beta_binomial with size = inf, a = 2, b = 5")
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, Inf, 5),
+  expect_error(monty_random_beta_binomial_ab(10, Inf, 5, r),
                "Invalid call to beta_binomial with size = 10, a = inf, b = 5")
-  expect_error(monty_rng$new(1)$beta_binomial_ab(1, 10, 2, Inf),
+  expect_error(monty_random_beta_binomial_ab(10, 2, Inf, r),
                "Invalid call to beta_binomial with size = 10, a = 2, b = inf")
 })
 
@@ -1177,33 +1174,33 @@ test_that("can generate samples from the cauchy distribution", {
   ## This one is really hard to validate because the cauchy does not
   ## have any finite moments...
   n <- 100000
-  ans <- monty_rng$new(2)$cauchy(n, 0, 1)
+  ans <- monty_random_n_cauchy(n, 0, 1, monty_rng_create(seed = 2))
   expect_gt(ks.test(ans, "pcauchy")$p.value, 0.3)
   expect_equal(median(ans), 0, tolerance = 0.01)
 })
 
 
 test_that("deterministic cauchy throws", {
-  rng <- monty_rng$new(1, deterministic = TRUE)
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
   expect_error(
-    rng$cauchy(1, 0, 1),
+    monty_random_cauchy(0, 1, rng),
     "Can't use Cauchy distribution deterministically; it has no mean")
 })
 
 
 test_that("cauchy density is correct", {
   expect_equal(
-    eval(distr_cauchy$expr$density, list(x = 1:10, scale = 2, location = 3)), 
+    eval(distr_cauchy$expr$density, list(x = 1:10, scale = 2, location = 3)),
     dcauchy(1:10, scale = 2, location = 3, log = TRUE))
 })
 
 
 test_that("regression tests of binomial issues", {
-  rng <- monty_rng$new(1, seed = 42)
+  rng <- monty_rng_create(seed = 42)
   ## all values 0..n represented:
-  expect_setequal(rng$binomial(10000, 1, 0.5), 0:1)
-  expect_setequal(rng$binomial(10000, 4, 0.2), 0:4)
-  expect_setequal(rng$binomial(10000, 10, 0.5), 0:10)
+  expect_setequal(monty_random_n_binomial(10000, 1, 0.5, rng), 0:1)
+  expect_setequal(monty_random_n_binomial(10000, 4, 0.2, rng), 0:4)
+  expect_setequal(monty_random_n_binomial(10000, 10, 0.5, rng), 0:10)
 })
 
 
@@ -1216,31 +1213,31 @@ test_that("can fetch rng state", {
 
 
 test_that("exponential by mean agrees with rate", {
-  ans1 <- monty_rng$new(1)$exponential_rate(100, 0.5)
-  ans2 <- monty_rng$new(1)$exponential_mean(100, 2)
+  ans1 <- monty_random_n_exponential_rate(100, 0.5, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_exponential_mean(100, 2, monty_rng_create(seed = 1))
   expect_equal(ans1, ans2)
 })
 
 
 test_that("can sample from the beta distribution", {
-  rng <- monty_rng$new(1, seed = 42)
+  rng <- monty_rng_create(seed = 42)
   a <- 2.5
   b <- 1.5
-  r <- rng$beta(1000000, a, b)
+  r <- monty_random_n_beta(1000000, a, b, rng)
   expect_equal(mean(r), a / (a + b), tolerance = 1e-3)
   expect_equal(var(r), a * b / ((a + b)^2 * (a + b + 1)), tolerance = 1e-2)
 })
 
 
 test_that("beta generation algorithm is correct", {
-  rng1 <- monty_rng$new(1, seed = 42)
-  rng2 <- monty_rng$new(1, seed = 42)
+  rng1 <- monty_rng_create(seed = 42)
+  rng2 <- monty_rng_create(seed = 42)
   a <- 2.5
   b <- 1.5
-  r <- rng1$beta(1, a, b)
+  r <- monty_random_beta(a, b, rng1)
 
-  x <- rng2$gamma_scale(1, a, 1)
-  y <- rng2$gamma_scale(1, b, 1)
+  x <- monty_random_gamma_scale(a, 1, rng2)
+  y <- monty_random_gamma_scale(b, 1, rng2)
   expect_equal(r, x / (x + y))
 })
 
@@ -1250,12 +1247,14 @@ test_that("deterministic beta returns mean", {
   a <- rexp(n)
   b <- rexp(n)
 
-  rng <- monty_rng$new(1, deterministic = TRUE)
-  state <- rng$state()
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
 
-  expect_equal(rng$beta(n, a, b), a / (a + b))
+  expect_equal(
+    mapply(monty_random_beta, a, b, MoreArgs = list(rng)),
+    a / (a + b))
 
-  expect_equal(rng$state(), state)
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -1263,12 +1262,12 @@ test_that("can generate from truncated normal", {
   set.seed(1)
   min <- -1
   max <- 2
-  r <- monty_rng$new()
+  r <- monty_rng_create(seed = 1)
 
   res <- replicate(10, {
     cmp <- rnorm(10000)
     cmp <- cmp[cmp >= min & cmp <= max]
-    res <- r$truncated_normal(10000, 0, 1, min, max)
+    res <- monty_random_n_truncated_normal(10000, 0, 1, min, max, r)
     suppressWarnings(ks.test(res, cmp)$p.value)
   })
   expect_gt(sum(res > 0.05), 5)
@@ -1279,14 +1278,14 @@ test_that("can generate from truncated normal, 1 sided", {
   set.seed(1)
   min <- -1
   max <- 2
-  r <- monty_rng$new()
+  r <- monty_rng_create(seed = 1)
 
   min <- -1
   max <- Inf
   res <- replicate(10, {
     cmp <- rnorm(10000)
     cmp <- cmp[cmp >= min & cmp <= max]
-    res <- r$truncated_normal(10000, 0, 1, min, max)
+    res <- monty_random_n_truncated_normal(10000, 0, 1, min, max, r)
     suppressWarnings(ks.test(res, cmp)$p.value)
   })
   expect_gt(sum(res > 0.05), 5)
@@ -1296,22 +1295,22 @@ test_that("can generate from truncated normal, 1 sided", {
 test_that("can handle other one sided distribution", {
   min <- -1
   max <- 2
-  r1 <- monty_rng$new(seed = 42)
-  r2 <- monty_rng$new(seed = 42)
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
 
   min <- -1
   max <- Inf
-  y1 <- r1$truncated_normal(10, 2, 3, -1, Inf)
-  y2 <- r2$truncated_normal(10, -2, 3, -Inf, 1)
+  y1 <- monty_random_n_truncated_normal(10, 2, 3, -1, Inf, r1)
+  y2 <- monty_random_n_truncated_normal(10, -2, 3, -Inf, 1, r2)
   expect_equal(y2, -y1)
 })
 
 
 test_that("can sample untruncated normals from truncated normal", {
-  r1 <- monty_rng$new(seed = 42)
-  r2 <- monty_rng$new(seed = 42)
-  y1 <- r1$truncated_normal(10, 2, 3, -Inf, Inf)
-  y2 <- r2$normal(10, 2, 3)
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
+  y1 <- monty_random_n_truncated_normal(10, 2, 3, -Inf, Inf, r1)
+  y2 <- monty_random_n_normal(10, 2, 3, r2)
   expect_identical(y1, y2)
 })
 
@@ -1321,13 +1320,13 @@ test_that("can compute mean of truncated normal", {
   sd <- 3
   min <- -1
   max <- 2
-  r <- monty_rng$new(seed = 42, deterministic = TRUE)
-  s0 <- r$state()
-  y <- r$truncated_normal(1, mean, sd, min, max)
+  r <- monty_rng_create(seed = 42, deterministic = TRUE)
+  s0 <- monty_rng_state(r)
+  y <- monty_random_truncated_normal(mean, sd, min, max, r)
   num <- integrate(function(x) x * dnorm(x, mean, sd), min, max)$value
   den <- integrate(function(x) dnorm(x, mean, sd), min, max)$value
   expect_equal(y, num / den)
-  expect_equal(r$state(), s0)
+  expect_equal(monty_rng_state(r), s0)
 })
 
 
@@ -1335,12 +1334,12 @@ test_that("can generate from truncated normal from tails", {
   set.seed(1)
   min <- 2
   max <- 4
-  r <- monty_rng$new()
+  r <- monty_rng_create(seed = 1)
 
   res <- replicate(10, {
     cmp <- rnorm(10000)
     cmp <- cmp[cmp >= min & cmp <= max]
-    res <- r$truncated_normal(10000, 0, 1, min, max)
+    res <- monty_random_n_truncated_normal(10000, 0, 1, min, max, r)
     suppressWarnings(ks.test(res, cmp)$p.value)
   })
   expect_gt(sum(res > 0.05), 5)
@@ -1351,34 +1350,13 @@ test_that("can generate from truncated normal from lower tail", {
   set.seed(1)
   min <- -6
   max <- -1
-  r <- monty_rng$new()
+  r <- monty_rng_create(seed = 1)
 
   res <- replicate(10, {
     cmp <- rnorm(10000)
     cmp <- cmp[cmp >= min & cmp <= max]
-    res <- r$truncated_normal(10000, 0, 1, min, max)
+    res <- monty_random_n_truncated_normal(10000, 0, 1, min, max, r)
     suppressWarnings(ks.test(res, cmp)$p.value)
   })
   expect_gt(sum(res > 0.05), 5)
-})
-
-
-test_that("can set state into rng", {
-  r1 <- monty_rng$new()
-  r2 <- monty_rng$new()
-
-  s1 <- r1$state()
-  r2$set_state(s1)
-
-  expect_equal(r2$random_real(10),
-               r1$random_real(10))
-})
-
-
-test_that("error if rng state wrong length", {
-  r <- monty_rng$new()
-  expect_error(
-    r$set_state(raw(4)),
-    "'state' must be a raw vector of length 32 (but was 4)",
-    fixed = TRUE)
 })
