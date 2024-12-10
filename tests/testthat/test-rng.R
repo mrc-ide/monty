@@ -616,6 +616,22 @@ test_that("Can vary vector parameters by generator for multinomial", {
 })
 
 
+test_that("can validate multinomial inputs", {
+  r <- monty_rng_create(seed = 1, n_streams = 3)
+  expect_error(
+    monty_random_multinomial(5, matrix(1, 7, 2), r),
+    "Expected 'prob' to have 3 or 1 columns, not 2")
+  expect_error(
+    monty_random_multinomial(5, array(1, c(7, 2, 3)), r),
+    "Expected 'prob' to be a matrix")
+
+  r <- monty_rng_create(seed = 1, n_streams = 1)
+  expect_error(
+    monty_random_multinomial(5, matrix(1, 7, 2), r),
+    "Expected 'prob' to have 1 column, not 2")
+})
+
+
 test_that("deterministic rbinom returns mean", {
   m <- 10
   n <- as.numeric(sample(10, m, replace = TRUE))

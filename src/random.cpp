@@ -61,8 +61,7 @@ struct input_array {
       fixed = ncol == 1;
       if (!fixed && static_cast<size_t>(ncol) != expected) {
         if (expected == 1) {
-          cpp11::stop("Expected '%s' to have %d columns, not %d",
-                      name, static_cast<int>(expected), ncol);
+          cpp11::stop("Expected '%s' to have 1 column, not %d", name, ncol);
         } else {
           cpp11::stop("Expected '%s' to have %d or 1 columns, not %d",
                       name, static_cast<int>(expected), ncol);
