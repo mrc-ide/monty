@@ -632,6 +632,15 @@ test_that("can validate multinomial inputs", {
 })
 
 
+test_that("deterministic multinomial returns expectation", {
+  r <- monty_rng_create(seed = 1, deterministic = TRUE)
+  p <- runif(10)
+  p <- p / sum(p)
+  res <- monty_random_multinomial(100, p, r)
+  expect_equal(res, 100 * p)
+})
+
+
 test_that("deterministic rbinom returns mean", {
   m <- 10
   n <- as.numeric(sample(10, m, replace = TRUE))
