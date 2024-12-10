@@ -49,7 +49,6 @@ test_that("Can draw samples from many single-variable MVNs", {
   r1 <- monty_rng_create(seed = 42, n_streams = 4)
   r2 <- monty_rng_create(seed = 42, n_streams = 4)
   vcv <- array(1, c(1, 1, 4))
-  x <- runif(4)
   expect_equal(make_rmvnorm(vcv)(r2),
                monty_random_normal(0, 1, r1))
   expect_equal(make_rmvnorm(0.1 * vcv)(r2),

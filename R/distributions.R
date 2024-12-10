@@ -38,18 +38,29 @@ make_rmvnorm <- function(vcv) {
   } else {
     stopifnot(length(dim(vcv)) == 3)
     m <- dim(vcv)[[3]]
-    browser()
-    ## OK, the issue here is what we do if the number of streams and
-    ## vcv don't match; we do need to use a different approach, and
-    ## this is best done in C code.
+    ## At this point we have a vcv that has 'm' entries; we'll be
+    ## given a rng that has either 1 stream (PT) or 'm' streams
+    ## (simultaneous sampling)
     if (n == 1) {
-      sd <- sqrt(drop(vcv))
+      r <- sqrt(drop(vcv))
     } else {
       r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
-      function(rng) {
-        mu <- monty_random_n_normal(n * m, 0, 1, rng)
-        vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
+    }
+    function(rng) {
+      n_streams <- length(rng)
+      stopifnot(any(n_streams == c(1, m)))
+      len <- if (n_streams == 1) n * m else n
+      rand <- monty_random_n_normal(len, 0, 1, rng)
+      if (n == 1) {
+        ret <- drop(rand) * r
+      } else {
+        ret <- vapply(seq_len(m), function(i) rand[, i] %*% r[, , i],
+                      numeric(n))
+        if (m == 1 && !attr(rng, "preserve_stream_dimension")) {
+          dim(ret) <- NULL
+        }
       }
+      ret
     }
   }
 }
