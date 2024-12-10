@@ -330,6 +330,20 @@ extern "C" SEXP _monty_cpp_monty_random_n_truncated_normal(SEXP n_samples, SEXP 
     return cpp11::as_sexp(cpp_monty_random_n_truncated_normal(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(min), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(max), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
+// random.cpp
+cpp11::doubles cpp_monty_random_multinomial(cpp11::doubles r_size, cpp11::doubles r_prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_multinomial(SEXP r_size, SEXP r_prob, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_multinomial(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_multinomial(size_t n_samples, cpp11::doubles r_size, cpp11::doubles r_prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_multinomial(SEXP n_samples, SEXP r_size, SEXP r_prob, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_multinomial(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
 // random_legacy.cpp
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic);
 extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP deterministic) {
@@ -544,6 +558,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_gamma_scale",              (DL_FUNC) &_monty_cpp_monty_random_gamma_scale,              3},
     {"_monty_cpp_monty_random_hypergeometric",           (DL_FUNC) &_monty_cpp_monty_random_hypergeometric,           4},
     {"_monty_cpp_monty_random_log_normal",               (DL_FUNC) &_monty_cpp_monty_random_log_normal,               3},
+    {"_monty_cpp_monty_random_multinomial",              (DL_FUNC) &_monty_cpp_monty_random_multinomial,              3},
     {"_monty_cpp_monty_random_n_beta",                   (DL_FUNC) &_monty_cpp_monty_random_n_beta,                   4},
     {"_monty_cpp_monty_random_n_beta_binomial_ab",       (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_ab,       5},
     {"_monty_cpp_monty_random_n_beta_binomial_prob",     (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_prob,     5},
@@ -555,6 +570,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_gamma_scale",            (DL_FUNC) &_monty_cpp_monty_random_n_gamma_scale,            4},
     {"_monty_cpp_monty_random_n_hypergeometric",         (DL_FUNC) &_monty_cpp_monty_random_n_hypergeometric,         5},
     {"_monty_cpp_monty_random_n_log_normal",             (DL_FUNC) &_monty_cpp_monty_random_n_log_normal,             4},
+    {"_monty_cpp_monty_random_n_multinomial",            (DL_FUNC) &_monty_cpp_monty_random_n_multinomial,            4},
     {"_monty_cpp_monty_random_n_negative_binomial_mu",   (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_mu,   4},
     {"_monty_cpp_monty_random_n_negative_binomial_prob", (DL_FUNC) &_monty_cpp_monty_random_n_negative_binomial_prob, 4},
     {"_monty_cpp_monty_random_n_normal_box_muller",      (DL_FUNC) &_monty_cpp_monty_random_n_normal_box_muller,      4},

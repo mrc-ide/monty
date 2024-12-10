@@ -184,6 +184,14 @@ cpp_monty_random_n_truncated_normal <- function(n_samples, mean, sd, min, max, p
   .Call(`_monty_cpp_monty_random_n_truncated_normal`, n_samples, mean, sd, min, max, ptr)
 }
 
+cpp_monty_random_multinomial <- function(r_size, r_prob, ptr) {
+  .Call(`_monty_cpp_monty_random_multinomial`, r_size, r_prob, ptr)
+}
+
+cpp_monty_random_n_multinomial <- function(n_samples, r_size, r_prob, ptr) {
+  .Call(`_monty_cpp_monty_random_n_multinomial`, n_samples, r_size, r_prob, ptr)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }

@@ -54,7 +54,7 @@ template <typename real_type, typename rng_state_type,
           typename T, typename U>
 __host__ __device__
 void multinomial(rng_state_type& rng_state, int size, const T& prob,
-                 int prob_len, U& ret) {
+                 int prob_len, U ret) {
   real_type p_tot = 0;
   for (int i = 0; i < prob_len; ++i) {
     if (prob[i] < 0) {
