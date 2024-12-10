@@ -502,23 +502,27 @@ test_that("multinomial algorithm is correct", {
   size <- 20
   n <- 5
 
-  res <- monty_rng$new(1, seed = 1L)$multinomial(n, size, prob)
-
   ## Separate implementation of the core algorithm:
   cmp_multinomial <- function(rng, size, prob) {
     p <- prob / (1 - cumsum(c(0, prob[-length(prob)])))
     ret <- numeric(length(prob))
     for (i in seq_len(length(prob) - 1L)) {
-      ret[i] <- rng$binomial(1, size, p[i])
+      ret[i] <- monty_random_binomial(size, p[i], rng)
       size <- size - ret[i]
     }
     ret[length(ret)] <- size
     ret
   }
 
-  rng2 <- monty_rng$new(1, seed = 1L)
-  cmp <- replicate(n, cmp_multinomial(rng2, size, prob))
-  expect_equal(res, cmp)
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
+  res1 <- monty_random_multinomial(size, prob, r1)
+  res2 <- cmp_multinomial(r2, size, prob)
+  expect_equal(res1, res2)
+
+  res1 <- monty_random_n_multinomial(n, size, prob, r1)
+  res2 <- replicate(n, cmp_multinomial(r2, size, prob))
+  expect_equal(res1, res2)
 })
 
 
@@ -526,7 +530,8 @@ test_that("multinomial expectation is correct", {
   p <- runif(10)
   p <- p / sum(p)
   n <- 10000
-  res <- monty_rng$new(1, seed = 1L)$multinomial(n, 100, p)
+  rng <- monty_rng_create(seed = 1)
+  res <- monty_random_n_multinomial(n, 100, p, rng)
   expect_equal(dim(res), c(10, n))
   expect_equal(colSums(res), rep(100, n))
   expect_equal(rowMeans(res), p * 100, tolerance = 1e-2)
@@ -539,7 +544,8 @@ test_that("multinomial allows zero probs", {
   p <- p / sum(p)
   n <- 500
   size <- 100
-  res <- monty_rng$new(1, seed = 1L)$multinomial(n, size, p)
+  rng <- monty_rng_create(seed = 1)
+  res <- monty_random_n_multinomial(n, size, p, rng)
 
   expect_equal(res[4, ], rep(0, n))
   expect_equal(colSums(res), rep(size, n))
@@ -549,104 +555,64 @@ test_that("multinomial allows zero probs", {
 test_that("multinomial allows non-normalised prob", {
   p <- runif(10, 0, 10)
   n <- 50
-  res1 <- monty_rng$new(1, seed = 1L)$multinomial(n, 100, p)
-  res2 <- monty_rng$new(1, seed = 1L)$multinomial(n, 100, p / sum(p))
+  res1 <- monty_random_n_multinomial(n, 100, p, monty_rng_create(seed = 1))
+  res2 <- monty_random_n_multinomial(n, 100, p / sum(p),
+                                     monty_rng_create(seed = 1))
   expect_equal(res1, res2)
 })
 
 
 test_that("Invalid prob throws an error", {
-  r <- monty_rng$new(1, seed = 1L)
+  r <- monty_rng_create(seed = 1)
   expect_error(
-    r$multinomial(1, 10, c(0, 0, 0)),
+    monty_random_multinomial(10, c(0, 0, 0), r),
     "No positive prob in call to multinomial")
   expect_error(
-    r$multinomial(1, 10, c(-0.1, 0.6, 0.5)),
+    monty_random_multinomial(10, c(-0.1, 0.6, 0.5), r),
     "Negative prob passed to multinomial")
 })
 
 
-test_that("Can vary parameters for multinomial, single generator", {
+test_that("Can vary scalar parameters by generator for multinomial", {
   np <- 7L
-  ng <- 1L
-  size <- 13
+  ng <- 3L
   n <- 17L
-  prob <- matrix(runif(np * n), np, n)
-  prob <- prob / rep(colSums(prob), each = np)
 
-  rng <- monty_rng$new(1, seed = 1L)
-  cmp <- vapply(seq_len(n), function(i) rng$multinomial(1, size, prob[, i]),
-                numeric(np))
-  res <- monty_rng$new(1, seed = 1L)$multinomial(n, size, prob)
+  # prob <- matrix(runif(np * ng), np, ng)
+  prob <- runif(np)
+  size <- 10 * seq_len(ng)
+
+  r <- monty_rng_create(seed = 1, n_streams = ng)
+  state <- matrix(monty_rng_state(r), ncol = ng)
+
+  cmp <- vapply(seq_len(ng), function(i) {
+    ri <- monty_rng_create(seed = state[, i])
+    monty_random_n_multinomial(n, size[i], prob, ri)
+  }, matrix(numeric(), np, n))
+
+  res <- monty_random_n_multinomial(n, size, prob, r)
   expect_equal(res, cmp)
-
-  expect_error(
-    monty_rng$new(1, seed = 1L)$multinomial(n, size, prob[, -5]),
-    "If 'prob' is a matrix, it must have 17 columns")
-  expect_error(
-    monty_rng$new(1, seed = 1L)$multinomial(n, size, prob[0, ]),
-    "Input parameters imply length of 'prob' of only 0 (< 2)",
-    fixed = TRUE)
-  expect_error(
-    monty_rng$new(1, seed = 1L)$multinomial(n, size, prob[1, , drop = FALSE]),
-    "Input parameters imply length of 'prob' of only 1 (< 2)",
-    fixed = TRUE)
 })
 
 
-test_that("Can vary parameters by generator for multinomial", {
+test_that("Can vary vector parameters by generator for multinomial", {
   np <- 7L
   ng <- 3L
   size <- 13
   n <- 17L
 
-  prob <- array(runif(np * ng), c(np, 1, ng))
-  prob <- prob / rep(colSums(prob), each = np)
+  prob <- matrix(runif(np * ng), np, ng)
 
-  state <- matrix(monty_rng$new(ng, seed = 1L)$state(), ncol = ng)
+  r <- monty_rng_create(seed = 1, n_streams = ng)
+  state <- matrix(monty_rng_state(r), ncol = ng)
+
   cmp <- vapply(seq_len(ng), function(i) {
-    monty_rng$new(1, seed = state[, i])$multinomial(n, size, prob[, , i])
+    ri <- monty_rng_create(seed = state[, i])
+    monty_random_n_multinomial(n, size, prob[, i], ri)
   }, matrix(numeric(), np, n))
 
-  res <- monty_rng$new(ng, seed = 1L)$multinomial(n, size, prob)
+  res <- monty_random_n_multinomial(n, size, prob, r)
   expect_equal(res, cmp)
-})
-
-
-test_that("Can vary parameters for multinomial, multiple generators", {
-  np <- 7L
-  ng <- 3L
-  size <- 13
-  n <- 17L
-  prob <- array(runif(np * n * ng), c(np, n, ng))
-  prob <- prob / rep(colSums(prob), each = np)
-
-  ## Setting up the expectation here is not easy, we need a set of
-  ## generators. This test exploits the fact that we alredy worked out
-  ## we could vary a parameter over draws with a single generator.
-  state <- matrix(monty_rng$new(ng, seed = 1L)$state(), ncol = ng)
-  cmp <- vapply(seq_len(ng), function(i) {
-    monty_rng$new(1, seed = state[, i])$multinomial(n, size, prob[, , i])
-  }, matrix(numeric(), np, n))
-
-  res <- monty_rng$new(ng, seed = 1L)$multinomial(n, size, prob)
-  expect_equal(res, cmp)
-
-  expect_error(
-    monty_rng$new(ng, seed = 1L)$multinomial(n, size, prob[, -5, ]),
-    "If 'prob' is a 3d array, it must have 1 or 17 columns")
-  expect_error(
-    monty_rng$new(ng, seed = 1L)$multinomial(n, size, prob[, , -1]),
-    "If 'prob' is a 3d array, it must have 3 layers")
-  expect_error(
-    monty_rng$new(ng, seed = 1L)$multinomial(n, size, prob[0, , ]),
-    "Input parameters imply length of 'prob' of only 0 (< 2)",
-    fixed = TRUE)
-  ## Final bad inputs:
-  p4 <- array(prob, c(dim(prob), 1))
-  expect_error(
-    monty_rng$new(ng, seed = 1L)$multinomial(n, size, p4),
-    "'prob' must be a vector, matrix or 3d array")
 })
 
 
@@ -1366,11 +1332,11 @@ test_that("can draw weibull random numbers", {
   shape <- 5
   scale <- 3
   n <- 10000000
-  
+
   ans1 <- monty_random_n_weibull(n, shape, scale, monty_rng_create(seed = 1))
   ans2 <- monty_random_n_weibull(n, shape, scale, monty_rng_create(seed = 1))
   expect_identical(ans1, ans2)
-  
+
   expect_equal(mean(ans1), scale * gamma(1 + 1 / shape), tolerance = 1e-3)
   true_var <- scale^2 * (gamma(1 + 2 / shape) - gamma(1 + 1 / shape)^2)
   expect_equal(var(ans1), true_var, tolerance = 1e-3)
@@ -1381,10 +1347,10 @@ test_that("deterministic weibull returns mean", {
   n_reps <- 10
   shape <- as.numeric(sample(10, n_reps, replace = TRUE))
   scale <- as.numeric(sample(10, n_reps, replace = TRUE))
-  
+
   rng <- monty_rng_create(seed = 1, deterministic = TRUE)
   state <- monty_rng_state(rng)
-  
+
   expect_equal(
     mapply(monty_random_weibull, shape, scale, MoreArgs = list(rng)),
     scale * gamma(1 + 1 / shape))
@@ -1396,7 +1362,7 @@ test_that("weibull random numbers prevent bad inputs", {
   r <- monty_rng_create(seed = 1)
   expect_equal(monty_random_weibull(0, 0, r), 0)
   expect_equal(monty_random_weibull(Inf, Inf, r), Inf)
-  
+
   expect_error(
     monty_random_weibull(-1.1, 5.1, r),
     "Invalid call to Weibull with shape = -1.1, scale = 5.1")
@@ -1410,13 +1376,13 @@ test_that("can draw log-normal random numbers", {
   meanlog <- 1.5
   sdlog <- 0.5
   n <- 10000000
-  
-  ans1 <- 
+
+  ans1 <-
     monty_random_n_log_normal(n, meanlog, sdlog, monty_rng_create(seed = 1))
-  ans2 <- 
+  ans2 <-
     monty_random_n_log_normal(n, meanlog, sdlog, monty_rng_create(seed = 1))
   expect_identical(ans1, ans2)
-  
+
   expect_equal(mean(ans1), exp(meanlog + sdlog^2 / 2), tolerance = 1e-3)
   true_var <- (exp(sdlog^2) - 1) * exp(2 * meanlog + sdlog^2)
   expect_equal(var(ans1), true_var, tolerance = 1e-2)
@@ -1427,10 +1393,10 @@ test_that("deterministic log-normal returns mean", {
   n_reps <- 10
   meanlog <- as.numeric(sample(seq(-10, 10), n_reps, replace = TRUE))
   sdlog <- as.numeric(sample(10, n_reps, replace = TRUE))
-  
+
   rng <- monty_rng_create(seed = 1, deterministic = TRUE)
   state <- monty_rng_state(rng)
-  
+
   expect_equal(
     mapply(monty_random_log_normal, meanlog, sdlog, MoreArgs = list(rng)),
     exp(meanlog + sdlog^2 / 2))
@@ -1440,7 +1406,7 @@ test_that("deterministic log-normal returns mean", {
 
 test_that("log-normal random numbers prevent bad inputs", {
   r <- monty_rng_create(seed = 1)
-  
+
   expect_error(
     monty_random_log_normal(1.1, -5.1, r),
     "Invalid call to log_normal with meanlog = 1.1, sdlog = -5.1")
