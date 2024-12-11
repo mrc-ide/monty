@@ -337,7 +337,22 @@ cpp11::doubles monty_random_sample_n_4(Fn fn, size_t n_samples,
   return r_y;
 }
 
+
+template <typename T>
+SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
+  auto seed = monty::random::r::as_rng_seed<typename T::rng_state>(r_seed);
+  T *rng = new T(n_streams, seed, deterministic);
+  return cpp11::external_pointer<T>(rng);
+}
+
+
 // Real functions that we export
+[[cpp11::register]]
+SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic) {
+  return monty_rng_alloc<default_rng64>(r_seed, n_streams, deterministic);
+}
+
+
 [[cpp11::register]]
 cpp11::sexp cpp_monty_rng_state(cpp11::sexp ptr) {
   auto * rng = safely_read_externalptr<default_rng64>(ptr, "state");

@@ -156,6 +156,21 @@ monty_rng_long_jump <- function(state, n = 1) {
 }
 
 
+## This was used previously, we have a variant of this in dust2, as
+## well.
+monty_rng_distributed_state <- function(seed = NULL, n_nodes = 1L) {
+  rng <- monty_rng_create(seed = seed)
+  ret <- vector("list", n_nodes)
+  for (i in seq_len(n_nodes)) {
+    ret[[i]] <- monty_rng_state(rng)
+    if (i < n_nodes) {
+      monty_rng_long_jump(rng)
+    }
+  }
+  ret
+}
+
+
 ##' @export
 print.monty_rng_state <- function(x, ...) {
   cli::cli_h1("<monty_rng_state>")
