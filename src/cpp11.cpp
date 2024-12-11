@@ -6,6 +6,13 @@
 #include <R_ext/Visibility.h>
 
 // random.cpp
+SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic);
+extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP deterministic) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(monty_rng_alloc(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(r_seed), cpp11::as_cpp<cpp11::decay_t<int>>(n_streams), cpp11::as_cpp<cpp11::decay_t<bool>>(deterministic)));
+  END_CPP11
+}
+// random.cpp
 cpp11::sexp cpp_monty_rng_state(cpp11::sexp ptr);
 extern "C" SEXP _monty_cpp_monty_rng_state(SEXP ptr) {
   BEGIN_CPP11
@@ -402,6 +409,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_rng_long_jump",                   (DL_FUNC) &_monty_cpp_monty_rng_long_jump,                   2},
     {"_monty_cpp_monty_rng_set_state",                   (DL_FUNC) &_monty_cpp_monty_rng_set_state,                   2},
     {"_monty_cpp_monty_rng_state",                       (DL_FUNC) &_monty_cpp_monty_rng_state,                       1},
+    {"_monty_monty_rng_alloc",                           (DL_FUNC) &_monty_monty_rng_alloc,                           3},
     {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          2},
     {NULL, NULL, 0}
 };
