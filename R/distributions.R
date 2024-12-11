@@ -2,7 +2,17 @@
 ## because it's quite gross.  Mostly it is trying to tidy up some of
 ## the ways that we might draw from multivariate normal distributions.
 ## This is complicated by wanting to cache the results of the vcv
-## decomposition where possible.
+## decomposition where possible. We don't expose this anywhere to the
+## user, and doing so is difficult because we'd need a thread-safe way
+## of doing matrix multiplication (and possibly Cholesky
+## factorisation) but this involves LAPACK (and therefore linking to
+## libfortran) and is not guaranteed to be thread-safe.
+
+## It's also tangled up with the distribution support, being different
+## to most distributions in having vector output and *matrix*
+## input. The most effficient way of using this really requires that
+## we have the decomposition cached wherever possible, so it does not
+## neatly fit into our usual approach at all.
 
 ## This is the form of the Cholesky factorisation of a matrix we use
 ## in the multivariate normal sampling.
@@ -48,9 +58,13 @@ make_rmvnorm <- function(vcv) {
     }
     function(rng) {
       n_streams <- length(rng)
-      stopifnot(any(n_streams == c(1, m)))
-      len <- if (n_streams == 1) n * m else n
-      rand <- monty_random_n_normal(len, 0, 1, rng)
+      if (n_streams == 1) {
+        rand <- matrix(monty_random_n_normal(n * m, 0, 1, rng), n, m)
+      } else if (n_streams == m) {
+        rand <- monty_random_n_normal(n, 0, 1, rng)
+      } else {
+        stop("Invalid input in rng")
+      }
       if (n == 1) {
         ret <- drop(rand) * r
       } else {

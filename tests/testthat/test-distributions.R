@@ -62,9 +62,6 @@ test_that("Can draw samples from many centred single-variable MVNs", {
   r1 <- monty_rng_create(seed = 42, n_streams = 4)
   r2 <- monty_rng_create(seed = 42, n_streams = 4)
   vcv <- array(1, c(1, 1, 4))
-  x <- runif(4)
-  expect_equal(make_rmvnorm(vcv)(r2),
-               monty_random_normal(0, 1, r1))
 
   expect_equal(make_rmvnorm(vcv)(r2),
                monty_random_normal(0, 1, r1))
@@ -78,7 +75,6 @@ test_that("Can draw samples from many centred single-variable MVNs", {
 test_that("Can draw samples from many bivariate MVNs", {
   r1 <- monty_rng_create(seed = 42, n_streams = 5)
   r2 <- monty_rng_create(seed = 42, n_streams = 5)
-  r3 <- monty_rng_create(seed = 42, n_streams = 5)
   vcv <- array(0, c(2, 2, 5))
   set.seed(1)
   vcv[1, 1, ] <- 1:5
@@ -94,5 +90,37 @@ test_that("Can draw samples from many bivariate MVNs", {
     r <- monty_rng_create(seed = rng_state[, i])
     make_rmvnorm(vcv[, , i])(r)
   }, numeric(2))
+  expect_identical(y, z)
+})
+
+
+test_that("can draw from single-variable mvns with a single stream", {
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
+  vcv <- array(1, c(1, 1, 4))
+
+  expect_equal(make_rmvnorm(vcv)(r2),
+               monty_random_n_normal(4, 0, 1, r1))
+  expect_equal(make_rmvnorm(0.1 * vcv)(r2),
+               monty_random_n_normal(4, 0, 1, r1) * sqrt(0.1))
+  expect_equal(make_rmvnorm(0.1 * 1:4 * vcv)(r2),
+               monty_random_n_normal(4, 0, 1, r1) * sqrt(0.1 * 1:4))
+})
+
+
+test_that("Can draw samples from many bivariate MVNs with a single stream", {
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
+  vcv <- array(0, c(2, 2, 5))
+  set.seed(1)
+  vcv[1, 1, ] <- 1:5
+  vcv[2, 2, ] <- 1
+  vcv[1, 2, ] <- vcv[2, 1, ] <- rnorm(5, 0, 0.1)
+
+  y <- make_rmvnorm(vcv)(r2)
+  expect_equal(dim(y), c(2, 5))
+
+  ## A bit of work do do these separately:
+  z <- vapply(1:5, function(i) make_rmvnorm(vcv[, , i])(r1), numeric(2))
   expect_identical(y, z)
 })
