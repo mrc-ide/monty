@@ -156,7 +156,6 @@ monty_rng_long_jump <- function(state, n = 1) {
 }
 
 
-
 ##' @export
 print.monty_rng_state <- function(x, ...) {
   cli::cli_h1("<monty_rng_state>")
