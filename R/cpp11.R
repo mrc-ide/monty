@@ -288,18 +288,6 @@ monty_legacy_rng_set_state <- function(ptr, r_state) {
   invisible(.Call(`_monty_monty_legacy_rng_set_state`, ptr, r_state))
 }
 
-monty_rng_pointer_init <- function(n_streams, seed, long_jump, algorithm) {
-  .Call(`_monty_monty_rng_pointer_init`, n_streams, seed, long_jump, algorithm)
-}
-
-monty_rng_pointer_sync <- function(obj, algorithm) {
-  invisible(.Call(`_monty_monty_rng_pointer_sync`, obj, algorithm))
-}
-
-test_rng_pointer_get <- function(obj, n_streams) {
-  .Call(`_monty_test_rng_pointer_get`, obj, n_streams)
-}
-
-test_xoshiro_run <- function(obj) {
-  .Call(`_monty_test_xoshiro_run`, obj)
+test_xoshiro_run <- function(obj, algorithm) {
+  .Call(`_monty_test_xoshiro_run`, obj, algorithm)
 }
