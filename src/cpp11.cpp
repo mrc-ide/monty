@@ -515,33 +515,11 @@ extern "C" SEXP _monty_monty_legacy_rng_set_state(SEXP ptr, SEXP r_state) {
     return R_NilValue;
   END_CPP11
 }
-// rng_pointer.cpp
-cpp11::sexp monty_rng_pointer_init(int n_streams, cpp11::sexp seed, int long_jump, std::string algorithm);
-extern "C" SEXP _monty_monty_rng_pointer_init(SEXP n_streams, SEXP seed, SEXP long_jump, SEXP algorithm) {
-  BEGIN_CPP11
-    return cpp11::as_sexp(monty_rng_pointer_init(cpp11::as_cpp<cpp11::decay_t<int>>(n_streams), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(seed), cpp11::as_cpp<cpp11::decay_t<int>>(long_jump), cpp11::as_cpp<cpp11::decay_t<std::string>>(algorithm)));
-  END_CPP11
-}
-// rng_pointer.cpp
-void monty_rng_pointer_sync(cpp11::environment obj, std::string algorithm);
-extern "C" SEXP _monty_monty_rng_pointer_sync(SEXP obj, SEXP algorithm) {
-  BEGIN_CPP11
-    monty_rng_pointer_sync(cpp11::as_cpp<cpp11::decay_t<cpp11::environment>>(obj), cpp11::as_cpp<cpp11::decay_t<std::string>>(algorithm));
-    return R_NilValue;
-  END_CPP11
-}
-// rng_pointer.cpp
-double test_rng_pointer_get(cpp11::environment obj, int n_streams);
-extern "C" SEXP _monty_test_rng_pointer_get(SEXP obj, SEXP n_streams) {
-  BEGIN_CPP11
-    return cpp11::as_sexp(test_rng_pointer_get(cpp11::as_cpp<cpp11::decay_t<cpp11::environment>>(obj), cpp11::as_cpp<cpp11::decay_t<int>>(n_streams)));
-  END_CPP11
-}
 // test_rng.cpp
-std::vector<std::string> test_xoshiro_run(cpp11::environment obj);
-extern "C" SEXP _monty_test_xoshiro_run(SEXP obj) {
+std::vector<std::string> test_xoshiro_run(cpp11::sexp obj, std::string algorithm);
+extern "C" SEXP _monty_test_xoshiro_run(SEXP obj, SEXP algorithm) {
   BEGIN_CPP11
-    return cpp11::as_sexp(test_xoshiro_run(cpp11::as_cpp<cpp11::decay_t<cpp11::environment>>(obj)));
+    return cpp11::as_sexp(test_xoshiro_run(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(obj), cpp11::as_cpp<cpp11::decay_t<std::string>>(algorithm)));
   END_CPP11
 }
 
@@ -614,15 +592,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_monty_rng_negative_binomial_mu",            (DL_FUNC) &_monty_monty_rng_negative_binomial_mu,            5},
     {"_monty_monty_rng_negative_binomial_prob",          (DL_FUNC) &_monty_monty_rng_negative_binomial_prob,          5},
     {"_monty_monty_rng_normal",                          (DL_FUNC) &_monty_monty_rng_normal,                          6},
-    {"_monty_monty_rng_pointer_init",                    (DL_FUNC) &_monty_monty_rng_pointer_init,                    4},
-    {"_monty_monty_rng_pointer_sync",                    (DL_FUNC) &_monty_monty_rng_pointer_sync,                    2},
     {"_monty_monty_rng_poisson",                         (DL_FUNC) &_monty_monty_rng_poisson,                         4},
     {"_monty_monty_rng_random_normal",                   (DL_FUNC) &_monty_monty_rng_random_normal,                   4},
     {"_monty_monty_rng_random_real",                     (DL_FUNC) &_monty_monty_rng_random_real,                     3},
     {"_monty_monty_rng_truncated_normal",                (DL_FUNC) &_monty_monty_rng_truncated_normal,                7},
     {"_monty_monty_rng_uniform",                         (DL_FUNC) &_monty_monty_rng_uniform,                         5},
-    {"_monty_test_rng_pointer_get",                      (DL_FUNC) &_monty_test_rng_pointer_get,                      2},
-    {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          1},
+    {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          2},
     {NULL, NULL, 0}
 };
 }
