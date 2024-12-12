@@ -43,7 +43,7 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
       }
     } else {
       vcv <- sampler_validate_vcv(vcv, pars)
-      internal$sample_momentum <- make_rmvnorm(vcv, centred = TRUE)
+      internal$sample_momentum <- make_rmvnorm(vcv)
     }
     if (debug) {
       internal$history <- list()

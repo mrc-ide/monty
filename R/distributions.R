@@ -2,13 +2,17 @@
 ## because it's quite gross.  Mostly it is trying to tidy up some of
 ## the ways that we might draw from multivariate normal distributions.
 ## This is complicated by wanting to cache the results of the vcv
-## decomposition where possible.
+## decomposition where possible. We don't expose this anywhere to the
+## user, and doing so is difficult because we'd need a thread-safe way
+## of doing matrix multiplication (and possibly Cholesky
+## factorisation) but this involves LAPACK (and therefore linking to
+## libfortran) and is not guaranteed to be thread-safe.
 
-## Not in base R
-rmvnorm <- function(x, vcv, rng) {
-  make_rmvnorm(vcv)(x, rng)
-}
-
+## It's also tangled up with the distribution support, being different
+## to most distributions in having vector output and *matrix*
+## input. The most effficient way of using this really requires that
+## we have the decomposition cached wherever possible, so it does not
+## neatly fit into our usual approach at all.
 
 ## This is the form of the Cholesky factorisation of a matrix we use
 ## in the multivariate normal sampling.
@@ -18,46 +22,66 @@ chol_pivot <- function(x) {
 }
 
 
-make_rmvnorm <- function(vcv, centred = FALSE) {
+## There are three uses of this; two use centred and one does not.
+##
+## * monty_example_gaussian uses centred
+## * sampler_hmc also uses centred
+## * make_random_walk_proposal does not use centred, but could
+
+
+make_rmvnorm <- function(vcv) {
   n <- nrow(vcv)
-  if (n == 1) {
+  if (is.matrix(vcv)) {
     ## Special case for transformations in single-dimensional case; no
     ## need to work with matrix multiplication or decompositions here.
-    sd <- sqrt(drop(vcv))
-    if (centred) {
+    if (n == 1) {
+      sd <- sqrt(drop(vcv))
       function(rng) {
         monty_random_normal(0, sd, rng)
       }
     } else {
-      function(x, rng) {
-        x + monty_random_normal(0, sd, rng)
-      }
-    }
-  } else if (is.matrix(vcv)) {
-    r <- chol_pivot(vcv)
-    if (centred) {
+      r <- chol_pivot(vcv)
       function(rng) {
         drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
-      }
-    } else {
-      function(x, rng) {
-        x + drop(monty_random_n_normal(n, 0, 1, rng) %*% r)
       }
     }
   } else {
     stopifnot(length(dim(vcv)) == 3)
     m <- dim(vcv)[[3]]
-    r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
-    if (centred) {
-      function(rng) {
-        mu <- monty_random_n_normal(n, 0, 1, rng)
-        vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
-      }
+    ## At this point we have a vcv that has 'm' entries; we'll be
+    ## given a rng that has either 1 stream (PT) or 'm' streams
+    ## (simultaneous sampling)
+    if (n == 1) {
+      r <- sqrt(drop(vcv))
     } else {
-      function(x, rng) {
-        mu <- monty_random_n_normal(n, 0, 1, rng) # + x perhaps?
-        x + vapply(seq_len(m), function(i) mu[, i] %*% r[, , i], numeric(n))
+      r <- vapply(seq_len(m), function(i) chol_pivot(vcv[, , i]), vcv[, , 1])
+    }
+    function(rng) {
+      n_streams <- length(rng)
+      if (n_streams == 1) {
+        rand <- matrix(monty_random_n_normal(n * m, 0, 1, rng), n, m)
+      } else if (n_streams == m) {
+        rand <- monty_random_n_normal(n, 0, 1, rng)
+      } else {
+        if (m == 1) {
+          cli::cli_abort(
+            "Expected a random number generator with 1 stream, not {n_streams}")
+        } else {
+          cli::cli_abort(paste(
+            "Expected a random number generator with 1 or {m} streams, not",
+            "{n_streams}"))
+        }
       }
+      if (n == 1) {
+        ret <- drop(rand) * r
+      } else {
+        ret <- vapply(seq_len(m), function(i) rand[, i] %*% r[, , i],
+                      numeric(n))
+        if (m == 1 && !attr(rng, "preserve_stream_dimension")) {
+          dim(ret) <- NULL # TODO - test this....
+        }
+      }
+      ret
     }
   }
 }

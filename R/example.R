@@ -92,7 +92,7 @@ monty_example_gaussian <- function(vcv) {
   n <- nrow(vcv)
   monty_model(list(
     parameters = letters[seq_len(n)],
-    direct_sample = make_rmvnorm(vcv, centred = TRUE),
+    direct_sample = make_rmvnorm(vcv),
     density = make_ldmvnorm(vcv),
     gradient = make_deriv_ldmvnorm(vcv),
     domain = cbind(rep(-Inf, n), rep(Inf, n))))

@@ -193,7 +193,7 @@ test_that("can reflect parameters in matrix form", {
                sapply(1:4, function(i) reflect_proposal(p[, i], -xb, xa)))
 
 
-  mvn <- make_rmvnorm(diag(3) * c(4, 8, 16), centred = TRUE)
+  mvn <- make_rmvnorm(diag(3) * c(4, 8, 16))
   r <- monty_rng_create(seed = 42)
   x <- replicate(10, mvn(r))
   x_min <- c(-2, -Inf, -1)
