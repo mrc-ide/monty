@@ -24,7 +24,7 @@ chol_pivot <- function(x) {
 
 ## There are three uses of this; two use centred and one does not.
 ##
-## * monty_example_gaussian uses centrered
+## * monty_example_gaussian uses centred
 ## * sampler_hmc also uses centred
 ## * make_random_walk_proposal does not use centred, but could
 
