@@ -686,4 +686,5 @@ print.monty_model_properties <- function(x, ...) {
   if (any(unset)) {
     cli::cli_alert_info("Unset: {squote(names(x)[unset])}")
   }
+  invisible(x)
 }

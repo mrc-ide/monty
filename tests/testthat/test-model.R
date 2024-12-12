@@ -256,3 +256,30 @@ test_that("can print information about simple models", {
   expect_match(res$messages, "can be directly sampled from",
                fixed = TRUE, all = FALSE)
 })
+
+
+test_that("can print information about model properties", {
+  p <- monty_model_properties()
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_equal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<monty_model_properties>",
+               fixed = TRUE, all = FALSE)
+  expect_false(any(grepl("is_stochastic:", res$messages)))
+  expect_match(res$messages, "Unset:",
+               fixed = TRUE, all = FALSE)
+})
+
+
+test_that("can print information about model properties that are set", {
+  p <- monty_model_properties(is_stochastic = TRUE, has_observer = TRUE)
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_equal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<monty_model_properties>",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "is_stochastic:",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "has_observer:",
+               fixed = TRUE, all = FALSE)
+  expect_match(res$messages, "Unset:",
+               fixed = TRUE, all = FALSE)
+})

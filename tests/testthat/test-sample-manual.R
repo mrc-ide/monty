@@ -146,6 +146,19 @@ test_that("can print information about a manual sample", {
 })
 
 
+test_that("can print information about a continued sample", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  base <- monty_sample(model, sampler, 100, n_chains = 2, restartable = TRUE)
+
+  path <- withr::local_tempdir()
+  monty_sample_manual_prepare_continue(base, 50, path)
+  expect_snapshot(
+    monty_sample_manual_info(path),
+    transform = scrub_manual_info)
+})
+
+
 test_that("can print information about chain completeness", {
   expect_message(sample_manual_info_chain(c(TRUE, TRUE)),
                  "All chains complete")
