@@ -333,6 +333,18 @@ test_that("rexp agrees with stats::rexp", {
 })
 
 
+
+test_that("can sample from exponential distribution (mean)", {
+  r1 <- monty_rng_create(seed = 42)
+  r2 <- monty_rng_create(seed = 42)
+  expect_equal(monty_random_exponential_mean(0.5, r1),
+               monty_random_exponential_rate(2, r2))
+  expect_equal(monty_random_n_exponential_mean(10, 0.5, r1),
+               monty_random_n_exponential_rate(10, 2, r2))
+})
+
+
+
 test_that("continue stream", {
   rng1 <- monty_rng_create(seed = 1)
   rng2 <- monty_rng_create(seed = 1)
@@ -1071,6 +1083,9 @@ test_that("negative_binomial_mu follows from negative_binomial_prob", {
   size <- 20
   mu <- size * (1 - prob) / prob
   expect_identical(
+    monty_random_negative_binomial_mu(size, mu, rng1),
+    monty_random_negative_binomial_prob(size, prob, rng2))
+  expect_identical(
     monty_random_n_negative_binomial_mu(100, size, mu, rng1),
     monty_random_n_negative_binomial_prob(100, size, prob, rng2))
 })
@@ -1125,6 +1140,9 @@ test_that("beta_binomial_prob follows from beta_binomial_ab", {
   b <- 5
   prob <- a / (a + b)
   rho <- 1 / (a + b + 1)
+  expect_identical(
+    monty_random_beta_binomial_prob(size, prob, rho, rng1),
+    monty_random_beta_binomial_ab(size, a, b, rng2))
   expect_identical(
     monty_random_n_beta_binomial_prob(100, size, prob, rho, rng1),
     monty_random_n_beta_binomial_ab(100, size, a, b, rng2))

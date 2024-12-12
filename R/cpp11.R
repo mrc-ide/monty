@@ -196,6 +196,6 @@ cpp_monty_random_n_multinomial <- function(n_samples, r_size, r_prob, ptr) {
   .Call(`_monty_cpp_monty_random_n_multinomial`, n_samples, r_size, r_prob, ptr)
 }
 
-test_xoshiro_run <- function(obj, algorithm) {
-  .Call(`_monty_test_xoshiro_run`, obj, algorithm)
+test_xoshiro_run <- function(ptr) {
+  .Call(`_monty_test_xoshiro_run`, ptr)
 }
