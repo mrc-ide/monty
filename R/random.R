@@ -661,3 +661,12 @@ monty_random_log_normal <- function(meanlog, sdlog, state) {
 monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
   cpp_monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
 }
+
+
+monty_random_multinomial <- function(size, prob, state) {
+  cpp_monty_random_multinomial(size, prob, state)
+}
+
+monty_random_n_multinomial <- function(n_samples, size, prob, state) {
+  cpp_monty_random_n_multinomial(n_samples, size, prob, state)
+}

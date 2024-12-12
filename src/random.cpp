@@ -41,6 +41,46 @@ struct input {
   }
 };
 
+struct input_array {
+  const double * const data;
+  size_t len;
+  bool fixed;
+
+  input_array(cpp11::doubles r_data, size_t expected, const char *name) :
+    data(REAL(r_data)) {
+    const auto dim = r_data.attr("dim");
+    if (dim == R_NilValue) {
+      fixed = true;
+      size_ = r_data.size();
+    } else {
+      if (Rf_length(dim) != 2) {
+        cpp11::stop("Expected '%s' to be a matrix", name);
+      }
+      size_ = INTEGER(dim)[0];
+      const auto ncol = INTEGER(dim)[1];
+      fixed = ncol == 1;
+      if (!fixed && static_cast<size_t>(ncol) != expected) {
+        if (expected == 1) {
+          cpp11::stop("Expected '%s' to have 1 column, not %d", name, ncol);
+        } else {
+          cpp11::stop("Expected '%s' to have %d or 1 columns, not %d",
+                      name, static_cast<int>(expected), ncol);
+        }
+      }
+    }
+  }
+
+  size_t size() const {
+    return size_;
+  }
+
+  auto operator[](size_t i) const {
+    return data + (fixed ? 0 : i * size_);
+  }
+private:
+  size_t size_;
+};
+
 bool preserve_stream_dimension(size_t n, cpp11::sexp ptr) {
   return n > 1 || INTEGER(ptr.attr("preserve_stream_dimension"))[0] == 1;
 }
@@ -158,7 +198,14 @@ void set_dimensions(size_t n_samples, size_t n_streams, cpp11::sexp ptr, cpp11::
   if (preserve_stream_dimension(n_streams, ptr)) {
     ret.attr("dim") = cpp11::writable::integers{static_cast<int>(n_samples), static_cast<int>(n_streams)};
   }
+}
 
+void set_dimensions(size_t n_state, size_t n_samples, size_t n_streams, cpp11::sexp ptr, cpp11::sexp ret) {
+  if (preserve_stream_dimension(n_streams, ptr)) {
+    ret.attr("dim") = cpp11::writable::integers{static_cast<int>(n_state), static_cast<int>(n_samples), static_cast<int>(n_streams)};
+  } else {
+    ret.attr("dim") = cpp11::writable::integers{static_cast<int>(n_state), static_cast<int>(n_samples)};
+  }
 }
 
 template <typename Fn>
@@ -219,8 +266,8 @@ cpp11::doubles monty_random_sample_n_2(Fn fn, size_t n_samples,
 
   double * y = REAL(r_y);
   for (size_t i = 0; i < n_streams; ++i) {
+    auto& state_i = rng->state(i);
     for (size_t j = 0; j < n_samples; ++j) {
-      auto& state_i = rng->state(i);
       auto y_i = y + n_samples * i;
       y_i[j] = fn(state_i, a[i], b[i]);
     }
@@ -756,3 +803,54 @@ cpp11::doubles cpp_monty_random_n_truncated_normal(size_t n_samples,
 
 // Other
 // multinomial
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_multinomial(cpp11::doubles r_size,
+                                            cpp11::doubles r_prob,
+                                            cpp11::sexp ptr) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "multinomial");
+  const size_t n_streams = rng->size();
+  auto size = input(r_size, n_streams, "size");
+  auto prob = input_array(r_prob, n_streams, "prob");
+  const auto len = prob.size();
+
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams * len);
+  double * y = REAL(r_y);
+
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    monty::random::multinomial<double>(state, size[i], prob[i], len, y + i * len);
+  }
+
+  set_dimensions(len, n_streams, ptr, r_y);
+
+  return r_y;
+}
+
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_multinomial(size_t n_samples,
+                                              cpp11::doubles r_size,
+                                              cpp11::doubles r_prob,
+                                              cpp11::sexp ptr) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "multinomial");
+  const size_t n_streams = rng->size();
+  auto size = input(r_size, n_streams, "size");
+  auto prob = input_array(r_prob, n_streams, "prob");
+  const auto len = prob.size();
+
+  cpp11::writable::doubles r_y =
+    cpp11::writable::doubles(n_samples * n_streams * len);
+  double * y = REAL(r_y);
+
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto y_ij = y + len * (n_samples * i + j);
+      monty::random::multinomial<double>(state, size[i], prob[i], len, y_ij);
+    }
+  }
+
+  set_dimensions(len, n_samples, n_streams, ptr, r_y);
+
+  return r_y;
+}
