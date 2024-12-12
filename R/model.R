@@ -118,13 +118,13 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   `(-Inf, Inf)`.
 ##'
 ##' * `direct_sample`: A function to sample directly from the
-##'   parameter space, given a [monty_rng] object to sample from.
-##'   In the case where a model returns a posterior (e.g., in Bayesian
-##'   inference), this is assumed to be sampling from the prior.
-##'   We'll use this for generating initial conditions for MCMC where
-##'   those are not given, and possibly other uses.  If not given then
-##'   when using [monty_sample()] the user will have to provide a
-##'   vector of initial states.
+##'   parameter space, given a `monty_rng` object to sample from (see
+##'   [monty_rng_create]).  In the case where a model returns a
+##'   posterior (e.g., in Bayesian inference), this is assumed to be
+##'   sampling from the prior.  We'll use this for generating initial
+##'   conditions for MCMC where those are not given, and possibly
+##'   other uses.  If not given then when using [monty_sample()] the
+##'   user will have to provide a vector of initial states.
 ##'
 ##' * `gradient`: A function to compute the gradient of `density` with
 ##'   respect to the parameter vector; takes a parameter vector and
@@ -141,11 +141,11 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   look after their own stream, and that they may need many
 ##'   streams).  Models that provide this method are assumed to be
 ##'   stochastic; however, you can use the `is_stochastic` property
-##'   (via [monty_model_properties()]) to override this (e.g., to
-##'   run a stochastic model with its deterministic expectation).
-##'   This function takes a raw vector of random number state from
-##'   [monty_rng] and uses it to set the random number state for
-##'   your model; this is derived from the random number stream for a
+##'   (via [monty_model_properties()]) to override this (e.g., to run
+##'   a stochastic model with its deterministic expectation).  This
+##'   function takes a raw vector of random number state from a
+##'   `monty_rng` and uses it to set the random number state for your
+##'   model; this is derived from the random number stream for a
 ##'   particular chain, jumped ahead.
 ##'
 ##' * `get_rng_state`: A function to get the RNG state; must be
@@ -304,8 +304,8 @@ monty_model_gradient <- function(model, parameters, named = FALSE) {
 ##'
 ##' @inheritParams monty_model_gradient
 ##'
-##' @param rng Random number state, created by [monty_rng].  Use of
-##'   an RNG with more than one stream may or may not work as
+##' @param rng Random number state, created by [monty_rng_create].
+##'   Use of an RNG with more than one stream may or may not work as
 ##'   expected; this is something we need to tidy up (`mrc-5292`)
 ##'
 ##' @return A vector or matrix of sampled parameters
