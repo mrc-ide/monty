@@ -63,7 +63,14 @@ make_rmvnorm <- function(vcv) {
       } else if (n_streams == m) {
         rand <- monty_random_n_normal(n, 0, 1, rng)
       } else {
-        stop("Invalid input in rng")
+        if (m == 1) {
+          cli::cli_abort(
+            "Expected a random number generator with 1 stream, not {n_streams}")
+        } else {
+          cli::cli_abort(paste(
+            "Expected a random number generator with 1 or {m} streams, not",
+            "{n_streams}"))
+        }
       }
       if (n == 1) {
         ret <- drop(rand) * r
@@ -71,7 +78,7 @@ make_rmvnorm <- function(vcv) {
         ret <- vapply(seq_len(m), function(i) rand[, i] %*% r[, , i],
                       numeric(n))
         if (m == 1 && !attr(rng, "preserve_stream_dimension")) {
-          dim(ret) <- NULL
+          dim(ret) <- NULL # TODO - test this....
         }
       }
       ret

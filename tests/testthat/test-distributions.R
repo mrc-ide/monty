@@ -124,3 +124,27 @@ test_that("Can draw samples from many bivariate MVNs with a single stream", {
   z <- vapply(1:5, function(i) make_rmvnorm(vcv[, , i])(r1), numeric(2))
   expect_identical(y, z)
 })
+
+
+test_that("rng must be compatible with number of layers in vcv", {
+  r <- monty_rng_create(n_streams = 3)
+  vcv <- array(0, c(2, 2, 5))
+  vcv[1, 1, ] <- 1:5
+  vcv[2, 2, ] <- 1
+  vcv[1, 2, ] <- vcv[2, 1, ] <- rnorm(5, 0, 0.1)
+  expect_error(
+    make_rmvnorm(vcv)(r),
+    "Expected a random number generator with 1 or 5 streams, not 3")
+  expect_error(
+    make_rmvnorm(vcv[, , 1, drop = FALSE])(r),
+    "Expected a random number generator with 1 stream, not 3")
+})
+
+
+test_that("drop dimensions where requested", {
+  r1 <- monty_rng_create(n_streams = 1, preserve_stream_dimension = TRUE)
+  r2 <- monty_rng_create(n_streams = 1, preserve_stream_dimension = FALSE)
+  vcv <- array(diag(2), c(2, 2, 1))
+  expect_equal(dim(make_rmvnorm(vcv)(r1)), c(2, 1))
+  expect_null(dim(make_rmvnorm(vcv)(r2)))
+})
