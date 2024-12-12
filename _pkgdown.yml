@@ -119,14 +119,6 @@ reference:
     - monty_random_n_log_normal
     - monty_random_weibull
     - monty_random_n_weibull
-  - subsection: Legacy interface
-    desc: >-
-      Functions imported from dust; these will be retired soon
-    contents:
-    - monty_rng
-    - monty_rng_distributed_pointer
-    - monty_rng_distributed_state
-    - monty_rng_pointer
 
 articles:
   - title: Basics

@@ -156,6 +156,20 @@ monty_rng_long_jump <- function(state, n = 1) {
 }
 
 
+## This was used previously, we have a variant of this in dust2, as
+## well.
+monty_rng_distributed_state <- function(seed = NULL, n_nodes = 1L) {
+  rng <- monty_rng_create(seed = seed)
+  ret <- vector("list", n_nodes)
+  for (i in seq_len(n_nodes)) {
+    ret[[i]] <- monty_rng_state(rng)
+    if (i < n_nodes) {
+      monty_rng_long_jump(rng)
+    }
+  }
+  ret
+}
+
 
 ##' @export
 print.monty_rng_state <- function(x, ...) {
@@ -660,4 +674,13 @@ monty_random_log_normal <- function(meanlog, sdlog, state) {
 ##' @rdname monty_random_log_normal
 monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
   cpp_monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
+}
+
+
+monty_random_multinomial <- function(size, prob, state) {
+  cpp_monty_random_multinomial(size, prob, state)
+}
+
+monty_random_n_multinomial <- function(n_samples, size, prob, state) {
+  cpp_monty_random_n_multinomial(n_samples, size, prob, state)
 }
