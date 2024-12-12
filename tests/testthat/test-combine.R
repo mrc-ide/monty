@@ -18,11 +18,14 @@ test_that("can combine a model with direct_sample and one without", {
     parameters = "x",
     density = function(x) dexp(x, log = TRUE)))
   ab <- a + b
+  ba <- b + a
   expect_equal(ab$properties, a$properties)
+  expect_equal(ba$properties, a$properties)
 
-  r1 <- monty_rng_create(seed = 42)
-  r2 <- monty_rng_create(seed = 42)
-  expect_equal(ab$direct_sample(r1), a$direct_sample(r2))
+  expect_equal(ab$direct_sample(monty_rng_create(seed = 42)),
+               a$direct_sample(monty_rng_create(seed = 42)))
+  expect_equal(ba$direct_sample(monty_rng_create(seed = 42)),
+               a$direct_sample(monty_rng_create(seed = 42)))
 })
 
 
