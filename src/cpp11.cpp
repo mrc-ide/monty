@@ -352,10 +352,10 @@ extern "C" SEXP _monty_cpp_monty_random_n_multinomial(SEXP n_samples, SEXP r_siz
   END_CPP11
 }
 // test_rng.cpp
-std::vector<std::string> test_xoshiro_run(cpp11::sexp obj, std::string algorithm);
-extern "C" SEXP _monty_test_xoshiro_run(SEXP obj, SEXP algorithm) {
+std::vector<std::string> test_xoshiro_run(cpp11::sexp ptr);
+extern "C" SEXP _monty_test_xoshiro_run(SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(test_xoshiro_run(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(obj), cpp11::as_cpp<cpp11::decay_t<std::string>>(algorithm)));
+    return cpp11::as_sexp(test_xoshiro_run(cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 
@@ -410,7 +410,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_rng_set_state",                   (DL_FUNC) &_monty_cpp_monty_rng_set_state,                   2},
     {"_monty_cpp_monty_rng_state",                       (DL_FUNC) &_monty_cpp_monty_rng_state,                       1},
     {"_monty_monty_rng_alloc",                           (DL_FUNC) &_monty_monty_rng_alloc,                           3},
-    {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          2},
+    {"_monty_test_xoshiro_run",                          (DL_FUNC) &_monty_test_xoshiro_run,                          1},
     {NULL, NULL, 0}
 };
 }
