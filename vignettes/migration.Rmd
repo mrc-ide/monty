@@ -1,0 +1,99 @@
+---
+title: "Migration from mcstate"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Migration from mcstate}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+`monty` is the spiritual replacement for [`mcstate`](https://mrc-ide.github.io/mcstate/), which was used for inference of [odin.dust](https://mrc-ide.github.io/odin.dust/) models from 2020 to 2024.
+
+Unlike with the new versions of [`odin`](https://mrc-ide.github.io/odin/) ([`odin2`](https://mrc-ide.github.io/odin2/)) and [`dust`](https://mrc-ide.github.io/dust/) ([`dust2`](https://mrc-ide.github.io/dust2/)), we have not changed `mcstate` in place as we no longer felt that the name as appropriate; mcstate was explicitly about working with state space models, while `monty` is about Monte Carlo methods in general. And Wes has a goat called Monty, so here we are.
+
+# Where is everything?
+
+Some features have moved out of this package and into `dust2`:
+
+## The particle filter
+
+The particle filter has moved into [`dust2`](https://mrc-ide.github.io/dust2), see [`dust2::dust_filter_create`](https://mrc-ide.github.io/dust2/reference/dust_filter_create.html)
+
+What was previously a method on the old `particle_filter` object has now changed to be free function:
+
+Action                   | mcstate             | dust2
+-------------------------+---------------------+-----------------------------
+Allocate                 | `$new()`            | `dust_filter_create()` (1)
+Run                      | `$run()`            | `dust_likelihood_run()`
+Stateful run             | `$run_begin()`      | Not supported
+Get final state          | `$state()`          | `dust_likelihood_last_state()`
+Get trajectories         | `$history()`        | `dust_likelihood_last_trajectories()`
+Get ODE statistics       | `$ode_statistics()` | Not yet supported
+Get intermediate state   | `$restart_state()`  | Not yet supported
+Get inputs               | `$inputs`           | Not yet supported
+Change number of threads | `set_n_threads()`   | Not supported
+
+1. Or `dust_unfilter_create` for deterministic models
+
+In addition, differentiable deterministic models have `dust_likelihood_last_gradient()` to get the gradient of the likelihood at the last point.
+
+## Other state space methods
+
+In mcstate, we implemented two other sequential Monte Carlo methods: SMC^2 and IF2.  Neither of these have been reimplemented yet, but these will appear in dust if and when we do so.  Please let us know if you used these!
+
+# Running MCMC
+
+How these are specified and configured has totally changed, to the point where it is not really meaningful to do a table-based comparison of methods.
+
+A typical use with mcstate looked like this (adapted with simplification from the old [SIR models vignette](https://mrc-ide.github.io/mcstate/articles/sir_models.html))
+
+```r
+filter <- mcstate::particle_filter$new(data = ..., model = ..., compare = ...,
+                                       n_particles = ...)
+beta <- mcstate::pmcmc_parameter("beta", 0.2, min = 0)
+gamma <- mcstate::pmcmc_parameter("gamma", 0.1, min = 0, prior = function(p)
+  dgamma(p, shape = 1, scale = 0.2, log = TRUE))
+
+proposal_matrix <- diag(0.1, 2)
+mcmc_pars <- mcstate::pmcmc_parameters$new(list(beta = beta, gamma = gamma),
+                                           proposal_matrix)
+control <- mcstate::pmcmc_control(
+    n_steps,
+    save_state = TRUE,
+    save_trajectories = TRUE,
+    progress = TRUE)
+samples <- mcstate::pmcmc(mcmc_pars, filter, control = control)
+```
+
+With monty this would look more like:
+
+```r
+filter <- dust_filter_create(generator, time_start, data, n_particles)
+packer <- monty_packer(c("beta", "gamma"))
+model <- dust_likelihood_monty(filter, packer,
+                               save_state = TRUE,
+                               save_trajectories = TRUE)
+prior <- monty_dsl({
+  beta ~ Uniform(0, 100)
+  gamma ~ Gamma(shape = 1, scale = 0.2)
+})
+sampler <- monty_sampler_random_walk(diag(0.2, 2))
+samples <- monty_sample(model + prior, sampler, n_steps)
+```
+
+which contains roughly the same bits of information but in quite a different presentation:
+
+**The way that parameters are specified**: in `mcstate` we had `pmcmc_parameter` and `pmcmc_parameters`, one of which was a function and the other was a combination that included the sampler's proposal kernel!  This is all a bit silly.  Now:
+  * we use our [packer interface](https://mrc-ide.github.io/monty/reference/monty_packer.html) to smooth over the gap between how it is convenient to represent parameters in your odin model and how you need to represent them to think about moving around in parameter space
+  * we use the DSL to specify priors, removing the need to write out distributions, to sample from these distributions automatically and to prevent forgetting the `log = TRUE` on densities.
+
+**The the `pmcmc_control` object has gone**: this contained information that really effected the filter (e.g., `save_state` which has moved into the `dust_likelihood_monty` function) and the running of the chain itself.
+
+**The control over samplers has moved into a new sampler object**: we needed this additional level of control to allow different samplers to be used in different situations (e.g., to allow HMC in the case of a deterministic differentiable density).
