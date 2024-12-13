@@ -71,14 +71,14 @@ distr_beta_binomial_prob <- distribution(
   name = "BetaBinomial",
   variant = "prob",
   density = function(x, size, prob, rho) {
-    lchoose(size, x) + 
+    lchoose(size, x) +
       lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
       lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))},
   domain = c(0, Inf), # size?
   sample = "monty_random_beta_binomial_prob",
   expr = list(
     density = quote(
-      lchoose(size, x) + 
+      lchoose(size, x) +
         lbeta(x + prob * (1 / rho - 1), size - x + (1 - prob) * (1 / rho - 1)) -
         lbeta(prob * (1 / rho - 1), (1 - prob) * (1 / rho - 1))),
     mean = quote(size * prob)),
@@ -92,7 +92,7 @@ distr_beta_binomial_ab <- distribution(
   domain = c(0, Inf), # size?
   sample = "monty_random_beta_binomial_ab",
   expr = list(
-    density = quote(lchoose(size, x) + lbeta(x + a, size - x + b) - 
+    density = quote(lchoose(size, x) + lbeta(x + a, size - x + b) -
                       lbeta(a, b)),
     mean = quote(size * a / (a + b))),
   cpp = list(density = "beta_binomial_ab", sample = "beta_binomial_ab"))
@@ -104,7 +104,7 @@ distr_cauchy <- distribution(
   },
   domain = c(-Inf, Inf),
   expr = list(
-    density = quote(-log(pi) - log(scale) - 
+    density = quote(-log(pi) - log(scale) -
                       log1p(((x - location) / scale)^2)),
     mean = NULL),
   sample = "monty_random_cauchy",
@@ -173,7 +173,7 @@ distr_log_normal <- distribution(
   density = function(x, meanlog, sdlog) dlnorm(x, meanlog, sdlog, log = TRUE),
   domain = c(0, Inf),
   expr = list(
-    density = quote(-(log(x) - meanlog)^2 / (2 * sdlog^2) - log(2 * pi) / 2 - 
+    density = quote(-(log(x) - meanlog)^2 / (2 * sdlog^2) - log(2 * pi) / 2 -
                       log(sdlog) - log(x)),
     mean = quote(exp(meanlog + sdlog^2 / 2))),
   sample = "monty_random_log_normal",
@@ -263,7 +263,7 @@ distr_weibull <- distribution(
   domain = c(0, Inf),
   sample = "monty_random_weibull",
   expr = list(
-    density = quote(log(shape) + (shape - 1) * log(x) - shape * log(scale) - 
+    density = quote(log(shape) + (shape - 1) * log(x) - shape * log(scale) -
                       (x / scale)^shape),
     mean = quote(scale * gamma(1 + 1 / k))),
   cpp = list(density = "weibull", sample = "weibull"))

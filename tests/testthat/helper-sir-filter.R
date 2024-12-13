@@ -105,10 +105,10 @@ sir_run <- function(from, to, dt, state, packer, pars, rng) {
 
 
 sir_step <- function(time, dt, state, pars, rng) {
-  p_SI <- 1 - exp(-pars$beta * state$I / pars$N * dt)
-  p_IR <- rep(1 - exp(-pars$gamma * dt), length(state$I))
-  n_SI <- monty_random_binomial(state$S, p_SI, rng)
-  n_IR <- monty_random_binomial(state$I, p_IR, rng)
+  p_SI <- 1 - exp(-pars$beta * state$I / pars$N * dt)     # nolint
+  p_IR <- rep(1 - exp(-pars$gamma * dt), length(state$I)) # nolint
+  n_SI <- monty_random_binomial(state$S, p_SI, rng)       # nolint
+  n_IR <- monty_random_binomial(state$I, p_IR, rng)       # nolint
   cases <- if (time %% 1 == 0) 0 else state$cases
   list(S = state$S - n_SI,
        I = state$I + n_SI - n_IR,
