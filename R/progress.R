@@ -78,12 +78,12 @@ progress_bar_fancy <- function(n_chains, n_steps, show_overall,
   update <- function(chain_id, at) {
     ## Avoid writing into a closed progress bar, it will cause an
     ## error.  We do this by checking to see if progress has changed
-    ## from last time we tried updating.
-    changed <- any(e$n[chain_id] != at, na.rm = TRUE)
-    if (changed) {
+    ## from last time we tried updating, or if we're simply
+    ## incomplete.
+    if (any(at < n_steps | at > e$n)) {
       e$n[chain_id] <- at
+      cli::cli_progress_update(id = id, set = sum(e$n))
     }
-    cli::cli_progress_update(id = id, set = sum(e$n))
   }
 
   fail <- function() {
