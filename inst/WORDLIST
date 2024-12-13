@@ -2,11 +2,13 @@ CMD
 COVID
 HMC
 HPC
+HWHM
 Hasting
 OpenMP
 Poisson
 R's
 SEF
+SMC
 VCV
 WIP
 burnin
@@ -27,6 +29,7 @@ parallelisable
 parameterisations
 pmcmc
 quosures
+raws
 restartable
 rhyper
 rlang's
@@ -36,3 +39,4 @@ splitmix
 st
 stan
 th
+untruncated
