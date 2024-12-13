@@ -9,8 +9,8 @@ monty_model_direct_sample(model, rng, named = FALSE)
 \arguments{
 \item{model}{A \link{monty_model} object}
 
-\item{rng}{Random number state, created by \link{monty_rng}.  Use of
-an RNG with more than one stream may or may not work as
+\item{rng}{Random number state, created by \link{monty_rng_create}.
+Use of an RNG with more than one stream may or may not work as
 expected; this is something we need to tidy up (\code{mrc-5292})}
 
 \item{named}{Logical, indicating if the output should be named

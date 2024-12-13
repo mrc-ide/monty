@@ -117,7 +117,7 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
 ##'   provided!
 ##'
 ##' * `sample`: A function to sample from the distribution, given (as
-##'   a first argument) a rng object (see [monty_rng])
+##'   a first argument) a `monty_rng` object (see [monty_rng_create])
 ##'
 ##' @export
 ##' @examples

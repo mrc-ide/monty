@@ -73,13 +73,13 @@ parameters.  If named, then you can provide a subset, with
 parameters that are not included assumed to have a domain of
 \verb{(-Inf, Inf)}.
 \item \code{direct_sample}: A function to sample directly from the
-parameter space, given a \link{monty_rng} object to sample from.
-In the case where a model returns a posterior (e.g., in Bayesian
-inference), this is assumed to be sampling from the prior.
-We'll use this for generating initial conditions for MCMC where
-those are not given, and possibly other uses.  If not given then
-when using \code{\link[=monty_sample]{monty_sample()}} the user will have to provide a
-vector of initial states.
+parameter space, given a \code{monty_rng} object to sample from (see
+\link{monty_rng_create}).  In the case where a model returns a
+posterior (e.g., in Bayesian inference), this is assumed to be
+sampling from the prior.  We'll use this for generating initial
+conditions for MCMC where those are not given, and possibly
+other uses.  If not given then when using \code{\link[=monty_sample]{monty_sample()}} the
+user will have to provide a vector of initial states.
 \item \code{gradient}: A function to compute the gradient of \code{density} with
 respect to the parameter vector; takes a parameter vector and
 returns a vector the same length.  For efficiency, the model may
@@ -94,11 +94,11 @@ as that is the \emph{sampler's} rng stream, but we assume models will
 look after their own stream, and that they may need many
 streams).  Models that provide this method are assumed to be
 stochastic; however, you can use the \code{is_stochastic} property
-(via \code{\link[=monty_model_properties]{monty_model_properties()}}) to override this (e.g., to
-run a stochastic model with its deterministic expectation).
-This function takes a raw vector of random number state from
-\link{monty_rng} and uses it to set the random number state for
-your model; this is derived from the random number stream for a
+(via \code{\link[=monty_model_properties]{monty_model_properties()}}) to override this (e.g., to run
+a stochastic model with its deterministic expectation).  This
+function takes a raw vector of random number state from a
+\code{monty_rng} and uses it to set the random number state for your
+model; this is derived from the random number stream for a
 particular chain, jumped ahead.
 \item \code{get_rng_state}: A function to get the RNG state; must be
 provided if \code{set_rng_state} is present.  Must return the random

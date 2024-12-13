@@ -34,7 +34,7 @@ likely change once we support creation of differentiable models
 because we will want to do something with the arguments
 provided!
 \item \code{sample}: A function to sample from the distribution, given (as
-a first argument) a rng object (see \link{monty_rng})
+a first argument) a \code{monty_rng} object (see \link{monty_rng_create})
 }
 }
 \description{
