@@ -150,3 +150,18 @@ test_that("can fail progress bar nicely", {
   expect_s3_class(res$result, "simpleError")
   expect_equal(conditionMessage(res$result), "some error")
 })
+
+
+test_that("can get default spinner", {
+  withr::with_options(list(cli.spinner = NULL), {
+    expect_equal(monty_spinner(), monty_spinner(Sys.Date()))
+    expect_equal(monty_spinner(as.Date("2025-03-01")), "dots12")
+    expect_equal(monty_spinner(as.Date("2025-12-05")), "christmas")
+  })
+
+  withr::with_options(list(cli.spinner = "dots"), {
+    expect_equal(monty_spinner(), "dots")
+    expect_equal(monty_spinner(as.Date("2025-03-01")), "dots")
+    expect_equal(monty_spinner(as.Date("2025-12-05")), "dots")
+  })
+})
