@@ -52,13 +52,13 @@ progress_bar_simple <- function(n_steps, every_s = 1, min_updates = 20) {
 progress_bar_fancy <- function(n_chains, n_steps, show_overall,
                                single_chain = FALSE) {
   ## We're expecting to take a while, so we show immediately, if enabled:
-  oo <- options(cli.progress_show_after = 0)
-  on.exit(options(oo))
+  oo <- options(cli.progress_show_after = 0,
+                cli.spinner = monty_spinner())
 
   e <- new.env()
   e$n <- rep(0, n_chains)
   overall <- progress_overall(n_chains, n_steps, show_overall, single_chain)
-  fmt <- paste("Sampling {overall(e$n)} {cli::pb_bar} |",
+  fmt <- paste("{cli::pb_spin} Sampling {overall(e$n)} {cli::pb_bar} |",
                "{cli::pb_percent} ETA: {cli::pb_eta}")
   fmt_done <- paste(
     "{cli::col_green(cli::symbol$tick)} Sampled {cli::pb_total} steps",
@@ -78,15 +78,16 @@ progress_bar_fancy <- function(n_chains, n_steps, show_overall,
   update <- function(chain_id, at) {
     ## Avoid writing into a closed progress bar, it will cause an
     ## error.  We do this by checking to see if progress has changed
-    ## from last time we tried updating.
-    changed <- any(e$n[chain_id] != at, na.rm = TRUE)
-    if (changed) {
+    ## from last time we tried updating, or if we're simply
+    ## incomplete.
+    if (any(at < n_steps | at > e$n)) {
       e$n[chain_id] <- at
       cli::cli_progress_update(id = id, set = sum(e$n))
     }
   }
 
   fail <- function() {
+    options(oo)
     cli::cli_progress_done(id, result = "failed")
   }
 
@@ -154,4 +155,11 @@ with_progress_fail_on_error <- function(progress, code) {
     code,
     error = function(e) progress$fail(),
     interrupt = function(e) progress$fail())
+}
+
+
+monty_spinner <- function(date = Sys.Date()) {
+  getOption(
+    "cli.spinner",
+    if (format(date, "%m") == "12") "christmas" else "dots12")
 }
