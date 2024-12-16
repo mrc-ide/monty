@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 `monty` is the spiritual replacement for [`mcstate`](https://mrc-ide.github.io/mcstate/), which was used for inference of [odin.dust](https://mrc-ide.github.io/odin.dust/) models from 2020 to 2024.
 
-Unlike with the new versions of [`odin`](https://mrc-ide.github.io/odin/) ([`odin2`](https://mrc-ide.github.io/odin2/)) and [`dust`](https://mrc-ide.github.io/dust/) ([`dust2`](https://mrc-ide.github.io/dust2/)), we have not changed `mcstate` in place as we no longer felt that the name as appropriate; mcstate was explicitly about working with state space models, while `monty` is about Monte Carlo methods in general. And Wes has a goat called Monty, so here we are.
+Unlike with the new versions of [`odin`](https://mrc-ide.github.io/odin/) ([`odin2`](https://mrc-ide.github.io/odin2/)) and [`dust`](https://mrc-ide.github.io/dust/) ([`dust2`](https://mrc-ide.github.io/dust2/)), we have not changed `mcstate` in place as we no longer felt that the name was appropriate; mcstate was explicitly about working with state space models, while `monty` is about Monte Carlo methods in general. And Wes has a goat called Monty, so here we are.
 
 # Where is everything?
 
@@ -26,7 +26,7 @@ Some features have moved out of this package and into `dust2`:
 
 The particle filter has moved into [`dust2`](https://mrc-ide.github.io/dust2), see [`dust2::dust_filter_create`](https://mrc-ide.github.io/dust2/reference/dust_filter_create.html)
 
-What was previously a method on the old `particle_filter` object has now changed to be free function:
+What was previously a method on the old `particle_filter` object has now changed to be a free function:
 
 Action                   | mcstate             | dust2
 -------------------------+---------------------+-----------------------------
@@ -94,6 +94,6 @@ which contains roughly the same bits of information but in quite a different pre
   * we use our [packer interface](https://mrc-ide.github.io/monty/reference/monty_packer.html) to smooth over the gap between how it is convenient to represent parameters in your odin model and how you need to represent them to think about moving around in parameter space
   * we use the DSL to specify priors, removing the need to write out distributions, to sample from these distributions automatically and to prevent forgetting the `log = TRUE` on densities.
 
-**The the `pmcmc_control` object has gone**: this contained information that really effected the filter (e.g., `save_state` which has moved into the `dust_likelihood_monty` function) and the running of the chain itself.
+**The `pmcmc_control` object has gone**: this contained information that really affected the filter (e.g., `save_state` which has moved into the `dust_likelihood_monty` function) and the running of the chain itself.
 
 **The control over samplers has moved into a new sampler object**: we needed this additional level of control to allow different samplers to be used in different situations (e.g., to allow HMC in the case of a deterministic differentiable density).
