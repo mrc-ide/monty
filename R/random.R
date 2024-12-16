@@ -22,7 +22,7 @@
 ##' and you set `preserve_stream_dimension` to `FALSE` then we will
 ##' drop this dimension and return a matrix.
 ##'
-##' @title Create a monty random number genreator
+##' @title Create a monty random number generator
 ##'
 ##' @param n_streams The number of streams to create (see Details)
 ##'

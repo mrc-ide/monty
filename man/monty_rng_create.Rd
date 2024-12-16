@@ -2,7 +2,7 @@
 % Please edit documentation in R/random.R
 \name{monty_rng_create}
 \alias{monty_rng_create}
-\title{Create a monty random number genreator}
+\title{Create a monty random number generator}
 \usage{
 monty_rng_create(
   n_streams = 1L,
