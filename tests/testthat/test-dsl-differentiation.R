@@ -451,3 +451,15 @@ test_that("can diferentiate basic trig functions", {
     differentiate(quote(tan(x)), "x"),
     quote(1 / cos(x)^2))
 })
+
+
+test_that("differentiate expressions with arrays", {
+  expect_equal(differentiate(quote(x[i] + y[i]), "x"), 1)
+  expect_equal(differentiate(quote(x[i] + y[i]), "z"), 0
+})
+
+
+test_that("differentiate expressions with arrays", {
+  expect_equal(differentiate(quote(sum(x)), "x"), 1)
+  expect_equal(differentiate(quote(sum(x)), "y"), 0)
+})

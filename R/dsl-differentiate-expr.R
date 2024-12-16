@@ -144,6 +144,14 @@ derivative <- list(
   `(` = function(expr, name) {
     differentiate(expr[[2]], name)
   },
+  `[` = function(expr, name) {
+    res <- differentiate(expr[[2]], name)
+    if (is.numeric(res)) {
+      res
+    } else {
+      stop("Implement this - array access")
+    }
+  },
   exp = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("exp", a))
@@ -244,6 +252,14 @@ derivative <- list(
     b <- differentiate(call("lfactorial", k), name)
     c <- differentiate(call("lfactorial", maths$minus(n, k)), name)
     maths$minus(maths$minus(a, b), c)
+  },
+  sum = function(expr, name) {
+    target <- expr[[2]]
+    if (is.symbol(target)) {
+      return(if (as.character(target) == name) 1 else 0)
+    } else {
+      stop("Indexed sum not yet supported")
+    }
   }
 )
 
