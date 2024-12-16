@@ -240,11 +240,11 @@ test_that("Roundtrip scalars stored as zero-length arrays", {
   p <- monty_packer(array = list(a = integer(0), b = 1L))
   expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
 
-  ## expect_equal(p$unpack(1:2), list(a = 1, b = 2))
+  expect_equal(p$unpack(1:2), list(a = 1, b = 2))
   expect_equal(p$pack(list(a = 1, b = 2)), c(1, 2))
   expect_equal(p$pack(list(a = 1, b = matrix(2))), cbind(c(1, 2)))
 
-  ## expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
+  expect_equal(p$pack(list(a = 1, b = 2)), 1:2)
   expect_equal(p$pack(list(a = seq(1, 9, by = 2),
                            b = matrix(seq(2, 10, by = 2), 1, 5))),
                matrix(1:10, 2, 5))

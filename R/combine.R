@@ -228,7 +228,8 @@ model_combine_domain <- function(parts, parameters) {
 }
 
 
-model_combine_density <- function(parts, parameters, allow_multiple_parameters) {
+model_combine_density <- function(parts, parameters,
+                                  allow_multiple_parameters) {
   a <- parts[[1]]
   b <- parts[[2]]
   i_a <- match(a$parameters, parameters)

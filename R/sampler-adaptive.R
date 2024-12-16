@@ -166,7 +166,7 @@ monty_sampler_adaptive <- function(initial_vcv,
 
     if (internal$multiple_parameters) {
       internal$adaptive <-
-        Map(initialise_adaptive, 
+        Map(initialise_adaptive,
                lapply(asplit(pars, 2), c),
                asplit(initial_vcv, 3),
                MoreArgs = list(initial_vcv_weight = initial_vcv_weight,
@@ -206,12 +206,13 @@ monty_sampler_adaptive <- function(initial_vcv,
       d <- dim(state$pars)
       proposal_vcv <-
         vapply(seq_len(d[2]),
-               function (i)
+               function(i) {
                  calc_proposal_vcv(internal$adaptive[[i]]$scaling,
                                    internal$adaptive[[i]]$vcv,
                                    internal$adaptive[[i]]$weight,
                                    internal$adaptive[[i]]$initial_vcv,
-                                   internal$adaptive[[i]]$initial_vcv_weight),
+                                   internal$adaptive[[i]]$initial_vcv_weight)
+               },
                array(0, c(d[1], d[1])))
       proposal_vcv <- array(proposal_vcv, c(d[1], d[1], d[2]))
     } else {
@@ -247,10 +248,11 @@ monty_sampler_adaptive <- function(initial_vcv,
 
     if (internal$multiple_parameters) {
       internal$adaptive <-
-        lapply(seq_len(dim(state$pars)[2]),
-               function (i) update_adaptive(internal$adaptive[[i]],
-                                            state$pars[, i],
-                                            accept_prob[i]))
+        lapply(seq_len(dim(state$pars)[2]), function(i) {
+          update_adaptive(internal$adaptive[[i]],
+                          state$pars[, i],
+                          accept_prob[i])
+        })
     } else {
       internal$adaptive <-
         update_adaptive(internal$adaptive, state$pars, accept_prob)

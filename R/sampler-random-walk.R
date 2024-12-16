@@ -22,10 +22,10 @@
 ##'
 ##' The initial point selected will lie within the domain, as this is
 ##' enforced by [monty_sample].
-##' 
+##'
 ##' @param rerun_every Optional integer giving the frequency at which
-##'   we should rerun the model on the current "accepted" parameters to 
-##'   obtain a new density for stochastic models.  The default for this 
+##'   we should rerun the model on the current "accepted" parameters to
+##'   obtain a new density for stochastic models.  The default for this
 ##'   (`Inf`) will never trigger a rerun, but if you set to 100, then
 ##'   every 100 steps we run the model on both the proposed *and* previously
 ##'   accepted parameters before doing the comparison.  This may help "unstick"
@@ -49,7 +49,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
   internal <- new.env()
 
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
-  
+
   if (!identical(unname(rerun_every), Inf)) {
     assert_scalar_positive_integer(rerun_every)
   }
@@ -62,8 +62,8 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
-    
-    internal$rerun <- 
+
+    internal$rerun <-
       make_rerun(rerun_every, rerun_random, model$properties$is_stochastic)
 
     vcv <- sampler_validate_vcv(vcv, pars)
@@ -80,7 +80,7 @@ monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
       ## while the rerun is only used with stochastic models
       state$density <- model$density(state$pars)
     }
-    
+
     pars_next <- internal$proposal(state$pars, rng)
     reject_some <- boundaries == "reject" &&
       !all(i <- is_parameters_in_domain(pars_next, model$domain))

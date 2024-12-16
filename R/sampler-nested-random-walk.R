@@ -88,7 +88,7 @@ monty_sampler_nested_random_walk <- function(vcv, boundaries = "reflect") {
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
-    
+
     vcv <- sampler_validate_nested_vcv(vcv, model$parameter_groups, pars)
 
     internal$proposal <- nested_proposal(vcv, model$parameter_groups, pars,
@@ -288,14 +288,14 @@ check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
 }
 
 
-sampler_validate_nested_vcv <- function(vcv, parameter_groups, pars, 
+sampler_validate_nested_vcv <- function(vcv, parameter_groups, pars,
                                         call = NULL) {
   i_base <- parameter_groups == 0
   n_base <- sum(i_base)
   has_base <- n_base != 0
   n_groups <- max(parameter_groups)
   i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
-  
+
   if (NROW(vcv$base) != n_base) {
     cli::cli_abort(
       c("Incompatible number of base parameters in your model and sampler",
@@ -323,7 +323,7 @@ sampler_validate_nested_vcv <- function(vcv, parameter_groups, pars,
         set_names(detail, "i")),
       call = call)
   }
-  
+
   if (has_base) {
     if (is.matrix(pars)) {
       vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base, , drop = FALSE])
@@ -331,18 +331,18 @@ sampler_validate_nested_vcv <- function(vcv, parameter_groups, pars,
       vcv$base <- sampler_validate_vcv(vcv$base, pars[i_base])
     }
   }
-  
+
   for (i in seq_len(n_groups)) {
     if (is.matrix(pars)) {
-      vcv$groups[[i]] <- 
+      vcv$groups[[i]] <-
         sampler_validate_vcv(vcv$groups[[i]],
                              pars[i_group[[i]], , drop = FALSE])
     } else {
-      vcv$groups[[i]] <- 
+      vcv$groups[[i]] <-
         sampler_validate_vcv(vcv$groups[[i]], pars[i_group[[i]]])
     }
   }
-  
+
   vcv
 }
 
@@ -354,7 +354,7 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
   has_base <- n_base != 0
   n_groups <- max(parameter_groups)
   i_group <- lapply(seq_len(n_groups), function(i) which(parameter_groups == i))
-  
+
   if (has_base) {
     if (is.matrix(pars)) {
       mvn_base <- make_random_walk_proposal(

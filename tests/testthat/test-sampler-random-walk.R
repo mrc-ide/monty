@@ -339,7 +339,7 @@ test_that("Can rerun a stochastic model", {
   sampler2 <- monty_sampler_random_walk(vcv = vcv, rerun_every = 2)
   res1 <- monty_sample(m, sampler1, 20)
   res2 <- monty_sample(m, sampler2, 20)
-  
+
   expect_gt(sum(diff(res1$density) != 0), sum(diff(res1$pars[1, , 1]) != 0))
   expect_true(all(diff(res1$density)[seq(1, 20, by = 2)] != 0))
   expect_gt(sum(diff(res2$density) != 0), sum(diff(res2$pars[1, , 1]) != 0))

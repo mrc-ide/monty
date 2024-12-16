@@ -101,8 +101,8 @@ random_array <- function(dim, named = FALSE) {
 ex_sir_filter_likelihood <- function(n_particles = 100,
                                      deterministic = FALSE,
                                      save_trajectories = FALSE) {
-  data <- data.frame(time      = c( 4,  8, 12, 16, 20, 24, 28, 32, 36),
-                     incidence = c( 1,  0,  3,  5,  2,  4,  3,  7,  2))
+  data <- data.frame(time      = c(4,  8, 12, 16, 20, 24, 28, 32, 36),
+                     incidence = c(1,  0,  3,  5,  2,  4,  3,  7,  2))
   sir_filter_monty(data, n_particles, deterministic, save_trajectories)
 }
 

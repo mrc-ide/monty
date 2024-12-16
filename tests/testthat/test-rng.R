@@ -260,7 +260,8 @@ test_that("Short circuit exit does not update rng state", {
 
 test_that("normal (box_muller) agrees with stats::rnorm", {
   n <- 100000
-  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2), "box_muller")
+  ans <- monty_random_n_normal(n, 0, 1, monty_rng_create(seed = 2),
+                               "box_muller")
   expect_equal(mean(ans), 0, tolerance = 1e-2)
   expect_equal(sd(ans), 1, tolerance = 1e-2)
   expect_gt(ks.test(ans, "pnorm")$p.value, 0.1)
@@ -590,7 +591,6 @@ test_that("Can vary scalar parameters by generator for multinomial", {
   ng <- 3L
   n <- 17L
 
-  # prob <- matrix(runif(np * ng), np, ng)
   prob <- runif(np)
   size <- 10 * seq_len(ng)
 

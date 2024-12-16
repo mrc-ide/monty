@@ -339,10 +339,10 @@ test_that("can run nested adaptive sampler simultaneously", {
   m <- ex_simple_nested_with_base(ng)
   sampler <- monty_sampler_nested_adaptive(
     list(base = diag(1), groups = rep(list(diag(1)), ng)))
-  
+
   set.seed(1)
   res1 <- monty_sample(m, sampler, 100, n_chains = 3)
-  
+
   set.seed(1)
   runner <- monty_runner_simultaneous()
   res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
@@ -360,10 +360,10 @@ test_that("can run nested adaptive sampler with rejecting boundaries
   sampler <- monty_sampler_nested_adaptive(
     list(base = diag(1), groups = rep(list(diag(1)), ng)),
     boundaries = "reject")
-  
+
   set.seed(1)
   res1 <- monty_sample(m, sampler, 100, n_chains = 3)
-  
+
   set.seed(1)
   runner <- monty_runner_simultaneous()
   res2 <- monty_sample(m, sampler, 100, n_chains = 3, runner = runner)
