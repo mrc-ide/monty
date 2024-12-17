@@ -145,13 +145,27 @@ derivative <- list(
     differentiate(expr[[2]], name)
   },
   `[` = function(expr, name) {
-    res <- differentiate(expr[[2]], name)
-    if (is.numeric(res)) {
-      res
-    } else {
-      stop("Implement this - array access")
+    target <- as.character(expr[[2]])
+    if (target != name) {
+      return(name)
     }
-  },
+    index <- as.list(expr[-(1:2)])
+
+    ## Assume odin's indexes for now
+    idx <- c("i", "j", "k", "l", "i5", "i6", "i7", "i8")[seq_along(index)]
+    i <- Map(is_same, index, lapply(idx, as.name))
+
+    if (any(vlapply(i, isFALSE))) {
+      return(0)
+    }
+    j <- vlapply(i, isTRUE)
+    if (all(j)) {
+      return(1)
+    }
+
+    ## Have to resort to some actual calculation here, sadly:
+    call("if", fold("&&", i[!j]), 1, 0)
+   },
   exp = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
     maths$times(differentiate(a, name), call("exp", a))
@@ -271,6 +285,7 @@ maths <- local({
         return(.parentheses_except(x[[2]], except))
       }
       pass <- grepl("^[A-Za-z]", fn) ||
+        fn == "[" ||
         (length(except) > 0 && fn %in% except) ||
         "unary_minus" %in% except && .is_unary_minus(x)
       if (pass) {
@@ -438,6 +453,18 @@ maths <- local({
       ret
     }
   }
+  fold <- function(fn, x) {
+    stopifnot(length(x) > 0)
+    if (length(x) == 1) {
+      x[[1]]
+    } else {
+      ret <- x[[1]]
+      for (el in x[-1]) {
+        ret <- call(fn, ret, el)
+      }
+      ret
+    }
+  }
   rewrite <- function(expr) {
     if (is.recursive(expr)) {
       fn <- as.character(expr[[1]])
@@ -467,3 +494,70 @@ maths <- local({
   }
   as.list(environment())
 })
+
+
+is_same <- function(a, b) {
+  if (is.numeric(a) && is.numeric(b)) {
+    return(a == b)
+  }
+  if (identical(a, b)) {
+    return(TRUE)
+  }
+  if (!is.recursive(a) && !is.recursive(b)) {
+    return(call("==", a, b))
+  }
+
+  a_parts <- expr_to_sum_of_parts(a)
+  b_parts <- lapply(expr_to_sum_of_parts(b), maths$uminus)
+  ab <- expr_factorise_parts(c(a_parts, b_parts))
+
+  if (is.numeric(ab)) {
+    return(ab == 0)
+  }
+
+  call("==", ab, 0)
+}
+
+
+## Duplicated from odin2:
+expr_to_sum_of_parts <- function(expr) {
+  if (rlang::is_call(expr, c("-", "+"), 2)) {
+    if (rlang::is_call(expr, "-")) {
+      parts <- lapply(expr[-1], expr_to_sum_of_parts)
+      uminus <- monty::monty_differentiation()$maths$uminus
+      parts[[2]] <- lapply(parts[[2]], uminus)
+      unlist(parts, FALSE)
+    } else {
+      unlist(lapply(expr[-1], expr_to_sum_of_parts), FALSE)
+    }
+  } else {
+    list(expr)
+  }
+}
+
+
+expr_factorise <- function(x) {
+  expr_factorise_parts(expr_to_sum_of_parts(x))
+}
+
+
+expr_factorise_parts <- function(parts) {
+  f <- function(el) {
+    if (is.numeric(el)) {
+      list(el, 1, "")
+    } else if (rlang::is_call(el, "-", 1)) {
+      ret <- f(el[[2]])
+      ret[[1]] <- -1 * ret[[1]]
+      ret
+    } else {
+      list(1, el, rlang::hash(el))
+    }
+  }
+  parts <- lapply(parts, f)
+  id <- vcapply(parts, "[[", 3)
+  ret <- lapply(unname(split(parts, id)), function(el) {
+    n <- sum(vnapply(el, "[[", 1))
+    maths$times(n, el[[1]][[2]])
+  })
+  maths$plus_fold(ret)
+}

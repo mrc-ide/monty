@@ -455,11 +455,27 @@ test_that("can diferentiate basic trig functions", {
 
 test_that("differentiate expressions with arrays", {
   expect_equal(differentiate(quote(x[i] + y[i]), "x"), 1)
-  expect_equal(differentiate(quote(x[i] + y[i]), "z"), 0
+  expect_equal(differentiate(quote(x[i] + y[i]), "z"), 0)
+  expect_equal(differentiate(quote(x[i]^2), "x"), quote(2 * x[i]))
+
+  expect_equal(differentiate(quote((x[i] - x[i + 1])^2), "x"),
+               quote(2 * (x[i] - x[1 + i])))
+  expect_equal(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
 })
 
 
 test_that("differentiate expressions with arrays", {
   expect_equal(differentiate(quote(sum(x)), "x"), 1)
   expect_equal(differentiate(quote(sum(x)), "y"), 0)
+})
+
+
+test_that("test sameness", {
+  expect_true(is_same(1, 1))
+  expect_false(is_same(1, 0))
+  expect_true(is_same(quote(i), quote(i)))
+  expect_true(is_same(quote(j), quote(j)))
+  expect_equal(is_same(quote(i), quote(j)), quote(i == j))
+  expect_equal(is_same(quote(i), quote(2)), quote(i == 2))
+  expect_false(is_same(quote(i), quote(i + 1)))
 })
