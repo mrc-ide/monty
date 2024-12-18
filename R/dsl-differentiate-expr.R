@@ -147,7 +147,7 @@ derivative <- list(
   `[` = function(expr, name) {
     target <- as.character(expr[[2]])
     if (target != name) {
-      return(name)
+      return(0)
     }
     index <- as.list(expr[-(1:2)])
 
