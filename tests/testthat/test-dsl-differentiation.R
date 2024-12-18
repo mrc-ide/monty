@@ -461,6 +461,9 @@ test_that("differentiate expressions with arrays", {
   expect_equal(differentiate(quote((x[i] - x[i + 1])^2), "x"),
                quote(2 * (x[i] - x[1 + i])))
   expect_equal(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
+
+  expect_equal(differentiate(quote(3 * (x[2] - x[i])), "x"),
+               quote(3 * ((if (2 == i) 1 else 0) - 1)))
 })
 
 

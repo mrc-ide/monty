@@ -164,7 +164,7 @@ derivative <- list(
     }
 
     ## Have to resort to some actual calculation here, sadly:
-    call("if", fold("&&", i[!j]), 1, 0)
+    call("if", maths$fold("&&", i[!j]), 1, 0)
    },
   exp = function(expr, name) {
     a <- maths$rewrite(expr[[2]])
