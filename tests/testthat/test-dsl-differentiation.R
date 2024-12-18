@@ -454,22 +454,21 @@ test_that("can diferentiate basic trig functions", {
 
 
 test_that("differentiate expressions with arrays", {
-  expect_equal(differentiate(quote(x[i] + y[i]), "x"), 1)
-  expect_equal(differentiate(quote(x[i] + y[i]), "z"), 0)
-  expect_equal(differentiate(quote(x[i]^2), "x"), quote(2 * x[i]))
+  expect_identical(differentiate(quote(x[i] + y[i]), "x"), 1)
+  expect_identical(differentiate(quote(x[i] + y[i]), "z"), 0)
+  expect_identical(differentiate(quote(x[i]^2), "x"), quote(2 * x[i]))
 
-  expect_equal(differentiate(quote((x[i] - x[i + 1])^2), "x"),
-               quote(2 * (x[i] - x[1 + i])))
-  expect_equal(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
-
-  expect_equal(differentiate(quote(3 * (x[2] - x[i])), "x"),
-               quote(3 * ((if (2 == i) 1 else 0) - 1)))
+  expect_identical(differentiate(quote((x[i] - x[i + 1])^2), "x"),
+                   quote(2 * (x[i] - x[1 + i])))
+  expect_identical(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
+  expect_identical(differentiate(quote(3 * (x[i] - x[2])), "x"),
+                   quote(3 * (1 - (if (2 == i) 1 else 0))))
 })
 
 
 test_that("differentiate expressions with arrays", {
-  expect_equal(differentiate(quote(sum(x)), "x"), 1)
-  expect_equal(differentiate(quote(sum(x)), "y"), 0)
+  expect_identical(differentiate(quote(sum(x)), "x"), 1)
+  expect_identical(differentiate(quote(sum(x)), "y"), 0)
 })
 
 

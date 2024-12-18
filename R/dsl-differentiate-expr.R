@@ -288,7 +288,7 @@ maths <- local({
         fn == "[" ||
         (length(except) > 0 && fn %in% except) ||
         "unary_minus" %in% except && .is_unary_minus(x)
-      if (pass) {
+      if (fn != "if" && pass) {
         return(x)
       }
       call("(", x)
