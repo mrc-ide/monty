@@ -473,11 +473,36 @@ test_that("differentiate expressions with arrays", {
 
 
 test_that("test sameness", {
-  expect_true(is_same(1, 1))
-  expect_false(is_same(1, 0))
-  expect_true(is_same(quote(i), quote(i)))
-  expect_true(is_same(quote(j), quote(j)))
-  expect_equal(is_same(quote(i), quote(j)), quote(i == j))
-  expect_equal(is_same(quote(i), quote(2)), quote(i == 2))
-  expect_false(is_same(quote(i), quote(i + 1)))
+  expect_true(maths$is_same(1, 1))
+  expect_false(maths$is_same(1, 0))
+  expect_true(maths$is_same(quote(i), quote(i)))
+  expect_true(maths$is_same(quote(j), quote(j)))
+  expect_equal(maths$is_same(quote(i), quote(j)), quote(i == j))
+  expect_equal(maths$is_same(quote(i), quote(2)), quote(i == 2))
+  expect_false(maths$is_same(quote(i), quote(i + 1)))
+})
+
+
+test_that("decompose an expression into sum of parts", {
+  expect_equal(maths$as_sum_of_parts(1), list(1))
+  expect_equal(maths$as_sum_of_parts(quote(x)), list(quote(x)))
+  expect_equal(maths$as_sum_of_parts(quote(x + y)), list(quote(x), quote(y)))
+  expect_equal(maths$as_sum_of_parts(quote(x + y + z)),
+               list(quote(x), quote(y), quote(z)))
+  expect_equal(maths$as_sum_of_parts(quote(x + 2 * y + z)),
+               list(quote(x), quote(2 * y), quote(z)))
+  expect_equal(maths$as_sum_of_parts(quote(x - y)), list(quote(x), quote(-y)))
+  expect_equal(maths$as_sum_of_parts(quote(x - y - z)),
+               list(quote(x), quote(-y), quote(-z)))
+})
+
+
+## Lots that this does not cover yet, it's limited to support what
+## tends to happen in odin index calculations which are necessarily
+## simple
+test_that("factorise an expression", {
+  expect_equal(maths$factorise(quote(1)), quote(1))
+  expect_equal(maths$factorise(quote(a)), quote(a))
+  expect_equal(maths$factorise(quote(a + a)), quote(2 * a))
+  expect_equal(maths$factorise(quote(1 + 2)), quote(3))
 })
