@@ -463,12 +463,28 @@ test_that("differentiate expressions with arrays", {
   expect_identical(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
   expect_identical(differentiate(quote(3 * (x[i] - x[2])), "x"),
                    quote(3 * (1 - (if (2 == i) 1 else 0))))
+
+  expect_identical(differentiate(quote(x[i] + x[j]), "x"),
+                   quote(1 + if (j == i) 1 else 0))
 })
 
 
-test_that("differentiate expressions with arrays", {
+test_that("differentiate complete sums with arrays", {
   expect_identical(differentiate(quote(sum(x)), "x"), 1)
   expect_identical(differentiate(quote(sum(x)), "y"), 0)
+})
+
+
+test_that("differentiate partial sums with arrays", {
+  expect_equal(differentiate(quote(sum(x[i, ])), "x"), 1)
+  expect_equal(differentiate(quote(sum(x[, i])), "x"),
+               quote(if (i == j) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[i, , 3])), "x"),
+               quote(if (3 == k) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[i, , a:b])), "x"),
+               quote(if (k >= a && k <= b) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[, i, a:b])), "x"),
+               quote(if (i == j && k >= a && k <= b) 1 else 0))
 })
 
 

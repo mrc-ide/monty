@@ -271,9 +271,46 @@ derivative <- list(
     target <- expr[[2]]
     if (is.symbol(target)) {
       return(if (as.character(target) == name) 1 else 0)
-    } else {
-      stop("Indexed sum not yet supported")
     }
+    if (!rlang::is_call(target, "[")) {
+      stop("Unsupported input to 'sum'")
+    }
+
+    index <- as.list(target[-(1:2)])
+    target <- target[[2]]
+    if (as.character(target) != name) {
+      return(0)
+    }
+
+    ## Assuming that this is all "reasonable" following odin:
+    index_full <- vlapply(index, rlang::is_missing)
+    index_range <- vlapply(index, function(i) ":" %in% all.names(i))
+    index_at <- !(index_full | index_range)
+
+    idx <- c("i", "j", "k", "l", "i5", "i6", "i7", "i8")[seq_along(index)]
+
+    i <- Map(maths$is_same, index[index_at], lapply(idx[index_at], as.name))
+    if (any(vlapply(i, isFALSE))) {
+      return(0)
+    }
+
+    if (any(index_range)) {
+      i <- c(
+        i,
+        Map(function(a, b) call(">=", a, b),
+            lapply(idx[index_range], as.name),
+            lapply(index[index_range], function(e) e[[2]])),
+        Map(function(a, b) call("<=", a, b),
+            lapply(idx[index_range], as.name),
+            lapply(index[index_range], function(e) e[[3]])))
+    }
+
+    j <- vlapply(i, isTRUE)
+    if (all(j)) {
+      return(1)
+    }
+
+    call("if", maths$fold("&&", i[!j]), 1, 0)
   }
 )
 
