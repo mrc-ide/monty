@@ -272,9 +272,7 @@ derivative <- list(
     if (is.symbol(target)) {
       return(if (as.character(target) == name) 1 else 0)
     }
-    if (!rlang::is_call(target, "[")) {
-      stop("Unsupported input to 'sum'")
-    }
+    stopifnot(rlang::is_call(target, "["))
 
     index <- as.list(target[-(1:2)])
     target <- target[[2]]
