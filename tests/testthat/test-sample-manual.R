@@ -355,3 +355,37 @@ test_that("can sample from models requiring restore", {
   res2 <- monty_sample_manual_collect(path)
   expect_equal(res2, res1)
 })
+
+
+test_that("can continue a manually sampled chain, twice", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+
+  path_a <- withr::local_tempdir()
+  path_b <- withr::local_tempdir()
+  path_c <- withr::local_tempdir()
+
+  set.seed(1)
+  cmp_a <- monty_sample(model, sampler, 100, n_chains = 2, restartable = TRUE)
+  cmp_b <- monty_sample_continue(cmp_a, 50, restartable = TRUE)
+  cmp_c <- monty_sample_continue(cmp_b, 20, restartable = TRUE)
+
+  set.seed(1)
+  monty_sample_manual_prepare(model, sampler, 100, path_a, n_chains = 2)
+  monty_sample_manual_run(1, path_a)
+  monty_sample_manual_run(2, path_a)
+  res_a <- monty_sample_manual_collect(path_a, restartable = TRUE)
+
+  monty_sample_manual_prepare_continue(res_a, 50, path_b)
+  monty_sample_manual_run(1, path_b)
+  monty_sample_manual_run(2, path_b)
+  res_b <- monty_sample_manual_collect(path_b, samples = res_a,
+                                       restartable = TRUE)
+
+  monty_sample_manual_prepare_continue(res_b, 20, path_c)
+  monty_sample_manual_run(1, path_c)
+  monty_sample_manual_run(2, path_c)
+  res_c <- monty_sample_manual_collect(path_c, samples = res_b)
+
+  expect_equal(res_c$pars, cmp_c$pars)
+})

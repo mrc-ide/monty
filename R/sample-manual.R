@@ -193,7 +193,17 @@ monty_sample_manual_collect <- function(path, samples = NULL,
 
   prev <- sample_manual_collect_check_samples(inputs, samples, append)
 
-  observer <- inputs$model$observer
+  if (is.null(inputs$restart)) {
+    model <- inputs$model
+    sampler <- inputs$sampler
+    thinning_factor <- inputs$steps$thinning_factor
+  } else {
+    model <- inputs$restart$model
+    sampler <- inputs$restart$sampler
+    thinning_factor <- inputs$restart$thinning_factor
+  }
+
+  observer <- model$observer
   res <- lapply(path$results, readRDS)
   samples <- combine_chains(res, observer)
   if (!is.null(prev)) {
@@ -201,8 +211,9 @@ monty_sample_manual_collect <- function(path, samples = NULL,
   }
 
   if (restartable) {
-    samples$restart <- restart_data(res, inputs$model, inputs$sampler, NULL,
-                                    inputs$steps$thinning_factor)
+    runner <- NULL
+    samples$restart <- restart_data(res, model, sampler, runner,
+                                    thinning_factor)
   }
   samples
 }
