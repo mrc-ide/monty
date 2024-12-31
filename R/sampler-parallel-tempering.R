@@ -182,7 +182,7 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     alpha <- pmin(
       0,
       (beta[i2] - beta[i1]) * ((density$target[i1] - density$base[i1]) -
-                               (density$target[i2]) - density$base[i2]))
+                               (density$target[i2] - density$base[i2])))
 
     u <- monty_random_n_real(length(i1), rng)
     accept <- log(u) < alpha
