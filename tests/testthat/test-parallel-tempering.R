@@ -67,3 +67,24 @@ test_that("base model and target must have same parameters", {
     monty_sample(target, s, 100),
     "'base' and 'model' must have the same parameters")
 })
+
+
+## This tests get/set of the internal state
+test_that("can continue a parallel tempering chain", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+
+  set.seed(1)
+  s <- monty_sampler_parallel_tempering(n_rungs = 10, vcv = matrix(0.1))
+  res1 <- monty_sample(posterior, s, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+
+  set.seed(1)
+  s <- monty_sampler_parallel_tempering(n_rungs = 10, vcv = matrix(0.1))
+  cmp <- monty_sample(posterior, s, 100, n_chains = 4)
+
+  expect_equal(res2$pars, cmp$pars)
+})
