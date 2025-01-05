@@ -8,10 +8,10 @@ monty_sampler_parallel_tempering(n_rungs, vcv, base = NULL)
 }
 \arguments{
 \item{n_rungs}{The number of \strong{extra} chains to run, must be at
-least 1 and probably should be an even number.}
+least 1.}
 
 \item{vcv}{The variance covariance matrix for the random walk
-sampler (this interface will change)}
+sampler.  You can provide}
 
 \item{base}{An optional base model, which must be provided if your
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using
@@ -31,7 +31,7 @@ it.  Currently uses a random walk sampler
 make this configurable in a future version.
 }
 \details{
-We implement the sampler based on https://arxiv.org/pdf/1905.02939
+We implement the sampler based on https://doi.org/10.1111/rssb.12464
 }
 \section{Efficiency of the sampler}{
 A parallel tempering sampler runs a series of chains at the same
@@ -44,7 +44,7 @@ may come from:
 \item \strong{Your model is parallelisable}.  If your underlying model can
 run very efficiently in parallel then it may not take much longer
 in "wall time" to run the extra copies of the calculations.  In
-this case, you'll stil be using much more CPU time but will be
+this case, you'll still be using much more CPU time but will be
 able to take advantage of extra cores to get more effective
 sampling if the parallel tempering sampler mixes better than the
 underlying sampler.
