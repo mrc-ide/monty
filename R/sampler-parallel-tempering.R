@@ -39,10 +39,10 @@
 ##' @title Parallel Tempering Sampler
 ##'
 ##' @param n_rungs The number of **extra** chains to run, must be at
-##'   least 1 and probably should be an even number.
+##'   least 1.
 ##'
 ##' @param vcv The variance covariance matrix for the random walk
-##'   sampler (this interface will change)
+##'   sampler.  You can provide
 ##'
 ##' @param base An optional base model, which must be provided if your
 ##'   model cannot be automatically decomposed into `prior +
@@ -55,9 +55,6 @@
 ##'
 ##' @export
 monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
-  ## We may want to warn if users provide an odd number of rungs as we
-  ## do a different number of swaps on even/odd steps.  Marc to check
-  ## if this would affect efficiency of the sampler.
   assert_scalar_size(n_rungs, allow_zero = FALSE)
 
   ## Use a fixed schedule for now, later we'll need to allow this to
@@ -174,9 +171,6 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
 
     ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
     ##
-    ## TODO: Marc to check and perhaps harmonise names
-    ## TODO: Marc: I have reversed the i's on beta here, seems required?
-    ##
     ## NOTE: this is done against the *actual* densities, not the ones
     ## scaled by beta.
     alpha <- pmin(
@@ -217,11 +211,12 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
   }
 
   get_internal_state <- function() {
-    list(accept_swap = internal$accept_swap)
+    keep <- c("accept_swap", "even_step", "last", "state")
+    set_names(lapply(keep, function(k) internal[[k]]), keep)
   }
 
   set_internal_state <- function(state) {
-    internal$accept_swap <- state$accept_swap
+    list2env(state, internal)
   }
 
   monty_sampler("Parallel Tempering",
