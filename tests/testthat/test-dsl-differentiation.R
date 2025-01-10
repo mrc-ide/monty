@@ -451,3 +451,74 @@ test_that("can diferentiate basic trig functions", {
     differentiate(quote(tan(x)), "x"),
     quote(1 / cos(x)^2))
 })
+
+
+test_that("differentiate expressions with arrays", {
+  expect_identical(differentiate(quote(x[i] + y[i]), "x"), 1)
+  expect_identical(differentiate(quote(x[i] + y[i]), "z"), 0)
+  expect_identical(differentiate(quote(x[i]^2), "x"), quote(2 * x[i]))
+
+  expect_identical(differentiate(quote((x[i] - x[i + 1])^2), "x"),
+                   quote(2 * (x[i] - x[1 + i])))
+  expect_identical(differentiate(quote(x[i] - x[i + 1]), "x"), 1)
+  expect_identical(differentiate(quote(3 * (x[i] - x[2])), "x"),
+                   quote(3 * (1 - (if (2 == i) 1 else 0))))
+
+  expect_identical(differentiate(quote(x[i] + x[j]), "x"),
+                   quote(1 + if (j == i) 1 else 0))
+})
+
+
+test_that("differentiate complete sums with arrays", {
+  expect_identical(differentiate(quote(sum(x)), "x"), 1)
+  expect_identical(differentiate(quote(sum(x)), "y"), 0)
+})
+
+
+test_that("differentiate partial sums with arrays", {
+  expect_equal(differentiate(quote(sum(x[i, ])), "x"), 1)
+  expect_equal(differentiate(quote(sum(x[, i])), "x"),
+               quote(if (i == j) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[i, , 3])), "x"),
+               quote(if (3 == k) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[i, , a:b])), "x"),
+               quote(if (k >= a && k <= b) 1 else 0))
+  expect_equal(differentiate(quote(sum(x[, i, a:b])), "x"),
+               quote(if (i == j && k >= a && k <= b) 1 else 0))
+})
+
+
+test_that("test sameness", {
+  expect_true(maths$is_same(1, 1))
+  expect_false(maths$is_same(1, 0))
+  expect_true(maths$is_same(quote(i), quote(i)))
+  expect_true(maths$is_same(quote(j), quote(j)))
+  expect_equal(maths$is_same(quote(i), quote(j)), quote(i == j))
+  expect_equal(maths$is_same(quote(i), quote(2)), quote(i == 2))
+  expect_false(maths$is_same(quote(i), quote(i + 1)))
+})
+
+
+test_that("decompose an expression into sum of parts", {
+  expect_equal(maths$as_sum_of_parts(1), list(1))
+  expect_equal(maths$as_sum_of_parts(quote(x)), list(quote(x)))
+  expect_equal(maths$as_sum_of_parts(quote(x + y)), list(quote(x), quote(y)))
+  expect_equal(maths$as_sum_of_parts(quote(x + y + z)),
+               list(quote(x), quote(y), quote(z)))
+  expect_equal(maths$as_sum_of_parts(quote(x + 2 * y + z)),
+               list(quote(x), quote(2 * y), quote(z)))
+  expect_equal(maths$as_sum_of_parts(quote(x - y)), list(quote(x), quote(-y)))
+  expect_equal(maths$as_sum_of_parts(quote(x - y - z)),
+               list(quote(x), quote(-y), quote(-z)))
+})
+
+
+## Lots that this does not cover yet, it's limited to support what
+## tends to happen in odin index calculations which are necessarily
+## simple
+test_that("factorise an expression", {
+  expect_equal(maths$factorise(quote(1)), quote(1))
+  expect_equal(maths$factorise(quote(a)), quote(a))
+  expect_equal(maths$factorise(quote(a + a)), quote(2 * a))
+  expect_equal(maths$factorise(quote(1 + 2)), quote(3))
+})
