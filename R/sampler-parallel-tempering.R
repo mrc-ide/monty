@@ -42,7 +42,7 @@
 ##'   least 1.
 ##'
 ##' @param vcv The variance covariance matrix for the random walk
-##'   sampler.  You can provide
+##'   sampler.
 ##'
 ##' @param base An optional base model, which must be provided if your
 ##'   model cannot be automatically decomposed into `prior +

@@ -11,7 +11,7 @@ monty_sampler_parallel_tempering(n_rungs, vcv, base = NULL)
 least 1.}
 
 \item{vcv}{The variance covariance matrix for the random walk
-sampler.  You can provide}
+sampler.}
 
 \item{base}{An optional base model, which must be provided if your
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using
