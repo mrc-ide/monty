@@ -147,6 +147,23 @@ ex_stochastic <- function(n = 10, sd_sample = 1, sd_measure = 1) {
 }
 
 
+## Here's Marc's original model, adapted to allow multiple parameters
+## at once, which we will need here.
+ex_mixture <- function(mu = 5) {
+  monty_model(
+    list(
+      parameters = "x",
+      density = function(x) {
+        drop(log(0.5 * dnorm(x + mu) + 0.5 * dnorm(x - mu)))
+      },
+      gradient = function(x) {
+        drop(-((x + mu) * dnorm(x + mu) + (x - mu) * dnorm(x - mu)) /
+               (dnorm(x + mu) + dnorm(x - mu)))
+      }),
+    monty_model_properties(allow_multiple_parameters = TRUE))
+}
+
+
 scrub_manual_info <- function(x) {
   x <- sub("Manual monty sampling at '.+",
            "Manual monty sampling at '<PATH>'",
