@@ -43,7 +43,7 @@
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
+old_monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
                                       rerun_every = Inf, rerun_random = TRUE) {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
   internal <- new.env()

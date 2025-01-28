@@ -158,7 +158,16 @@ monty_run_chain_parallel <- function(chain_id, pars, model, sampler, steps,
 monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
-  chain_state <- sampler$initialise(pars, model, rng)
+
+  ## TODO: On the fence about if 'rng' is really part of the shared
+  ## state, but it could be.
+  shared <- list2env(
+    list(model = model, rng = rng, inputs = sampler$inputs),
+    parent = emptyenv())
+  internal <- new.env(parent = emptyenv())
+
+  n_chains <- length(chain_id)
+  chain_state <- sampler$begin(shared, internal, pars, n_chains)
 
   if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -180,8 +189,11 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  monty_run_chain2(chain_id, chain_state, model, sampler, steps, progress,
-                   rng, r_rng_state)
+  ## This passing of state (the sampler is now three pieces -
+  ## {Sampler, Shared, State}) is somewhat peculiar and we should join
+  ## these in a little list that formalises the above.
+  monty_run_chain2(chain_id, sampler, shared, internal, steps, progress,
+                   r_rng_state)
 }
 
 
@@ -198,9 +210,10 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
 }
 
 
-monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
-                             progress, rng, r_rng_state) {
-  initial <- chain_state$pars
+monty_run_chain2 <- function(chain_id, sampler, shared, internal, steps,
+                             progress, r_rng_state) {
+  initial <- shared$state$pars
+  model <- shared$model
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
 
@@ -216,7 +229,7 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
 
   j <- 1L
   for (i in seq_len(n_steps)) {
-    chain_state <- sampler$step(chain_state, model, rng)
+    chain_state <- sampler$step(shared, internal)
     if (i > burnin && i %% thinning_factor == 0) {
       history_pars[, j] <- chain_state$pars
       history_density[[j]] <- chain_state$density
@@ -231,8 +244,7 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
-  details <- sampler$finalise(chain_state, model, rng)
+  details <- sampler$details(shared, internal)
 
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
@@ -246,8 +258,8 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
       chain = chain_state,
-      rng = monty_rng_state(rng),
-      sampler = sampler$get_internal_state(),
+      rng = monty_rng_state(shared$rng),
+      sampler = sampler$internal_state(shared, internal),
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 
   list(initial = initial,

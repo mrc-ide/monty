@@ -17,7 +17,6 @@ test_that("sampler return value contains history", {
   model <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   res <- monty_sample(model, sampler, 100, 1)
-  ## TODO: what is in details?
   expect_setequal(names(res),
                   c("pars", "density", "initial", "details", "observations"))
   expect_equal(dim(res$pars), c(1, 100, 1))

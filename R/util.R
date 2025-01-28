@@ -13,6 +13,7 @@ check_vcv <- function(vcv, allow_3d = FALSE, name = deparse(substitute(vcv)),
     what <- if (allow_3d) "matrix or 3d array" else "matrix"
     cli::cli_abort("Expected a {what} for '{name}'", call = call)
   }
+  vcv
 }
 
 
