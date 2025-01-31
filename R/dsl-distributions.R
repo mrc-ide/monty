@@ -239,7 +239,7 @@ distr_truncated_normal <- distribution(
   expr = list(
     mean = NULL,
     density = NULL),
-  domain = function(min, max) {
+  domain = function(mean, sd, min, max) {
     c(if (is.na(min)) -Inf else min, if (is.na(max)) Inf else max)
   },
   cpp = list(density = "truncated_normal",
