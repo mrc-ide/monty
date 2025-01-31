@@ -232,6 +232,8 @@ distr_poisson <- distribution(
 distr_truncated_normal <- distribution(
   name = "TruncatedNormal",
   density = function(x, mean, sd, min, max) {
+    dnorm(x, mean, sd, log = TRUE) - 
+      log(pnorm(max, mean, sd) - pnorm(min, mean, sd))
   },
   sample = "monty_random_truncated_normal",
   ## These would be much simpler to do via the chain rule as a pair.
