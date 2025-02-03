@@ -14,11 +14,12 @@ test_that("validate sampler against model on initialisation", {
   state <- list(pars = 1, density = -Inf)
   sampler1 <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
-  r <- monty_rng_create()
+  shared1 <- monty_sampler_shared(m, sampler1$inputs, r)
+  shared2 <- monty_sampler_shared(m, sampler2$inputs, r)
 
-  expect_no_error(sampler1$initialise(1, m, r))
+  expect_no_error(sampler1$begin(shared1, new.env(), 1, 1))
   expect_error(
-    sampler2$initialise(1, m, r),
+    sampler2$begin(shared2, new.env(), 1, 1),
     "Incompatible length parameters (1) and vcv (2)",
     fixed = TRUE)
 })

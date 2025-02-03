@@ -201,9 +201,14 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng_create(seed = state$rng)
-  sampler$set_internal_state(state$sampler)
+
+  internal <- list2env(state$sampler, parent = emptyenv())
+  shared <- monty_sampler_shared(model, sampler$inputs, rng)
+  list2env(state$chain, shared)
+  sampler$resume(state, internal)
+
   if (model$properties$is_stochastic) {
-    model$rng_state$set(state$model_rng)
+    shared$model$rng_state$set(state$model_rng)
   }
   monty_run_chain2(chain_id, state$chain, model, sampler, steps, progress,
                    rng, r_rng_state)
