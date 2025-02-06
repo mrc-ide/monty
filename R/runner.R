@@ -167,9 +167,9 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
   internal <- new.env(parent = emptyenv())
 
   n_chains <- length(chain_id)
-  chain_state <- sampler$begin(shared, internal, pars, n_chains)
+  sampler$begin(shared, internal, pars, n_chains)
 
-  if (!is.finite(chain_state$density)) {
+  if (!is.finite(shared$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
     ## validing this even earlier (in the parameter validation step)
     ## but that has its own issues (e.g., in the heirarchical sampler
@@ -207,11 +207,16 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   list2env(state$chain, shared)
   sampler$resume(state, internal)
 
+  ## Here, it looks like we have shared$pars and shared$density and
+  ## not shared$state$pars/shared$state$density, which in turn breaks
+  ## the proposal.  I think we should drop 'state' from here as it's
+  ## not helpful and then try and refactor.
+
   if (model$properties$is_stochastic) {
     shared$model$rng_state$set(state$model_rng)
   }
-  monty_run_chain2(chain_id, state$chain, model, sampler, steps, progress,
-                   rng, r_rng_state)
+  monty_run_chain2(chain_id, sampler, shared, internal, steps, progress,
+                   r_rng_state)
 }
 
 
@@ -234,12 +239,12 @@ monty_run_chain2 <- function(chain_id, sampler, shared, internal, steps,
 
   j <- 1L
   for (i in seq_len(n_steps)) {
-    chain_state <- sampler$step(shared, internal)
+    sampler$step(shared, internal)
     if (i > burnin && i %% thinning_factor == 0) {
-      history_pars[, j] <- chain_state$pars
-      history_density[[j]] <- chain_state$density
-      if (has_observer && !is.null(chain_state$observation)) {
-        history_observation[[j]] <- chain_state$observation
+      history_pars[, j] <- shared$pars
+      history_density[[j]] <- shared$density
+      if (has_observer && !is.null(shared$observation)) {
+        history_observation[[j]] <- shared$observation
       }
       j <- j + 1L
     }

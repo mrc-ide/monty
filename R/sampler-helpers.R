@@ -10,21 +10,19 @@ initialise_state <- function(pars, model, rng) {
 }
 
 
-update_state <- function(state, pars, density, accept, model, rng) {
+update_state <- function(shared, pars, density, accept) {
   if (any(accept)) {
-    if (is.matrix(state$pars)) {
-      state$pars[, accept] <- pars[, accept]
-      state$density[accept] <- density[accept]
-      state
+    if (is.matrix(shared$pars)) {
+      shared$pars[, accept] <- pars[, accept]
+      shared$density[accept] <- density[accept]
     } else {
-      state$pars <- pars
-      state$density <- density
-      if (model$properties$has_observer) {
-        state$observation <- model$observer$observe()
+      shared$pars <- pars
+      shared$density <- density
+      if (shared$model$properties$has_observer) {
+        shared$observation <- shared$model$observer$observe()
       }
     }
   }
-  state
 }
 
 

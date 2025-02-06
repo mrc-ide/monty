@@ -100,9 +100,16 @@ random_walk_begin <- function(shared, internal, pars, n_chains) {
                                inputs$rerun_random,
                                model$properties$is_stochastic)
 
+  initialise_rng_state(shared$model, shared$rng)
+  shared$pars <- pars
+  shared$density <- model$density(pars)
+  if (model$properties$has_observer) {
+    shared$observation <- model$observer$observe()
+  }
+
   ## TODO: refactor this later, or at least make it easy for other
   ## people to reuse.
-  shared$state <- initialise_state(pars, model, shared$rng)
+  ## shared$state <- initialise_state(pars, model, shared$rng)
 }
 
 
@@ -114,20 +121,19 @@ random_walk_step <- function(shared, internal) {
   rng <- shared$rng
   model <- shared$model
 
-  pars_next <- internal$proposal(shared$state$pars, rng)
+  pars_next <- internal$proposal(shared$pars, rng)
   rerun <- internal$rerun(rng)
-  state <- shared$state
   if (any(rerun)) {
     ## This is currently just setup assuming we are not using multiple
     ## parameters as currently they cannot be used with stochastic models,
     ## while the rerun is only used with stochastic models
-    state$density <- shared$model$density(state$pars)
+    shared$density <- shared$model$density(pars)
   }
 
   reject_some <- shared$inputs$boundaries == "reject" &&
     !all(i <- is_parameters_in_domain(pars_next, model$domain))
   if (reject_some) {
-    density_next <- rep(-Inf, length(state$density))
+    density_next <- rep(-Inf, length(shared$density))
     if (any(i)) {
       ## TODO: this makes the assumption that we can pass a matrix
       ## with fewer parameter sets through to dust, but I think
@@ -139,9 +145,8 @@ random_walk_step <- function(shared, internal) {
     density_next <- model$density(pars_next)
   }
 
-  accept <- density_next - state$density > log(monty_random_real(rng))
-  shared$state <- update_state(state, pars_next, density_next, accept,
-                               model, rng)
+  accept <- density_next - shared$density > log(monty_random_real(rng))
+  shared$state <- update_state(shared, pars_next, density_next, accept)
 }
 
 
