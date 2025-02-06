@@ -65,3 +65,45 @@ test_that("can compute vectorised densities", {
   expect_equal(m$density(cbind(c(0, 1, 2), c(3, 4, 5))),
                dnorm(c(0, 3), c(1, 4), c(2, 5), log = TRUE))
 })
+
+
+test_that("can cope with fixed parameters and multiple inputs", {
+  fn <- function(a, b, c) {
+    a + b + c
+  }
+
+  m <- monty_model_function(fn, fixed = list(c = 10),
+                            allow_multiple_parameters = TRUE)
+  expect_equal(m$parameters, c("a", "b"))
+  expect_equal(m$density(c(1, 2)), 13)
+  expect_equal(m$density(matrix(1:6, 2)), c(13, 17, 21))
+})
+
+
+test_that("can undo fixed arguments to packer", {
+  fn <- function(a, b, c) {
+    a + b + c
+  }
+  p <- monty_packer(c("a", "b"), fixed = list(c = 10))
+  m <- monty_model_function(fn, packer = p,
+                            allow_multiple_parameters = TRUE)
+  expect_equal(m$parameters, c("a", "b"))
+  expect_equal(m$density(c(1, 2)), 13)
+  expect_equal(m$density(matrix(1:6, 2)), c(13, 17, 21))
+})
+
+
+test_that("can't use process in packer with multiple parameters", {
+  fn <- function(a, b, c) {
+    a + b + c
+  }
+  p <- monty_packer(c("a", "b"), process = function(x) list(c = 10))
+
+  m <- monty_model_function(fn, packer = p)
+  expect_equal(m$parameters, c("a", "b"))
+  expect_equal(m$density(c(1, 2)), 13)
+
+  expect_error(
+    monty_model_function(fn, packer = p, allow_multiple_parameters = TRUE),
+    "Can't use 'allow_multiple_parameters' with a packer")
+})

@@ -60,6 +60,7 @@ unpacked.  This is of limited most use to most people.
 a packer to a packer for a subset of contents. Documentation
 will be provided once the interface settles, but this is for
 advanced use only!
+\item \code{inputs}: inputs that could be used to reconstitute this packer.
 }
 }
 \description{

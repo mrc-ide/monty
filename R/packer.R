@@ -206,6 +206,8 @@
 ##'   will be provided once the interface settles, but this is for
 ##'   advanced use only!
 ##'
+##' * `inputs`: inputs that could be used to reconstitute this packer.
+##'
 ##' @export
 ##'
 ##' @examples
@@ -393,11 +395,14 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
     list(index = index, packer = packer)
   }
 
+  inputs <- list(array = shape, fixed = fixed, process = process)
+
   ret <- list(names = function() nms,
               unpack = unpack,
               pack = pack,
               index = function() idx,
-              subset = subset)
+              subset = subset,
+              inputs = function() inputs)
   class(ret) <- "monty_packer"
   ret
 }

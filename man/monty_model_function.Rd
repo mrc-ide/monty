@@ -28,7 +28,8 @@ to \code{monty_packer} instead).}
 \item{allow_multiple_parameters}{Logical, indicating if passing in
 vectors for all parameters will return a vector of densities.
 This is \code{FALSE} by default because we cannot determine this
-automatically.}
+automatically.  Be aware that R's recycling rules may mean that
+this will not always work as expected!}
 }
 \value{
 A \link{monty_model} object that computes log density with the
