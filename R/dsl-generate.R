@@ -27,10 +27,26 @@ dsl_generate <- function(dat) {
 
 dsl_generate_density <- function(dat, env, meta) {
   exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
-  body <- c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
+  body_exprs <- c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
             call("<-", meta[["density"]], quote(numeric())),
             exprs,
             call("sum", meta[["density"]]))
+  if (is.null(dat$domain)) {
+    body <- rlang::call2("{", !!!body_exprs)
+  } else {
+    if (nrow(dat$domain) == 1) {
+      domain_min <- dat$domain[[1]]
+      domain_max <- dat$domain[[2]]
+      in_domain <- bquote(x >= .(domain_min) && x <= .(domain_max))
+    } else {
+      domain_min <- rlang::call2("c", !!!unname(dat$domain[, 1]))
+      domain_max <- rlang::call2("c", !!!unname(dat$domain[, 2]))
+      in_domain <- bquote(all(x >= .(domain_min) & x <= .(domain_max)))
+    }
+    body <- call(
+      "{",
+      call("if", in_domain, rlang::call2("{", !!!body_exprs), call("{", -Inf)))
+  }
   vectorise_density_over_parameters(
     as_function(alist(x = ), body, env))
 }
@@ -58,6 +74,9 @@ dsl_generate_gradient <- function(dat, env, meta) {
 
 
 dsl_generate_direct_sample <- function(dat, env, meta) {
+  if (!is.null(dat$domain)) {
+    return(NULL)
+  }
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr, meta)
   body <- c(call("<-", meta[["pars"]], quote(list())),
             exprs,
@@ -146,6 +165,13 @@ dsl_generate_domain <- function(dat, meta) {
       }
     }
   }
+
+  ## Same logic as model_combine_domain
+  if (!is.null(dat$domain)) {
+    domain[, 1] <- pmax(domain[, 1], dat$domain[, 1])
+    domain[, 2] <- pmin(domain[, 2], dat$domain[, 2])
+  }
+
   domain
 }
 

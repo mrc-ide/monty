@@ -107,3 +107,17 @@ test_that("can't use process in packer with multiple parameters", {
     monty_model_function(fn, packer = p, allow_multiple_parameters = TRUE),
     "Can't use 'allow_multiple_parameters' with a packer")
 })
+
+
+test_that("can apply domain to model from function", {
+  fn <- function(a, b) {
+    dnorm(0, a, b, log = TRUE)
+  }
+  m <- monty_model_function(fn, domain = rbind(b = c(1, 5)))
+  expect_s3_class(m, "monty_model")
+  expect_equal(m$domain, rbind(a = c(-Inf, Inf), b = c(1, 5)))
+  expect_equal(m$parameters, c("a", "b"))
+  expect_equal(monty_model_density(m, c(1, 2)),
+               dnorm(0, 1, 2, log = TRUE))
+  expect_equal(monty_model_density(m, c(1, 6)), -Inf)
+})
