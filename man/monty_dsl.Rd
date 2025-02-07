@@ -4,7 +4,7 @@
 \alias{monty_dsl}
 \title{Domain Specific Language for monty}
 \usage{
-monty_dsl(x, type = NULL, gradient = NULL, fixed = NULL)
+monty_dsl(x, type = NULL, gradient = NULL, fixed = NULL, domain = NULL)
 }
 \arguments{
 \item{x}{The model as an expression.  This may be given as an
@@ -36,6 +36,16 @@ provided, these values cannot be changed without rebuilding the
 model; they are fixed data.  You might use these for
 hyperparameters that are fixed across a set of model runs, for
 example.}
+
+\item{domain}{An optional domain.  Normally this is not wanted,
+but you can use this to truncate the domain of one or more
+parameters.  The domain is effectively applied \emph{after} the
+calculations implied by the DSL.  The density is not
+recalculated to reflect the change in the marginal density.
+Applying a domain will remove the ability to sample from the
+model, at least for now.  See \link{monty_model} for details on the
+format.  The provided parameters must match the parameters of
+your model.}
 }
 \value{
 A \link{monty_model} object derived from the expressions you
