@@ -10,7 +10,9 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
-  domain <- validate_domain(domain, parameters, call = call)
+  if (!is.null(domain)) {
+    domain <- validate_domain(domain, parameters, call = call)
+  }
 
   adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
