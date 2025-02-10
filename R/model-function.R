@@ -25,7 +25,8 @@
 ##' @param allow_multiple_parameters Logical, indicating if passing in
 ##'   vectors for all parameters will return a vector of densities.
 ##'   This is `FALSE` by default because we cannot determine this
-##'   automatically.
+##'   automatically.  Be aware that R's recycling rules may mean that
+##'   this will not always work as expected!
 ##'
 ##' @return A [monty_model] object that computes log density with the
 ##'   provided `density` function, given a numeric vector argument
@@ -59,12 +60,24 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
 
   if (is.null(packer)) {
     packer <- monty_packer(
-      setdiff(names(formals(density)), names(fixed)),
-      fixed = fixed)
+      setdiff(names(formals(density)), names(fixed)))
   } else {
     assert_is(packer, "monty_packer")
     if (!is.null(fixed)) {
       cli::cli_abort("Can't provide both 'packer' and 'fixed'", arg = "fixed")
+    }
+
+    if (allow_multiple_parameters) {
+      inputs <- packer$inputs()
+      if (!is.null(inputs$process)) {
+        cli::cli_abort(paste(
+          "Can't use 'allow_multiple_parameters' with a packer that uses",
+          "'process'"))
+      }
+      if (!is.null(inputs$fixed)) {
+        fixed <- inputs$fixed
+        packer <- monty_packer(array = inputs$array)
+      }
     }
   }
 
@@ -74,7 +87,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
   monty_model(
     list(parameters = packer$names(),
          density = function(x) {
-           rlang::inject(density(!!!packer$unpack(x)))
+           rlang::inject(density(!!!packer$unpack(x), !!!fixed))
          }),
     properties)
 }

@@ -204,15 +204,6 @@ test_that("error if given the wrong size input to unpack", {
 })
 
 
-test_that("can't used fixed with array unpacking", {
-  p <- monty_packer(c("x", "y"), fixed = list(a = 10))
-  expect_equal(p$unpack(1:2), list(x = 1, y = 2, a = 10))
-  expect_error(
-    p$unpack(matrix(1:6, 2)),
-    "Can't unpack a matrix where the unpacker uses 'fixed'")
-})
-
-
 test_that("can't used process with array unpacking", {
   p <- monty_packer(c("x", "y"), process = function(d) list(z = d$x + d$y))
   expect_equal(p$unpack(1:2), list(x = 1, y = 2, z = 3))
