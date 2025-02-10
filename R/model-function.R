@@ -93,12 +93,19 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
   use_domain <- !is.null(domain)
   if (use_domain) {
     domain <- validate_domain(domain, parameters, call = call)
+    if (allow_multiple_parameters) {
+      ## This involves some pretty tedious bookkeeping, and is going
+      ## to interact with the interface for running an indexed subset
+      ## of parameters that we need to sort dust out properly.
+      cli::cli_abort(
+        "'allow_multiple_parameters' and 'domain' cannot yet be used together")
+    }
   }
 
   monty_model(
     list(parameters = parameters,
          density = function(x) {
-           if (use_domain && any(x < domain[, 1] | x > domain[, 2])) {
+           if (use_domain && !all(x >= domain[, 1] & x <= domain[, 2])) {
              return(-Inf)
            }
            rlang::inject(density(!!!packer$unpack(x), !!!fixed))

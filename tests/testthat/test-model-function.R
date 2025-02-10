@@ -121,3 +121,14 @@ test_that("can apply domain to model from function", {
                dnorm(0, 1, 2, log = TRUE))
   expect_equal(monty_model_density(m, c(1, 6)), -Inf)
 })
+
+
+test_that("cannot use domain and multiple parameters", {
+  fn <- function(a, b) {
+    dnorm(0, a, b, log = TRUE)
+  }
+  domain <- rbind(b = c(1, 5))
+  expect_error(
+    monty_model_function(fn, domain = domain, allow_multiple_parameters = TRUE),
+    "'allow_multiple_parameters' and 'domain' cannot yet be used together")
+})
