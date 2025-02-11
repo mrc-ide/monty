@@ -159,11 +159,11 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
 
-  ## TODO: On the fence about if 'rng' is really part of the shared
-  ## state, but it could be.
-  shared <- list2env(
-    list(model = model, rng = rng, inputs = sampler$inputs),
-    parent = emptyenv())
+  ## NOTE: sampler$inputs is really a non-mutable set of inputs to the
+  ## sampler - I'm not totally sure why we are accessing it this way,
+  ## but I think it's because the actual sampler objects are stateless
+  ## and this gives access to the arguments later on.
+  shared <- monty_sampler_shared(model, sampler$inputs, rng)
   internal <- new.env(parent = emptyenv())
 
   n_chains <- length(chain_id)
@@ -222,7 +222,7 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
 
 monty_run_chain2 <- function(chain_id, sampler, shared, internal, steps,
                              progress, r_rng_state) {
-  initial <- shared$state$pars
+  initial <- shared$pars
   model <- shared$model
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
@@ -267,7 +267,6 @@ monty_run_chain2 <- function(chain_id, sampler, shared, internal, steps,
   internal <- list(
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
-      chain = chain_state,
       rng = monty_rng_state(shared$rng),
       sampler = sampler$internal_state(shared, internal),
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
