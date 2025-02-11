@@ -119,6 +119,7 @@ monty_runner_parallel <- function(n_workers) {
     parallel::clusterMap(
       cl,
       monty_run_chain_parallel,
+      chain_id = seq_len(n_chains),
       pars = pars_list,
       rng = rng_state,
       MoreArgs = args)
@@ -135,7 +136,7 @@ monty_runner_parallel <- function(n_workers) {
     parallel::clusterMap(
       cl,
       monty_continue_chain,
-      seq_len(n_chains),
+      chain_id = seq_len(n_chains),
       state,
       MoreArgs = args)
   }

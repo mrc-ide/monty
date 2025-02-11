@@ -150,7 +150,6 @@ test_that("validate parameter size when using previous samples", {
 })
 
 
-## FIXME
 test_that("can run more than one chain, in parallel", {
   model <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
