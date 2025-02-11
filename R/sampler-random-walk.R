@@ -163,9 +163,6 @@ random_walk_internal_state <- function(shared, internal) {
 }
 
 
-
-
-
 make_random_walk_proposal <- function(vcv, domain, boundaries) {
   mvn <- make_rmvnorm(vcv)
   if (boundaries != "reflect" || !any(is.finite(domain))) {

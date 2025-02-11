@@ -204,6 +204,11 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
 
   internal <- list2env(state$sampler, parent = emptyenv())
   shared <- monty_sampler_shared(model, sampler$inputs, rng)
+  ## This really wants us to write the PT one next, because at this
+  ## point we need to restore the chain state.
+  ##
+  ## For the RW sampler this is pars/density only but for PT it's a
+  ## few other bits, too.
   list2env(state$chain, shared)
   sampler$resume(state, internal)
 
@@ -267,6 +272,7 @@ monty_run_chain2 <- function(chain_id, sampler, shared, internal, steps,
   internal <- list(
     used_r_rng = !identical(get_r_rng_state(), r_rng_state),
     state = list(
+      chain = list(pars = shared$pars, density = shared$density),
       rng = monty_rng_state(shared$rng),
       sampler = sampler$internal_state(shared, internal),
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
