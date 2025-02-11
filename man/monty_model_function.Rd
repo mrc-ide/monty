@@ -8,6 +8,7 @@ monty_model_function(
   density,
   packer = NULL,
   fixed = NULL,
+  domain = NULL,
   allow_multiple_parameters = FALSE
 )
 }
@@ -24,6 +25,9 @@ are present in your numeric vector and if they are all scalars.}
 substitute into the call to \code{density}.  This cannot be used in
 conjunction with \code{packer} (you should use the \code{fixed} argument
 to \code{monty_packer} instead).}
+
+\item{domain}{Optional domain, see \link{monty_model}'s arguments for
+details.}
 
 \item{allow_multiple_parameters}{Logical, indicating if passing in
 vectors for all parameters will return a vector of densities.

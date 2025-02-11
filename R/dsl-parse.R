@@ -1,6 +1,6 @@
 ## The default of gradient_required = TRUE here helps with tests
 dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
-                      call = NULL) {
+                      domain = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
   dsl_parse_check_duplicates(exprs, call)
@@ -10,9 +10,14 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   name <- vcapply(exprs, "[[", "name")
   parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
 
+  if (!is.null(domain)) {
+    domain <- validate_domain(domain, parameters, call = call)
+  }
+
   adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
-  list(parameters = parameters, exprs = exprs, adjoint = adjoint, fixed = fixed)
+  list(parameters = parameters, exprs = exprs, adjoint = adjoint,
+       fixed = fixed, domain = domain)
 }
 
 

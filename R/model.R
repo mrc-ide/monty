@@ -358,22 +358,27 @@ validate_model_parameters <- function(model, call = NULL) {
 
 
 validate_model_domain <- function(model, call = NULL) {
-  domain <- model$domain
-  n_pars <- length(model$parameters)
+  validate_domain(model$domain, model$parameters, call = call)
+}
+
+
+validate_domain <- function(domain, parameters,
+                            name = deparse(substitute(domain)), call = NULL) {
+  n_pars <- length(parameters)
 
   if (is.null(domain)) {
     domain <- cbind(rep(-Inf, n_pars), rep(Inf, n_pars))
-    rownames(domain) <- model$parameters
+    rownames(domain) <- parameters
     return(domain)
   }
 
   if (!is.matrix(domain)) {
-    cli::cli_abort("Expected 'model$domain' to be a matrix if non-NULL",
+    cli::cli_abort("Expected '{name}' to be a matrix if non-NULL",
                    call = call)
   }
   if (ncol(domain) != 2) {
     cli::cli_abort(
-      c(paste("Expected 'model$domain' to have 2 columns,",
+      c(paste("Expected '{name}' to have 2 columns,",
               "but it had {ncol(domain)}"),
         i = paste("Because your domain is unnamed, if given it must",
                   "include all parameters in the same order as your model")),
@@ -384,30 +389,30 @@ validate_model_domain <- function(model, call = NULL) {
   if (is.null(nms)) {
     if (nrow(domain) != n_pars) {
       cli::cli_abort(
-        paste("Expected 'model$domain' to have {n_pars} row{?s},",
+        paste("Expected '{name}' to have {n_pars} row{?s},",
               "but it had {nrow(domain)}"),
         call = call)
     }
-    rownames(domain) <- model$parameters
+    rownames(domain) <- parameters
   } else {
     ## We might treat parameters that begin with '[' specially and
     ## allow these to replicate.  So if the user has a[1], a[2],
     ## a[3] then a row with 'a' will apply across all of these that
     ## are not explicitly given.
-    err <- setdiff(nms, model$parameters)
+    err <- setdiff(nms, parameters)
     if (length(err) > 0) {
       cli::cli_abort(
-        c("Unexpected parameters found in 'model$domain' rownames",
+        c("Unexpected parameters found in '{name}' rownames",
           set_names(err, "x")),
         call = call)
     }
-    msg <- setdiff(model$parameters, nms)
+    msg <- setdiff(parameters, nms)
     if (length(msg) > 0) {
       extra <- cbind(rep(-Inf, length(msg)), rep(Inf, length(msg)))
       rownames(extra) <- msg
       domain <- rbind(domain, extra)
     }
-    domain <- domain[model$parameters, , drop = FALSE]
+    domain <- domain[parameters, , drop = FALSE]
   }
 
   domain

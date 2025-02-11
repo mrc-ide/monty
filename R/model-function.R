@@ -22,6 +22,9 @@
 ##'   conjunction with `packer` (you should use the `fixed` argument
 ##'   to `monty_packer` instead).
 ##'
+##' @param domain Optional domain, see [monty_model]'s arguments for
+##'   details.
+##'
 ##' @param allow_multiple_parameters Logical, indicating if passing in
 ##'   vectors for all parameters will return a vector of densities.
 ##'   This is `FALSE` by default because we cannot determine this
@@ -48,6 +51,7 @@
 ##' # Same as the built-in banana example:
 ##' monty_model_density(monty_example("banana"), c(0, 0))
 monty_model_function <- function(density, packer = NULL, fixed = NULL,
+                                 domain = NULL,
                                  allow_multiple_parameters = FALSE) {
   if (!is.function(density)) {
     cli::cli_abort("Expected 'density' to be a function", arg = "density")
@@ -84,10 +88,28 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
   properties <- monty_model_properties(
     allow_multiple_parameters = allow_multiple_parameters)
 
+  parameters <- packer$names()
+
+  use_domain <- !is.null(domain)
+  if (use_domain) {
+    domain <- validate_domain(domain, parameters, call = call)
+    if (allow_multiple_parameters) {
+      ## This involves some pretty tedious bookkeeping, and is going
+      ## to interact with the interface for running an indexed subset
+      ## of parameters that we need to sort dust out properly.
+      cli::cli_abort(
+        "'allow_multiple_parameters' and 'domain' cannot yet be used together")
+    }
+  }
+
   monty_model(
-    list(parameters = packer$names(),
+    list(parameters = parameters,
          density = function(x) {
+           if (use_domain && !all(x >= domain[, 1] & x <= domain[, 2])) {
+             return(-Inf)
+           }
            rlang::inject(density(!!!packer$unpack(x), !!!fixed))
-         }),
+         },
+         domain = domain),
     properties)
 }

@@ -33,6 +33,16 @@
 ##'   hyperparameters that are fixed across a set of model runs, for
 ##'   example.
 ##'
+##' @param domain An optional domain.  Normally this is not wanted,
+##'   but you can use this to truncate the domain of one or more
+##'   parameters.  The domain is effectively applied *after* the
+##'   calculations implied by the DSL.  The density is not
+##'   recalculated to reflect the change in the marginal density.
+##'   Applying a domain will remove the ability to sample from the
+##'   model, at least for now.  See [monty_model] for details on the
+##'   format.  The provided parameters must match the parameters of
+##'   your model.
+##'
 ##' @return A [monty_model] object derived from the expressions you
 ##'   provide.
 ##'
@@ -48,7 +58,8 @@
 ##'
 ##' # You can also pass strings
 ##' monty_dsl("a ~ Normal(0, 1)")
-monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
+monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL,
+                      domain = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
@@ -58,13 +69,14 @@ monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
   call <- environment()
   fixed <- check_dsl_fixed(fixed)
   exprs <- dsl_preprocess(x, type, call)
-  dat <- dsl_parse(exprs, gradient, fixed, call)
+  dat <- dsl_parse(exprs, gradient, fixed, domain, call)
   dsl_generate(dat)
 }
 
 
 
-monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
+monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL,
+                            domain = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -74,7 +86,7 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL) {
   }
   fixed <- check_dsl_fixed(fixed, call)
   exprs <- dsl_preprocess(x, type, call)
-  dsl_parse(exprs, gradient, fixed, call)
+  dsl_parse(exprs, gradient, fixed, domain, call)
 }
 
 

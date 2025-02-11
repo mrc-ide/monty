@@ -185,3 +185,27 @@ test_that("gradient calculation correct single-parameter model", {
     m$gradient(x[, 1, drop = FALSE]),
     cbind(m$gradient(x[, 1])))
 })
+
+
+test_that("can apply a domain", {
+  m <- monty_dsl({
+    a ~ Exponential(1)
+  },
+  domain = rbind(a = c(1, 4)))
+  expect_equal(m$density(2), -2)
+  expect_equal(m$density(0), -Inf)
+  expect_equal(m$density(6), -Inf)
+})
+
+
+test_that("can apply a domain", {
+  m <- monty_dsl({
+    a ~ Exponential(1)
+    b ~ Normal(0, 1)
+  },
+  domain = rbind(a = c(1, 4), b = c(-2, 2)))
+  expect_equal(m$density(c(2, 1)),
+               dexp(2, log = TRUE) + dnorm(1, log = TRUE))
+  expect_equal(m$density(c(0, 1)), -Inf)
+  expect_equal(m$density(c(1, 6)), -Inf)
+})
