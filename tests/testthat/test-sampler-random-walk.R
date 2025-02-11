@@ -14,6 +14,7 @@ test_that("validate sampler against model on initialisation", {
   state <- list(pars = 1, density = -Inf)
   sampler1 <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+  r <- monty_rng_create()
   shared1 <- monty_sampler_shared(m, sampler1$inputs, r)
   shared2 <- monty_sampler_shared(m, sampler2$inputs, r)
 
@@ -76,13 +77,16 @@ test_that("can run multiple samples at once", {
   ## TODO: we need a much better rng support here; we'll need to make
   ## a tweak to the rng code to to a long jump between each chain.
   r <- monty_rng_create(n_streams = 5)
-  state0 <- sampler$initialise(p, m, r)
-  state1 <- sampler$step(state0, m, r)
+  shared <- monty_sampler_shared(m, sampler$inputs, r)
+  internal <- new.env(parent = emptyenv())
 
-  expect_equal(dim2(state0$pars), c(1, 5))
-  expect_equal(dim2(state1$pars), c(1, 5))
-  expect_equal(dim2(state0$density), 5)
-  expect_equal(dim2(state1$density), 5)
+  sampler$begin(shared, internal, p, 5)
+  expect_equal(dim2(shared$pars), c(1, 5))
+  expect_equal(dim2(shared$density), 5)
+
+  sampler$step(shared, internal)
+  expect_equal(dim2(shared$pars), c(1, 5))
+  expect_equal(dim2(shared$density), 5)
 })
 
 

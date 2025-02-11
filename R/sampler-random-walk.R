@@ -127,7 +127,7 @@ random_walk_step <- function(shared, internal) {
     ## This is currently just setup assuming we are not using multiple
     ## parameters as currently they cannot be used with stochastic models,
     ## while the rerun is only used with stochastic models
-    shared$density <- shared$model$density(pars)
+    shared$density <- shared$model$density(shared$pars)
   }
 
   reject_some <- shared$inputs$boundaries == "reject" &&
