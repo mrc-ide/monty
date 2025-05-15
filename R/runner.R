@@ -165,6 +165,11 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
   ## but I think it's because the actual sampler objects are stateless
   ## and this gives access to the arguments later on.
   shared <- monty_sampler_shared(model, sampler$inputs, rng)
+
+  ## TODO: I am not convinced that 'internal' is actually anything
+  ## real here, and that we might merge 'shared+internal' as 'state'?
+  ## That's a fairly easy fix to do once we get through this first bit
+  ## of refactoring though.
   internal <- new.env(parent = emptyenv())
 
   n_chains <- length(chain_id)
