@@ -147,6 +147,6 @@ test_that("can expand domain", {
           "b[1]" = c(-4, 4),
           "b[2]" = c(-4, 4),
           "b[3]" = c(-4, 4)))
-  expect_equal(res$density(c(0, 0, 0, 0)), -3.756816)
+  expect_equal(res$density(c(0, 0, 0, 0)), -3.75681559961402)
   expect_equal(res$density(c(0, 9, 0, 0)), -Inf)
 })
