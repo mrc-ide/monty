@@ -23,7 +23,8 @@
 ##'   to `monty_packer` instead).
 ##'
 ##' @param domain Optional domain, see [monty_model]'s arguments for
-##'   details.
+##'   details.  You can use "logical" names for array parameters and
+##'   these will be expanded as described in [monty_domain_expand()].
 ##'
 ##' @param allow_multiple_parameters Logical, indicating if passing in
 ##'   vectors for all parameters will return a vector of densities.
@@ -50,6 +51,18 @@
 ##'
 ##' # Same as the built-in banana example:
 ##' monty_model_density(monty_example("banana"), c(0, 0))
+##'
+##' # You can constrain parameters, for example:
+##' fn <- function(a, b) {
+##'   dbeta(a, 2, 5, log = TRUE) + dnorm(b, log = TRUE)
+##' }
+##'
+##' # Here 'a' must lie in [0, 1] so we pass this through as 'domain':
+##' pr <- monty_model_function(fn, domain = rbind(a = c(0, 1)))
+##'
+##' # Now, out-of-bounds values will be converted to -Inf:
+##' monty_model_density(pr, c(0.5, 0.5)) # ok
+##' monty_model_density(pr, c(0.5, 5)) # -Inf
 monty_model_function <- function(density, packer = NULL, fixed = NULL,
                                  domain = NULL,
                                  allow_multiple_parameters = FALSE) {
@@ -59,7 +72,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
 
   if (!is.null(fixed)) {
     assert_named(fixed, unique = TRUE)
-    assert_list(fixed, call = call)
+    assert_list(fixed)
   }
 
   if (is.null(packer)) {
@@ -92,7 +105,8 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
 
   use_domain <- !is.null(domain)
   if (use_domain) {
-    domain <- validate_domain(domain, parameters, call = call)
+    domain <- monty_domain_expand(domain, packer)
+    domain <- validate_domain(domain, parameters, call = environment())
     if (allow_multiple_parameters) {
       ## This involves some pretty tedious bookkeeping, and is going
       ## to interact with the interface for running an indexed subset
@@ -100,7 +114,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
       cli::cli_abort(
         "'allow_multiple_parameters' and 'domain' cannot yet be used together")
     }
-  }
+ }
 
   monty_model(
     list(parameters = parameters,
