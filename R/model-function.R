@@ -65,8 +65,7 @@
 ##' monty_model_density(pr, c(0.5, 5)) # -Inf
 monty_model_function <- function(density, packer = NULL, fixed = NULL,
                                  domain = NULL,
-                                 allow_multiple_parameters = FALSE,
-                                 is_stochastic = FALSE) {
+                                 allow_multiple_parameters = FALSE) {
   if (!is.function(density)) {
     cli::cli_abort("Expected 'density' to be a function", arg = "density")
   }
@@ -100,8 +99,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
   }
 
   properties <- monty_model_properties(
-    allow_multiple_parameters = allow_multiple_parameters,
-    is_stochastic = is_stochastic)
+    allow_multiple_parameters = allow_multiple_parameters)
 
   parameters <- packer$names()
 

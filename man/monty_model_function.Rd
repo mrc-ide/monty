@@ -9,8 +9,7 @@ monty_model_function(
   packer = NULL,
   fixed = NULL,
   domain = NULL,
-  allow_multiple_parameters = FALSE,
-  is_stochastic = FALSE
+  allow_multiple_parameters = FALSE
 )
 }
 \arguments{
