@@ -51,6 +51,18 @@
 ##'
 ##' # Same as the built-in banana example:
 ##' monty_model_density(monty_example("banana"), c(0, 0))
+##'
+##' # You can constrain parameters, for example:
+##' fn <- function(a, b) {
+##'   dbeta(a, 2, 5, log = TRUE) + dnorm(b, log = TRUE)
+##' }
+##'
+##' # Here 'a' must lie in [0, 1] so we pass this through as 'domain':
+##' pr <- monty_model_function(fn, domain = rbind(a = c(0, 1)))
+##'
+##' # Now, out-of-bounds values will be converted to -Inf:
+##' monty_model_density(pr, c(0.5, 0.5)) # ok
+##' monty_model_density(pr, c(0.5, 5)) # -Inf
 monty_model_function <- function(density, packer = NULL, fixed = NULL,
                                  domain = NULL,
                                  allow_multiple_parameters = FALSE,
