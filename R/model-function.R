@@ -52,14 +52,15 @@
 ##' monty_model_density(monty_example("banana"), c(0, 0))
 monty_model_function <- function(density, packer = NULL, fixed = NULL,
                                  domain = NULL,
-                                 allow_multiple_parameters = FALSE) {
+                                 allow_multiple_parameters = FALSE,
+                                 is_stochastic = FALSE) {
   if (!is.function(density)) {
     cli::cli_abort("Expected 'density' to be a function", arg = "density")
   }
 
   if (!is.null(fixed)) {
     assert_named(fixed, unique = TRUE)
-    assert_list(fixed, call = call)
+    assert_list(fixed)
   }
 
   if (is.null(packer)) {
@@ -86,13 +87,15 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
   }
 
   properties <- monty_model_properties(
-    allow_multiple_parameters = allow_multiple_parameters)
+    allow_multiple_parameters = allow_multiple_parameters,
+    is_stochastic = is_stochastic)
 
   parameters <- packer$names()
 
   use_domain <- !is.null(domain)
   if (use_domain) {
-    domain <- validate_domain(domain, parameters, call = call)
+    domain <- monty::monty_domain_expand(domain, packer)
+    domain <- validate_domain(domain, parameters, call = environment())
     if (allow_multiple_parameters) {
       ## This involves some pretty tedious bookkeeping, and is going
       ## to interact with the interface for running an indexed subset
@@ -100,7 +103,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
       cli::cli_abort(
         "'allow_multiple_parameters' and 'domain' cannot yet be used together")
     }
-  }
+ }
 
   monty_model(
     list(parameters = parameters,

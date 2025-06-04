@@ -132,3 +132,21 @@ test_that("cannot use domain and multiple parameters", {
     monty_model_function(fn, domain = domain, allow_multiple_parameters = TRUE),
     "'allow_multiple_parameters' and 'domain' cannot yet be used together")
 })
+
+
+test_that("can expand domain", {
+  fn <- function(a, b) {
+    dpois(a, 1, log = TRUE) + sum(dnorm(b, log = TRUE))
+  }
+  packer <- monty_packer(scalar = "a", array = list("b" = 3))
+  domain <- rbind(b = c(-4, 4))
+  res <- monty_model_function(fn, packer = packer, domain = domain)
+  expect_equal(
+    res$domain,
+    rbind(a = c(-Inf, Inf),
+          "b[1]" = c(-4, 4),
+          "b[2]" = c(-4, 4),
+          "b[3]" = c(-4, 4)))
+  expect_equal(res$density(c(0, 0, 0, 0)), -3.756816)
+  expect_equal(res$density(c(0, 9, 0, 0)), -Inf)
+})
