@@ -23,7 +23,8 @@
 ##'   to `monty_packer` instead).
 ##'
 ##' @param domain Optional domain, see [monty_model]'s arguments for
-##'   details.
+##'   details.  You can use "logical" names for array parameters and
+##'   these will be expanded as described in [monty_domain_expand()].
 ##'
 ##' @param allow_multiple_parameters Logical, indicating if passing in
 ##'   vectors for all parameters will return a vector of densities.
@@ -94,7 +95,7 @@ monty_model_function <- function(density, packer = NULL, fixed = NULL,
 
   use_domain <- !is.null(domain)
   if (use_domain) {
-    domain <- monty::monty_domain_expand(domain, packer)
+    domain <- monty_domain_expand(domain, packer)
     domain <- validate_domain(domain, parameters, call = environment())
     if (allow_multiple_parameters) {
       ## This involves some pretty tedious bookkeeping, and is going

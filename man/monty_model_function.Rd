@@ -9,7 +9,8 @@ monty_model_function(
   packer = NULL,
   fixed = NULL,
   domain = NULL,
-  allow_multiple_parameters = FALSE
+  allow_multiple_parameters = FALSE,
+  is_stochastic = FALSE
 )
 }
 \arguments{
@@ -27,7 +28,8 @@ conjunction with \code{packer} (you should use the \code{fixed} argument
 to \code{monty_packer} instead).}
 
 \item{domain}{Optional domain, see \link{monty_model}'s arguments for
-details.}
+details.  You can use "logical" names for array parameters and
+these will be expanded as described in \code{\link[=monty_domain_expand]{monty_domain_expand()}}.}
 
 \item{allow_multiple_parameters}{Logical, indicating if passing in
 vectors for all parameters will return a vector of densities.
