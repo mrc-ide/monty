@@ -143,7 +143,9 @@ monty_sampler_adaptive <- function(initial_vcv,
                                    forget_end = Inf,
                                    adapt_end = Inf,
                                    pre_diminish = 0,
-                                   boundaries = "reflect") {
+                                   boundaries = "reflect",
+                                   rerun_every = Inf,
+                                   rerun_random = TRUE) {
   ## This sampler is stateful; we will be updating our estimate of the
   ## mean and vcv of the target distribution, along with the our
   ## scaling factor, weight and autocorrelations.
@@ -151,16 +153,22 @@ monty_sampler_adaptive <- function(initial_vcv,
   internal <- new.env()
 
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
+  
+  if (!identical(unname(rerun_every), Inf)) {
+    assert_scalar_positive_integer(rerun_every)
+  }
+  assert_scalar_logical(rerun_random)
 
   initialise <- function(pars, model, rng) {
-    require_deterministic(model,
-                          "Can't use adaptive sampler with stochastic models")
 
     internal$multiple_parameters <- length(dim2(pars)) > 1
     if (internal$multiple_parameters) {
       ## this is enforced elsewhere
       stopifnot(model$properties$allow_multiple_parameters)
     }
+    
+    internal$rerun <-
+      make_rerun(rerun_every, rerun_random, model$properties$is_stochastic)
 
     initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
 
@@ -202,6 +210,15 @@ monty_sampler_adaptive <- function(initial_vcv,
   }
 
   step <- function(state, model, rng) {
+    
+    rerun <- internal$rerun(rng)
+    if (any(rerun)) {
+      ## This is currently just setup assuming we are not using multiple
+      ## parameters as currently they cannot be used with stochastic models,
+      ## while the rerun is only used with stochastic models
+      state$density <- model$density(state$pars)
+    }
+    
     if (internal$multiple_parameters) {
       d <- dim(state$pars)
       proposal_vcv <-
