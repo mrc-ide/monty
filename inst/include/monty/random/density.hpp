@@ -52,7 +52,7 @@ __host__ __device__ T lbeta(T x, T y) {
 }
 
 template <typename T>
-__host__ __device__ T binomial(int x, int size, T prob, bool log) {
+__host__ __device__ T binomial(T x, T size, T prob, bool log) {
 #ifndef __CUDA_ARCH__
   static_assert(std::is_floating_point<T>::value,
                 "binomial should only be used with real types");
@@ -92,7 +92,7 @@ __host__ __device__ T normal(T x, T mu, T sd, bool log) {
 }
 
 template <typename T>
-__host__ __device__ T negative_binomial_mu(int x, T size, T mu, bool log) {
+__host__ __device__ T negative_binomial_mu(T x, T size, T mu, bool log) {
 #ifndef __CUDA_ARCH__
   static_assert(std::is_floating_point<T>::value,
                 "negative_binomial should only be used with real types");
@@ -113,13 +113,13 @@ __host__ __device__ T negative_binomial_mu(int x, T size, T mu, bool log) {
     const T ratio = random::utils::epsilon<T>() * 100;
     if (mu < ratio * size) {
       const T log_prob = monty::math::log(mu / (1 + mu / size));
-      ret = x * log_prob - mu - random::utils::lgamma(static_cast<T>(x + 1)) +
+      ret = x * log_prob - mu - random::utils::lgamma(x + 1) +
         monty::math::log1p(x * (x - 1) / (2 * size));
     } else {
       const T prob = size / (size + mu);
-      ret = random::utils::lgamma(static_cast<T>(x + size)) -
-        random::utils::lgamma(static_cast<T>(size)) -
-        random::utils::lgamma(static_cast<T>(x + 1)) +
+      ret = random::utils::lgamma(x + size) -
+        random::utils::lgamma(size) -
+        random::utils::lgamma(x + 1) +
         size * monty::math::log(prob) + x * monty::math::log(1 - prob);
     }
   }
@@ -131,13 +131,13 @@ __host__ __device__ T negative_binomial_mu(int x, T size, T mu, bool log) {
 // This may not be stable for all size and prob, but provides
 // compatibility with R's C-level function. See ?dnbinom for details.
 template <typename T>
-__host__ __device__ T negative_binomial_prob(int x, T size, T prob, bool log) {
+__host__ __device__ T negative_binomial_prob(T x, T size, T prob, bool log) {
   const T mu = size * (1 - prob) / prob;
   return negative_binomial_mu(x, size, mu, log);
 }
 
 template <typename T>
-__host__ __device__ T beta_binomial_ab(int x, int size, T a, T b, bool log) {
+__host__ __device__ T beta_binomial_ab(T x, T size, T a, T b, bool log) {
 #ifndef __CUDA_ARCH__
   static_assert(std::is_floating_point<T>::value,
                 "beta_binomial should only be used with real types");
@@ -161,7 +161,7 @@ __host__ __device__ T beta_binomial_ab(int x, int size, T a, T b, bool log) {
 //
 // Where a and b have (0, Inf) support
 template <typename T>
-__host__ __device__ T beta_binomial_prob(int x, int size, T prob, T rho,
+__host__ __device__ T beta_binomial_prob(T x, T size, T prob, T rho,
                                          bool log) {
   const T a = prob * (1 / rho - 1);
   const T b = (1 - prob) * (1 / rho - 1);
@@ -169,7 +169,7 @@ __host__ __device__ T beta_binomial_prob(int x, int size, T prob, T rho,
 }
 
 template <typename T>
-__host__ __device__ T poisson(int x, T lambda, bool log) {
+__host__ __device__ T poisson(T x, T lambda, bool log) {
 #ifndef __CUDA_ARCH__
   static_assert(std::is_floating_point<T>::value,
                 "poisson should only be used with real types");
@@ -179,7 +179,7 @@ __host__ __device__ T poisson(int x, T lambda, bool log) {
     ret = 0;
   } else {
     ret = x * monty::math::log(lambda) - lambda -
-      random::utils::lgamma(static_cast<T>(x + 1));
+      random::utils::lgamma(x + 1);
   }
 
   SYNCWARP
