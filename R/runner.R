@@ -158,6 +158,7 @@ monty_run_chain_parallel <- function(chain_id, pars, model, sampler, steps,
 monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
+  model$restore()
   chain_state <- sampler$initialise(pars, model, rng)
 
   if (!is.finite(chain_state$density)) {
@@ -189,6 +190,7 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng_create(seed = state$rng)
+  model$restore()
   sampler$set_internal_state(state$sampler)
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
