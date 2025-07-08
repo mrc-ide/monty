@@ -25,7 +25,7 @@ without them becoming overwhelming.  You should probably not use
 these for anything other than exploring the package.
 }
 \section{Supported models}{
-\subsection{\code{bananna}}{
+\subsection{\code{banana}}{
 
 The banana model is a two-dimensional banana-shaped function,
 picked because it is quite annoying to sample from directly.  The
