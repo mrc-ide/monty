@@ -5,7 +5,7 @@
 ##'
 ##' # Supported models
 ##'
-##' ## `bananna`
+##' ## `banana`
 ##'
 ##' The banana model is a two-dimensional banana-shaped function,
 ##' picked because it is quite annoying to sample from directly.  The
