@@ -721,6 +721,26 @@ cpp11::doubles cpp_monty_random_n_log_normal(size_t n_samples,
                                  meanlog, sdlog, "meanlog", "sdlog");
 }
 
+// zi_poisson
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_poisson(cpp11::doubles lambda,
+                                           cpp11::doubles pi,
+                                           cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto lambda, auto pi) { return monty::random::zi_poisson<double>(state, lambda, pi); };
+  return monty_random_sample_1_2(fn, ptr, "zi_poisson",
+                                 lambda, pi, "lambda", "pi");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_poisson(size_t n_samples,
+                                             cpp11::doubles lambda,
+                                             cpp11::doubles pi,
+                                             cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto lambda, auto pi) { return monty::random::zi_poisson<double>(state, lambda, pi); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "zi_poisson",
+                                 lambda, pi, "lambda", "pi");
+}
+
 //// 3-arg functions
 
 // beta_binomial_prob

@@ -300,5 +300,20 @@ __host__ __device__ T log_normal(T x, T mulog, T sdlog, bool log) {
   return log ? (d - monty::math::log(x)) : (monty::math::exp(d) / x);
 }
 
+template <typename T>
+__host__ __device__ T zi_poisson(T x, T lambda, T pi, bool log) {
+  const auto d = poisson(x, lambda);
+  
+  T ret;
+  if (x == 0) {
+    ret = monty::math::log(pi + (1 - pi) * monty::math::exp(d));
+  } else {
+    ret = monty::math::log(1 - pi) + d;
+  }
+  
+  return maybe_log(ret, log);
+}
+
+
 }
 }

@@ -282,6 +282,20 @@ extern "C" SEXP _monty_cpp_monty_random_n_log_normal(SEXP n_samples, SEXP meanlo
   END_CPP11
 }
 // random.cpp
+cpp11::doubles cpp_monty_random_zi_poisson(cpp11::doubles lambda, cpp11::doubles pi, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_zi_poisson(SEXP lambda, SEXP pi, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_zi_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_zi_poisson(size_t n_samples, cpp11::doubles lambda, cpp11::doubles pi, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_zi_poisson(SEXP n_samples, SEXP lambda, SEXP pi, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_zi_poisson(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
 cpp11::doubles cpp_monty_random_beta_binomial_prob(cpp11::doubles size, cpp11::doubles prob, cpp11::doubles rho, cpp11::sexp ptr);
 extern "C" SEXP _monty_cpp_monty_random_beta_binomial_prob(SEXP size, SEXP prob, SEXP rho, SEXP ptr) {
   BEGIN_CPP11
@@ -395,6 +409,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_truncated_normal",       (DL_FUNC) &_monty_cpp_monty_random_n_truncated_normal,       6},
     {"_monty_cpp_monty_random_n_uniform",                (DL_FUNC) &_monty_cpp_monty_random_n_uniform,                4},
     {"_monty_cpp_monty_random_n_weibull",                (DL_FUNC) &_monty_cpp_monty_random_n_weibull,                4},
+    {"_monty_cpp_monty_random_n_zi_poisson",             (DL_FUNC) &_monty_cpp_monty_random_n_zi_poisson,             4},
     {"_monty_cpp_monty_random_negative_binomial_mu",     (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_mu,     3},
     {"_monty_cpp_monty_random_negative_binomial_prob",   (DL_FUNC) &_monty_cpp_monty_random_negative_binomial_prob,   3},
     {"_monty_cpp_monty_random_normal_box_muller",        (DL_FUNC) &_monty_cpp_monty_random_normal_box_muller,        3},
@@ -405,6 +420,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_truncated_normal",         (DL_FUNC) &_monty_cpp_monty_random_truncated_normal,         5},
     {"_monty_cpp_monty_random_uniform",                  (DL_FUNC) &_monty_cpp_monty_random_uniform,                  3},
     {"_monty_cpp_monty_random_weibull",                  (DL_FUNC) &_monty_cpp_monty_random_weibull,                  3},
+    {"_monty_cpp_monty_random_zi_poisson",               (DL_FUNC) &_monty_cpp_monty_random_zi_poisson,               3},
     {"_monty_cpp_monty_rng_jump",                        (DL_FUNC) &_monty_cpp_monty_rng_jump,                        2},
     {"_monty_cpp_monty_rng_long_jump",                   (DL_FUNC) &_monty_cpp_monty_rng_long_jump,                   2},
     {"_monty_cpp_monty_rng_set_state",                   (DL_FUNC) &_monty_cpp_monty_rng_set_state,                   2},

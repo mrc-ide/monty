@@ -677,6 +677,30 @@ monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
 }
 
 
+##' Sample from the zero-inflated Poisson distribution
+##'
+##' @title Sample from zero-inflated Poisson distribution
+##'
+##' @param lambda The mean (zero or more, length 1 or n). Only valid for
+##' lambda <= 10^7
+##' 
+##' @param pi The probability of extra zeros
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_zi_poisson <- function(lambda, pi, state) {
+  cpp_monty_random_zi_poisson(lambda, pi, state)
+}
+
+
+##' @export
+##' @rdname monty_random_zi_poisson
+monty_random_n_zi_poisson <- function(n_samples, lambda, pi, state) {
+  cpp_monty_random_n_zi_poisson(n_samples, lambda, pi, state)
+}
+
+
 monty_random_multinomial <- function(size, prob, state) {
   cpp_monty_random_multinomial(size, prob, state)
 }

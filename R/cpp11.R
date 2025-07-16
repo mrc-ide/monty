@@ -156,6 +156,14 @@ cpp_monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, ptr) {
   .Call(`_monty_cpp_monty_random_n_log_normal`, n_samples, meanlog, sdlog, ptr)
 }
 
+cpp_monty_random_zi_poisson <- function(lambda, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_poisson`, lambda, pi, ptr)
+}
+
+cpp_monty_random_n_zi_poisson <- function(n_samples, lambda, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_poisson`, n_samples, lambda, pi, ptr)
+}
+
 cpp_monty_random_beta_binomial_prob <- function(size, prob, rho, ptr) {
   .Call(`_monty_cpp_monty_random_beta_binomial_prob`, size, prob, rho, ptr)
 }
