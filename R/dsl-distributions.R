@@ -275,6 +275,60 @@ distr_weibull <- distribution(
     mean = quote(scale * gamma(1 + 1 / k))),
   cpp = list(density = "weibull", sample = "weibull"))
 
+distr_zi_negative_binomial_prob <- distribution(
+  name = "ZINegativeBinomial",
+  variant = "prob",
+  density = function(x, size, prob, pi) {
+    if (x == 0) {
+      log(pi + (1 - pi) * dnbinom(x, size, prob = prob, log = FALSE))
+    } else {
+      log(1 - pi) + dnbinom(x, size, prob = prob, log = TRUE)
+    }
+  },
+  domain = c(0, Inf),
+  sample = "monty_random_negative_binomial_prob",
+  expr = list(
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      x * log(1 - prob) + size * log(prob)),
+    mean = quote((1 - pi) * size * (1 - prob) / prob)),
+  cpp = list(density = "negative_binomial_prob",
+             sample = "negative_binomial_prob"))
+
+distr_zi_negative_binomial_mu <- distribution(
+  name = "ZINegativeBinomial",
+  variant = "mu",
+  density = function(x, size, mu, pi) {
+    if (x == 0) {
+      log(pi + (1 - pi) * dnbinom(x, size, mu = mu, log = FALSE))
+    } else {
+      log(1 - pi) + dnbinom(x, size, mu = mu, log = TRUE)
+    }
+  },
+  domain = c(0, Inf),
+  sample = "monty_random_negative_binomial_mu",
+  expr = list(
+    density = quote(lgamma(x + size) - lgamma(size) - lgamma(x + 1) +
+                      size * log(size) + x * log(mu) -
+                      (size + x) * log(size + mu)),
+    mean = quote((1 - pi) * mu)),
+  cpp = list(density = "negative_binomial_mu", sample = "negative_binomial_mu"))
+
+distr_zi_poisson <- distribution(
+  name = "ZIPoisson",
+  density = function(x, lambda, pi) {
+    if (x == 0) {
+      log(pi + (1 - pi) * dpois(x, lambda, log = FALSE))
+    } else {
+      log(1 - pi) + dpois(x, lambda, log = TRUE)
+    }
+  },
+  domain = c(0, Inf),
+  expr = list(
+    density = quote(x * log(lambda) - lambda - lfactorial(x)),
+    mean = quote((1 - pi) * lambda)),
+  sample = "monty_random_zi_poisson",
+  cpp = list(density = "zi_poisson", sample = "zi_poisson"))
+
 dsl_distributions <- local({
   d <- list(
     distr_beta,
@@ -294,7 +348,10 @@ dsl_distributions <- local({
     distr_poisson,
     distr_truncated_normal,
     distr_uniform,
-    distr_weibull)
+    distr_weibull,
+    distr_zi_negative_binomial_prob,
+    distr_zi_negative_binomial_mu,
+    distr_zi_poisson)
   split(d, vapply(d, "[[", "", "name"))
 })
 
