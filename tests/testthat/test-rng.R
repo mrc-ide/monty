@@ -1454,3 +1454,53 @@ test_that("log-normal random numbers prevent bad inputs", {
     monty_random_log_normal(1.1, -5.1, r),
     "Invalid call to log_normal with meanlog = 1.1, sdlog = -5.1")
 })
+
+
+test_that("can draw zero-inflated poisson random numbers", {
+  lambda <- 5
+  pi <- 0.2
+  n <- 10000000
+  
+  ans1 <- monty_random_n_zi_poisson(n, lambda, pi, monty_rng_create(seed = 1))
+  ans2 <- monty_random_n_zi_poisson(n, lambda, pi, monty_rng_create(seed = 1))
+  expect_identical(ans1, ans2)
+  
+  expect_equal(mean(ans1), (1 - pi) * lambda, tolerance = 1e-3)
+  true_var <- lambda * (1 - pi) * (1 + pi * lambda)
+  expect_equal(var(ans1), true_var, tolerance = 1e-3)
+})
+
+
+test_that("deterministic zero-inflated poisson returns mean", {
+  n_reps <- 10
+  lambda <- as.numeric(sample(10, n_reps, replace = TRUE))
+  pi <- as.numeric(sample(10, n_reps, replace = TRUE) / 10)
+  
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  state <- monty_rng_state(rng)
+  
+  expect_equal(
+    mapply(monty_random_zi_poisson, lambda, pi, MoreArgs = list(rng)),
+    (1 - pi) * lambda)
+  expect_equal(monty_rng_state(rng), state)
+})
+
+
+test_that("Zero-inflated poisson random numbers prevent bad inputs", {
+  r <- monty_rng_create(seed = 1)
+  expect_equal(monty_random_zi_poisson(5, 1, r), 0)
+  expect_equal(monty_random_zi_poisson(0, 0.5, r), 0)
+  
+  expect_error(
+    monty_random_zi_poisson(-1.1, 0.1, r),
+    "Invalid call to zi_poisson with lambda = -1.1, pi = 0.1")
+  expect_error(
+    monty_random_zi_poisson(Inf, 0.1, r),
+    "Invalid call to zi_poisson with lambda = inf, pi = 0.1")
+  expect_error(
+    monty_random_zi_poisson(5, -0.1, r),
+    "Invalid call to zi_poisson with lambda = 5, pi = -0.1")
+  expect_error(
+    monty_random_zi_poisson(5, 1.1, r),
+    "Invalid call to zi_poisson with lambda = 5, pi = 1.1")
+})
