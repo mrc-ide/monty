@@ -314,6 +314,35 @@ __host__ __device__ T zi_poisson(T x, T lambda, T pi, bool log) {
   return maybe_log(ret, log);
 }
 
+template <typename T>
+__host__ __device__ T zi_negative_binomial_prob(T x, T size, T prob, T pi,
+                                                bool log) {
+  const auto d = negative_binomial_prob(x, size, prob);
+  
+  T ret;
+  if (x == 0) {
+    ret = monty::math::log(pi + (1 - pi) * monty::math::exp(d));
+  } else {
+    ret = monty::math::log(1 - pi) + d;
+  }
+  
+  return maybe_log(ret, log);
+}
+
+template <typename T>
+__host__ __device__ T zi_negative_binomial_mu(T x, T size, T mu, T pi,
+                                              bool log) {
+  const auto d = negative_binomial_mu(x, size, mu);
+  
+  T ret;
+  if (x == 0) {
+    ret = monty::math::log(pi + (1 - pi) * monty::math::exp(d));
+  } else {
+    ret = monty::math::log(1 - pi) + d;
+  }
+  
+  return maybe_log(ret, log);
+}
 
 }
 }

@@ -188,6 +188,22 @@ cpp_monty_random_n_hypergeometric <- function(n_samples, n1, n2, k, ptr) {
   .Call(`_monty_cpp_monty_random_n_hypergeometric`, n_samples, n1, n2, k, ptr)
 }
 
+cpp_monty_random_zi_negative_binomial_prob <- function(size, prob, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_negative_binomial_prob`, size, prob, pi, ptr)
+}
+
+cpp_monty_random_n_zi_negative_binomial_prob <- function(n_samples, size, prob, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_prob`, n_samples, size, prob, pi, ptr)
+}
+
+cpp_monty_random_zi_negative_binomial_mu <- function(size, mu, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_negative_binomial_mu`, size, mu, pi, ptr)
+}
+
+cpp_monty_random_n_zi_negative_binomial_mu <- function(n_samples, size, mu, pi, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_mu`, n_samples, size, mu, pi, ptr)
+}
+
 cpp_monty_random_truncated_normal <- function(mean, sd, min, max, ptr) {
   .Call(`_monty_cpp_monty_random_truncated_normal`, mean, sd, min, max, ptr)
 }

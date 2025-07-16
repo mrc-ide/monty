@@ -809,6 +809,49 @@ cpp11::doubles cpp_monty_random_n_hypergeometric(size_t n_samples,
                                  n1, n2, k, "n1", "n2", "k");
 }
 
+// zi_negative_binomial_prob
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_negative_binomial_prob(cpp11::doubles size,
+                                                          cpp11::doubles prob,
+                                                          cpp11::doubles pi,
+                                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob, auto pi) { return monty::random::zi_negative_binomial_prob<double>(state, size, prob, pi); };
+  return monty_random_sample_1_3(fn, ptr, "zi_negative_binomial_prob",
+                                 size, prob, pi, "size", "prob", "pi");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_prob(size_t n_samples,
+                                                            cpp11::doubles size,
+                                                            cpp11::doubles prob,
+                                                            cpp11::doubles pi,
+                                                            cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto prob, auto pi) { return monty::random::zi_negative_binomial_prob<double>(state, size, prob, pi); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "zi_negative_binomial_prob",
+                                 size, prob, pi, "size", "prob", "pi");
+}
+
+// zi_negative_binomial_mu
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_negative_binomial_mu(cpp11::doubles size,
+                                                        cpp11::doubles mu,
+                                                        cpp11::doubles pi,
+                                                        cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto mu, auto pi) { return monty::random::zi_negative_binomial_mu<double>(state, size, mu, pi); };
+  return monty_random_sample_1_3(fn, ptr, "zi_negative_binomial_mu",
+                                 size, mu, pi, "size", "mu", "pi");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_mu(size_t n_samples,
+                                                          cpp11::doubles size,
+                                                          cpp11::doubles mu,
+                                                          cpp11::doubles pi,
+                                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto size, auto mu, auto pi) { return monty::random::zi_negative_binomial_mu<double>(state, size, mu, pi); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "zi_negative_binomial_mu",
+                                 size, mu, pi, "size", "mu", "pi");
+}
 
 //// 4-arg functions
 

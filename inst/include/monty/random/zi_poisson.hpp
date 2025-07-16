@@ -3,8 +3,7 @@
 #include <cmath>
 
 #include "monty/random/generator.hpp"
-#include "monty/random/numeric.hpp"
-#include "monty/random/math.hpp"
+#include "monty/random/poisson.hpp"
 
 namespace monty {
 namespace random {
