@@ -16,7 +16,7 @@ void zi_negative_binomial_validate(real_type size, real_type prob, real_type pi)
   if (!std::isfinite(size) || !std::isfinite(prob) || size <= 0 || prob <= 0 || prob > 1 || pi < 0  || pi > 1) {
     char buffer[256];
     snprintf(buffer, 256,
-             "Invalid call to negative_binomial with size = %g, prob = %g, pi = %g",
+             "Invalid call to zi_negative_binomial with size = %g, prob = %g, pi = %g",
              size, prob, pi);
     monty::utils::fatal_error(buffer);
   }

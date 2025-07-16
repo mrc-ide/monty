@@ -1504,3 +1504,67 @@ test_that("Zero-inflated poisson random numbers prevent bad inputs", {
     monty_random_zi_poisson(5, 1.1, r),
     "Invalid call to zi_poisson with lambda = 5, pi = 1.1")
 })
+
+
+test_that("can generate zero-inflated negative binomial numbers", {
+  m <- 1000000
+  n <- 958
+  p <- 0.004145
+  pi <- 0.2
+  r <- monty_rng_create(seed = 1)
+  yf <- monty_random_n_zi_negative_binomial_prob(m, n, p, pi, r)
+  
+  true_mean <- (1 - pi) * (1 - p) * n / p
+  expect_equal(mean(yf), true_mean, tolerance = 1e-3)
+  true_var <- (1 - pi) * true_mean * (1 + true_mean * (pi + k))
+  expect_equal(var(yf), true_var, tolerance = 1e-2)
+})
+
+
+test_that("zi_negative_binomial_mu follows from zi_negative_binomial_prob", {
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
+  prob <- 0.3
+  size <- 20
+  pi <- 0.2
+  mu <- size * (1 - prob) / prob
+  expect_identical(
+    monty_random_zi_negative_binomial_mu(size, mu, pi, rng1),
+    monty_random_zi_negative_binomial_prob(size, prob, pi, rng2))
+  expect_identical(
+    monty_random_n_zi_negative_binomial_mu(100, size, mu, pi, rng1),
+    monty_random_n_zi_negative_binomial_prob(100, size, prob, pi, rng2))
+})
+
+
+test_that("deterministic zero-inflated negative binomial returns mean", {
+  m <- 100
+  p <- as.numeric(sample(10, m, replace = TRUE)) / 10
+  pi <- as.numeric(sample(10, m, replace = TRUE)) / 10
+  n <- as.numeric(sample(10, m, replace = TRUE))
+  
+  rng <- monty_rng_create(seed = 1, deterministic = TRUE)
+  expect_equal(
+    mapply(monty_random_zi_negative_binomial_prob, n, p, pi,
+           MoreArgs = list(rng)),
+    (1 - pi) * (1 - p) * n / p)
+})
+
+
+test_that("negative binomial prevents bad inputs", {
+  r <- monty_rng_create(seed = 1)
+  expect_error(monty_random_zi_negative_binomial_prob(10, 0, 0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(0, 0.5, 0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(10, 1.5, 0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(10, Inf, 0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(Inf, 0.4, 0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(10, 0.4, -0.2, r),
+               "Invalid call to zi_negative_binomial")
+  expect_error(monty_random_zi_negative_binomial_prob(10, 0.4, 1.2, r),
+               "Invalid call to zi_negative_binomial")
+})
