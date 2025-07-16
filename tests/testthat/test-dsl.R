@@ -209,3 +209,14 @@ test_that("can apply a domain", {
   expect_equal(m$density(c(0, 1)), -Inf)
   expect_equal(m$density(c(1, 6)), -Inf)
 })
+
+
+test_that("can use truncated normal in dsl", {
+  expect_warning(
+    prior <- monty::monty_dsl({
+      beta ~ TruncatedNormal(mean = 0.2, sd = 0.1, min = 0.05, max = 0.5)
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(prior, "monty_model")
+  expect_false(prior$properties$has_gradient)
+})
