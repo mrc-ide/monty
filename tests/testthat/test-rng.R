@@ -1514,9 +1514,10 @@ test_that("can generate zero-inflated negative binomial numbers", {
   r <- monty_rng_create(seed = 1)
   yf <- monty_random_n_zi_negative_binomial_prob(m, n, p, pi, r)
   
-  true_mean <- (1 - pi) * (1 - p) * n / p
-  expect_equal(mean(yf), true_mean, tolerance = 1e-3)
-  true_var <- (1 - pi) * true_mean * (1 + true_mean * (pi + k))
+  negbin_mean <- (1 - p) * n / p
+  true_mean <- (1 - pi) * 
+  expect_equal(mean(yf), (1 - pi) * negbin_mean, tolerance = 1e-3)
+  true_var <- (1 - pi) * negbin_mean * (1 + negbin_mean * (pi + 1 / n))
   expect_equal(var(yf), true_var, tolerance = 1e-2)
 })
 
