@@ -50,7 +50,7 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
     } else {
       args <- set_names(c(as.name(eq$name), eq$distribution$args),
                         names(formals(eq$distribution$density)))
-      density_expr <- eq$distribution$expr$density_expr
+      density_expr <- eq$distribution$expr$density
       if (is.null(density_expr)) {
         dsl_parse_error(
           "Density for '{eq$distribution$name}' not differentiable",
