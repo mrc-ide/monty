@@ -302,7 +302,7 @@ __host__ __device__ T log_normal(T x, T mulog, T sdlog, bool log) {
 
 template <typename T>
 __host__ __device__ T zi_poisson(T x, T lambda, T pi, bool log) {
-  const auto d = poisson(x, lambda);
+  const auto d = poisson(x, lambda, true);
   
   T ret;
   if (x == 0) {
@@ -317,7 +317,7 @@ __host__ __device__ T zi_poisson(T x, T lambda, T pi, bool log) {
 template <typename T>
 __host__ __device__ T zi_negative_binomial_prob(T x, T size, T prob, T pi,
                                                 bool log) {
-  const auto d = negative_binomial_prob(x, size, prob);
+  const auto d = negative_binomial_prob(x, size, prob, true);
   
   T ret;
   if (x == 0) {
@@ -332,7 +332,7 @@ __host__ __device__ T zi_negative_binomial_prob(T x, T size, T prob, T pi,
 template <typename T>
 __host__ __device__ T zi_negative_binomial_mu(T x, T size, T mu, T pi,
                                               bool log) {
-  const auto d = negative_binomial_mu(x, size, mu);
+  const auto d = negative_binomial_mu(x, size, mu, true);
   
   T ret;
   if (x == 0) {
