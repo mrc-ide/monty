@@ -156,12 +156,12 @@ cpp_monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, ptr) {
   .Call(`_monty_cpp_monty_random_n_log_normal`, n_samples, meanlog, sdlog, ptr)
 }
 
-cpp_monty_random_zi_poisson <- function(lambda, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_zi_poisson`, lambda, pi, ptr)
+cpp_monty_random_zi_poisson <- function(pi0, lambda, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_poisson`, pi0, lambda, ptr)
 }
 
-cpp_monty_random_n_zi_poisson <- function(n_samples, lambda, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_n_zi_poisson`, n_samples, lambda, pi, ptr)
+cpp_monty_random_n_zi_poisson <- function(n_samples, pi0, lambda, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_poisson`, n_samples, pi0, lambda, ptr)
 }
 
 cpp_monty_random_beta_binomial_prob <- function(size, prob, rho, ptr) {
@@ -188,20 +188,20 @@ cpp_monty_random_n_hypergeometric <- function(n_samples, n1, n2, k, ptr) {
   .Call(`_monty_cpp_monty_random_n_hypergeometric`, n_samples, n1, n2, k, ptr)
 }
 
-cpp_monty_random_zi_negative_binomial_prob <- function(size, prob, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_zi_negative_binomial_prob`, size, prob, pi, ptr)
+cpp_monty_random_zi_negative_binomial_prob <- function(pi0, size, prob, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_negative_binomial_prob`, pi0, size, prob, ptr)
 }
 
-cpp_monty_random_n_zi_negative_binomial_prob <- function(n_samples, size, prob, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_prob`, n_samples, size, prob, pi, ptr)
+cpp_monty_random_n_zi_negative_binomial_prob <- function(n_samples, pi0, size, prob, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_prob`, n_samples, pi0, size, prob, ptr)
 }
 
-cpp_monty_random_zi_negative_binomial_mu <- function(size, mu, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_zi_negative_binomial_mu`, size, mu, pi, ptr)
+cpp_monty_random_zi_negative_binomial_mu <- function(pi0, size, mu, ptr) {
+  .Call(`_monty_cpp_monty_random_zi_negative_binomial_mu`, pi0, size, mu, ptr)
 }
 
-cpp_monty_random_n_zi_negative_binomial_mu <- function(n_samples, size, mu, pi, ptr) {
-  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_mu`, n_samples, size, mu, pi, ptr)
+cpp_monty_random_n_zi_negative_binomial_mu <- function(n_samples, pi0, size, mu, ptr) {
+  .Call(`_monty_cpp_monty_random_n_zi_negative_binomial_mu`, n_samples, pi0, size, mu, ptr)
 }
 
 cpp_monty_random_truncated_normal <- function(mean, sd, min, max, ptr) {

@@ -278,11 +278,11 @@ distr_weibull <- distribution(
 distr_zi_negative_binomial_prob <- distribution(
   name = "ZINegativeBinomial",
   variant = "prob",
-  density = function(x, size, prob, pi) {
+  density = function(x, pi0, size, prob) {
     if (x == 0) {
-      log(pi + (1 - pi) * dnbinom(x, size, prob = prob, log = FALSE))
+      log(pi0 + (1 - pi0) * dnbinom(x, size, prob = prob, log = FALSE))
     } else {
-      log(1 - pi) + dnbinom(x, size, prob = prob, log = TRUE)
+      log(1 - pi0) + dnbinom(x, size, prob = prob, log = TRUE)
     }
   },
   domain = c(0, Inf),
@@ -296,11 +296,11 @@ distr_zi_negative_binomial_prob <- distribution(
 distr_zi_negative_binomial_mu <- distribution(
   name = "ZINegativeBinomial",
   variant = "mu",
-  density = function(x, size, mu, pi) {
+  density = function(x, pi0, size, mu) {
     if (x == 0) {
-      log(pi + (1 - pi) * dnbinom(x, size, mu = mu, log = FALSE))
+      log(pi0 + (1 - pi0) * dnbinom(x, size, mu = mu, log = FALSE))
     } else {
-      log(1 - pi) + dnbinom(x, size, mu = mu, log = TRUE)
+      log(1 - pi0) + dnbinom(x, size, mu = mu, log = TRUE)
     }
   },
   domain = c(0, Inf),
@@ -312,11 +312,11 @@ distr_zi_negative_binomial_mu <- distribution(
 
 distr_zi_poisson <- distribution(
   name = "ZIPoisson",
-  density = function(x, lambda, pi) {
+  density = function(x, pi0, lambda) {
     if (x == 0) {
-      log(pi + (1 - pi) * dpois(x, lambda, log = FALSE))
+      log(pi0 + (1 - pi0) * dpois(x, lambda, log = FALSE))
     } else {
-      log(1 - pi) + dpois(x, lambda, log = TRUE)
+      log(1 - pi0) + dpois(x, lambda, log = TRUE)
     }
   },
   domain = c(0, Inf),

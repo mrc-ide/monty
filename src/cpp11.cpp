@@ -282,17 +282,17 @@ extern "C" SEXP _monty_cpp_monty_random_n_log_normal(SEXP n_samples, SEXP meanlo
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_zi_poisson(cpp11::doubles lambda, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_zi_poisson(SEXP lambda, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_zi_poisson(cpp11::doubles pi0, cpp11::doubles lambda, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_zi_poisson(SEXP pi0, SEXP lambda, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_zi_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_zi_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_n_zi_poisson(size_t n_samples, cpp11::doubles lambda, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_n_zi_poisson(SEXP n_samples, SEXP lambda, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_n_zi_poisson(size_t n_samples, cpp11::doubles pi0, cpp11::doubles lambda, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_zi_poisson(SEXP n_samples, SEXP pi0, SEXP lambda, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_n_zi_poisson(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_n_zi_poisson(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
@@ -338,31 +338,31 @@ extern "C" SEXP _monty_cpp_monty_random_n_hypergeometric(SEXP n_samples, SEXP n1
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_zi_negative_binomial_prob(cpp11::doubles size, cpp11::doubles prob, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_zi_negative_binomial_prob(SEXP size, SEXP prob, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_zi_negative_binomial_prob(cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_zi_negative_binomial_prob(SEXP pi0, SEXP size, SEXP prob, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_n_zi_negative_binomial_prob(size_t n_samples, cpp11::doubles size, cpp11::doubles prob, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_n_zi_negative_binomial_prob(SEXP n_samples, SEXP size, SEXP prob, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_prob(size_t n_samples, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles prob, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_zi_negative_binomial_prob(SEXP n_samples, SEXP pi0, SEXP size, SEXP prob, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_n_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_n_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_zi_negative_binomial_mu(cpp11::doubles size, cpp11::doubles mu, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_zi_negative_binomial_mu(SEXP size, SEXP mu, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_zi_negative_binomial_mu(cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles mu, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_zi_negative_binomial_mu(SEXP pi0, SEXP size, SEXP mu, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
-cpp11::doubles cpp_monty_random_n_zi_negative_binomial_mu(size_t n_samples, cpp11::doubles size, cpp11::doubles mu, cpp11::doubles pi, cpp11::sexp ptr);
-extern "C" SEXP _monty_cpp_monty_random_n_zi_negative_binomial_mu(SEXP n_samples, SEXP size, SEXP mu, SEXP pi, SEXP ptr) {
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_mu(size_t n_samples, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles mu, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_zi_negative_binomial_mu(SEXP n_samples, SEXP pi0, SEXP size, SEXP mu, SEXP ptr) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cpp_monty_random_n_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+    return cpp11::as_sexp(cpp_monty_random_n_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
 // random.cpp
