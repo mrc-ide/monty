@@ -262,7 +262,7 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
 
 template <typename T>
 __host__ __device__ T truncated_normal(T x, T mu, T sd, T min, T max, bool log) {
-  const auto d = normal(x, mu, sd);
+  const auto d = normal(x, mu, sd, true);
 
   const auto z_min = 0.5 * (1 + std::erf(min / monty::math::sqrt(2)));
   const auto z_max = 0.5 * (1 + std::erf(max / monty::math::sqrt(2)));
@@ -295,7 +295,7 @@ __host__ __device__ T weibull(T x, T shape, T scale, bool log) {
 
 template <typename T>
 __host__ __device__ T log_normal(T x, T mulog, T sdlog, bool log) {
-  const auto d = normal(monty::math::log(x), mulog, sdlog);
+  const auto d = normal(monty::math::log(x), mulog, sdlog, false);
   
   return log ? (d - monty::math::log(x)) : (monty::math::exp(d) / x);
 }
