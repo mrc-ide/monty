@@ -198,7 +198,10 @@ real_type btrs(rng_state_type& rng_state, real_type n, real_type p) {
 template <typename real_type>
 __host__ __device__
 void binomial_validate(real_type n, real_type p) {
-  if (n < 0 || p < 0 || p > 1 || std::isnan(n) || std::isnan(p)) {
+  const bool err = n < 0 || p < 0 || p > 1 ||
+    (std::isnan(p) && n > 0) ||
+    (std::isnan(n) && p > 0);
+  if (err) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to binomial with n = %.0f, p = %g, q = %g",
@@ -220,7 +223,7 @@ __host__ real_type binomial_deterministic(real_type n, real_type p) {
     }
   }
   binomial_validate(n, p);
-  return n * p;
+  return n > 0 && p > 0 ? n * p : 0;
 }
 
 // NOTE: we return a real, not an int, as with deterministic mode this
