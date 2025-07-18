@@ -120,6 +120,12 @@ reference:
     - monty_random_n_log_normal
     - monty_random_weibull
     - monty_random_n_weibull
+    - monty_random_poisson
+    - monty_random_n_zi_poisson
+    - monty_random_zi_negative_binomial_prob
+    - monty_random_n_zi_negative_binomial_prob
+    - monty_random_zi_negative_binomial_mu
+    - monty_random_n_zi_negative_binomial_mu
 
 articles:
   - title: Basics
