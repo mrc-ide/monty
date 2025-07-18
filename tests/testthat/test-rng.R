@@ -168,6 +168,21 @@ test_that("Binomial random numbers prevent bad inputs", {
 })
 
 
+test_that("binomial edge cases in deterministic mode", {
+  skip_on_cran() # potentially system dependent
+  r <- monty_rng_create(deterministic = TRUE)
+  expect_equal(monty_random_binomial(0, 0, r), 0)
+  expect_error(
+    monty_random_binomial(1, NaN, r),
+    "Invalid call to binomial with n = 1, p = .+")
+  expect_error(
+    monty_random_binomial(NaN, 1, r),
+    "Invalid call to binomial with n = .+, p = 1")
+  expect_equal(monty_random_binomial(0, NaN, r), 0)
+  expect_equal(monty_random_binomial(NaN, 0, r), 0)
+})
+
+
 test_that("avoid integer overflow in binomial draws with very large n", {
   r <- monty_rng_create(seed = 1)
   n <- 2^33

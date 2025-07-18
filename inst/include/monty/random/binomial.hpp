@@ -223,7 +223,7 @@ __host__ real_type binomial_deterministic(real_type n, real_type p) {
     }
   }
   binomial_validate(n, p);
-  return n * p;
+  return n > 0 && p > 0 ? n * p : 0;
 }
 
 // NOTE: we return a real, not an int, as with deterministic mode this
