@@ -137,7 +137,7 @@ test_that("binomial numbers and their complement are the same (np large)", {
 test_that("Binomial random numbers prevent bad inputs", {
   skip_on_cran() # potentially system dependent
   r <- monty_rng_create(seed = 1)
-  monty_random_binomial(0, 0, r)
+  expect_equal(monty_random_binomial(0, 0, r), 0)
   expect_error(
     monty_random_binomial(1, -1, r),
     "Invalid call to binomial with n = 1, p = -1")
@@ -155,12 +155,31 @@ test_that("Binomial random numbers prevent bad inputs", {
   expect_error(
     monty_random_binomial(-1, 0.5, r),
     "Invalid call to binomial with n = -1, p = 0.5")
+  ## Prevent NaN values
   expect_error(
     monty_random_binomial(1, NaN, r),
     "Invalid call to binomial with n = 1, p = .+")
   expect_error(
     monty_random_binomial(NaN, 1, r),
     "Invalid call to binomial with n = .+, p = 1")
+  ## But not in the edge cases where the answer is known
+  expect_equal(monty_random_binomial(0, NaN, r), 0)
+  expect_equal(monty_random_binomial(NaN, 0, r), 0)
+})
+
+
+test_that("binomial edge cases in deterministic mode", {
+  skip_on_cran() # potentially system dependent
+  r <- monty_rng_create(deterministic = TRUE)
+  expect_equal(monty_random_binomial(0, 0, r), 0)
+  expect_error(
+    monty_random_binomial(1, NaN, r),
+    "Invalid call to binomial with n = 1, p = .+")
+  expect_error(
+    monty_random_binomial(NaN, 1, r),
+    "Invalid call to binomial with n = .+, p = 1")
+  expect_equal(monty_random_binomial(0, NaN, r), 0)
+  expect_equal(monty_random_binomial(NaN, 0, r), 0)
 })
 
 
