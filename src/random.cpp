@@ -721,6 +721,26 @@ cpp11::doubles cpp_monty_random_n_log_normal(size_t n_samples,
                                  meanlog, sdlog, "meanlog", "sdlog");
 }
 
+// zi_poisson
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_poisson(cpp11::doubles pi0,
+                                           cpp11::doubles lambda,
+                                           cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto lambda) { return monty::random::zi_poisson<double>(state, pi0, lambda); };
+  return monty_random_sample_1_2(fn, ptr, "zi_poisson",
+                                 pi0, lambda, "pi0", "lambda");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_poisson(size_t n_samples,
+                                             cpp11::doubles pi0,
+                                             cpp11::doubles lambda,
+                                             cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto lambda) { return monty::random::zi_poisson<double>(state, pi0, lambda); };
+  return monty_random_sample_n_2(fn, n_samples, ptr, "zi_poisson",
+                                 pi0, lambda, "pi0", "lambda");
+}
+
 //// 3-arg functions
 
 // beta_binomial_prob
@@ -789,6 +809,49 @@ cpp11::doubles cpp_monty_random_n_hypergeometric(size_t n_samples,
                                  n1, n2, k, "n1", "n2", "k");
 }
 
+// zi_negative_binomial_prob
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_negative_binomial_prob(cpp11::doubles pi0,
+                                                          cpp11::doubles size,
+                                                          cpp11::doubles prob,
+                                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto size, auto prob) { return monty::random::zi_negative_binomial_prob<double>(state, pi0, size, prob); };
+  return monty_random_sample_1_3(fn, ptr, "zi_negative_binomial_prob",
+                                 pi0, size, prob, "pi0", "size", "prob");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_prob(size_t n_samples,
+                                                            cpp11::doubles pi0,
+                                                            cpp11::doubles size,
+                                                            cpp11::doubles prob,
+                                                            cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto size, auto prob) { return monty::random::zi_negative_binomial_prob<double>(state, pi0, size, prob); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "zi_negative_binomial_prob",
+                                 pi0, size, prob, "pi0", "size", "prob");
+}
+
+// zi_negative_binomial_mu
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_zi_negative_binomial_mu(cpp11::doubles pi0,
+                                                        cpp11::doubles size,
+                                                        cpp11::doubles mu,
+                                                        cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto size, auto mu) { return monty::random::zi_negative_binomial_mu<double>(state, pi0, size, mu); };
+  return monty_random_sample_1_3(fn, ptr, "zi_negative_binomial_mu",
+                                 pi0, size, mu, "pi0", "size", "mu");
+}
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_zi_negative_binomial_mu(size_t n_samples,
+                                                          cpp11::doubles pi0,
+                                                          cpp11::doubles size,
+                                                          cpp11::doubles mu,
+                                                          cpp11::sexp ptr) {
+  const auto fn = [](auto& state, auto pi0, auto size, auto mu) { return monty::random::zi_negative_binomial_mu<double>(state, pi0, size, mu); };
+  return monty_random_sample_n_3(fn, n_samples, ptr, "zi_negative_binomial_mu",
+                                 pi0, size, mu, "pi0", "size", "mu");
+}
 
 //// 4-arg functions
 

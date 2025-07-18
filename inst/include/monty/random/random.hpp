@@ -18,6 +18,8 @@
 #include "monty/random/poisson.hpp"
 #include "monty/random/uniform.hpp"
 #include "monty/random/weibull.hpp"
+#include "monty/random/zi_negative_binomial.hpp"
+#include "monty/random/zi_poisson.hpp"
 
 #include "monty/random/version.hpp"
 
