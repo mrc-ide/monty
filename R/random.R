@@ -733,7 +733,7 @@ monty_random_n_zi_negative_binomial_prob <- function(n_samples, pi0, size, prob,
 
 
 
-##' @param mu The mean (zero or more) of the Negative Binomial part of the
+##' @param mu The mean (zero or more) of the negative binomial part of the
 ##'   distribution
 ##'
 ##' @inheritParams monty_random_real
