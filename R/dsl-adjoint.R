@@ -2,26 +2,27 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
   if (isFALSE(required)) {
     return(NULL)
   }
-  exprs <- adjoint_rewrite_stochastic(parameters, exprs)
-  rlang::try_fetch(
-    adjoint_create(parameters, exprs),
-    monty_parse_error = function(e) {
-      if (is.null(required)) {
-        ## TODO: this might change as #52 is merged, to print slightly
-        ## more nicely.  At present we need one extra parent on this
-        ## than ideal because otherwise we don't get the contextual
-        ## information about the differentiation failure attached to
-        ## the warning.
-        cli::cli_warn(
-          c("Not creating a gradient function for this model",
-            i = paste("Pass 'gradient = FALSE' to disable creating the",
-                      "gradient function, which will disable this warning")),
-          parent = e)
-        NULL
-      } else {
-        rlang::zap() # not handling this, throw it anyway.
-      }
-    })
+  rlang::try_fetch({
+    exprs <- adjoint_rewrite_stochastic(parameters, exprs)
+    adjoint_create(parameters, exprs)
+  },
+  monty_parse_error = function(e) {
+    if (is.null(required)) {
+      ## TODO: this might change as #52 is merged, to print slightly
+      ## more nicely.  At present we need one extra parent on this
+      ## than ideal because otherwise we don't get the contextual
+      ## information about the differentiation failure attached to
+      ## the warning.
+      cli::cli_warn(
+        c("Not creating a gradient function for this model",
+          i = paste("Pass 'gradient = FALSE' to disable creating the",
+                    "gradient function, which will disable this warning")),
+        parent = e)
+      NULL
+    } else {
+      rlang::zap() # not handling this, throw it anyway.
+    }
+  })
 }
 
 
@@ -41,7 +42,7 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
 ## densities.
 ##
 ## > __density_a + __density_b + ... + __density_n
-adjoint_rewrite_stochastic <- function(parameters, exprs) {
+adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
   prefix_density <- "__density"
   f <- function(eq) {
     if (eq$type == "assignment") {
@@ -49,8 +50,13 @@ adjoint_rewrite_stochastic <- function(parameters, exprs) {
     } else {
       args <- set_names(c(as.name(eq$name), eq$distribution$args),
                         names(formals(eq$distribution$density)))
-      rhs <- maths$rewrite(
-        substitute_(eq$distribution$expr$density, list2env(args)))
+      density_expr <- eq$distribution$expr$density
+      if (is.null(density_expr)) {
+        dsl_parse_error(
+          "Density for '{eq$distribution$name}' not differentiable",
+          "E206", eq$expr, call)
+      }
+      rhs <- maths$rewrite(substitute_(density_expr, list2env(args)))
       name <- paste0(prefix_density, eq$name)
       list(type = "assignment",
            name = name,
