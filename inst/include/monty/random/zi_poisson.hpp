@@ -36,12 +36,7 @@ real_type zi_poisson(rng_state_type& rng_state, real_type pi0, real_type lambda)
   const auto draw_poisson = 
     pi0 == 0 || (pi0 < 1 && random_real<real_type>(rng_state) > pi0);
   
-  if (draw_poisson) {
-    return poisson(rng_state, lambda);
-  } else {
-    return 0;
-  }
-  
+  return draw_poisson ? poisson(rng_state, lambda) : 0;
 }
 
 }
