@@ -1490,6 +1490,21 @@ test_that("can draw zero-inflated poisson random numbers", {
 })
 
 
+test_that("zero-inflated poisson replicates poisson when pi0 = 0", {
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
+  pi0 <- 0
+  lambda <- 5
+  
+  expect_identical(
+    monty_random_zi_poisson(pi0, lambda, rng1),
+    monty_random_poisson(lambda, rng2))
+  expect_identical(
+    monty_random_n_zi_poisson(100, pi0, lambda, rng1),
+    monty_random_n_poisson(100, lambda, rng2))
+})
+
+
 test_that("deterministic zero-inflated poisson returns mean", {
   n_reps <- 10
   pi0 <- as.numeric(sample(10, n_reps, replace = TRUE) / 10)
@@ -1558,6 +1573,22 @@ test_that("zi_negative_binomial_mu follows from zi_negative_binomial_prob", {
   expect_identical(
     monty_random_n_zi_negative_binomial_mu(100, pi0, size, mu, rng1),
     monty_random_n_zi_negative_binomial_prob(100, pi0, size, prob, rng2))
+})
+
+
+test_that("zero-inflated neg binomial replicates neg binomial when pi0 = 0", {
+  rng1 <- monty_rng_create(seed = 1L)
+  rng2 <- monty_rng_create(seed = 1L)
+  pi0 <- 0
+  prob <- 0.3
+  size <- 20
+  
+  expect_identical(
+    monty_random_zi_negative_binomial_prob(pi0, size, prob, rng1),
+    monty_random_negative_binomial_prob(size, prob, rng2))
+  expect_identical(
+    monty_random_n_zi_negative_binomial_prob(100, pi0, size, prob, rng1),
+    monty_random_n_negative_binomial_prob(100, size, prob, rng2))
 })
 
 

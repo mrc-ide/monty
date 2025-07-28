@@ -35,11 +35,17 @@ real_type zi_negative_binomial_prob(rng_state_type& rng_state, real_type pi0, re
       return (1 - pi0) * (1 - prob) * size / prob;
     }
     
-    const real_type u = random_real<real_type>(rng_state);
-    if (u <= pi0) {
-      return 0;
+    bool draw_negative_binomial;
+    if (pi0 == 0 || pi0 == 1) {
+      draw_negative_binomial = pi0 == 0;
     } else {
+      draw_negative_binomial = random_real<real_type>(rng_state) > pi0;
+    }
+    
+    if (draw_negative_binomial) {
       return negative_binomial_prob(rng_state, size, prob);
+    } else {
+      return 0;
     }
 }
 

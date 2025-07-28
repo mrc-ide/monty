@@ -32,11 +32,18 @@ real_type zi_poisson(rng_state_type& rng_state, real_type pi0, real_type lambda)
   if (rng_state.deterministic) {
     return (1 - pi0) * lambda;
   }
-  const real_type u = random_real<real_type>(rng_state);
-  if (u <= pi0) {
-    return 0;
+  
+  bool draw_poisson;
+  if (pi0 == 0 || pi0 == 1) {
+    draw_poisson = pi0 == 0;
   } else {
+    draw_poisson = random_real<real_type>(rng_state) > pi0;
+  }
+  
+  if (draw_poisson) {
     return poisson(rng_state, lambda);
+  } else {
+    return 0;
   }
   
 }
