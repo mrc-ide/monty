@@ -279,7 +279,11 @@ distr_zi_negative_binomial_prob <- distribution(
   name = "ZINegativeBinomial",
   variant = "prob",
   density = function(x, pi0, size, prob) {
-    if (x == 0) {
+    if (pi0 == 0) {
+      dnbinom(x, size, prob = prob, log = TRUE)
+    } else if (pi0 == 1) {
+      if (x == 0) 0 else -Inf
+    } else if (x == 0) {
       log(pi0 + (1 - pi0) * dnbinom(x, size, prob = prob, log = FALSE))
     } else {
       log(1 - pi0) + dnbinom(x, size, prob = prob, log = TRUE)
@@ -297,7 +301,11 @@ distr_zi_negative_binomial_mu <- distribution(
   name = "ZINegativeBinomial",
   variant = "mu",
   density = function(x, pi0, size, mu) {
-    if (x == 0) {
+    if (pi0 == 0) {
+      dnbinom(x, size, mu = mu, log = TRUE)
+    } else if (pi0 == 1) {
+      if (x == 0) 0 else -Inf
+    } else if (x == 0) {
       log(pi0 + (1 - pi0) * dnbinom(x, size, mu = mu, log = FALSE))
     } else {
       log(1 - pi0) + dnbinom(x, size, mu = mu, log = TRUE)
@@ -314,7 +322,11 @@ distr_zi_negative_binomial_mu <- distribution(
 distr_zi_poisson <- distribution(
   name = "ZIPoisson",
   density = function(x, pi0, lambda) {
-    if (x == 0) {
+    if (pi0 == 0) {
+      dpois(x, lambda, log = TRUE)
+    } else if (pi0 == 1) {
+      if (x == 0) 0 else -Inf
+    } else if (x == 0) {
       log(pi0 + (1 - pi0) * dpois(x, lambda, log = FALSE))
     } else {
       log(1 - pi0) + dpois(x, lambda, log = TRUE)

@@ -305,7 +305,11 @@ __host__ __device__ T zi_poisson(T x, T pi0, T lambda, bool log) {
   const auto d = poisson(x, lambda, true);
   
   T ret;
-  if (x == 0) {
+  if (pi0 == 0) {
+    ret = d;
+  } else if (pi0 == 1) {
+    ret = x == 0 ? 0 : -random::utils::infinity<T>();
+  } else if (x == 0) {
     ret = monty::math::log(pi0 + (1 - pi0) * monty::math::exp(d));
   } else {
     ret = monty::math::log(1 - pi0) + d;
@@ -320,7 +324,11 @@ __host__ __device__ T zi_negative_binomial_prob(T x, T pi0, T size, T prob,
   const auto d = negative_binomial_prob(x, size, prob, true);
   
   T ret;
-  if (x == 0) {
+  if (pi0 == 0) {
+    ret = d;
+  } else if (pi0 == 1) {
+    ret = x == 0 ? 0 : -random::utils::infinity<T>();
+  } else if (x == 0) {
     ret = monty::math::log(pi0 + (1 - pi0) * monty::math::exp(d));
   } else {
     ret = monty::math::log(1 - pi0) + d;
@@ -335,7 +343,11 @@ __host__ __device__ T zi_negative_binomial_mu(T x, T pi0, T size, T mu,
   const auto d = negative_binomial_mu(x, size, mu, true);
   
   T ret;
-  if (x == 0) {
+  if (pi0 == 0) {
+    ret = d;
+  } else if (pi0 == 1) {
+    ret = x == 0 ? 0 : -random::utils::infinity<T>();
+  } else if (x == 0) {
     ret = monty::math::log(pi0 + (1 - pi0) * monty::math::exp(d));
   } else {
     ret = monty::math::log(1 - pi0) + d;
