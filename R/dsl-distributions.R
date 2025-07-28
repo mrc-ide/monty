@@ -286,12 +286,12 @@ distr_zi_negative_binomial_prob <- distribution(
     }
   },
   domain = c(0, Inf),
-  sample = "monty_random_negative_binomial_prob",
+  sample = "monty_random_zi_negative_binomial_prob",
   expr = list(
     density = NULL,
     mean = NULL),
-  cpp = list(density = "negative_binomial_prob",
-             sample = "negative_binomial_prob"))
+  cpp = list(density = "zi_negative_binomial_prob",
+             sample = "zi_negative_binomial_prob"))
 
 distr_zi_negative_binomial_mu <- distribution(
   name = "ZINegativeBinomial",
@@ -304,11 +304,12 @@ distr_zi_negative_binomial_mu <- distribution(
     }
   },
   domain = c(0, Inf),
-  sample = "monty_random_negative_binomial_mu",
+  sample = "monty_random_zi_negative_binomial_mu",
   expr = list(
     density = NULL,
     mean = NULL),
-  cpp = list(density = "negative_binomial_mu", sample = "negative_binomial_mu"))
+  cpp = list(density = "zi_negative_binomial_mu",
+             sample = "zi_negative_binomial_mu"))
 
 distr_zi_poisson <- distribution(
   name = "ZIPoisson",
