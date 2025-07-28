@@ -39,7 +39,7 @@ A vector of random numbers, the same length as the number
 of streams in \code{state}.
 }
 \description{
-Sample from a zero-inflated negative binomial distribution. ith probability
+Sample from a zero-inflated negative binomial distribution. With probability
 \code{pi0} a 0 is drawn, otherwise it draws from the corresponding standard
 negative binomial distribution (which may also result in a 0 being drawn).
 As with the standard negative binomial distribution, there are two

@@ -706,7 +706,7 @@ monty_random_n_zi_poisson <- function(n_samples, pi0, lambda, state) {
 }
 
 
-##' Sample from a zero-inflated negative binomial distribution. ith probability
+##' Sample from a zero-inflated negative binomial distribution. With probability
 ##' `pi0` a 0 is drawn, otherwise it draws from the corresponding standard
 ##' negative binomial distribution (which may also result in a 0 being drawn).
 ##' As with the standard negative binomial distribution, there are two 
