@@ -38,7 +38,7 @@ A vector of random numbers, the same length as the number
 of streams in \code{state}.
 }
 \description{
-Sample from a beta-binomial distribution.  There are two
-parameterisations available one in terms of probability and
+Sample from a beta-binomial distribution. There are two
+parameterisations available: one in terms of probability and
 dispersion and the other in terms of two shape parameters.
 }

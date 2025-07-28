@@ -13,7 +13,8 @@ monty_random_n_zi_poisson(n_samples, pi0, lambda, state)
 \item{pi0}{The probability of extra zeros}
 
 \item{lambda}{The mean (zero or more, length 1 or n) of the Poisson part of
-the distribution. Only valid for lambda <= 10^7}
+the distribution. Only valid for lambda <= 10^7. Note that the mean of the
+zero-inflated Poisson distribution will actually be \code{(1 - pi0) * lambda}}
 
 \item{state}{The random number state, from \link{monty_rng_create}}
 
@@ -26,5 +27,7 @@ A vector of random numbers, the same length as the number
 of streams in \code{state}.
 }
 \description{
-Sample from the zero-inflated Poisson distribution
+Sample from the zero-inflated Poisson distribution. With probability \code{pi0} a
+0 is drawn, otherwise it draws from the corresponding standard Poisson
+distribution (which may also result in a 0 being drawn).
 }
