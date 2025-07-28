@@ -1502,23 +1502,24 @@ test_that("zero-inflated poisson replicates poisson when pi0 = 0", {
   expect_identical(
     monty_random_n_zi_poisson(100, pi0, lambda, rng1),
     monty_random_n_poisson(100, lambda, rng2))
+  expect_equal(monty_rng_state(rng1), monty_rng_state(rng2))
 })
 
 
 test_that("zero-inflated poisson automatically draws 0 when pi0 = 1", {
-  rng1 <- monty_rng_create(seed = 1L)
-  rng2 <- monty_rng_create(seed = 1L)
+  rng <- monty_rng_create(seed = 1L)
   pi0 <- 1
   lambda <- 5
   
-  expect_identical(
-    monty_random_zi_poisson(pi0, lambda, rng1), 0)
-  expect_identical(
-    monty_random_n_zi_poisson(100, pi0, lambda, rng1), rep(0, 100))
+  state <- monty_rng_state(rng)
   
-  ## check that automatic draws of 0 have not affected rng
-  expect_identical(monty_random_n_real(100, rng1), 
-                   monty_random_n_real(100, rng2))
+  expect_identical(
+    monty_random_zi_poisson(pi0, lambda, rng), 0)
+  expect_identical(
+    monty_random_n_zi_poisson(100, pi0, lambda, rng), rep(0, 100))
+  
+  ## check that automatic draws of 0 have not changed rng state
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
@@ -1606,25 +1607,26 @@ test_that("zero-inflated neg binomial replicates neg binomial when pi0 = 0", {
   expect_identical(
     monty_random_n_zi_negative_binomial_prob(100, pi0, size, prob, rng1),
     monty_random_n_negative_binomial_prob(100, size, prob, rng2))
+  expect_equal(monty_rng_state(rng1), monty_rng_state(rng2))
 })
 
 
 test_that("zero-inflated neg binomial automatically draws 0 when pi0 = 1", {
-  rng1 <- monty_rng_create(seed = 1L)
-  rng2 <- monty_rng_create(seed = 1L)
+  rng <- monty_rng_create(seed = 1L)
   pi0 <- 1
   prob <- 0.3
   size <- 20
   
+  state <- monty_rng_state(rng)
+  
   expect_identical(
-    monty_random_zi_negative_binomial_prob(pi0, size, prob, rng1), 0)
+    monty_random_zi_negative_binomial_prob(pi0, size, prob, rng), 0)
   expect_identical(
-    monty_random_n_zi_negative_binomial_prob(100, pi0, size, prob, rng1),
+    monty_random_n_zi_negative_binomial_prob(100, pi0, size, prob, rng),
     rep(0, 100))
   
-  ## check that automatic draws of 0 have not affected rng
-  expect_identical(monty_random_n_real(100, rng1), 
-                   monty_random_n_real(100, rng2))
+  ## check that automatic draws of 0 have not changed rng state
+  expect_equal(monty_rng_state(rng), state)
 })
 
 
