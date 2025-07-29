@@ -35,5 +35,7 @@ A vector of random numbers, the same length as the number
 of streams in \code{state}.
 }
 \description{
-Sample from a negative binomial distribution
+Sample from a negative binomial distribution. There are two
+parameterisations available: one in based on the success probability and the
+other based on the mean.
 }

@@ -402,7 +402,9 @@ monty_random_n_gamma_rate <- function(n_samples, shape, rate, state) {
 }
 
 
-##' Sample from a negative binomial distribution
+##' Sample from a negative binomial distribution. There are two
+##' parameterisations available: one in based on the success probability and the
+##' other based on the mean.
 ##'
 ##' @title Sample from negative binomial distribution
 ##'
@@ -518,8 +520,8 @@ monty_random_n_uniform <- function(n_samples, min, max, state) {
 }
 
 
-##' Sample from a beta-binomial distribution.  There are two
-##' parameterisations available one in terms of probability and
+##' Sample from a beta-binomial distribution. There are two
+##' parameterisations available: one in terms of probability and
 ##' dispersion and the other in terms of two shape parameters.
 ##'
 ##' @title Sample from beta-binomial distribution
@@ -674,6 +676,95 @@ monty_random_log_normal <- function(meanlog, sdlog, state) {
 ##' @rdname monty_random_log_normal
 monty_random_n_log_normal <- function(n_samples, meanlog, sdlog, state) {
   cpp_monty_random_n_log_normal(n_samples, meanlog, sdlog, state)
+}
+
+
+##' Sample from the zero-inflated Poisson distribution. With probability `pi0` a
+##' 0 is drawn, otherwise it draws from the corresponding standard Poisson
+##' distribution (which may also result in a 0 being drawn).
+##'
+##' @title Sample from zero-inflated Poisson distribution
+##'
+##' @param pi0 The probability of extra zeros
+##'
+##' @param lambda The mean (zero or more, length 1 or n) of the Poisson part of
+##' the distribution. Only valid for lambda <= 10^7. Note that the mean of the
+##' zero-inflated Poisson distribution will actually be `(1 - pi0) * lambda`
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##' @export
+monty_random_zi_poisson <- function(pi0, lambda, state) {
+  cpp_monty_random_zi_poisson(pi0, lambda, state)
+}
+
+
+##' @export
+##' @rdname monty_random_zi_poisson
+monty_random_n_zi_poisson <- function(n_samples, pi0, lambda, state) {
+  cpp_monty_random_n_zi_poisson(n_samples, pi0, lambda, state)
+}
+
+
+##' Sample from a zero-inflated negative binomial distribution. With probability
+##' `pi0` a 0 is drawn, otherwise it draws from the corresponding standard
+##' negative binomial distribution (which may also result in a 0 being drawn).
+##' As with the standard negative binomial distribution, there are two 
+##' parameterisations available, based on either the success probability or
+##' mean of the negative binomial part of the distribution.
+##'
+##' @title Sample from zero-inflated negative binomial distribution
+##'
+##' @param pi0 The probability of excess zeros
+##' 
+##' @param size The target number of successful trials
+##'   (zero or more)
+##'
+##' @param prob The probability of success on each trial (between 0
+##'   and 1)
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_zi_negative_binomial
+monty_random_zi_negative_binomial_prob <- function(pi0, size, prob, state) {
+  cpp_monty_random_zi_negative_binomial_prob(pi0, size, prob, state)
+}
+
+
+##' @export
+##' @rdname monty_random_zi_negative_binomial
+monty_random_n_zi_negative_binomial_prob <- function(n_samples, pi0, size, prob,
+                                                  state) {
+  cpp_monty_random_n_zi_negative_binomial_prob(n_samples, pi0, size, prob,
+                                               state)
+}
+
+
+
+##' @param mu The mean (zero or more) of the negative binomial part of the
+##'   distribution. Note the mean of the zero-inflated negative binomial
+##'   distribution will actually be `(1 - pi0) * mu`
+##'
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_zi_negative_binomial
+monty_random_zi_negative_binomial_mu <- function(pi0, size, mu, state) {
+  cpp_monty_random_zi_negative_binomial_mu(pi0, size, mu, state)
+}
+
+
+##' @inheritParams monty_random_real
+##' @inherit monty_random_real return
+##'
+##' @export
+##' @rdname monty_random_zi_negative_binomial
+monty_random_n_zi_negative_binomial_mu <- function(n_samples, pi0, size, mu,
+                                                   state) {
+  cpp_monty_random_n_zi_negative_binomial_mu(n_samples, pi0, size, mu, state)
 }
 
 
