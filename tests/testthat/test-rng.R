@@ -1119,6 +1119,9 @@ test_that("deterministic negative binomial returns mean", {
   expect_equal(
     mapply(monty_random_negative_binomial_prob, n, p, MoreArgs = list(rng)),
     (1 - p) * n / p)
+  
+  ## check edge case where we have NaN input but outcome is known
+  expect_equal(monty_random_negative_binomial_prob(0, NaN, rng), 0)
 })
 
 
@@ -1126,14 +1129,22 @@ test_that("negative binomial prevents bad inputs", {
   r <- monty_rng_create(seed = 1)
   expect_error(monty_random_negative_binomial_prob(10, 0, r),
                "Invalid call to negative_binomial with size = 10, prob = 0")
-  expect_error(monty_random_negative_binomial_prob(0, 0.5, r),
-               "Invalid call to negative_binomial with size = 0, prob = 0.5")
   expect_error(monty_random_negative_binomial_prob(10, 1.5, r),
                "Invalid call to negative_binomial with size = 10, prob = 1.5")
   expect_error(monty_random_negative_binomial_prob(10, Inf, r),
                "Invalid call to negative_binomial with size = 10, prob = inf")
   expect_error(monty_random_negative_binomial_prob(Inf, 0.4, r),
                "Invalid call to negative_binomial with size = inf, prob = 0.4")
+  
+  ## Prevent NaN values
+  expect_error(
+    monty_random_negative_binomial_prob(10, NaN, r),
+    "Invalid call to negative_binomial with size = 10, prob = .+")
+  expect_error(
+    monty_random_negative_binomial_prob(NaN, 1, r),
+    "Invalid call to negative_binomial with size = .+, prob = 1")
+  ## But not in the edge case where the answer is known
+  expect_equal(monty_random_negative_binomial_prob(0, NaN, r), 0)
 })
 
 
@@ -1535,6 +1546,9 @@ test_that("deterministic zero-inflated poisson returns mean", {
     mapply(monty_random_zi_poisson, pi0, lambda, MoreArgs = list(rng)),
     (1 - pi0) * lambda)
   expect_equal(monty_rng_state(rng), state)
+  
+  ## check edge case where we have NaN input but outcome is known
+  expect_equal(monty_random_zi_poisson(1, NaN, rng), 0)
 })
 
 
@@ -1558,6 +1572,16 @@ test_that("Zero-inflated poisson random numbers prevent bad inputs", {
   expect_error(
     monty_random_zi_poisson(0.1, Inf, r),
     "Invalid call to zi_poisson with pi0 = 0.1, lambda = inf")
+  
+  ## Prevent NaN values
+  expect_error(
+    monty_random_zi_poisson(0.2, NaN, r),
+    "Invalid call to zi_poisson with pi0 = 0.2, lambda = .+")
+  expect_error(
+    monty_random_zi_poisson(NaN, 5, r),
+    "Invalid call to zi_poisson with pi0 = .+, lambda = 5")
+  ## But not in the edge case where the answer is known
+  expect_equal(monty_random_zi_poisson(1, NaN, r), 0)
 })
 
 
@@ -1641,26 +1665,50 @@ test_that("deterministic zero-inflated negative binomial returns mean", {
     mapply(monty_random_zi_negative_binomial_prob, pi0, n, p,
            MoreArgs = list(rng)),
     (1 - pi0) * (1 - p) * n / p)
+  
+  ## check edge cases where we have NaN inputs but outcome is known
+  expect_equal(monty_random_zi_negative_binomial_prob(1, NaN, NaN, rng), 0)
+  expect_equal(monty_random_zi_negative_binomial_prob(0.2, 0, NaN, rng), 0)
 })
 
 
 test_that("zero-inflated negative binomial prevents bad inputs", {
   r <- monty_rng_create(seed = 1)
-  expect_error(monty_random_zi_negative_binomial_prob(-0.2, 10, 0.4, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(1.2, 10, 0.4, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(0.2, 10, 0, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(0.2, 0, 0.5, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(0.2, 10, 1.5, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(0.2, 10, Inf, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(0.2, Inf, 0.4, r),
-               "Invalid call to zi_negative_binomial")
-  expect_error(monty_random_zi_negative_binomial_prob(Inf, 10, 0.4, r),
-               "Invalid call to zi_negative_binomial")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(-0.2, 10, 1, r),
+    "Invalid call to zi_negative_binomial with pi0 = -0.2, size = 10, prob = 1")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(1.2, 10, 1, r),
+    "Invalid call to zi_negative_binomial with pi0 = 1.2, size = 10, prob = 1")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0.2, 10, 0, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0.2, size = 10, prob = 0")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0, 10, 1.5, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0, size = 10, prob = 1.5")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0, 10, Inf, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0, size = 10, prob = inf")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0, Inf, 0.4, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0, size = inf, prob = 0.4")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(Inf, 10, 1, r),
+    "Invalid call to zi_negative_binomial with pi0 = inf, size = 10, prob = 1")
   
+  ## Prevent NaN values
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0.2, 10, NaN, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0.2, size = 10, prob = .+")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(0.2, NaN, 1, r),
+    "Invalid call to zi_negative_binomial with pi0 = 0.2, size = .+, prob = 1")
+  expect_error(
+    monty_random_zi_negative_binomial_prob(NaN, 10, 1, r),
+    "Invalid call to zi_negative_binomial with pi0 = .+, size = 10, prob = 1")
+  ## But not in the edge cases where the answer is known
+  expect_equal(monty_random_zi_negative_binomial_prob(1, NaN, NaN, r), 0)
+  expect_equal(monty_random_zi_negative_binomial_prob(1, 10, NaN, r), 0)
+  expect_equal(monty_random_zi_negative_binomial_prob(1, NaN, 1, r), 0)
+  expect_equal(monty_random_zi_negative_binomial_prob(0.2, 0, NaN, r), 0)
 })

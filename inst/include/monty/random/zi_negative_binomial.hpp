@@ -13,7 +13,12 @@ namespace {
 
 template <typename real_type>
 void zi_negative_binomial_validate(real_type pi0, real_type size, real_type prob) {
-  if (!std::isfinite(pi0) || !std::isfinite(size) || !std::isfinite(prob) || pi0 < 0  || pi0 > 1 || size <= 0 || prob <= 0 || prob > 1) {
+  const bool err = pi0 < 0 || pi0 > 1 || size < 0 || prob < 0 || prob > 1 ||
+    !std::isfinite(pi0) ||
+    (pi0 < 1 && std::isnan(prob) && size > 0) ||
+    (pi0 < 1 && !std::isfinite(size)) || 
+    (pi0 < 1 && size > 0 && prob == 0);
+  if (err) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to zi_negative_binomial with pi0 = %g, size = %g, prob = %g",
@@ -32,7 +37,7 @@ real_type zi_negative_binomial_prob(rng_state_type& rng_state, real_type pi0, re
     zi_negative_binomial_validate(pi0, size, prob);
 
     if (rng_state.deterministic) {
-      return (1 - pi0) * (1 - prob) * size / prob;
+      return (pi0 < 1 && size > 0) ? (1 - pi0) * (1 - prob) * size / prob : 0;
     }
     
     const auto draw_negative_binomial = 

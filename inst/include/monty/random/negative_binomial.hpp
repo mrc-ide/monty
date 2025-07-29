@@ -13,7 +13,10 @@ namespace {
 
 template <typename real_type>
 void negative_binomial_validate(real_type size, real_type prob) {
-  if (!std::isfinite(size) || !std::isfinite(prob) || size <= 0 || prob <= 0 || prob > 1) {
+  const bool err = size < 0 || prob < 0 || prob > 1 ||
+    (std::isnan(prob) && size > 0) || !std::isfinite(size) || 
+    (size > 0 && prob == 0);
+  if (err) {
     char buffer[256];
     snprintf(buffer, 256,
              "Invalid call to negative_binomial with size = %g, prob = %g",
@@ -32,9 +35,9 @@ real_type negative_binomial_prob(rng_state_type& rng_state, real_type size, real
     negative_binomial_validate(size, prob);
 
     if (rng_state.deterministic) {
-      return (1 - prob) * size / prob;
+      return size > 0 ? (1 - prob) * size / prob : 0;
     }
-    return (prob == 1) ? 0 : poisson(rng_state, gamma_scale(rng_state, size, (1 - prob) / prob));
+    return (size == 0 || prob == 1) ? 0 : poisson(rng_state, gamma_scale(rng_state, size, (1 - prob) / prob));
 }
 
 template <typename real_type, typename rng_state_type>
