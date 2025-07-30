@@ -197,3 +197,19 @@ test_that("density::beta_binomial agrees", {
   expect_identical(density_beta_binomial_ab(10L, 0L, 5, 1, TRUE), -Inf)
   expect_identical(density_beta_binomial_ab(10L, 2L, 5, 4, TRUE), -Inf)
 })
+
+
+test_that("density::uniform agrees", {
+  min <- runif(50, -50, 50)
+  max <- min + runif(50, 0, 100)
+  x <- runif(length(min), min, max)
+  expect_equal(dunif(x, min, max, TRUE),
+               density_uniform(x, min, max, TRUE))
+  expect_equal(dunif(x, min, max, FALSE),
+               density_uniform(x, min, max, FALSE))
+  
+  expect_identical(density_uniform(0, 1, 2, FALSE), 0)
+  expect_identical(density_uniform(3, 1, 2, FALSE), 0)
+  expect_identical(density_uniform(0, 1, 2, TRUE), -Inf)
+  expect_identical(density_uniform(0, 1, 2, TRUE), -Inf)
+})

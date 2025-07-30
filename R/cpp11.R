@@ -28,6 +28,10 @@ density_poisson <- function(x, lambda, log) {
   .Call(`_monty_density_poisson`, x, lambda, log)
 }
 
+density_uniform <- function(x, min, max, log) {
+  .Call(`_monty_density_uniform`, x, min, max, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }

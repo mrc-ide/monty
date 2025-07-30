@@ -91,3 +91,14 @@ SEXP density_poisson(cpp11::integers x, cpp11::doubles lambda, bool log) {
   }
   return ret;
 }
+
+[[cpp11::register]]
+SEXP density_uniform(cpp11::doubles x, cpp11::doubles min, cpp11::doubles max,
+                     bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::uniform<double>(x[i], min[i], max[i], log);
+  }
+  return ret;
+}
