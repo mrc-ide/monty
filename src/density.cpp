@@ -114,3 +114,13 @@ SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b,
   return ret;
 }
 
+[[cpp11::register]]
+SEXP density_log_normal(cpp11::doubles x, cpp11::doubles mulog,
+                        cpp11::doubles sdlog, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::log_normal<double>(x[i], mulog[i], sdlog[i], log);
+  }
+  return ret;
+}

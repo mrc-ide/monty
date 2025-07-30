@@ -229,8 +229,30 @@ test_that("density::beta agrees", {
   expect_equal(dbeta(x, a, b, log = FALSE),
                density_beta(x, a, b, FALSE))
   
+  ## Outside domain
   expect_identical(density_beta(-1, 1, 2, FALSE), 0)
   expect_identical(density_beta(2, 1, 2, FALSE), 0)
-  expect_identical(density_beta(-1, 1, 2, TRUE), -Inf)
+    expect_identical(density_beta(-1, 1, 2, TRUE), -Inf)
   expect_identical(density_beta(2, 1, 2, TRUE), -Inf)
+})
+
+
+test_that("density::log_normal agrees", {
+  mulog <- runif(50, -100, 100)
+  sdlog <- runif(length(mulog), max = 100)
+  x <- rlnorm(length(mulog), mulog, sdlog = runif(length(mulog), max = 100))
+  expect_equal(dlnorm(x, mulog, sdlog, TRUE),
+               density_log_normal(x, mulog, sdlog, TRUE))
+  expect_equal(dlnorm(x, mulog, sdlog, FALSE),
+               density_log_normal(x, mulog, sdlog, FALSE))
+  
+  ## Corner cases
+  expect_equal(density_log_normal(1, 0, 0, TRUE), dlnorm(1, 0, 0, TRUE))
+  expect_equal(density_log_normal(1, 0, 0, FALSE), dlnorm(1, 0, 0, FALSE))
+  expect_equal(density_log_normal(2, 0, 0, TRUE), dlnorm(2, 0, 0, TRUE))
+  expect_equal(density_log_normal(2, 0, 0, FALSE), dlnorm(2, 0, 0, FALSE))
+  
+  ## Outside domain
+  expect_identical(density_log_normal(-1, 0, 1, FALSE), 0)
+  expect_identical(density_log_normal(-1, 0, 1, TRUE), -Inf)
 })

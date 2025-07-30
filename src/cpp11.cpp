@@ -68,6 +68,13 @@ extern "C" SEXP _monty_density_beta(SEXP x, SEXP a, SEXP b, SEXP log) {
     return cpp11::as_sexp(density_beta(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
   END_CPP11
 }
+// density.cpp
+SEXP density_log_normal(cpp11::doubles x, cpp11::doubles mulog, cpp11::doubles sdlog, bool log);
+extern "C" SEXP _monty_density_log_normal(SEXP x, SEXP mulog, SEXP sdlog, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_log_normal(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mulog), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sdlog), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
 // random.cpp
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic);
 extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP deterministic) {
@@ -524,6 +531,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_beta_binomial_ab",                     (DL_FUNC) &_monty_density_beta_binomial_ab,                     5},
     {"_monty_density_beta_binomial_prob",                   (DL_FUNC) &_monty_density_beta_binomial_prob,                   5},
     {"_monty_density_binomial",                             (DL_FUNC) &_monty_density_binomial,                             4},
+    {"_monty_density_log_normal",                           (DL_FUNC) &_monty_density_log_normal,                           4},
     {"_monty_density_negative_binomial_mu",                 (DL_FUNC) &_monty_density_negative_binomial_mu,                 5},
     {"_monty_density_negative_binomial_prob",               (DL_FUNC) &_monty_density_negative_binomial_prob,               4},
     {"_monty_density_normal",                               (DL_FUNC) &_monty_density_normal,                               4},
