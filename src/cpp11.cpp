@@ -5,6 +5,55 @@
 #include "cpp11/declarations.hpp"
 #include <R_ext/Visibility.h>
 
+// density.cpp
+SEXP density_binomial(cpp11::integers x, cpp11::integers size, cpp11::doubles prob, bool log);
+extern "C" SEXP _monty_density_binomial(SEXP x, SEXP size, SEXP prob, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_binomial(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_normal(cpp11::doubles x, cpp11::doubles mu, cpp11::doubles sd, bool log);
+extern "C" SEXP _monty_density_normal(SEXP x, SEXP mu, SEXP sd, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_normal(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(sd), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_negative_binomial_mu(cpp11::integers x, cpp11::doubles size, cpp11::doubles mu, bool log, bool is_float);
+extern "C" SEXP _monty_density_negative_binomial_mu(SEXP x, SEXP size, SEXP mu, SEXP log, SEXP is_float) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<bool>>(log), cpp11::as_cpp<cpp11::decay_t<bool>>(is_float)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_negative_binomial_prob(cpp11::integers x, cpp11::doubles size, cpp11::doubles prob, bool log);
+extern "C" SEXP _monty_density_negative_binomial_prob(SEXP x, SEXP size, SEXP prob, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_beta_binomial_prob(cpp11::integers x, cpp11::integers size, cpp11::doubles prob, cpp11::doubles rho, bool log);
+extern "C" SEXP _monty_density_beta_binomial_prob(SEXP x, SEXP size, SEXP prob, SEXP rho, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_beta_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rho), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_beta_binomial_ab(cpp11::integers x, cpp11::integers size, cpp11::doubles a, cpp11::doubles b, bool log);
+extern "C" SEXP _monty_density_beta_binomial_ab(SEXP x, SEXP size, SEXP a, SEXP b, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_beta_binomial_ab(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_poisson(cpp11::integers x, cpp11::doubles lambda, bool log);
+extern "C" SEXP _monty_density_poisson(SEXP x, SEXP lambda, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
 // random.cpp
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic);
 extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP deterministic) {
@@ -457,6 +506,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_rng_long_jump",                      (DL_FUNC) &_monty_cpp_monty_rng_long_jump,                      2},
     {"_monty_cpp_monty_rng_set_state",                      (DL_FUNC) &_monty_cpp_monty_rng_set_state,                      2},
     {"_monty_cpp_monty_rng_state",                          (DL_FUNC) &_monty_cpp_monty_rng_state,                          1},
+    {"_monty_density_beta_binomial_ab",                     (DL_FUNC) &_monty_density_beta_binomial_ab,                     5},
+    {"_monty_density_beta_binomial_prob",                   (DL_FUNC) &_monty_density_beta_binomial_prob,                   5},
+    {"_monty_density_binomial",                             (DL_FUNC) &_monty_density_binomial,                             4},
+    {"_monty_density_negative_binomial_mu",                 (DL_FUNC) &_monty_density_negative_binomial_mu,                 5},
+    {"_monty_density_negative_binomial_prob",               (DL_FUNC) &_monty_density_negative_binomial_prob,               4},
+    {"_monty_density_normal",                               (DL_FUNC) &_monty_density_normal,                               4},
+    {"_monty_density_poisson",                              (DL_FUNC) &_monty_density_poisson,                              3},
     {"_monty_monty_rng_alloc",                              (DL_FUNC) &_monty_monty_rng_alloc,                              3},
     {"_monty_test_xoshiro_run",                             (DL_FUNC) &_monty_test_xoshiro_run,                             1},
     {NULL, NULL, 0}
