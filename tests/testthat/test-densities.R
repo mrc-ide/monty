@@ -208,8 +208,29 @@ test_that("density::uniform agrees", {
   expect_equal(dunif(x, min, max, FALSE),
                density_uniform(x, min, max, FALSE))
   
-  expect_identical(density_uniform(0, 1, 2, FALSE), 0)
+  expect_identical(density_uniform(-1, 1, 2, FALSE), 0)
   expect_identical(density_uniform(3, 1, 2, FALSE), 0)
-  expect_identical(density_uniform(0, 1, 2, TRUE), -Inf)
-  expect_identical(density_uniform(0, 1, 2, TRUE), -Inf)
+  expect_identical(density_uniform(-1, 1, 2, TRUE), -Inf)
+  expect_identical(density_uniform(3, 1, 2, TRUE), -Inf)
+})
+
+
+test_that("density::beta agrees", {
+  ## Similar to beta_binomial_ab, we will sample prob and rho on [0, 1]
+  ## and convert to a and b
+  prob <- runif(50)
+  rho <- runif(length(prob))
+  a <- prob * (1 / rho - 1)
+  b <- (1 - prob) * (1 / rho - 1)
+  x <- runif(length(prob))
+  
+  expect_equal(dbeta(x, a, b, log = TRUE),
+               density_beta(x, a, b, TRUE))
+  expect_equal(dbeta(x, a, b, log = FALSE),
+               density_beta(x, a, b, FALSE))
+  
+  expect_identical(density_beta(-1, 1, 2, FALSE), 0)
+  expect_identical(density_beta(2, 1, 2, FALSE), 0)
+  expect_identical(density_beta(-1, 1, 2, TRUE), -Inf)
+  expect_identical(density_beta(2, 1, 2, TRUE), -Inf)
 })

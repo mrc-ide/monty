@@ -102,3 +102,15 @@ SEXP density_uniform(cpp11::doubles x, cpp11::doubles min, cpp11::doubles max,
   }
   return ret;
 }
+
+[[cpp11::register]]
+SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b,
+                  bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::beta<double>(x[i], a[i], b[i], log);
+  }
+  return ret;
+}
+

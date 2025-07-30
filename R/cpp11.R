@@ -32,6 +32,10 @@ density_uniform <- function(x, min, max, log) {
   .Call(`_monty_density_uniform`, x, min, max, log)
 }
 
+density_beta <- function(x, a, b, log) {
+  .Call(`_monty_density_beta`, x, a, b, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }
