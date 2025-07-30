@@ -145,6 +145,8 @@ __host__ __device__ T beta_binomial_ab(T x, T size, T a, T b, bool log) {
   T ret;
   if (x == 0 && size == 0) {
     ret = 0;
+  } else if (x > size) {
+    ret = -random::utils::infinity<T>();
   } else {
     ret = lchoose<T>(size, x) + lbeta(x + a, size - x + b) - lbeta(a, b);
   }
