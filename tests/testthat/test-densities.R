@@ -150,9 +150,7 @@ test_that("density::negative_binomial agrees in prob mode", {
 
 test_that("density::beta_binomial agrees", {
   ## There's no beta-binomial in R stats so we'll create this here
-  dbetabinom <- function(x, size, prob, rho, log = FALSE) {
-    a <- prob * (1 / rho - 1)
-    b <- (1 - prob) * (1 / rho - 1)
+  dbetabinom <- function(x, size, a, b, log = FALSE) {
     out <- lchoose(size, x) + lbeta(x + a, size - x + b) - lbeta(a, b)
     if (!log) {
       out <- exp(out)
@@ -163,18 +161,39 @@ test_that("density::beta_binomial agrees", {
   size <- as.integer(0:50)
   prob <- runif(length(size))
   rho <- runif(length(size))
+  a <- prob * (1 / rho - 1)
+  b <- (1 - prob) * (1 / rho - 1)
   x <- as.integer(runif(length(size), 0, size))
+  
   expect_equal(density_beta_binomial_prob(x, size, prob, rho, TRUE),
-               dbetabinom(x, size, prob, rho, TRUE))
+               dbetabinom(x, size, a, b, TRUE))
   expect_equal(density_beta_binomial_prob(x, size, prob, rho, FALSE),
-               dbetabinom(x, size, prob, rho, FALSE))
+               dbetabinom(x, size, a, b, FALSE))
+  
+  expect_equal(density_beta_binomial_ab(x, size, a, b, TRUE),
+               dbetabinom(x, size, a, b, TRUE))
+  expect_equal(density_beta_binomial_ab(x, size, a, b, FALSE),
+               dbetabinom(x, size, a, b, FALSE))
   
   expect_equal(density_beta_binomial_prob(0L, 0L, 0, 0, TRUE), 0)
-  expect_equal(density_beta_binomial_prob(0L, 0L, 0, 0, FALSE), 1)
   expect_equal(density_beta_binomial_prob(0L, 0L, 0.5, 0, FALSE), 1)
+  expect_equal(density_beta_binomial_prob(0L, 0L, 0, 0, TRUE), 0)
+  expect_equal(density_beta_binomial_prob(0L, 0L, 0.5, 0, FALSE), 1)
+  
+  expect_equal(density_beta_binomial_ab(0L, 0L, 0, 0, TRUE), 0)
+  expect_equal(density_beta_binomial_ab(0L, 0L, 5, 0, FALSE), 1)
+  expect_equal(density_beta_binomial_ab(0L, 0L, 0, 5, FALSE), 1)
+  expect_equal(density_beta_binomial_ab(0L, 0L, 0, 0, TRUE), 0)
+  expect_equal(density_beta_binomial_ab(0L, 0L, 5, 0, FALSE), 1)
+  expect_equal(density_beta_binomial_ab(0L, 0L, 0, 5, FALSE), 1)
   
   expect_identical(density_beta_binomial_prob(10L, 0L, 0.5, 0.1, FALSE), 0)
   expect_identical(density_beta_binomial_prob(10L, 2L, 0.5, 0.4, FALSE), 0)
   expect_identical(density_beta_binomial_prob(10L, 0L, 0.5, 0.1, TRUE), -Inf)
   expect_identical(density_beta_binomial_prob(10L, 2L, 0.5, 0.4, TRUE), -Inf)
+  
+  expect_identical(density_beta_binomial_ab(10L, 0L, 5, 1, FALSE), 0)
+  expect_identical(density_beta_binomial_ab(10L, 2L, 5, 4, FALSE), 0)
+  expect_identical(density_beta_binomial_ab(10L, 0L, 5, 1, TRUE), -Inf)
+  expect_identical(density_beta_binomial_ab(10L, 2L, 5, 4, TRUE), -Inf)
 })
