@@ -40,6 +40,10 @@ density_log_normal <- function(x, mulog, sdlog, log) {
   .Call(`_monty_density_log_normal`, x, mulog, sdlog, log)
 }
 
+density_truncated_normal <- function(x, mu, sd, min, max, log) {
+  .Call(`_monty_density_truncated_normal`, x, mu, sd, min, max, log)
+}
+
 density_cauchy <- function(x, location, scale, log) {
   .Call(`_monty_density_cauchy`, x, location, scale, log)
 }

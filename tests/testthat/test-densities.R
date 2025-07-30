@@ -200,8 +200,10 @@ test_that("density::beta_binomial agrees", {
 
 
 test_that("density::uniform agrees", {
-  min <- runif(50, -50, 50)
-  max <- min + runif(50, 0, 100)
+  domain1 <- runif(50, -100, 100)
+  domain2 <- runif(length(domain1), -100, 100)
+  min <- pmin(domain1, domain2)
+  max <- pmax(domain1, domain2)
   x <- runif(length(min), min, max)
   expect_equal(dunif(x, min, max, TRUE),
                density_uniform(x, min, max, TRUE))
@@ -255,6 +257,38 @@ test_that("density::log_normal agrees", {
   ## Outside domain
   expect_identical(density_log_normal(-1, 0, 1, FALSE), 0)
   expect_identical(density_log_normal(-1, 0, 1, TRUE), -Inf)
+})
+
+
+test_that("density::truncated_normal agrees", {
+  ## There's no truncated normal in R stats so we'll create this here
+  dtruncnorm <- function(x, mean, sd, min, max, log) {
+    out <- dnorm(x, mean, sd, log = TRUE) - 
+      log(pnorm(max, mean, sd) - pnorm(min, mean, sd))
+    if (!log) {
+      out <- exp(out)
+    }
+    out
+  }
+  
+  mean <- runif(50, -100, 100)
+  sd <- runif(length(mean), max = 100)
+  domain1 <- runif(50, -100, 100)
+  domain2 <- runif(length(domain1), -100, 100)
+  min <- pmin(domain1, domain2)
+  max <- pmax(domain1, domain2)
+  x <- runif(length(min), min, max)
+  
+  expect_equal(dtruncnorm(x, mean, sd, min, max, TRUE),
+               density_truncated_normal(x, mean, sd, min, max, TRUE))
+  expect_equal(dtruncnorm(x, mean, sd, min, max, FALSE),
+               density_truncated_normal(x, mean, sd, min, max, FALSE))
+  
+  ## Corner cases
+  expect_equal(density_truncated_normal(1, 1, 0, -10, 10, TRUE), Inf)
+  expect_equal(density_truncated_normal(1, 1, 0, -10, 10, FALSE), Inf)
+  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, TRUE), 0)
+  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, FALSE), -Inf)
 })
 
 
