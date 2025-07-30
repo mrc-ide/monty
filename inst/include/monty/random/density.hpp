@@ -304,9 +304,15 @@ __host__ __device__ T weibull(T x, T shape, T scale, bool log) {
 
 template <typename T>
 __host__ __device__ T log_normal(T x, T mulog, T sdlog, bool log) {
-  const auto d = normal(monty::math::log(x), mulog, sdlog, false);
   
-  return log ? (d - monty::math::log(x)) : (monty::math::exp(d) / x);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = normal(monty::math::log(x), mulog, sdlog, true) - monty::math::log(x);
+  }
+
+  return maybe_log(ret, log);
 }
 
 template <typename T>
