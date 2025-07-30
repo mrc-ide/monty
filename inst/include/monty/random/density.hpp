@@ -257,8 +257,15 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "beta should only be used with real types");
 #endif
-  const auto ret = (a - 1) * monty::math::log(x) +
-    (b - 1) * monty::math::log(1 - x) - lbeta(a, b);
+  
+  T ret;
+  if (x < 0 || x > 1) {
+    ret = -random::utils::infinity<T>();;
+  } else {
+    ret = (a - 1) * monty::math::log(x) +
+      (b - 1) * monty::math::log(1 - x) - lbeta(a, b);
+  }
+  
   return maybe_log(ret, log);
 }
 
