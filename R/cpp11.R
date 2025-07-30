@@ -40,6 +40,10 @@ density_log_normal <- function(x, mulog, sdlog, log) {
   .Call(`_monty_density_log_normal`, x, mulog, sdlog, log)
 }
 
+density_cauchy <- function(x, location, scale, log) {
+  .Call(`_monty_density_cauchy`, x, location, scale, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }

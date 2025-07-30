@@ -256,3 +256,22 @@ test_that("density::log_normal agrees", {
   expect_identical(density_log_normal(-1, 0, 1, FALSE), 0)
   expect_identical(density_log_normal(-1, 0, 1, TRUE), -Inf)
 })
+
+
+test_that("density::cauchy agrees", {
+  location <- runif(50, -100, 100)
+  x <- rcauchy(length(location), location, 
+               scale = runif(length(location), max = 100))
+  scale <- runif(length(x), max = 100)
+  expect_equal(dcauchy(x, location, scale, TRUE),
+               density_cauchy(x, location, scale, TRUE))
+  expect_equal(dcauchy(x, location, scale, FALSE),
+               density_cauchy(x, location, scale, FALSE))
+  
+  ## Corner cases
+  ## dcauchy produces NaN here - do we want that?
+  # expect_equal(density_cauchy(1, 1, 0, TRUE), dcauchy(1, 1, 0, TRUE))
+  # expect_equal(density_cauchy(1, 1, 0, FALSE), dcauchy(1, 1, 0, FALSE))
+  # expect_equal(density_cauchy(0, 1, 0, TRUE), dcauchy(0, 1, 0, TRUE))
+  # expect_equal(density_cauchy(0, 1, 0, FALSE), dcauchy(0, 1, 0, FALSE))
+})
