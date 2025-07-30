@@ -273,8 +273,10 @@ template <typename T>
 __host__ __device__ T truncated_normal(T x, T mu, T sd, T min, T max, bool log) {
   const auto d = normal(x, mu, sd, true);
 
-  const auto z_min = 0.5 * (1 + std::erf(min / monty::math::sqrt(2)));
-  const auto z_max = 0.5 * (1 + std::erf(max / monty::math::sqrt(2)));
+  const auto y_min = (min - mu) / sd;
+  const auto y_max = (max - mu) / sd;
+  const auto z_min = 0.5 * (1 + std::erf(y_min / monty::math::sqrt(2)));
+  const auto z_max = 0.5 * (1 + std::erf(y_max / monty::math::sqrt(2)));
   const auto z = z_max - z_min;
 
   return log ? (d - monty::math::log(z)) : (monty::math::exp(d) / z);
