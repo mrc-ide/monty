@@ -11,6 +11,10 @@ test_that("density::poisson agrees", {
   expect_equal(density_poisson(0L, 0, TRUE), dpois(0, 0, TRUE))
   expect_equal(density_poisson(0L, 0, FALSE), dpois(0, 0, FALSE))
   expect_equal(dpois(1L, 0, TRUE), density_poisson(1L, 0, TRUE))
+  
+  ## Outside domain
+  expect_identical(density_poisson(-1L, 10, FALSE), 0)
+  expect_identical(density_poisson(-1L, 10, TRUE), -Inf)
 })
 
 
@@ -46,6 +50,10 @@ test_that("density::binomial agrees", {
   expect_equal(density_binomial(0L, 0L, 0.5, TRUE), dbinom(0, 0, 0.5, TRUE))
   expect_equal(density_binomial(10L, 0L, 0, TRUE), dbinom(10L, 0L, 0, TRUE))
   expect_equal(density_binomial(10L, 4L, 0.5, TRUE), dbinom(10L, 4L, 0.5, TRUE))
+  
+  ## Outside domain
+  expect_identical(density_binomial(-1L, 10L, 0.5, FALSE), 0)
+  expect_identical(density_binomial(-1L, 10L, 0.5, TRUE), -Inf)
 })
 
 
@@ -69,13 +77,13 @@ test_that("density::negative_binomial agrees", {
                  dnbinom(x, size, mu = mu, log = FALSE),
                  tolerance = tolerance)
     
-    ## size > x case which was implemented incorrectly in <= v0.6.5
+    ## size > x case
     expect_equal(
       dnbinom(511, 2, mu = 6.65, log = TRUE),
       density_negative_binomial_mu(511L, 2, 6.65, TRUE, is_float),
       tolerance = tolerance)
     
-    ## Allow non integer size (wrong in <= 0.7.5)
+    ## Allow non integer size
     expect_equal(
       density_negative_binomial_mu(511L, 3.5, 1, TRUE, is_float),
       dnbinom(511, 3.5, mu = 1, log = TRUE),
@@ -131,20 +139,49 @@ test_that("density::negative_binomial agrees", {
                  dnbinom(0L, size = 50, mu = 1e-8, log = TRUE))
     expect_equal(density_negative_binomial_mu(0L, 50, 1e-20, TRUE, is_float),
                  dnbinom(0L, size = 50, mu = 1e-20, log = TRUE))
+    
+    ## Outside domain
+    expect_identical(
+      density_negative_binomial_mu(-1L, 5, 8, FALSE, is_float), 0)
+    expect_identical(
+      density_negative_binomial_mu(-1L, 5, 8, TRUE, is_float), -Inf)
   }
 })
 
 
-## This is very basic for now, we can expand it to pick up the corner
-## cases when it is more widely used.
 test_that("density::negative_binomial agrees in prob mode", {
-  x <- 0:11
-  size <- rep(1, length(x))
-  prob <- rep(0.5, length(x))
+  x <- as.integer(runif(50, max = 100))
+  size <- runif(length(x), max = 50)
+  prob <- runif(length(x))
+  
   expect_equal(density_negative_binomial_prob(x, size, prob, TRUE),
                dnbinom(x, size, prob, log = TRUE))
   expect_equal(density_negative_binomial_prob(x, size, prob, FALSE),
                dnbinom(x, size, prob, log = FALSE))
+  
+  ## Corner cases
+  expect_equal(density_negative_binomial_prob(0L, 5, 1, TRUE), 
+               dnbinom(0, 5, 1, log = TRUE))
+  expect_equal(density_negative_binomial_prob(0L, 5, 1, FALSE), 
+               dnbinom(0, 5, 1, log = FALSE))
+  expect_equal(density_negative_binomial_prob(1L, 5, 1, TRUE), 
+               dnbinom(1, 5, 1, log = TRUE))
+  expect_equal(density_negative_binomial_prob(1L, 5, 1, FALSE), 
+               dnbinom(1, 5, 1, log = FALSE))
+  expect_equal(density_negative_binomial_prob(0L, 0, 0.5, TRUE), 
+               dnbinom(0, 0, 0.5, log = TRUE))
+  expect_equal(density_negative_binomial_prob(0L, 0, 0.5, FALSE), 
+               dnbinom(0, 0, 0.5, log = FALSE))
+  expect_equal(density_negative_binomial_prob(1L, 0, 0.5, TRUE), 
+               dnbinom(1, 0, 0.5, log = TRUE))
+  expect_equal(density_negative_binomial_prob(1L, 0, 0.5, FALSE), 
+               dnbinom(1, 0, 0.5, log = FALSE))
+  
+  ## Outside domain
+  expect_identical(
+    density_negative_binomial_prob(-1L, 5, 0.5, FALSE), 0)
+  expect_identical(
+    density_negative_binomial_prob(-1L, 5, 0.5, TRUE), -Inf)
 })
 
 
@@ -175,6 +212,7 @@ test_that("density::beta_binomial agrees", {
   expect_equal(density_beta_binomial_ab(x, size, a, b, FALSE),
                dbetabinom(x, size, a, b, FALSE))
   
+  ## Corner cases
   expect_equal(density_beta_binomial_prob(0L, 0L, 0, 0, TRUE), 0)
   expect_equal(density_beta_binomial_prob(0L, 0L, 0.5, 0, FALSE), 1)
   expect_equal(density_beta_binomial_prob(0L, 0L, 0, 0, TRUE), 0)
@@ -187,6 +225,7 @@ test_that("density::beta_binomial agrees", {
   expect_equal(density_beta_binomial_ab(0L, 0L, 5, 0, FALSE), 1)
   expect_equal(density_beta_binomial_ab(0L, 0L, 0, 5, FALSE), 1)
   
+  ## Outside domain
   expect_identical(density_beta_binomial_prob(10L, 0L, 0.5, 0.1, FALSE), 0)
   expect_identical(density_beta_binomial_prob(10L, 2L, 0.5, 0.4, FALSE), 0)
   expect_identical(density_beta_binomial_prob(10L, 0L, 0.5, 0.1, TRUE), -Inf)
@@ -208,6 +247,7 @@ test_that("density::uniform agrees", {
   expect_equal(dunif(x, min, max, FALSE),
                density_uniform(x, min, max, FALSE))
   
+  ## Outside domain
   expect_identical(density_uniform(-1, 1, 2, FALSE), 0)
   expect_identical(density_uniform(3, 1, 2, FALSE), 0)
   expect_identical(density_uniform(-1, 1, 2, TRUE), -Inf)
