@@ -225,8 +225,13 @@ __host__ __device__ T gamma_rate(T x, T shape, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * monty::math::log(x) - rate * x -
-    random::utils::lgamma(shape) + shape * monty::math::log(rate);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = (shape - 1) * monty::math::log(x) - rate * x -
+      random::utils::lgamma(shape) + shape * monty::math::log(rate);
+  }
   return maybe_log(ret, log);
 }
 
@@ -236,8 +241,13 @@ __host__ __device__ T gamma_scale(T x, T shape, T scale, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * monty::math::log(x) - x / scale -
-    random::utils::lgamma(shape) - shape * monty::math::log(scale);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = (shape - 1) * monty::math::log(x) - x / scale -
+      random::utils::lgamma(shape) - shape * monty::math::log(scale);
+  }
   return maybe_log(ret, log);
 }
 
