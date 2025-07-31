@@ -319,8 +319,13 @@ __host__ __device__ T weibull(T x, T shape, T scale, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "weibull should only be used with real types");
 #endif
-  const auto ret = monty::math::log(shape) + (shape - 1) * monty::math::log(x) -
-    shape * monty::math::log(scale) - (x / scale)^shape;
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = monty::math::log(shape) + (shape - 1) * monty::math::log(x) -
+      shape * monty::math::log(scale) - monty::math::pow(x / scale, shape);
+  }
   return maybe_log(ret, log);
 }
 
