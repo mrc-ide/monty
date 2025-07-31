@@ -336,6 +336,77 @@ test_that("density::gamma agrees", {
 })
 
 
+test_that("density::hypergeometric agrees", {
+  
+  ## m is number of white balls
+  m <- as.integer(runif(50, 1, 50))
+  ## n is number of black balls
+  n <- as.integer(runif(50, 1, 50))
+  ## k is number of balls drawn, cannot be more than m + n 
+  k <- as.integer(runif(50, 1, m + n))
+  ## number of white balls drawn, cannot be less than max(0, k - n) or
+  ## more than min(m, k)
+  x <- as.integer(runif(50, pmax(0, k - n), pmin(m, k)))
+  
+  expect_equal(dhyper(x, m, n, k, log = TRUE),
+               density_hypergeometric(x, m, n, k, TRUE))
+  expect_equal(dhyper(x, m, n, k, log = FALSE),
+               density_hypergeometric(x, m, n, k, FALSE))
+  
+  
+  ## Corner cases
+  expect_equal(density_hypergeometric(0L, 0L, 0L, 0L, FALSE), 
+               dhyper(0, 0, 0, 0, FALSE))
+  expect_equal(density_hypergeometric(0L, 0L, 0L, 0L, TRUE), 
+               dhyper(0, 0, 0, 0, TRUE))
+  expect_equal(density_hypergeometric(1L, 0L, 0L, 0L, FALSE), 
+               dhyper(1, 0, 0, 0, FALSE))
+  expect_equal(density_hypergeometric(1L, 0L, 0L, 0L, TRUE), 
+               dhyper(1, 0, 0, 0, TRUE))
+  expect_equal(density_hypergeometric(5L, 10L, 0L, 5L, FALSE), 
+               dhyper(5, 10, 0, 5, FALSE))
+  expect_equal(density_hypergeometric(5L, 10L, 0L, 5L, TRUE), 
+               dhyper(5, 10, 0, 5, TRUE))
+  expect_equal(density_hypergeometric(1L, 10L, 0L, 5L, FALSE), 
+               dhyper(1, 10, 0, 5, FALSE))
+  expect_equal(density_hypergeometric(1L, 10L, 0L, 5L, TRUE), 
+               dhyper(1, 10, 0, 5, TRUE))
+  expect_equal(density_hypergeometric(0L, 0L, 10L, 5L, FALSE), 
+               dhyper(0, 0, 10, 5, FALSE))
+  expect_equal(density_hypergeometric(0L, 0L, 10L, 5L, TRUE), 
+               dhyper(0, 0, 10, 5, TRUE))
+  expect_equal(density_hypergeometric(1L, 0L, 10L, 5L, FALSE), 
+               dhyper(1, 0, 10, 5, FALSE))
+  expect_equal(density_hypergeometric(1L, 0L, 10L, 5L, TRUE), 
+               dhyper(1, 0, 10, 5, TRUE))
+  expect_equal(density_hypergeometric(15L, 5L, 10L, 15L, FALSE), 
+               dhyper(15, 5, 10, 15, FALSE))
+  expect_equal(density_hypergeometric(15L, 5L, 10L, 15L, TRUE), 
+               dhyper(15, 5, 10, 15, TRUE))
+  expect_equal(density_hypergeometric(1L, 5L, 10L, 15L, FALSE), 
+               dhyper(1, 5, 10, 15, FALSE))
+  expect_equal(density_hypergeometric(1L, 5L, 10L, 15L, TRUE), 
+               dhyper(1, 5, 10, 15, TRUE))
+  
+  
+  
+  ## Outside domain
+  ## Less than 0
+  expect_identical(density_hypergeometric(-1L, 20L, 10L, 5L, TRUE), -Inf)
+  expect_identical(density_hypergeometric(-1L, 20L, 10L, 5L, FALSE), 0)
+  ## More than k
+  expect_identical(density_hypergeometric(6L, 20L, 10L, 5L, TRUE), -Inf)
+  expect_identical(density_hypergeometric(6L, 20L, 10L, 5L, FALSE), 0)
+  ## More than m
+  expect_identical(density_hypergeometric(25L, 20L, 10L, 25L, TRUE), -Inf)
+  expect_identical(density_hypergeometric(25L, 20L, 10L, 25L, FALSE), 0)
+  ## Less than k - n
+  expect_identical(density_hypergeometric(10L, 20L, 10L, 25L, TRUE), -Inf)
+  expect_identical(density_hypergeometric(10L, 20L, 10L, 25L, FALSE), 0)
+  
+})
+
+
 test_that("density::log_normal agrees", {
   mulog <- runif(50, -100, 100)
   sdlog <- runif(length(mulog), max = 100)

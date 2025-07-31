@@ -52,6 +52,10 @@ density_beta <- function(x, a, b, log) {
   .Call(`_monty_density_beta`, x, a, b, log)
 }
 
+density_hypergeometric <- function(x, n1, n2, k, log) {
+  .Call(`_monty_density_hypergeometric`, x, n1, n2, k, log)
+}
+
 density_log_normal <- function(x, mulog, sdlog, log) {
   .Call(`_monty_density_log_normal`, x, mulog, sdlog, log)
 }

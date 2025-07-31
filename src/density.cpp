@@ -157,6 +157,18 @@ SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b,
 }
 
 [[cpp11::register]]
+SEXP density_hypergeometric(cpp11::integers x, cpp11::integers n1, cpp11::integers n2,
+                            cpp11::integers k, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::hypergeometric<double>(x[i], n1[i], n2[i],
+                                                    k[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
 SEXP density_log_normal(cpp11::doubles x, cpp11::doubles mulog,
                         cpp11::doubles sdlog, bool log) {
   const size_t n = x.size();

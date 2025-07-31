@@ -97,6 +97,13 @@ extern "C" SEXP _monty_density_beta(SEXP x, SEXP a, SEXP b, SEXP log) {
   END_CPP11
 }
 // density.cpp
+SEXP density_hypergeometric(cpp11::integers x, cpp11::integers n1, cpp11::integers n2, cpp11::integers k, bool log);
+extern "C" SEXP _monty_density_hypergeometric(SEXP x, SEXP n1, SEXP n2, SEXP k, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_hypergeometric(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(n1), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(n2), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(k), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
 SEXP density_log_normal(cpp11::doubles x, cpp11::doubles mulog, cpp11::doubles sdlog, bool log);
 extern "C" SEXP _monty_density_log_normal(SEXP x, SEXP mulog, SEXP sdlog, SEXP log) {
   BEGIN_CPP11
@@ -599,6 +606,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_exponential_rate",                     (DL_FUNC) &_monty_density_exponential_rate,                     3},
     {"_monty_density_gamma_rate",                           (DL_FUNC) &_monty_density_gamma_rate,                           4},
     {"_monty_density_gamma_scale",                          (DL_FUNC) &_monty_density_gamma_scale,                          4},
+    {"_monty_density_hypergeometric",                       (DL_FUNC) &_monty_density_hypergeometric,                       5},
     {"_monty_density_log_normal",                           (DL_FUNC) &_monty_density_log_normal,                           4},
     {"_monty_density_negative_binomial_mu",                 (DL_FUNC) &_monty_density_negative_binomial_mu,                 5},
     {"_monty_density_negative_binomial_prob",               (DL_FUNC) &_monty_density_negative_binomial_prob,               4},
