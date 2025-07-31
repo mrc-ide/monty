@@ -436,29 +436,122 @@ test_that("density::zi_poisson agrees", {
   expect_equal(dpois(x, lambda, FALSE),
                density_zi_poisson(x, pi0, lambda, FALSE))
   
-  ## Corner cases
-  expect_equal(density_zi_poisson(0L, 0, 0, TRUE), 0)
-  expect_equal(density_zi_poisson(0L, 0, 0, FALSE), 1)
-  expect_equal(density_zi_poisson(1L, 0, 0, TRUE), -Inf)
-  expect_equal(density_zi_poisson(1L, 0, 0, FALSE), 0)
-  expect_equal(density_zi_poisson(0L, 0.5, 0, TRUE), 0)
-  expect_equal(density_zi_poisson(0L, 0.5, 0, FALSE), 1)
-  expect_equal(density_zi_poisson(1L, 0.5, 0, TRUE), -Inf)
-  expect_equal(density_zi_poisson(1L, 0.5, 0, FALSE), 0)
-  expect_equal(density_zi_poisson(0L, 1, 0, TRUE), 0)
-  expect_equal(density_zi_poisson(0L, 1, 0, FALSE), 1)
-  expect_equal(density_zi_poisson(1L, 1, 0, TRUE), -Inf)
-  expect_equal(density_zi_poisson(1L, 1, 0, FALSE), 0)
+  ## pi0 = 1 Corner cases (only possible outcome is 0)
   expect_equal(density_zi_poisson(0L, 1, 10, TRUE), 0)
   expect_equal(density_zi_poisson(0L, 1, 10, FALSE), 1)
   expect_equal(density_zi_poisson(1L, 1, 10, TRUE), -Inf)
   expect_equal(density_zi_poisson(1L, 1, 10, FALSE), 0)
   
-  ## Outside domain
-  expect_identical(density_zi_poisson(-1L, 0., 10, FALSE), 0)
-  expect_identical(density_zi_poisson(-1L, 0, 10, TRUE), -Inf)
-  expect_identical(density_zi_poisson(-1L, 0.5, 10, FALSE), 0)
-  expect_identical(density_zi_poisson(-1L, 0.5, 10, TRUE), -Inf)
-  expect_identical(density_zi_poisson(-1L, 1, 10, FALSE), 0)
-  expect_identical(density_zi_poisson(-1L, 1, 10, TRUE), -Inf)
+  ## Remaining tests should be unaffected by pi0, for safety we test at
+  ## at pi0 = 0, 0.5 and 1 (edge values and a value in-between)
+  for (pi0 in c(0, 0.5, 1)) {
+    ## lambda = 0 corner cases
+    expect_equal(density_zi_poisson(0L, pi0, 0, TRUE), 0)
+    expect_equal(density_zi_poisson(0L, pi0, 0, FALSE), 1)
+    expect_equal(density_zi_poisson(1L, pi0, 0, TRUE), -Inf)
+    expect_equal(density_zi_poisson(1L, pi0, 0, FALSE), 0)
+    
+    ## Outside domain
+    expect_identical(density_zi_poisson(-1L, pi0, 10, FALSE), 0)
+    expect_identical(density_zi_poisson(-1L, 0, 10, TRUE), -Inf)
+  }
+  
+})
+
+test_that("density::zi_negative_binomial agrees", {
+  ## There's no zero-inflated negative binomial in R stats so we'll create this
+  ## here
+  dzinbinom <- function(x, pi0, size, prob, log = FALSE) {
+    if (pi0 == 0) {
+      out <- dnbinom(x, size, prob = prob, log = TRUE)
+    } else if (pi0 == 1) {
+      out <- if (x == 0) 0 else -Inf
+    } else if (x == 0) {
+      out <- log(pi0 + (1 - pi0) * dnbinom(x, size, prob = prob, log = FALSE))
+    } else {
+      out <- log(1 - pi0) + dnbinom(x, size, prob = prob, log = TRUE)
+    }
+    if (!log) {
+      out <- exp(out)
+    }
+    out
+  }
+  
+  x <- as.integer(runif(50, max = 50))
+  pi0 <- runif(length(x))
+  size <- runif(length(x), max = 50)
+  prob <- runif(length(x))
+  mu <- size * (1 - prob) / prob
+  
+  expect_equal(mapply(dzinbinom, x = x, pi0 = pi0, size = size, prob = prob, 
+                      MoreArgs = list(log = TRUE)),
+               density_zi_negative_binomial_prob(x, pi0, size, prob, TRUE))
+  expect_equal(mapply(dzinbinom, x = x, pi0 = pi0, size = size, prob = prob, 
+                      MoreArgs = list(log = FALSE)),
+               density_zi_negative_binomial_prob(x, pi0, size, prob, FALSE))
+  
+  expect_equal(mapply(dzinbinom, x = x, pi0 = pi0, size = size, prob = prob, 
+                      MoreArgs = list(log = TRUE)),
+               density_zi_negative_binomial_mu(x, pi0, size, mu, TRUE))
+  expect_equal(mapply(dzinbinom, x = x, pi0 = pi0, size = size, prob = prob, 
+                      MoreArgs = list(log = FALSE)),
+               density_zi_negative_binomial_mu(x, pi0, size, mu, FALSE))
+  
+  ## Reduces to negative binomial when pi0 = 0
+  pi0 <- rep(0, length(x))
+  expect_equal(dnbinom(x, size, prob = prob, log = TRUE),
+               density_zi_negative_binomial_prob(x, pi0, size, prob, TRUE))
+  expect_equal(dnbinom(x, size, prob = prob, log = FALSE),
+               density_zi_negative_binomial_prob(x, pi0, size, prob, FALSE))
+  
+  expect_equal(dnbinom(x, size, mu = mu, log = TRUE),
+               density_zi_negative_binomial_mu(x, pi0, size, mu, TRUE))
+  expect_equal(dnbinom(x, size, mu = mu, log = FALSE),
+               density_zi_negative_binomial_mu(x, pi0, size, mu, FALSE))
+  
+  
+  ## pi0 = 1 corner cases (only possible outcome is 0)
+  expect_equal(density_zi_negative_binomial_prob(0L, 1, 5, 0.5, TRUE), 0)
+  expect_equal(density_zi_negative_binomial_prob(0L, 1, 5, 0.5, FALSE), 1)
+  expect_equal(density_zi_negative_binomial_prob(1L, 1, 5, 0.5, TRUE), -Inf)
+  expect_equal(density_zi_negative_binomial_prob(1L, 1, 5, 0.5, FALSE), 0)               
+  
+  expect_equal(density_zi_negative_binomial_mu(0L, 1, 5, 5, TRUE), 0)
+  expect_equal(density_zi_negative_binomial_mu(0L, 1, 5, 5, FALSE), 1)
+  expect_equal(density_zi_negative_binomial_mu(1L, 1, 5, 5, TRUE), -Inf)
+  expect_equal(density_zi_negative_binomial_mu(1L, 1, 5, 5, FALSE), 0)
+  
+  ## Remaining tests should be unaffected by pi0, for safety we test at
+  ## at pi0 = 0, 0.5 and 1 (edge values and a value in-between)
+  for (pi0 in c(0, 0.5, 1)) {
+    ## Corner cases for negative binomial parameters
+    expect_equal(density_zi_negative_binomial_prob(0L, pi0, 5, 1, TRUE), 0)
+    expect_equal(density_zi_negative_binomial_prob(0L, pi0, 5, 1, FALSE), 1)
+    expect_equal(density_zi_negative_binomial_prob(1L, pi0, 5, 1, TRUE), -Inf)
+    expect_equal(density_zi_negative_binomial_prob(1L, pi0, 5, 1, FALSE), 0)
+    expect_equal(density_zi_negative_binomial_prob(0L, pi0, 0, 0.5, TRUE), 0)
+    expect_equal(density_zi_negative_binomial_prob(0L, pi0, 0, 0.5, FALSE), 1)
+    expect_equal(density_zi_negative_binomial_prob(1L, pi0, 0, 0.5, TRUE), -Inf)
+    expect_equal(density_zi_negative_binomial_prob(1L, pi0, 0, 0.5, FALSE), 0)
+    expect_equal(density_zi_negative_binomial_mu(0L, pi0, 5, 0, TRUE), 0)
+    expect_equal(density_zi_negative_binomial_mu(0L, pi0, 5, 0, FALSE), 1)
+    expect_equal(density_zi_negative_binomial_mu(1L, pi0, 5, 0, TRUE), -Inf)
+    expect_equal(density_zi_negative_binomial_mu(1L, pi0, 5, 0, FALSE), 0)
+    expect_equal(density_zi_negative_binomial_mu(0L, pi0, 0, 0, TRUE), 0)
+    expect_equal(density_zi_negative_binomial_mu(0L, pi0, 0, 0, FALSE), 1)
+    expect_equal(density_zi_negative_binomial_mu(1L, pi0, 0, 0, TRUE), -Inf)
+    expect_equal(density_zi_negative_binomial_mu(1L, pi0, 0, 0, FALSE), 0)
+    
+    ## Outside domain
+    expect_identical(
+      density_zi_negative_binomial_prob(-1L, pi0, 10, 0.5, FALSE), 0)
+    expect_identical(
+      density_zi_negative_binomial_prob(-1L, pi0, 10, 0.5, TRUE), -Inf)
+    
+    expect_identical(
+      density_zi_negative_binomial_mu(-1L, pi0, 10, 5, FALSE), 0)
+    expect_identical(
+      density_zi_negative_binomial_mu(-1L, pi0, 10, 5, TRUE), -Inf)
+  }
+  
 })

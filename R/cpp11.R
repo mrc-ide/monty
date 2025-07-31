@@ -68,6 +68,14 @@ density_zi_poisson <- function(x, pi0, lambda, log) {
   .Call(`_monty_density_zi_poisson`, x, pi0, lambda, log)
 }
 
+density_zi_negative_binomial_mu <- function(x, pi0, size, mu, log) {
+  .Call(`_monty_density_zi_negative_binomial_mu`, x, pi0, size, mu, log)
+}
+
+density_zi_negative_binomial_prob <- function(x, pi0, size, prob, log) {
+  .Call(`_monty_density_zi_negative_binomial_prob`, x, pi0, size, prob, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }

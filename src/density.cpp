@@ -199,3 +199,31 @@ SEXP density_zi_poisson(cpp11::integers x, cpp11::doubles pi0,
   }
   return ret;
 }
+
+[[cpp11::register]]
+SEXP density_zi_negative_binomial_mu(cpp11::integers x, cpp11::doubles pi0,
+                                     cpp11::doubles size, cpp11::doubles mu,
+                                     bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = 
+      monty::density::zi_negative_binomial_mu<double>(x[i], pi0[i], size[i],
+                                                      mu[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
+SEXP density_zi_negative_binomial_prob(cpp11::integers x, cpp11::doubles pi0,
+                                       cpp11::doubles size, cpp11::doubles prob,
+                                       bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = 
+      monty::density::zi_negative_binomial_prob<double>(x[i], pi0[i], size[i],
+                                                        prob[i], log);
+  }
+  return ret;
+}

@@ -124,6 +124,20 @@ extern "C" SEXP _monty_density_zi_poisson(SEXP x, SEXP pi0, SEXP lambda, SEXP lo
     return cpp11::as_sexp(density_zi_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
   END_CPP11
 }
+// density.cpp
+SEXP density_zi_negative_binomial_mu(cpp11::integers x, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles mu, bool log);
+extern "C" SEXP _monty_density_zi_negative_binomial_mu(SEXP x, SEXP pi0, SEXP size, SEXP mu, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_zi_negative_binomial_prob(cpp11::integers x, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles prob, bool log);
+extern "C" SEXP _monty_density_zi_negative_binomial_prob(SEXP x, SEXP pi0, SEXP size, SEXP prob, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
 // random.cpp
 SEXP monty_rng_alloc(cpp11::sexp r_seed, int n_streams, bool deterministic);
 extern "C" SEXP _monty_monty_rng_alloc(SEXP r_seed, SEXP n_streams, SEXP deterministic) {
@@ -592,6 +606,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_poisson",                              (DL_FUNC) &_monty_density_poisson,                              3},
     {"_monty_density_uniform",                              (DL_FUNC) &_monty_density_uniform,                              4},
     {"_monty_density_weibull",                              (DL_FUNC) &_monty_density_weibull,                              4},
+    {"_monty_density_zi_negative_binomial_mu",              (DL_FUNC) &_monty_density_zi_negative_binomial_mu,              5},
+    {"_monty_density_zi_negative_binomial_prob",            (DL_FUNC) &_monty_density_zi_negative_binomial_prob,            5},
     {"_monty_density_zi_poisson",                           (DL_FUNC) &_monty_density_zi_poisson,                           4},
     {"_monty_monty_rng_alloc",                              (DL_FUNC) &_monty_monty_rng_alloc,                              3},
     {"_monty_test_xoshiro_run",                             (DL_FUNC) &_monty_test_xoshiro_run,                             1},
