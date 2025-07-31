@@ -104,6 +104,26 @@ SEXP density_uniform(cpp11::doubles x, cpp11::doubles min, cpp11::doubles max,
 }
 
 [[cpp11::register]]
+SEXP density_exponential_rate(cpp11::doubles x, cpp11::doubles rate, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::exponential_rate<double>(x[i], rate[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
+SEXP density_exponential_mean(cpp11::doubles x, cpp11::doubles mean, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::exponential_mean<double>(x[i], mean[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
 SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b,
                   bool log) {
   const size_t n = x.size();
