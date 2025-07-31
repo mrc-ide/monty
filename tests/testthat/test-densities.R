@@ -272,8 +272,36 @@ test_that("density::beta agrees", {
   ## Outside domain
   expect_identical(density_beta(-1, 1, 2, FALSE), 0)
   expect_identical(density_beta(2, 1, 2, FALSE), 0)
-    expect_identical(density_beta(-1, 1, 2, TRUE), -Inf)
+  expect_identical(density_beta(-1, 1, 2, TRUE), -Inf)
   expect_identical(density_beta(2, 1, 2, TRUE), -Inf)
+})
+
+
+test_that("density::exponential agrees", {
+  x <- runif(50, max = 50)
+  
+  rate <- rexp(50)
+  mean <- 1 / rate
+  
+  expect_equal(dexp(x, rate, TRUE),
+               density_exponential_rate(x, rate, TRUE))
+  expect_equal(dexp(x, rate, FALSE),
+               density_exponential_rate(x, rate, FALSE))
+  
+  expect_equal(dexp(x, rate, TRUE),
+               density_exponential_mean(x, mean, TRUE))
+  expect_equal(dexp(x, rate, FALSE),
+               density_exponential_mean(x, mean, FALSE))
+  
+  ## Corner cases
+  expect_equal(density_exponential_rate(10, 0, TRUE), dexp(0, 0, TRUE))
+  expect_equal(density_exponential_rate(10, 0, FALSE), dexp(0, 0, FALSE))
+  
+  ## Outside domain
+  expect_identical(density_exponential_rate(-1, 1, FALSE), 0)
+  expect_identical(density_exponential_rate(-1, 1, TRUE), -Inf)
+  expect_identical(density_exponential_mean(-1, 1, FALSE), 0)
+  expect_identical(density_exponential_mean(-1, 1, TRUE), -Inf)
 })
 
 

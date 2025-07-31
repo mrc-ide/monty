@@ -32,6 +32,14 @@ density_uniform <- function(x, min, max, log) {
   .Call(`_monty_density_uniform`, x, min, max, log)
 }
 
+density_exponential_rate <- function(x, rate, log) {
+  .Call(`_monty_density_exponential_rate`, x, rate, log)
+}
+
+density_exponential_mean <- function(x, mean, log) {
+  .Call(`_monty_density_exponential_mean`, x, mean, log)
+}
+
 density_beta <- function(x, a, b, log) {
   .Call(`_monty_density_beta`, x, a, b, log)
 }

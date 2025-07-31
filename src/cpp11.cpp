@@ -62,6 +62,20 @@ extern "C" SEXP _monty_density_uniform(SEXP x, SEXP min, SEXP max, SEXP log) {
   END_CPP11
 }
 // density.cpp
+SEXP density_exponential_rate(cpp11::doubles x, cpp11::doubles rate, bool log);
+extern "C" SEXP _monty_density_exponential_rate(SEXP x, SEXP rate, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_exponential_rate(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rate), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_exponential_mean(cpp11::doubles x, cpp11::doubles mean, bool log);
+extern "C" SEXP _monty_density_exponential_mean(SEXP x, SEXP mean, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_exponential_mean(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
 SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b, bool log);
 extern "C" SEXP _monty_density_beta(SEXP x, SEXP a, SEXP b, SEXP log) {
   BEGIN_CPP11
@@ -539,6 +553,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_beta_binomial_prob",                   (DL_FUNC) &_monty_density_beta_binomial_prob,                   5},
     {"_monty_density_binomial",                             (DL_FUNC) &_monty_density_binomial,                             4},
     {"_monty_density_cauchy",                               (DL_FUNC) &_monty_density_cauchy,                               4},
+    {"_monty_density_exponential_mean",                     (DL_FUNC) &_monty_density_exponential_mean,                     3},
+    {"_monty_density_exponential_rate",                     (DL_FUNC) &_monty_density_exponential_rate,                     3},
     {"_monty_density_log_normal",                           (DL_FUNC) &_monty_density_log_normal,                           4},
     {"_monty_density_negative_binomial_mu",                 (DL_FUNC) &_monty_density_negative_binomial_mu,                 5},
     {"_monty_density_negative_binomial_prob",               (DL_FUNC) &_monty_density_negative_binomial_prob,               4},
