@@ -40,6 +40,14 @@ density_exponential_mean <- function(x, mean, log) {
   .Call(`_monty_density_exponential_mean`, x, mean, log)
 }
 
+density_gamma_rate <- function(x, shape, rate, log) {
+  .Call(`_monty_density_gamma_rate`, x, shape, rate, log)
+}
+
+density_gamma_scale <- function(x, shape, scale, log) {
+  .Call(`_monty_density_gamma_scale`, x, shape, scale, log)
+}
+
 density_beta <- function(x, a, b, log) {
   .Call(`_monty_density_beta`, x, a, b, log)
 }

@@ -280,7 +280,7 @@ test_that("density::beta agrees", {
 test_that("density::exponential agrees", {
   x <- runif(50, max = 50)
   
-  rate <- rexp(50)
+  rate <- rexp(length(x))
   mean <- 1 / rate
   
   expect_equal(dexp(x, rate, TRUE),
@@ -294,14 +294,45 @@ test_that("density::exponential agrees", {
                density_exponential_mean(x, mean, FALSE))
   
   ## Corner cases
-  expect_equal(density_exponential_rate(10, 0, TRUE), dexp(0, 0, TRUE))
-  expect_equal(density_exponential_rate(10, 0, FALSE), dexp(0, 0, FALSE))
+  expect_equal(density_exponential_rate(10, 0, TRUE), dexp(10, 0, TRUE))
+  expect_equal(density_exponential_rate(10, 0, FALSE), dexp(10, 0, FALSE))
   
   ## Outside domain
   expect_identical(density_exponential_rate(-1, 1, FALSE), 0)
   expect_identical(density_exponential_rate(-1, 1, TRUE), -Inf)
   expect_identical(density_exponential_mean(-1, 1, FALSE), 0)
   expect_identical(density_exponential_mean(-1, 1, TRUE), -Inf)
+})
+
+
+test_that("density::gamma agrees", {
+  x <- runif(50, max = 50)
+  
+  rate <- rexp(length(x))
+  scale <- 1 / rate
+  shape <- runif(length(x), max = 50)
+  
+  expect_equal(dgamma(x, shape, rate = rate, log = TRUE),
+               density_gamma_rate(x, shape, rate, TRUE))
+  expect_equal(dgamma(x, shape, rate = rate, log = FALSE),
+               density_gamma_rate(x, shape, rate, FALSE))
+  
+  expect_equal(dgamma(x, shape, scale = scale, log = TRUE),
+               density_gamma_scale(x, shape, scale, TRUE))
+  expect_equal(dgamma(x, shape, scale = scale, log = FALSE),
+               density_gamma_scale(x, shape, scale, FALSE))
+  
+  ## Corner cases
+  expect_equal(density_gamma_rate(10, 2, 0, TRUE),
+               dgamma(10, 2, rate = 0, log = TRUE))
+  expect_equal(density_gamma_rate(10, 2, 0, FALSE),
+               dgamma(10, 2, rate = 0, log = FALSE))
+  
+  ## Outside domain
+  expect_identical(density_gamma_rate(-1, 2, 1, FALSE), 0)
+  expect_identical(density_gamma_rate(-1, 2, 1, TRUE), -Inf)
+  expect_identical(density_gamma_scale(-1, 2, 1, FALSE), 0)
+  expect_identical(density_gamma_scale(-1, 2, 1, TRUE), -Inf)
 })
 
 

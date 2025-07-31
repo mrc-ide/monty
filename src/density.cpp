@@ -124,6 +124,28 @@ SEXP density_exponential_mean(cpp11::doubles x, cpp11::doubles mean, bool log) {
 }
 
 [[cpp11::register]]
+SEXP density_gamma_rate(cpp11::doubles x, cpp11::doubles shape,
+                        cpp11::doubles rate, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::gamma_rate<double>(x[i], shape[i], rate[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
+SEXP density_gamma_scale(cpp11::doubles x, cpp11::doubles shape,
+                         cpp11::doubles scale, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::gamma_scale<double>(x[i], shape[i], scale[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
 SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b,
                   bool log) {
   const size_t n = x.size();
