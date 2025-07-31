@@ -177,3 +177,14 @@ SEXP density_cauchy(cpp11::doubles x, cpp11::doubles location,
   }
   return ret;
 }
+
+[[cpp11::register]]
+SEXP density_weibull(cpp11::doubles x, cpp11::doubles shape,
+                     cpp11::doubles scale, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::weibull<double>(x[i], shape[i], scale[i], log);
+  }
+  return ret;
+}

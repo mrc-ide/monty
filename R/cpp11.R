@@ -60,6 +60,10 @@ density_cauchy <- function(x, location, scale, log) {
   .Call(`_monty_density_cauchy`, x, location, scale, log)
 }
 
+density_weibull <- function(x, shape, scale, log) {
+  .Call(`_monty_density_weibull`, x, shape, scale, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }
