@@ -437,13 +437,6 @@ test_that("density::cauchy agrees", {
                density_cauchy(x, location, scale, TRUE))
   expect_equal(dcauchy(x, location, scale, FALSE),
                density_cauchy(x, location, scale, FALSE))
-  
-  ## Corner cases
-  ## dcauchy produces NaN here - do we want that?
-  # expect_equal(density_cauchy(1, 1, 0, TRUE), dcauchy(1, 1, 0, TRUE))
-  # expect_equal(density_cauchy(1, 1, 0, FALSE), dcauchy(1, 1, 0, FALSE))
-  # expect_equal(density_cauchy(0, 1, 0, TRUE), dcauchy(0, 1, 0, TRUE))
-  # expect_equal(density_cauchy(0, 1, 0, FALSE), dcauchy(0, 1, 0, FALSE))
 })
 
 
@@ -456,13 +449,6 @@ test_that("density::weibull agrees", {
                density_weibull(x, shape, scale, TRUE))
   expect_equal(dweibull(x, shape, scale, FALSE),
                density_weibull(x, shape, scale, FALSE))
-  
-  ## Corner cases
-  ## dweibull produces NaN here - do we want that?
-  # expect_equal(density_weibull(1, 1, 0, TRUE), dweibull(1, 1, 0, TRUE))
-  # expect_equal(density_weibull(1, 1, 0, FALSE), dweibull(1, 1, 0, FALSE))
-  # expect_equal(density_weibull(0, 1, 0, TRUE), dweibull(0, 1, 0, TRUE))
-  # expect_equal(density_weibull(0, 1, 0, FALSE), dweibull(0, 1, 0, FALSE))
   
   ## Outside domain
   expect_identical(density_weibull(-1, 1, 1, FALSE), 0)
