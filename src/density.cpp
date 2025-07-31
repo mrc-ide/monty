@@ -188,3 +188,14 @@ SEXP density_weibull(cpp11::doubles x, cpp11::doubles shape,
   }
   return ret;
 }
+
+[[cpp11::register]]
+SEXP density_zi_poisson(cpp11::integers x, cpp11::doubles pi0,
+                        cpp11::doubles lambda, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::zi_poisson<double>(x[i], pi0[i], lambda[i], log);
+  }
+  return ret;
+}

@@ -64,6 +64,10 @@ density_weibull <- function(x, shape, scale, log) {
   .Call(`_monty_density_weibull`, x, shape, scale, log)
 }
 
+density_zi_poisson <- function(x, pi0, lambda, log) {
+  .Call(`_monty_density_zi_poisson`, x, pi0, lambda, log)
+}
+
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {
   .Call(`_monty_monty_rng_alloc`, r_seed, n_streams, deterministic)
 }

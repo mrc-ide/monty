@@ -397,3 +397,68 @@ test_that("density::weibull agrees", {
   expect_identical(density_weibull(-1, 1, 1, FALSE), 0)
   expect_identical(density_weibull(-1, 1, 1, TRUE), -Inf)
 })
+
+
+
+test_that("density::zi_poisson agrees", {
+  ## There's no zero-inflated Poisson in R stats so we'll create this here
+  dzipois <- function(x, pi0, lambda, log = FALSE) {
+    if (pi0 == 0) {
+      out <- dpois(x, lambda, log = TRUE)
+    } else if (pi0 == 1) {
+      out <- if (x == 0) 0 else -Inf
+    } else if (x == 0) {
+      out <- log(pi0 + (1 - pi0) * dpois(x, lambda, log = FALSE))
+    } else {
+      out <- log(1 - pi0) + dpois(x, lambda, log = TRUE)
+    }
+    if (!log) {
+      out <- exp(out)
+    }
+    out
+  }
+  
+  lambda <- rexp(50)
+  pi0 <- runif(length(lambda))
+  x <- as.integer(runif(length(lambda), 0, 50))
+  
+  expect_equal(mapply(dzipois, x = x, pi0 = pi0, lambda = lambda, 
+                      MoreArgs = list(log = TRUE)),
+               density_zi_poisson(x, pi0, lambda, TRUE))
+  expect_equal(mapply(dzipois, x = x, pi0 = pi0, lambda = lambda, 
+                      MoreArgs = list(log = FALSE)),
+               density_zi_poisson(x, pi0, lambda, FALSE))
+  
+  ## Reduces to Poisson when pi0 = 0
+  pi0 <- rep(0, length(x))
+  expect_equal(dpois(x, lambda, TRUE),
+               density_zi_poisson(x, pi0, lambda, TRUE))
+  expect_equal(dpois(x, lambda, FALSE),
+               density_zi_poisson(x, pi0, lambda, FALSE))
+  
+  ## Corner cases
+  expect_equal(density_zi_poisson(0L, 0, 0, TRUE), 0)
+  expect_equal(density_zi_poisson(0L, 0, 0, FALSE), 1)
+  expect_equal(density_zi_poisson(1L, 0, 0, TRUE), -Inf)
+  expect_equal(density_zi_poisson(1L, 0, 0, FALSE), 0)
+  expect_equal(density_zi_poisson(0L, 0.5, 0, TRUE), 0)
+  expect_equal(density_zi_poisson(0L, 0.5, 0, FALSE), 1)
+  expect_equal(density_zi_poisson(1L, 0.5, 0, TRUE), -Inf)
+  expect_equal(density_zi_poisson(1L, 0.5, 0, FALSE), 0)
+  expect_equal(density_zi_poisson(0L, 1, 0, TRUE), 0)
+  expect_equal(density_zi_poisson(0L, 1, 0, FALSE), 1)
+  expect_equal(density_zi_poisson(1L, 1, 0, TRUE), -Inf)
+  expect_equal(density_zi_poisson(1L, 1, 0, FALSE), 0)
+  expect_equal(density_zi_poisson(0L, 1, 10, TRUE), 0)
+  expect_equal(density_zi_poisson(0L, 1, 10, FALSE), 1)
+  expect_equal(density_zi_poisson(1L, 1, 10, TRUE), -Inf)
+  expect_equal(density_zi_poisson(1L, 1, 10, FALSE), 0)
+  
+  ## Outside domain
+  expect_identical(density_zi_poisson(-1L, 0., 10, FALSE), 0)
+  expect_identical(density_zi_poisson(-1L, 0, 10, TRUE), -Inf)
+  expect_identical(density_zi_poisson(-1L, 0.5, 10, FALSE), 0)
+  expect_identical(density_zi_poisson(-1L, 0.5, 10, TRUE), -Inf)
+  expect_identical(density_zi_poisson(-1L, 1, 10, FALSE), 0)
+  expect_identical(density_zi_poisson(-1L, 1, 10, TRUE), -Inf)
+})
