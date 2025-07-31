@@ -194,7 +194,13 @@ __host__ __device__ T exponential_rate(T x, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(monty::math::log(rate) - rate * x, log);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = monty::math::log(rate) - rate * x;
+  }
+  return maybe_log(ret, log);
 }
 
 // TODO: rename as scale
@@ -204,7 +210,13 @@ __host__ __device__ T exponential_mean(T x, T mean, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(-monty::math::log(mean) - x / mean, log);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = -monty::math::log(mean) - x / mean;
+  }
+  return maybe_log(ret, log);
 }
 
 template <typename T>
@@ -260,7 +272,7 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
   
   T ret;
   if (x < 0 || x > 1) {
-    ret = -random::utils::infinity<T>();;
+    ret = -random::utils::infinity<T>();
   } else {
     ret = (a - 1) * monty::math::log(x) +
       (b - 1) * monty::math::log(1 - x) - lbeta(a, b);
