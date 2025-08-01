@@ -205,7 +205,11 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng_create(seed = state$rng)
   model$restore()
-  sampler$set_internal_state(state$sampler)
+  if (is_v2_sampler(sampler)) {
+    sampler$state$restore(state$sampler)
+  } else {
+    sampler$set_internal_state(state$sampler)
+  }
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
@@ -255,11 +259,14 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
+  ## I'm not sure about the best name for this, and we need to check
+  ## what was actually being done here; I think it was mostly debug!?
   if (is_v2_sampler) {
     details <- NULL
+    sampler_state <- sampler$state$dump(sampler_state)
   } else {
     details <- sampler$finalise(chain_state, model, rng)
+    sampler_state <- NULL
   }
 
   if (has_observer) {
