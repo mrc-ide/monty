@@ -45,4 +45,6 @@ toy_sampler <- function(sd) {
 
 
 sampler <- toy_sampler(rep(0.2, 5))
-samples <- monty_sample(model, sampler, 100)
+model <- monty_example("gaussian", diag(5))
+samples1 <- monty_sample(model, sampler, 100, restartable = TRUE)
+samples2 <- monty_sample_continue(samples1, 50)
