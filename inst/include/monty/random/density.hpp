@@ -294,7 +294,6 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
 template <typename T>
 __host__ __device__ T truncated_normal(T x, T mu, T sd, T min, T max, bool log) {
   
-  
   T ret;
   if (x < min || x > max) {
     ret = -random::utils::infinity<T>();
