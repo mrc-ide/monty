@@ -73,7 +73,13 @@
 ##'   assume that `list2env(x, parent = emptyenv())` is sufficient and
 ##'   use that (unless your state is `NULL`, in which case we use
 ##'   `identity`).  If provided then typically you will need to
-##'   provide `state_dump`, too.
+##'   provide `state_dump`, too.  The arguments here, if provided,
+##'   must be
+##'
+##'   * `state_chain`
+##'   * `state_sampler`
+##'   * `control`
+##'   * `model`
 ##'
 ##' @return A `monty_sampler2` object
 ##' @export
@@ -98,13 +104,21 @@ monty_sampler2 <- function(name, help, control, initialise, step,
 }
 
 
-monty_sampler2_default_dump <- function(x) {
-  if (is.null(x)) x else as.list(x)
+monty_sampler2_default_dump <- function(state_sampler) {
+  if (is.null(state_sampler)) {
+    state_sampler
+  } else {
+    as.list(state_sampler)
+  }
 }
 
 
-monty_sampler2_default_restore <- function(x) {
-  if (is.null(x)) x else list2env(x, parent = emptyenv())
+monty_sampler2_default_restore <- function(state_chain, state_sampler, control, model) {
+  if (is.null(state_sampler)) {
+    state_sampler
+  } else {
+    list2env(state_sampler, parent = emptyenv())
+  }
 }
 
 

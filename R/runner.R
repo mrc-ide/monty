@@ -206,7 +206,7 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   rng <- monty_rng_create(seed = state$rng)
   model$restore()
   if (is_v2_sampler(sampler)) {
-    sampler$state$restore(state$sampler)
+    sampler$state$restore(state$chain, state$sampler, sampler$control, model)
   } else {
     sampler$set_internal_state(state$sampler)
   }
