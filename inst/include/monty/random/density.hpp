@@ -293,13 +293,23 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
 
 template <typename T>
 __host__ __device__ T truncated_normal(T x, T mu, T sd, T min, T max, bool log) {
-  const auto d = normal(x, mu, sd, true);
-
-  const auto z_min = 0.5 * (1 + std::erf(min / monty::math::sqrt(2)));
-  const auto z_max = 0.5 * (1 + std::erf(max / monty::math::sqrt(2)));
-  const auto z = z_max - z_min;
-
-  return log ? (d - monty::math::log(z)) : (monty::math::exp(d) / z);
+  
+  T ret;
+  if (x < min || x > max) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    const auto d = normal(x, mu, sd, true);
+    
+    const auto y_min = (min - mu) / sd;
+    const auto y_max = (max - mu) / sd;
+    const auto z_min = 0.5 * std::erfc(-y_min / M_SQRT2);
+    const auto z_max = 0.5 * std::erfc(-y_max / M_SQRT2);
+    const auto z = z_max - z_min;
+    
+    ret = d - monty::math::log(z);
+  }
+  
+  return maybe_log(ret, log);
 }
 
 template <typename T>

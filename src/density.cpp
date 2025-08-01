@@ -180,6 +180,19 @@ SEXP density_log_normal(cpp11::doubles x, cpp11::doubles mulog,
 }
 
 [[cpp11::register]]
+SEXP density_truncated_normal(cpp11::doubles x, cpp11::doubles mu,
+                              cpp11::doubles sd, cpp11::doubles min,
+                              cpp11::doubles max, bool log) {
+  const size_t n = x.size();
+  cpp11::writable::doubles ret(x.size());
+  for (size_t i = 0; i < n; ++i) {
+    ret[i] = monty::density::truncated_normal<double>(x[i], mu[i], sd[i], 
+                                                      min[i], max[i], log);
+  }
+  return ret;
+}
+
+[[cpp11::register]]
 SEXP density_cauchy(cpp11::doubles x, cpp11::doubles location,
                     cpp11::doubles scale, bool log) {
   const size_t n = x.size();
