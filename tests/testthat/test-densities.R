@@ -454,11 +454,34 @@ test_that("density::truncated_normal agrees", {
   expect_equal(dtruncnorm(x, mean, sd, min, max, FALSE),
                density_truncated_normal(x, mean, sd, min, max, FALSE))
   
+  ## One-sided truncation
+  vec_inf <- rep(Inf, length(x))
+  expect_equal(dtruncnorm(x, mean, sd, -vec_inf, max, TRUE),
+               density_truncated_normal(x, mean, sd, -vec_inf, max, TRUE))
+  expect_equal(dtruncnorm(x, mean, sd, -vec_inf, max, FALSE),
+               density_truncated_normal(x, mean, sd, -vec_inf, max, FALSE))
+  expect_equal(dtruncnorm(x, mean, sd, min, vec_inf, TRUE),
+               density_truncated_normal(x, mean, sd, min, vec_inf, TRUE))
+  expect_equal(dtruncnorm(x, mean, sd, min, vec_inf, FALSE),
+               density_truncated_normal(x, mean, sd, min, vec_inf, FALSE))
+  
+  ## min = -Inf and max = Inf reduces to normal without truncation
+  expect_equal(dnorm(x, mean, sd, TRUE),
+               density_truncated_normal(x, mean, sd, -vec_inf, vec_inf, TRUE))
+  expect_equal(dnorm(x, mean, sd, FALSE),
+               density_truncated_normal(x, mean, sd, -vec_inf, vec_inf, FALSE))
+  
   ## Corner cases
   expect_equal(density_truncated_normal(1, 1, 0, -10, 10, TRUE), Inf)
   expect_equal(density_truncated_normal(1, 1, 0, -10, 10, FALSE), Inf)
-  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, TRUE), 0)
-  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, FALSE), -Inf)
+  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, TRUE), -Inf)
+  expect_equal(density_truncated_normal(0, 1, 0, -10, 10, FALSE), 0)
+  
+  ## Outside domain
+  expect_identical(density_truncated_normal(11, 1, 1, -10, 10, TRUE), -Inf)
+  expect_identical(density_truncated_normal(11, 1, 1, -10, 10, FALSE), 0)
+  expect_identical(density_truncated_normal(-11, 1, 0, -10, 10, TRUE), -Inf)
+  expect_identical(density_truncated_normal(-11, 1, 1, -10, 10, FALSE), 0)
 })
 
 
