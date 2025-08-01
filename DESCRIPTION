@@ -19,7 +19,6 @@ RoxygenNote: 7.3.2
 URL: https://mrc-ide.github.io/monty, https://github.com/mrc-ide/monty
 BugReports: https://github.com/mrc-ide/monty/issues
 Imports:
-    R6,
     cli,
     parallel,
     rlang

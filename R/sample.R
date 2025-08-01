@@ -114,7 +114,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          restartable = FALSE, burnin = NULL,
                          thinning_factor = NULL) {
   assert_is(model, "monty_model")
-  assert_is(sampler, "monty_sampler")
+  assert_is(sampler, c("monty_sampler", "monty_sampler2"))
   if (is.null(runner)) {
     runner <- monty_runner_serial()
   } else {
@@ -133,6 +133,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
     samples$restart <- restart_data(res, model, sampler, runner,
                                     thinning_factor)
   }
+
   samples
 }
 
