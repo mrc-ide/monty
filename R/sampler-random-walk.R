@@ -199,3 +199,110 @@ make_rerun <- function(every, random, is_stochastic) {
     }
   }
 }
+
+
+make_rerun2 <- function(control, model) {
+  if (!control$rerun || !model$properties$is_stochastic) {
+    return(NULL)
+  }
+  make_rerun(control$rerun_every, control$rerun_every, TRUE)
+}
+
+
+make_random_walk_proposal2 <- function(control, model, pars) {
+  vcv <- sampler_validate_vcv(vcv, pars)
+  make_random_walk_proposal(vcv, model$domain, control$boundaries)  
+}
+
+
+sampler_random_walk_initialise <- function(state_chain, control, model, rng) {
+  n_pars <- length(model$parameters)
+  ## TODO: Samplers need to cope with this, and we could have them
+  ## advertise this I think, as part of their properties.
+  multiple_parameters <- length(dim2(pars)) > 1
+  if (multiple_parameters) {
+    ## this is properly enforced elsewhere, but we assert here to be
+    ## safe.
+    stopifnot(model$properties$allow_multiple_parameters)
+  }
+  
+  ## We don't actually need to return an environment here, because all
+  ## our things that are modified by reference (rerun) will already be
+  ## captured in an environment
+  list(proposal = make_random_walk_proposal2(control, model, pars),
+       rerun = make_rerun2(control, model))
+}
+
+
+sampler_random_walk_step <- function(state_chain, state_sampler, control,
+                                     model, rng) {
+  if (control$rerun) {
+    rerun <- state_sampler$rerun(rng)
+    if (any(rerun)) {
+      ## This is currently just setup assuming we are not using multiple
+      ## parameters as currently they cannot be used with stochastic models,
+      ## while the rerun is only used with stochastic models
+      state$density <- model$density(state$pars)
+    }
+  }
+
+  pars_next <- state_sampler$proposal(state$pars, rng)
+  reject_some <- boundaries == "reject" &&
+    !all(i <- is_parameters_in_domain(pars_next, model$domain))
+  if (reject_some) {
+    density_next <- rep(-Inf, length(state$density))
+    if (any(i)) {
+      density_next[i] <- model$density(pars_next[, i, drop = FALSE])
+    }
+  } else {
+    density_next <- model$density(pars_next)
+  }
+  accept <- density_next - state$density > log(monty_random_real(rng))
+
+  ## TODO: rng is not needed through here and can be removed
+  update_state(state_chain, pars_next, density_next, accept, model, rng)
+}
+
+
+sampler_random_walk_dump <- function(state_sampler) {
+  if (!is.null(state_sampler$rerun) && !control$rerun_random) {
+    stop("some additional state to restore")
+  }
+  NULL
+}
+
+
+sampler_random_walk_restore <- function(state_chain, state_sampler, control,
+                                        model) {
+  pars <- state_chain$pars
+  state_sampler$proposal <- make_random_walk_proposal2(control, model, pars)
+  rerun <- make_rerun2(control, model)
+  if (!is.null(rerun) && !control$rerun_random) {
+    stop("some additional state to restore")
+  }
+
+  list(proposal = proposal, rerun = rerun)
+}
+
+
+monty_sampler_random_walk2 <- function(vcv, boundaries = "reflect",
+                                       rerun_every = Inf, rerun_random = TRUE) {
+  check_vcv(vcv, allow_3d = TRUE, call = environment())
+  boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
+  if (!identical(unname(rerun_every), Inf)) {
+    assert_scalar_positive_integer(rerun_every)
+  }
+  assert_scalar_logical(rerun_random)
+  control <- list(vcv = vcv,
+                  boundaries = boundaries,
+                  rerun_every = rerun_every,
+                  rerun_random = rerun_random)
+
+  monty_sampler2("Random walk",
+                 "monty_random_walk",
+                 control,
+                 sampler_random_walk_initialise,
+                 sampler_random_walk_step,
+                 sampler_random_walk_dump,
+                 sampler_random_walk_restore)
+}
