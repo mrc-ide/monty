@@ -194,7 +194,13 @@ __host__ __device__ T exponential_rate(T x, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(monty::math::log(rate) - rate * x, log);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = monty::math::log(rate) - rate * x;
+  }
+  return maybe_log(ret, log);
 }
 
 // TODO: rename as scale
@@ -204,7 +210,13 @@ __host__ __device__ T exponential_mean(T x, T mean, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "exponential should only be used with real types");
 #endif
-  return maybe_log(-monty::math::log(mean) - x / mean, log);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = -monty::math::log(mean) - x / mean;
+  }
+  return maybe_log(ret, log);
 }
 
 template <typename T>
@@ -213,8 +225,13 @@ __host__ __device__ T gamma_rate(T x, T shape, T rate, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * monty::math::log(x) - rate * x -
-    random::utils::lgamma(shape) + shape * monty::math::log(rate);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = (shape - 1) * monty::math::log(x) - rate * x -
+      random::utils::lgamma(shape) + shape * monty::math::log(rate);
+  }
   return maybe_log(ret, log);
 }
 
@@ -224,8 +241,13 @@ __host__ __device__ T gamma_scale(T x, T shape, T scale, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "gamma should only be used with real types");
 #endif
-  const auto ret = (shape - 1) * monty::math::log(x) - x / scale -
-    random::utils::lgamma(shape) - shape * monty::math::log(scale);
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = (shape - 1) * monty::math::log(x) - x / scale -
+      random::utils::lgamma(shape) - shape * monty::math::log(scale);
+  }
   return maybe_log(ret, log);
 }
 
@@ -260,7 +282,7 @@ __host__ __device__ T beta(T x, T a, T b, bool log) {
   
   T ret;
   if (x < 0 || x > 1) {
-    ret = -random::utils::infinity<T>();;
+    ret = -random::utils::infinity<T>();
   } else {
     ret = (a - 1) * monty::math::log(x) +
       (b - 1) * monty::math::log(1 - x) - lbeta(a, b);
@@ -299,8 +321,13 @@ __host__ __device__ T weibull(T x, T shape, T scale, bool log) {
   static_assert(std::is_floating_point<T>::value,
                 "weibull should only be used with real types");
 #endif
-  const auto ret = monty::math::log(shape) + (shape - 1) * monty::math::log(x) -
-    shape * monty::math::log(scale) - (x / scale)^shape;
+  T ret;
+  if (x < 0) {
+    ret = -random::utils::infinity<T>();
+  } else {
+    ret = monty::math::log(shape) + (shape - 1) * monty::math::log(x) -
+      shape * monty::math::log(scale) - monty::math::pow(x / scale, shape);
+  }
   return maybe_log(ret, log);
 }
 

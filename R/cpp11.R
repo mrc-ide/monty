@@ -32,8 +32,28 @@ density_uniform <- function(x, min, max, log) {
   .Call(`_monty_density_uniform`, x, min, max, log)
 }
 
+density_exponential_rate <- function(x, rate, log) {
+  .Call(`_monty_density_exponential_rate`, x, rate, log)
+}
+
+density_exponential_mean <- function(x, mean, log) {
+  .Call(`_monty_density_exponential_mean`, x, mean, log)
+}
+
+density_gamma_rate <- function(x, shape, rate, log) {
+  .Call(`_monty_density_gamma_rate`, x, shape, rate, log)
+}
+
+density_gamma_scale <- function(x, shape, scale, log) {
+  .Call(`_monty_density_gamma_scale`, x, shape, scale, log)
+}
+
 density_beta <- function(x, a, b, log) {
   .Call(`_monty_density_beta`, x, a, b, log)
+}
+
+density_hypergeometric <- function(x, n1, n2, k, log) {
+  .Call(`_monty_density_hypergeometric`, x, n1, n2, k, log)
 }
 
 density_log_normal <- function(x, mulog, sdlog, log) {
@@ -46,6 +66,22 @@ density_truncated_normal <- function(x, mu, sd, min, max, log) {
 
 density_cauchy <- function(x, location, scale, log) {
   .Call(`_monty_density_cauchy`, x, location, scale, log)
+}
+
+density_weibull <- function(x, shape, scale, log) {
+  .Call(`_monty_density_weibull`, x, shape, scale, log)
+}
+
+density_zi_poisson <- function(x, pi0, lambda, log) {
+  .Call(`_monty_density_zi_poisson`, x, pi0, lambda, log)
+}
+
+density_zi_negative_binomial_mu <- function(x, pi0, size, mu, log) {
+  .Call(`_monty_density_zi_negative_binomial_mu`, x, pi0, size, mu, log)
+}
+
+density_zi_negative_binomial_prob <- function(x, pi0, size, prob, log) {
+  .Call(`_monty_density_zi_negative_binomial_prob`, x, pi0, size, prob, log)
 }
 
 monty_rng_alloc <- function(r_seed, n_streams, deterministic) {

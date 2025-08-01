@@ -62,10 +62,45 @@ extern "C" SEXP _monty_density_uniform(SEXP x, SEXP min, SEXP max, SEXP log) {
   END_CPP11
 }
 // density.cpp
+SEXP density_exponential_rate(cpp11::doubles x, cpp11::doubles rate, bool log);
+extern "C" SEXP _monty_density_exponential_rate(SEXP x, SEXP rate, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_exponential_rate(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rate), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_exponential_mean(cpp11::doubles x, cpp11::doubles mean, bool log);
+extern "C" SEXP _monty_density_exponential_mean(SEXP x, SEXP mean, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_exponential_mean(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mean), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_gamma_rate(cpp11::doubles x, cpp11::doubles shape, cpp11::doubles rate, bool log);
+extern "C" SEXP _monty_density_gamma_rate(SEXP x, SEXP shape, SEXP rate, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_gamma_rate(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(rate), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_gamma_scale(cpp11::doubles x, cpp11::doubles shape, cpp11::doubles scale, bool log);
+extern "C" SEXP _monty_density_gamma_scale(SEXP x, SEXP shape, SEXP scale, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_gamma_scale(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
 SEXP density_beta(cpp11::doubles x, cpp11::doubles a, cpp11::doubles b, bool log);
 extern "C" SEXP _monty_density_beta(SEXP x, SEXP a, SEXP b, SEXP log) {
   BEGIN_CPP11
     return cpp11::as_sexp(density_beta(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(a), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(b), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_hypergeometric(cpp11::integers x, cpp11::integers n1, cpp11::integers n2, cpp11::integers k, bool log);
+extern "C" SEXP _monty_density_hypergeometric(SEXP x, SEXP n1, SEXP n2, SEXP k, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_hypergeometric(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(n1), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(n2), cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(k), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
   END_CPP11
 }
 // density.cpp
@@ -87,6 +122,34 @@ SEXP density_cauchy(cpp11::doubles x, cpp11::doubles location, cpp11::doubles sc
 extern "C" SEXP _monty_density_cauchy(SEXP x, SEXP location, SEXP scale, SEXP log) {
   BEGIN_CPP11
     return cpp11::as_sexp(density_cauchy(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(location), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_weibull(cpp11::doubles x, cpp11::doubles shape, cpp11::doubles scale, bool log);
+extern "C" SEXP _monty_density_weibull(SEXP x, SEXP shape, SEXP scale, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_weibull(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(shape), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(scale), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_zi_poisson(cpp11::integers x, cpp11::doubles pi0, cpp11::doubles lambda, bool log);
+extern "C" SEXP _monty_density_zi_poisson(SEXP x, SEXP pi0, SEXP lambda, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_zi_poisson(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(lambda), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_zi_negative_binomial_mu(cpp11::integers x, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles mu, bool log);
+extern "C" SEXP _monty_density_zi_negative_binomial_mu(SEXP x, SEXP pi0, SEXP size, SEXP mu, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_zi_negative_binomial_mu(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(mu), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
+  END_CPP11
+}
+// density.cpp
+SEXP density_zi_negative_binomial_prob(cpp11::integers x, cpp11::doubles pi0, cpp11::doubles size, cpp11::doubles prob, bool log);
+extern "C" SEXP _monty_density_zi_negative_binomial_prob(SEXP x, SEXP pi0, SEXP size, SEXP prob, SEXP log) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(density_zi_negative_binomial_prob(cpp11::as_cpp<cpp11::decay_t<cpp11::integers>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(pi0), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(prob), cpp11::as_cpp<cpp11::decay_t<bool>>(log)));
   END_CPP11
 }
 // random.cpp
@@ -546,6 +609,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_beta_binomial_prob",                   (DL_FUNC) &_monty_density_beta_binomial_prob,                   5},
     {"_monty_density_binomial",                             (DL_FUNC) &_monty_density_binomial,                             4},
     {"_monty_density_cauchy",                               (DL_FUNC) &_monty_density_cauchy,                               4},
+    {"_monty_density_exponential_mean",                     (DL_FUNC) &_monty_density_exponential_mean,                     3},
+    {"_monty_density_exponential_rate",                     (DL_FUNC) &_monty_density_exponential_rate,                     3},
+    {"_monty_density_gamma_rate",                           (DL_FUNC) &_monty_density_gamma_rate,                           4},
+    {"_monty_density_gamma_scale",                          (DL_FUNC) &_monty_density_gamma_scale,                          4},
+    {"_monty_density_hypergeometric",                       (DL_FUNC) &_monty_density_hypergeometric,                       5},
     {"_monty_density_log_normal",                           (DL_FUNC) &_monty_density_log_normal,                           4},
     {"_monty_density_negative_binomial_mu",                 (DL_FUNC) &_monty_density_negative_binomial_mu,                 5},
     {"_monty_density_negative_binomial_prob",               (DL_FUNC) &_monty_density_negative_binomial_prob,               4},
@@ -553,6 +621,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_density_poisson",                              (DL_FUNC) &_monty_density_poisson,                              3},
     {"_monty_density_truncated_normal",                     (DL_FUNC) &_monty_density_truncated_normal,                     6},
     {"_monty_density_uniform",                              (DL_FUNC) &_monty_density_uniform,                              4},
+    {"_monty_density_weibull",                              (DL_FUNC) &_monty_density_weibull,                              4},
+    {"_monty_density_zi_negative_binomial_mu",              (DL_FUNC) &_monty_density_zi_negative_binomial_mu,              5},
+    {"_monty_density_zi_negative_binomial_prob",            (DL_FUNC) &_monty_density_zi_negative_binomial_prob,            5},
+    {"_monty_density_zi_poisson",                           (DL_FUNC) &_monty_density_zi_poisson,                           4},
     {"_monty_monty_rng_alloc",                              (DL_FUNC) &_monty_monty_rng_alloc,                              3},
     {"_monty_test_xoshiro_run",                             (DL_FUNC) &_monty_test_xoshiro_run,                             1},
     {NULL, NULL, 0}
