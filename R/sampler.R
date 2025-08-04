@@ -229,7 +229,7 @@ msa2_step <- function(state_chain, state_sampler, control, model, rng) {
                            control$initial_vcv_weight)
 
   proposal <-
-    make_random_walk_proposal(vcv, model$domain, control$boundaries)
+    make_random_walk_proposal_fn(vcv, model$domain, control$boundaries)
   pars_next <- proposal(state_chain$pars, rng)
 
   u <- monty_random_real(rng)

@@ -206,14 +206,15 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   rng <- monty_rng_create(seed = state$rng)
   model$restore()
   if (is_v2_sampler(sampler)) {
-    sampler$state$restore(state$chain, state$sampler, sampler$control, model)
+    sampler_state <- sampler$state$restore(
+      state$chain, state$sampler, sampler$control, model)
   } else {
     sampler$set_internal_state(state$sampler)
+    sampler_state <- NULL
   }
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
-  sampler_state <- NULL
   monty_run_chain2(chain_id, state$chain, sampler_state, model, sampler,
                    steps, progress, rng, r_rng_state)
 }
@@ -282,7 +283,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
     state = list(
       chain = chain_state,
       rng = monty_rng_state(rng),
-      sampler = sampler$state$dump(sampler_state),
+      sampler = sampler_state,
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 
   list(initial = initial,
