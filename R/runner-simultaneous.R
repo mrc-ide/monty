@@ -121,7 +121,7 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   sampler_state <- state[[1]]$sampler
   if (is_v2_sampler(sampler)) {
     sampler_state <- sampler$state$restore(
-      state$chain, state$sampler, sampler$control, model)
+      chain_state, state$sampler, sampler$control, model)
   } else {
     if (!is.null(sampler_state)) {
       sampler$set_internal_state(sampler_state)

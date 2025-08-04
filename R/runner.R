@@ -188,7 +188,7 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
     ## the HMC or adaptive samplers set up.
     ##
     ## Having discussed this a bit more, we would like to lift the
-    ## 'initialise_sate' part out of this function (so that
+    ## 'initialise_state' part out of this function (so that
     ## chain_state, and not pars, is passed into run_chain) and then
     ## have runners look after initialisation themselves with control
     ## over how many points to try.

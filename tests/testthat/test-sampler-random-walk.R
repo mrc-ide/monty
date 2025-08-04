@@ -119,8 +119,6 @@ test_that("can continue a simultaneous random walk sampler", {
   }
   expect_equal(lapply(res2a$restart$state, drop_sampler_state),
                lapply(res1a$restart$state, drop_sampler_state))
-  skip("This needs fixing")
-  ## I don't see the chain coming through here nicely.
   res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res2b, res1b)

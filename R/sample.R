@@ -133,7 +133,6 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
     samples$restart <- restart_data(res, model, sampler, runner,
                                     thinning_factor)
   }
-
   samples
 }
 
