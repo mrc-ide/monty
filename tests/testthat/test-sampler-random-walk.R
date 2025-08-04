@@ -9,7 +9,6 @@ test_that("can draw samples from a trivial model", {
 
 
 test_that("validate sampler against model on initialisation", {
-  skip("rewrite")
   m <- ex_simple_gamma1()
 
   state <- list(pars = 1, density = -Inf)
@@ -17,9 +16,9 @@ test_that("validate sampler against model on initialisation", {
   sampler2 <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
   r <- monty_rng_create()
 
-  expect_no_error(sampler1$initialise(1, m, r))
+  expect_no_error(sampler1$initialise(state, sampler1$control, m, r))
   expect_error(
-    sampler2$initialise(1, m, r),
+    sampler2$initialise(state, sampler2$control, m, r),
     "Incompatible length parameters (1) and vcv (2)",
     fixed = TRUE)
 })
@@ -70,15 +69,15 @@ test_that("can continue observed models", {
 
 
 test_that("can run multiple samples at once", {
-  skip("rework")
   m <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   p <- matrix(runif(5), 1)
+  state0 <- list(pars = p, density = m$density(p))
   ## TODO: we need a much better rng support here; we'll need to make
   ## a tweak to the rng code to to a long jump between each chain.
   r <- monty_rng_create(n_streams = 5)
-  state0 <- sampler$initialise(p, m, r)
-  state1 <- sampler$step(state0, m, r)
+  state_sampler <- sampler$initialise(state0, sampler$control, m, r)
+  state1 <- sampler$step(state0, state_sampler, sampler$control, m, r)
 
   expect_equal(dim2(state0$pars), c(1, 5))
   expect_equal(dim2(state1$pars), c(1, 5))
