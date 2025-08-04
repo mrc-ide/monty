@@ -54,7 +54,7 @@ toy_sampler_initialise <- function(state_chain, control, model, rng) {
 
 The `step` function is where the actual interesting work happens:
 
-```
+```{r}
 toy_sampler_step <- function(state_chain, state_sampler, control, model, rng) {
   pars <- state_chain$pars
   density <- state_chain$density
