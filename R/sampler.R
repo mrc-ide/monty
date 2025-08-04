@@ -23,6 +23,9 @@
 ##' @param help Name of the function to direct users to find help.
 ##'   Usually that is the name of the constructor function.
 ##'
+##' @param control A list of control parameters passed to the sampler.
+##'   These are immutable (i.e., once created they cannot be changed).
+##'
 ##' @param initialise A function to initialise the sampler.  This is
 ##'   called once at the start of the chain to set up any internal
 ##'   state, though in some cases it will not need to do very much.
