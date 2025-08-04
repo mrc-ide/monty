@@ -104,6 +104,15 @@ monty_sampler2 <- function(name, help, control, initialise, step,
 }
 
 
+##' @export
+print.monty_sampler2 <- function(x, ...) {
+  cli::cli_h1("<monty_sampler: {x$name} ({x$help})>")
+  cli::cli_alert_info("Use {.help monty_sample} to use this sampler")
+  cli::cli_alert_info("See {.help {x$help}} for more information")
+  invisible(x)
+}
+
+
 monty_sampler2_default_dump <- function(state_sampler) {
   if (is.null(state_sampler)) {
     state_sampler

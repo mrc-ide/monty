@@ -5,7 +5,7 @@
 \title{Random Walk Sampler}
 \usage{
 monty_sampler_random_walk(
-  vcv = NULL,
+  vcv,
   boundaries = "reflect",
   rerun_every = Inf,
   rerun_random = TRUE
@@ -46,7 +46,7 @@ expected number of MCMC steps between reruns but a different
 pattern.}
 }
 \value{
-A \code{monty_sampler} object, which can be used with
+A \code{monty_sampler2} object, which can be used with
 \link{monty_sample}
 }
 \description{
