@@ -267,7 +267,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
     sampler_state <- sampler$state$dump(sampler_state)
   } else {
     details <- sampler$finalise(chain_state, model, rng)
-    sampler_state <- NULL
+    sampler_state <- sampler$get_internal_state()
   }
 
   if (has_observer) {
