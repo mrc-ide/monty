@@ -141,4 +141,5 @@ articles:
     - migration
   - title: Extending
     navbar: Extending
+    contents:
     - writing-samplers
