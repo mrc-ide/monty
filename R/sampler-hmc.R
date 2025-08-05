@@ -344,6 +344,11 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
     list(pars = pars, accept = accept)
   }
 
+  ## There are some pretty grim bits here for saving and loading
+  ## history internals that should be tidied up at some point, but
+  ## that probably requires something like the observer's approach to
+  ## custom combine/split/append support.  Something to put in the
+  ## next iteration, perhaps.
   dump <- function() {
     if (multiple_parameters) {
       lapply(seq_len(dim_pars[[2]]), function(i) {
