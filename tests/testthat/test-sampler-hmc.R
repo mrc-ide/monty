@@ -81,13 +81,13 @@ test_that("given vcv and parameters must be compatible", {
 
 
 test_that("can transform model parameters to R^n and back again", {
-  transform <- hmc_transform(cbind(rep(-Inf, 3), rep(Inf, 3)), FALSE)
+  transform <- hmc_transform_fn(cbind(rep(-Inf, 3), rep(Inf, 3)), FALSE)
   x <- c(0.1, 0.2, 0.3)
   expect_identical(transform$model2rn(x), x)
   expect_identical(transform$rn2model(x), x)
   expect_identical(transform$deriv(x), rep(1, 3))
 
-  transform <- hmc_transform(cbind(rep(0, 3), rep(Inf, 3)), FALSE)
+  transform <- hmc_transform_fn(cbind(rep(0, 3), rep(Inf, 3)), FALSE)
   x <- c(0.5, 1.5, 2.5)
   expect_identical(transform$model2rn(x), log(x))
   expect_identical(transform$rn2model(log(x)), x)
@@ -95,7 +95,7 @@ test_that("can transform model parameters to R^n and back again", {
 
   lower <- c(0, 1, 2)
   upper <- c(1, 3, 6)
-  transform <- hmc_transform(cbind(lower, upper), FALSE)
+  transform <- hmc_transform_fn(cbind(lower, upper), FALSE)
   x <- c(0.5, 1.5, 2.5)
   expect_identical(transform$model2rn(x), logit_bounded(x, lower, upper))
   theta <- transform$model2rn(x)
@@ -103,7 +103,7 @@ test_that("can transform model parameters to R^n and back again", {
   expect_equal(transform$deriv(x), dilogit_bounded(x, lower, upper))
 
   ## A mixed case:
-  transform <- hmc_transform(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), FALSE)
+  transform <- hmc_transform_fn(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), FALSE)
   x <- c(0.5, 0.6, 0.7)
   theta <- transform$model2rn(x)
   expect_equal(theta, c(0.5, log(0.6), logit_bounded(0.7, 0, 1)))
@@ -115,8 +115,8 @@ test_that("can transform model parameters to R^n and back again", {
 
 test_that("multiple transforms at once are possible", {
   ## Same cases as above
-  t1 <- hmc_transform(cbind(rep(-Inf, 3), rep(Inf, 3)), FALSE)
-  t2 <- hmc_transform(cbind(rep(-Inf, 3), rep(Inf, 3)), TRUE)
+  t1 <- hmc_transform_fn(cbind(rep(-Inf, 3), rep(Inf, 3)), FALSE)
+  t2 <- hmc_transform_fn(cbind(rep(-Inf, 3), rep(Inf, 3)), TRUE)
 
   ## Pars come in with rows representing parameters and columns
   ## parameter sets.
@@ -130,8 +130,8 @@ test_that("multiple transforms at once are possible", {
   expect_identical(t2$rn2model(x), apply(x, 2, t1$rn2model))
   expect_identical(t2$deriv(x), apply(x, 2, t1$deriv))
 
-  t1 <- hmc_transform(cbind(rep(0, 3), rep(Inf, 3)), FALSE)
-  t2 <- hmc_transform(cbind(rep(0, 3), rep(Inf, 3)), TRUE)
+  t1 <- hmc_transform_fn(cbind(rep(0, 3), rep(Inf, 3)), FALSE)
+  t2 <- hmc_transform_fn(cbind(rep(0, 3), rep(Inf, 3)), TRUE)
   x <- matrix(c(0.5, 1.5, 2.5), 3, 4) + runif(12) - 0.5
   x1 <- x[, 1, drop = FALSE]
 
@@ -144,8 +144,8 @@ test_that("multiple transforms at once are possible", {
 
   lower <- c(0, 1, 2)
   upper <- c(1, 3, 6)
-  t1 <- hmc_transform(cbind(lower, upper), FALSE)
-  t2 <- hmc_transform(cbind(lower, upper), TRUE)
+  t1 <- hmc_transform_fn(cbind(lower, upper), FALSE)
+  t2 <- hmc_transform_fn(cbind(lower, upper), TRUE)
   x <- matrix(c(0.5, 1.5, 2.5), 3, 4) + runif(12) - 0.5
   x1 <- x[, 1, drop = FALSE]
 
@@ -157,8 +157,8 @@ test_that("multiple transforms at once are possible", {
   expect_identical(t2$deriv(x), apply(x, 2, t1$deriv))
 
   ## A mixed case:
-  t1 <- hmc_transform(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), FALSE)
-  t2 <- hmc_transform(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), TRUE)
+  t1 <- hmc_transform_fn(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), FALSE)
+  t2 <- hmc_transform_fn(cbind(c(-Inf, 0, 0), c(Inf, Inf, 1)), TRUE)
   x <- matrix(c(0.5, 0.6, 0.7), 3, 4) + runif(12) * 0.1 - 0.05
   expect_identical(t2$model2rn(x), apply(x, 2, t1$model2rn))
   expect_identical(t2$rn2model(x), apply(x, 2, t1$rn2model))
@@ -168,7 +168,7 @@ test_that("multiple transforms at once are possible", {
 
 test_that("prevent weird distributions", {
   expect_error(
-    hmc_transform(cbind(rep(0, 3), c(1, Inf, -Inf))),
+    hmc_transform_fn(cbind(rep(0, 3), c(1, Inf, -Inf))),
     "Unhandled domain type for parameter 3")
 })
 
@@ -239,13 +239,14 @@ test_that("can run hmc model simultaneously", {
 test_that("can run hmc model simultaneously, with debug", {
   m <- monty_example("banana")
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
-                                 debug = TRUE)
+                               debug = TRUE)
   runner <- monty_runner_simultaneous()
   set.seed(1)
   res1 <- monty_sample(m, sampler, 30, n_chains = 3)
   ## We don't yet do a good job of auto squashing the details.  I'll
   ## make this change in a future PR so it's more obvious (mrc-5293)
   res1$details <- observer_finalise_auto(res1$details)
+
   set.seed(1)
   res2 <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner)
   expect_equal(res1, res2)
@@ -259,6 +260,7 @@ test_that("can continue a hmc model simultaneously, with debug", {
   runner <- monty_runner_simultaneous()
   set.seed(1)
   res1a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
+
   res1b <- monty_sample_continue(res1a, 70)
   ## We don't yet do a good job of auto squashing the details.  I'll
   ## make this change in a future PR so it's more obvious (mrc-5293)

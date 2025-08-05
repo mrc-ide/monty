@@ -170,7 +170,12 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## I'm not sure about the best name for this
   if (is_v2_sampler) {
-    details <- NULL
+    if (is.null(sampler$details)) {
+      details <- NULL
+    } else {
+      details <- sampler$details(chain_state, sampler_state, sampler$control,
+                                 model)
+    }
     sampler_state <- sampler$state$dump(sampler_state)
   } else {
     details <- sampler$finalise(chain_state, model, rng)

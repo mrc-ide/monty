@@ -321,18 +321,16 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
     if (length(env$history) == 0) {
       return(NULL)
     }
-
     pars <- array_bind(arrays = lapply(env$history, "[[", "pars"), after = Inf)
-    rownames(pars) <- model$parameters
-
     if (multiple_parameters) {
       n_sets <- dim_pars[[2]]
-      accept <- vapply(env$history, "[[", "accept")
+      pars <- aperm(pars, c(1, 3, 4, 2))
+      accept <- lapply(env$history, "[[", "accept")
       accept <- matrix(unlist(accept), ncol = n_sets, byrow = TRUE)
     } else {
       accept <- vlapply(env$history, "[[", "accept")
     }
-
+    rownames(pars) <- model$parameters
     list(pars = pars, accept = accept)
   }
 
