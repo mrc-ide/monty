@@ -260,12 +260,10 @@ test_that("can continue a hmc model simultaneously, with debug", {
   runner <- monty_runner_simultaneous()
   set.seed(1)
   res1a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
-
   res1b <- monty_sample_continue(res1a, 70)
   ## We don't yet do a good job of auto squashing the details.  I'll
   ## make this change in a future PR so it's more obvious (mrc-5293)
   res1b$details <- observer_finalise_auto(res1b$details)
-
   set.seed(1)
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE,
                         runner = runner)
