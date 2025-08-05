@@ -268,7 +268,7 @@ test_that("can continue a hmc model simultaneously, with debug", {
 
   set.seed(1)
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE,
-                          runner = runner)
+                        runner = runner)
   res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res1b, res2b)

@@ -296,11 +296,21 @@ hmc_kinetic_energy <- function(v) {
 
 hmc_history_recorder <- function(control, pars, history = NULL) {
   env <- new.env(parent = emptyenv())
-  env$history <- history %||% list()
 
   n_integration_steps <- control$n_integration_steps
   dim_pars <- dim2(pars)
   multiple_parameters <- length(dim_pars) > 1
+
+  if (multiple_parameters && !is.null(history)) {
+    env$history <- lapply(seq_along(history[[1]]), function(i) {
+      pars <- array_bind(arrays = lapply(history, function(x) x[[i]]$pars),
+                         on = 2)
+      accept <- vlapply(history, function(x) x[[i]]$accept)
+      list(pars = pars, accept = accept)
+    })
+  } else {
+    env$history <- history %||% list()
+  }
 
   add <- function(i, pars) {
     if (i == 0) {
@@ -334,8 +344,20 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
     list(pars = pars, accept = accept)
   }
 
+  dump <- function() {
+    if (multiple_parameters) {
+      lapply(seq_len(dim_pars[[2]]), function(i) {
+        lapply(env$history, function(x) {
+          list(pars = x$pars[, i, , drop = FALSE], accept = x$accept[[i]])
+        })
+      })
+    } else {
+      env$history
+    }
+  }
+
   list(add = add,
        complete = complete,
        details = details,
-       dump = function() env$history)
+       dump = dump)
 }
