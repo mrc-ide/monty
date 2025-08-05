@@ -263,7 +263,12 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## I'm not sure about the best name for this, and we need to check
   ## what was actually being done here; I think it was mostly debug!?
   if (is_v2_sampler) {
-    details <- NULL
+    if (is.null(sampler$details)) {
+      details <- NULL
+    } else {
+      details <- sampler$details(chain_state, sampler_state, sampler$control,
+                                 model)
+    }
     sampler_state <- sampler$state$dump(sampler_state)
   } else {
     details <- sampler$finalise(chain_state, model, rng)

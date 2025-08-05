@@ -130,6 +130,7 @@ sampler_random_walk_dump <- function(state_sampler) {
 sampler_random_walk_restore <- function(state_chain, state_sampler, control,
                                         model) {
   pars <- state_chain$pars
+  ## TODO: come up with a pattern for reusing things
   list(proposal = make_random_walk_proposal(control, model, pars),
        rerun = make_rerun(control, model, state_sampler$rerun_state))
 }

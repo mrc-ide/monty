@@ -16,7 +16,9 @@ array_bind <- function(..., arrays = list(...), on = NULL,
       "Only one of 'on', 'before' or 'after' may be given")
   }
   if (!is.null(after)) {
-    if (after < 1 || after > r) {
+    if (after == Inf) {
+      after <- r
+    } else if (after < 1 || after > r) {
       cli::cli_abort(
         "Invalid value for 'after' ({after}), must be in [1, {r}]",
         arg = "after", call = call)
