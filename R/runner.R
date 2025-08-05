@@ -159,7 +159,15 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
   model$restore()
-  chain_state <- sampler$initialise(pars, model, rng)
+
+  if (is_v2_sampler(sampler)) {
+    chain_state <- initialise_state(pars, model, rng)
+    sampler_state <-
+      sampler$initialise(chain_state, sampler$control, model, rng)
+  } else {
+    chain_state <- sampler$initialise(pars, model, rng)
+    sampler_state <- NULL
+  }
 
   if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -178,11 +186,17 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
     ## hard to do with the random walk sampler as it's stateless so
     ## there's no real effect, but we'll readdress this once we get
     ## the HMC or adaptive samplers set up.
+    ##
+    ## Having discussed this a bit more, we would like to lift the
+    ## 'initialise_state' part out of this function (so that
+    ## chain_state, and not pars, is passed into run_chain) and then
+    ## have runners look after initialisation themselves with control
+    ## over how many points to try.
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  monty_run_chain2(chain_id, chain_state, model, sampler, steps, progress,
-                   rng, r_rng_state)
+  monty_run_chain2(chain_id, chain_state, sampler_state, model, sampler,
+                   steps, progress, rng, r_rng_state)
 }
 
 
@@ -191,17 +205,23 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   r_rng_state <- get_r_rng_state()
   rng <- monty_rng_create(seed = state$rng)
   model$restore()
-  sampler$set_internal_state(state$sampler)
+  if (is_v2_sampler(sampler)) {
+    sampler_state <- sampler$state$restore(
+      state$chain, state$sampler, sampler$control, model)
+  } else {
+    sampler$set_internal_state(state$sampler)
+    sampler_state <- NULL
+  }
   if (model$properties$is_stochastic) {
     model$rng_state$set(state$model_rng)
   }
-  monty_run_chain2(chain_id, state$chain, model, sampler, steps, progress,
-                   rng, r_rng_state)
+  monty_run_chain2(chain_id, state$chain, sampler_state, model, sampler,
+                   steps, progress, rng, r_rng_state)
 }
 
 
-monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
-                             progress, rng, r_rng_state) {
+monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
+                             sampler, steps, progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
@@ -216,9 +236,16 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
 
+  is_v2_sampler <- is_v2_sampler(sampler)
+
   j <- 1L
   for (i in seq_len(n_steps)) {
-    chain_state <- sampler$step(chain_state, model, rng)
+    if (is_v2_sampler) {
+      chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                  model, rng)
+    } else {
+      chain_state <- sampler$step(chain_state, model, rng)
+    }
     if (i > burnin && i %% thinning_factor == 0) {
       history_pars[, j] <- chain_state$pars
       history_density[[j]] <- chain_state$density
@@ -233,8 +260,15 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
-  details <- sampler$finalise(chain_state, model, rng)
+  ## I'm not sure about the best name for this, and we need to check
+  ## what was actually being done here; I think it was mostly debug!?
+  if (is_v2_sampler) {
+    details <- NULL
+    sampler_state <- sampler$state$dump(sampler_state)
+  } else {
+    details <- sampler$finalise(chain_state, model, rng)
+    sampler_state <- sampler$get_internal_state()
+  }
 
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
@@ -249,7 +283,7 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
     state = list(
       chain = chain_state,
       rng = monty_rng_state(rng),
-      sampler = sampler$get_internal_state(),
+      sampler = sampler_state,
       model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
 
   list(initial = initial,

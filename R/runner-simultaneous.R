@@ -81,9 +81,16 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
   n_chains <- length(rng_state)
   rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
-  chain_state <- sampler$initialise(pars, model, rng)
+  if (is_v2_sampler(sampler)) {
+    chain_state <- initialise_state(pars, model, rng)
+    sampler_state <-
+      sampler$initialise(chain_state, sampler$control, model, rng)
+  } else {
+    chain_state <- sampler$initialise(pars, model, rng)
+    sampler_state <- NULL
+  }
 
-  monty_run_chains_simultaneous2(chain_state, model, sampler,
+  monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
                                  steps, progress, rng, r_rng_state)
 }
 
@@ -112,19 +119,26 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   ## times.  We could warn, but as there's not a lot of better
   ## alternatives for the user, let's just keep going.
   sampler_state <- state[[1]]$sampler
-  if (!is.null(sampler_state)) {
-    sampler$set_internal_state(sampler_state)
+  if (is_v2_sampler(sampler)) {
+    sampler_state <- sampler$state$restore(
+      chain_state, state$sampler, sampler$control, model)
+  } else {
+    if (!is.null(sampler_state)) {
+      sampler$set_internal_state(sampler_state)
+    }
+    sampler_state <- NULL
   }
 
   stopifnot(!model$properties$is_stochastic)
   ## Need to use model$rng_state$set to put state$model_rng into the model
 
-  monty_run_chains_simultaneous2(chain_state, model, sampler,
+  monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
                                  steps, progress, rng, r_rng_state)
 }
 
 
-monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
+monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
+                                           model, sampler,
                                            steps, progress, rng,
                                            r_rng_state) {
   initial <- chain_state$pars
@@ -136,9 +150,15 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   history_density <- matrix(NA_real_, n_steps_record, n_chains)
 
   chain_id <- seq_len(n_chains)
+  is_v2_sampler <- is_v2_sampler(sampler)
 
   for (i in seq_len(steps$total)) {
-    chain_state <- sampler$step(chain_state, model, rng)
+    if (is_v2_sampler) {
+      chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                  model, rng)
+    } else {
+      chain_state <- sampler$step(chain_state, model, rng)
+    }
     history_pars[, i, ] <- chain_state$pars
     history_density[i, ] <- chain_state$density
     ## TODO: also allow observations here if enabled
@@ -149,7 +169,13 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   rownames(history_pars) <- model$parameters
 
   ## I'm not sure about the best name for this
-  details <- sampler$finalise(chain_state, model, rng)
+  if (is_v2_sampler) {
+    details <- NULL
+    sampler_state <- sampler$state$dump(sampler_state)
+  } else {
+    details <- sampler$finalise(chain_state, model, rng)
+    sampler_state <- sampler$get_internal_state()
+  }
 
   ## This simplifies handling later; we might want to make a new
   ## version of asplit that does not leave stray attributes on later
@@ -157,7 +183,6 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   rng_state <- matrix(monty_rng_state(rng), ncol = n_chains)
   rng_state <- lapply(asplit(rng_state, 2), as.vector)
 
-  sampler_state <- sampler$get_internal_state()
   if (!is.null(sampler_state)) {
     sampler_state <- rep(list(sampler_state), n_chains)
   }

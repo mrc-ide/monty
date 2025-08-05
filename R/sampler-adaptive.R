@@ -225,7 +225,7 @@ monty_sampler_adaptive <- function(initial_vcv,
     }
 
     proposal <-
-      make_random_walk_proposal(proposal_vcv, model$domain, boundaries)
+      make_random_walk_proposal_fn(proposal_vcv, model$domain, boundaries)
     pars_next <- proposal(state$pars, rng)
 
     u <- monty_random_real(rng)

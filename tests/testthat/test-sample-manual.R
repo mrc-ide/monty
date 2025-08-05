@@ -339,6 +339,8 @@ test_that("can continue a manually run manual chain", {
 })
 
 
+## This test causes a warning where we trigger R's RNG; this comes
+## from (I think) the rng init used in restore()
 test_that("can sample from models requiring restore", {
   path <- withr::local_tempdir()
   model <- ex_stochastic()

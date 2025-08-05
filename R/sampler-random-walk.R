@@ -39,163 +39,103 @@
 ##'   expected number of MCMC steps between reruns but a different
 ##'   pattern.
 ##'
-##' @return A `monty_sampler` object, which can be used with
+##' @return A `monty_sampler2` object, which can be used with
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_sampler_random_walk <- function(vcv = NULL, boundaries = "reflect",
+monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                                       rerun_every = Inf, rerun_random = TRUE) {
   check_vcv(vcv, allow_3d = TRUE, call = environment())
-  internal <- new.env()
-
   boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
-
   if (!identical(unname(rerun_every), Inf)) {
     assert_scalar_positive_integer(rerun_every)
   }
   assert_scalar_logical(rerun_random)
+  control <- list(vcv = vcv,
+                  boundaries = boundaries,
+                  rerun = rerun_every < Inf,
+                  rerun_every = rerun_every,
+                  rerun_random = rerun_random)
 
-  initialise <- function(pars, model, rng) {
-    n_pars <- length(model$parameters)
-    multiple_parameters <- length(dim2(pars)) > 1
-    if (multiple_parameters) {
-      ## this is enforced elsewhere
-      stopifnot(model$properties$allow_multiple_parameters)
-    }
+  monty_sampler2("Random walk",
+                 "monty_random_walk",
+                 control,
+                 sampler_random_walk_initialise,
+                 sampler_random_walk_step,
+                 sampler_random_walk_dump,
+                 sampler_random_walk_restore)
+}
 
-    internal$rerun <-
-      make_rerun(rerun_every, rerun_random, model$properties$is_stochastic)
 
-    vcv <- sampler_validate_vcv(vcv, pars)
-    internal$proposal <-
-      make_random_walk_proposal(vcv, model$domain, boundaries)
-    initialise_state(pars, model, rng)
+## The core sampler functions: initalise, step, dump, restore
+sampler_random_walk_initialise <- function(state_chain, control, model, rng) {
+  pars <- state_chain$pars
+
+  ## TODO: Samplers need to cope with this, and we could have them
+  ## advertise this I think, as part of their properties, once we have
+  ## that sorted out.
+  multiple_parameters <- length(dim2(pars)) > 1
+  if (multiple_parameters) {
+    ## this is properly enforced elsewhere, but we assert here to be
+    ## safe.
+    stopifnot(model$properties$allow_multiple_parameters)
   }
+  
+  ## We don't actually need to return an environment here, because all
+  ## our things that are modified by reference (rerun) will already be
+  ## captured in an environment
+  list(proposal = make_random_walk_proposal(control, model, pars),
+       rerun = make_rerun(control, model))
+}
 
-  step <- function(state, model, rng) {
-    rerun <- internal$rerun(rng)
+
+sampler_random_walk_step <- function(state_chain, state_sampler, control,
+                                     model, rng) {
+  if (control$rerun) {
+    rerun <- state_sampler$rerun(rng)
     if (any(rerun)) {
       ## This is currently just setup assuming we are not using multiple
       ## parameters as currently they cannot be used with stochastic models,
       ## while the rerun is only used with stochastic models
-      state$density <- model$density(state$pars)
+      state_chain$density <- model$density(state_chain$pars)
     }
+  }
 
-    pars_next <- internal$proposal(state$pars, rng)
-    reject_some <- boundaries == "reject" &&
-      !all(i <- is_parameters_in_domain(pars_next, model$domain))
-    if (reject_some) {
-      density_next <- rep(-Inf, length(state$density))
-      if (any(i)) {
-        density_next[i] <- model$density(pars_next[, i, drop = FALSE])
-      }
-    } else {
-      density_next <- model$density(pars_next)
+  pars_next <- state_sampler$proposal(state_chain$pars, rng)
+  reject_some <- control$boundaries == "reject" &&
+    !all(i <- is_parameters_in_domain(pars_next, model$domain))
+  if (reject_some) {
+    density_next <- rep(-Inf, length(state_chain$density))
+    if (any(i)) {
+      density_next[i] <- model$density(pars_next[, i, drop = FALSE])
     }
-    accept <- density_next - state$density > log(monty_random_real(rng))
-    state <- update_state(state, pars_next, density_next, accept,
-                          model, rng)
-    state
-  }
-
-  ## These are all effectively the defaults:
-  finalise <- function(state, model, rng) {
-    NULL
-  }
-
-  get_internal_state <- function() {
-    as.list(internal)
-  }
-
-  set_internal_state <- function(state) {
-    list2env(state, internal)
-  }
-
-  monty_sampler("Random walk",
-                "monty_random_walk",
-                initialise,
-                step,
-                finalise,
-                get_internal_state,
-                set_internal_state)
-}
-
-
-make_random_walk_proposal <- function(vcv, domain, boundaries) {
-  mvn <- make_rmvnorm(vcv)
-  if (boundaries != "reflect" || !any(is.finite(domain))) {
-    return(function(x, rng) {
-      x + mvn(rng)
-    })
-  }
-
-  x_min <- domain[, 1]
-  x_max <- domain[, 2]
-  function(x, rng) {
-    reflect_proposal(x + mvn(rng), x_min, x_max)
-  }
-}
-
-
-## create function to reflect proposal boundaries at pars_min and pars_max
-## this ensures the proposal is symmetrical and we can simplify the MH step
-reflect_proposal <- function(x, x_min, x_max) {
-  i <- x < x_min | x > x_max
-  if (any(i)) {
-    i_both <- i & is.finite(x_min) & is.finite(x_max)
-    i_min <- i & is.finite(x_min) & !is.finite(x_max)
-    i_max <- i & !is.finite(x_min) & is.finite(x_max)
-    if (is.matrix(x)) {
-      ## This will be a bit different if the model supports array
-      ## specifications of the domain, which we might want to support
-      ## later I guess. Replicating these helps tidy up the
-      ## bookkeeping, and also means we don't have to think about this
-      ## very much.
-      x_min <- array(x_min, dim(x))
-      x_max <- array(x_max, dim(x))
-    }
-    x[i_both] <- reflect_proposal_both(x[i_both], x_min[i_both], x_max[i_both])
-    x[i_min] <- reflect_proposal_one(x[i_min], x_min[i_min])
-    x[i_max] <- reflect_proposal_one(x[i_max], x_max[i_max])
-  }
-  x
-}
-
-
-reflect_proposal_both <- function(x, x_min, x_max) {
-  x_r <- x_max - x_min
-  abs((x + x_r - x_min) %% (2 * x_r) - x_r) + x_min
-}
-
-
-reflect_proposal_one <- function(x, x_bound) {
-  2 * x_bound - x
-}
-
-
-is_parameters_in_domain <- function(x, domain) {
-  x_min <- domain[, 1]
-  x_max <- domain[, 2]
-  i <- x > x_min & x < x_max
-  if (all(i)) {
-    if (is.matrix(x)) rep(TRUE, ncol(x)) else TRUE
   } else {
-    if (is.matrix(x)) apply(i, 2, all) else FALSE
+    density_next <- model$density(pars_next)
   }
+  accept <- density_next - state_chain$density > log(monty_random_real(rng))
+
+  ## TODO: rng is not needed through here and can be removed
+  update_state(state_chain, pars_next, density_next, accept, model, rng)
 }
 
 
-make_rerun <- function(every, random, is_stochastic) {
-  if (!is_stochastic && !is.finite(every)) {
-    function(rng) rep(FALSE, length(rng))
-  } else if (random) {
-    function(rng) monty_random_real(rng) < 1 / every
-  } else {
-    i <- 0L
-    env <- environment()
-    function(rng) {
-      env$i <- i + 1L
-      rep(i %% every == 0, length(rng))
-    }
+sampler_random_walk_dump <- function(state_sampler) {
+  if (is.null(state_sampler$rerun)) {
+    return(NULL)
   }
+  list(rerun_state = attr(state_sampler$rerun, "data"))$step
+}
+
+
+sampler_random_walk_restore <- function(state_chain, state_sampler, control,
+                                        model) {
+  pars <- state_chain$pars
+  list(proposal = make_random_walk_proposal(control, model, pars),
+       rerun = make_rerun(control, model, state_sampler$rerun_state))
+}
+
+
+make_random_walk_proposal <- function(control, model, pars) {
+  vcv <- sampler_validate_vcv(control$vcv, pars)
+  make_random_walk_proposal_fn(vcv, model$domain, control$boundaries)
 }

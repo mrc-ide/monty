@@ -139,3 +139,6 @@ articles:
     - dsl-errors
     - samplers
     - migration
+  - title: Extending
+    navbar: Extending
+    - writing-samplers

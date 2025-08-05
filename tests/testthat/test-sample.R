@@ -4,7 +4,7 @@ test_that("can validate sample inputs", {
   expect_error(monty_sample(NULL, NULL, 100),
                "Expected 'model' to be a 'monty_model'")
   expect_error(monty_sample(model, NULL, 100),
-               "Expected 'sampler' to be a 'monty_sampler'")
+               "Expected 'sampler' to be a 'monty_sampler")
   expect_error(monty_sample(model, sampler, 100, runner = TRUE),
                "Expected 'runner' to be a 'monty_runner'")
   expect_error(monty_sample(model, sampler, 100, c(1, 2)),

@@ -357,7 +357,7 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
 
   if (has_base) {
     if (is.matrix(pars)) {
-      mvn_base <- make_random_walk_proposal(
+      mvn_base <- make_random_walk_proposal_fn(
         vcv$base, domain[i_base, , drop = FALSE], boundaries)
       proposal_base <- function(x, rng) {
         ## This approach is likely to be a bit fragile, so we'll
@@ -366,7 +366,7 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
         x
       }
     } else {
-      mvn_base <- make_random_walk_proposal(
+      mvn_base <- make_random_walk_proposal_fn(
         vcv$base, domain[i_base, , drop = FALSE], boundaries)
       proposal_base <- function(x, rng) {
         ## This approach is likely to be a bit fragile, so we'll
@@ -381,9 +381,9 @@ nested_proposal <- function(vcv, parameter_groups, pars, domain,
   }
 
   mvn_groups <- lapply(seq_len(n_groups), function(i) {
-    make_random_walk_proposal(vcv$groups[[i]],
-                              domain[i_group[[i]], , drop = FALSE],
-                              boundaries)
+    make_random_walk_proposal_fn(vcv$groups[[i]],
+                                 domain[i_group[[i]], , drop = FALSE],
+                                 boundaries)
   })
   proposal_groups <- function(x, rng) {
     for (i in seq_len(n_groups)) {
