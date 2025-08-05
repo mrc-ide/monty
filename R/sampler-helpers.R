@@ -17,7 +17,10 @@ update_state <- function(state, pars, density, accept, model, rng) {
       state$density[accept] <- density[accept]
       state
     } else {
-      state$pars <- pars
+      ## Some sampler/model combinations might produce a 1-column
+      ## matrix for the updated pars, but we should store this as a
+      ## vector regardless:
+      state$pars <- drop(pars)
       state$density <- density
       if (model$properties$has_observer) {
         state$observation <- model$observer$observe()
