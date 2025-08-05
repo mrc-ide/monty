@@ -11,7 +11,8 @@ monty_sampler2(
   initialise,
   step,
   state_dump = NULL,
-  state_restore = NULL
+  state_restore = NULL,
+  details = NULL
 )
 }
 \arguments{
@@ -83,6 +84,20 @@ must be
 \item \code{control}
 \item \code{model}
 }}
+
+\item{details}{Optionally, a function to tidy internal state to be
+saved at the end of the run.  If you provide this you almost
+certainly need to provide \code{state_dump} and \code{state_restore}.  The
+arguments here must be:
+\itemize{
+\item \code{state_chain}
+\item \code{state_sampler}
+\item \code{control}
+\item \code{model}
+}
+
+but we expect that only \code{state_sampler} will generally be
+needed.  Return whatever you fancy.}
 }
 \value{
 A \code{monty_sampler2} object
