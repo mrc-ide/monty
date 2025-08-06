@@ -43,8 +43,6 @@ reference:
     - monty_sampler_random_walk
     - monty_sampler_adaptive
     - monty_sampler_hmc
-    - monty_sampler_nested_random_walk
-    - monty_sampler_nested_adaptive
     - monty_sampler_parallel_tempering
 
   - subtitle: Chain runners
