@@ -144,247 +144,154 @@ monty_sampler_adaptive <- function(initial_vcv,
                                    adapt_end = Inf,
                                    pre_diminish = 0,
                                    boundaries = "reflect") {
-  ## This sampler is stateful; we will be updating our estimate of the
-  ## mean and vcv of the target distribution, along with the our
-  ## scaling factor, weight and autocorrelations.
   check_vcv(initial_vcv, allow_3d = TRUE, call = environment())
-  internal <- new.env()
-
-  boundaries <- match_value(boundaries, c("reflect", "reject", "ignore"))
-
-  initialise <- function(pars, model, rng) {
-    require_deterministic(model,
-                          "Can't use adaptive sampler with stochastic models")
-
-    internal$multiple_parameters <- length(dim2(pars)) > 1
-    if (internal$multiple_parameters) {
-      ## this is enforced elsewhere
-      stopifnot(model$properties$allow_multiple_parameters)
-    }
-
-    initial_vcv <- sampler_validate_vcv(initial_vcv, pars)
-
-    if (internal$multiple_parameters) {
-      internal$adaptive <-
-        Map(initialise_adaptive,
-               lapply(asplit(pars, 2), c),
-               asplit(initial_vcv, 3),
-               MoreArgs = list(initial_vcv_weight = initial_vcv_weight,
-                               initial_scaling = initial_scaling,
-                               initial_scaling_weight = initial_scaling_weight,
-                               min_scaling = min_scaling,
-                               scaling_increment = scaling_increment,
-                               log_scaling_update = log_scaling_update,
-                               acceptance_target = acceptance_target,
-                               forget_rate = forget_rate,
-                               forget_end = forget_end,
-                               adapt_end = adapt_end,
-                               pre_diminish = pre_diminish)
-        )
-    } else {
-      internal$adaptive <-
-        initialise_adaptive(pars,
-                            initial_vcv,
-                            initial_vcv_weight,
-                            initial_scaling,
-                            initial_scaling_weight,
-                            min_scaling,
-                            scaling_increment,
-                            log_scaling_update,
-                            acceptance_target,
-                            forget_rate,
-                            forget_end,
-                            adapt_end,
-                            pre_diminish)
-    }
-
-    initialise_state(pars, model, rng)
+  if (is.null(scaling_increment)) {
+    n_pars <- nrow(initial_vcv)
+    scaling_increment <- calc_scaling_increment(
+      n_pars, acceptance_target, log_scaling_update)
   }
 
-  step <- function(state, model, rng) {
-    if (internal$multiple_parameters) {
-      d <- dim(state$pars)
-      proposal_vcv <-
-        vapply(seq_len(d[2]),
-               function(i) {
-                 calc_proposal_vcv(internal$adaptive[[i]]$scaling,
-                                   internal$adaptive[[i]]$vcv,
-                                   internal$adaptive[[i]]$weight,
-                                   internal$adaptive[[i]]$initial_vcv,
-                                   internal$adaptive[[i]]$initial_vcv_weight)
-               },
-               array(0, c(d[1], d[1])))
-      proposal_vcv <- array(proposal_vcv, c(d[1], d[1], d[2]))
-    } else {
-      proposal_vcv <-
-        calc_proposal_vcv(internal$adaptive$scaling,
-                          internal$adaptive$vcv,
-                          internal$adaptive$weight,
-                          internal$adaptive$initial_vcv,
-                          internal$adaptive$initial_vcv_weight)
-    }
-
-    proposal <-
-      make_random_walk_proposal_fn(proposal_vcv, model$domain, boundaries)
-    pars_next <- proposal(state$pars, rng)
-
-    u <- monty_random_real(rng)
-    reject_some <- boundaries == "reject" &&
-      !all(i <- is_parameters_in_domain(pars_next, model$domain))
-    if (reject_some) {
-      density_next <- rep(-Inf, length(state$density))
-      if (any(i)) {
-        density_next[i] <- model$density(pars_next[, i, drop = FALSE])
-      }
-    } else {
-      density_next <- model$density(pars_next)
-    }
-
-    accept_prob <- pmin(1, exp(density_next - state$density))
-
-    accept <- u < accept_prob
-    state <- update_state(state, pars_next, density_next, accept,
-                          model, rng)
-
-    if (internal$multiple_parameters) {
-      internal$adaptive <-
-        lapply(seq_len(dim(state$pars)[2]), function(i) {
-          update_adaptive(internal$adaptive[[i]],
-                          state$pars[, i],
-                          accept_prob[i])
-        })
-    } else {
-      internal$adaptive <-
-        update_adaptive(internal$adaptive, state$pars, accept_prob)
-    }
-
-    state
+  if (is.null(initial_scaling_weight)) {
+    initial_scaling_weight <- 5 / (acceptance_target * (1 - acceptance_target))
   }
 
-  finalise <- function(state, model, rng) {
-    out <- internal$adaptive
+  control <- list(
+    initial_vcv = initial_vcv,
+    initial_vcv_weight = initial_vcv_weight,
+    initial_scaling = initial_scaling,
+    initial_scaling_weight = initial_scaling_weight,
+    min_scaling = min_scaling,
+    scaling_increment = scaling_increment,
+    log_scaling_update = log_scaling_update,
+    acceptance_target = acceptance_target,
+    forget_rate = forget_rate,
+    forget_end = forget_end,
+    adapt_end = adapt_end,
+    pre_diminish = pre_diminish,
+    boundaries = boundaries)
 
-    keep_adaptive <- c("autocorrelation", "mean", "vcv", "weight", "included",
-                       "scaling_history", "scaling_weight", "scaling_increment")
-
-    if (internal$multiple_parameters) {
-      out <- lapply(out, function(x) x[keep_adaptive])
-    } else {
-      out <- out[keep_adaptive]
-    }
-
-    out
-  }
-
-  get_internal_state <- function() {
-    as.list(internal)
-  }
-
-  set_internal_state <- function(state) {
-    list2env(state, internal)
-  }
-
-  monty_sampler("Adaptive Metropolis-Hastings",
-                "monty_sampler_adaptive",
-                initialise,
-                step,
-                finalise,
-                get_internal_state,
-                set_internal_state)
+  monty_sampler2("Adaptive Metropolis-Hastings",
+                 "monty_sampler_adaptive",
+                 control,
+                 sampler_random_walk_adaptive_initialise,
+                 sampler_random_walk_adaptive_step,
+                 details = sampler_random_walk_adaptive_details)
 }
 
 
-initialise_adaptive <- function(pars,
-                                initial_vcv,
-                                initial_vcv_weight,
-                                initial_scaling,
-                                initial_scaling_weight,
-                                min_scaling,
-                                scaling_increment,
-                                log_scaling_update,
-                                acceptance_target,
-                                forget_rate,
-                                forget_end,
-                                adapt_end,
-                                pre_diminish) {
-  weight <- 0
-  iteration <- 0
+sampler_random_walk_adaptive_initialise <- function(state_chain, control,
+                                                    model, rng) {
+  require_deterministic(model,
+                        "Can't use adaptive sampler with stochastic models")
 
-  mean <- unname(pars)
-  n_pars <- length(pars)
-  autocorrelation <- array(0, dim(initial_vcv))
-  vcv <- update_vcv(mean, autocorrelation, weight)
+  pars <- state_chain$pars
+  multiple_parameters <- length(dim2(pars)) > 1
 
-  scaling <- initial_scaling
 
-  scaling_increment <- scaling_increment %||%
-    calc_scaling_increment(n_pars, acceptance_target, log_scaling_update)
-  scaling_weight <- initial_scaling_weight %||%
-    5 / (acceptance_target * (1 - acceptance_target))
+  initial_vcv <- sampler_validate_vcv(control$initial_vcv, pars)
 
-  history_pars <- NULL
-  included <- integer()
-  scaling_history <- scaling
 
-  list(initial_vcv = initial_vcv,
-       initial_vcv_weight = initial_vcv_weight,
-       weight = weight,
-       iteration = iteration,
-       mean = mean,
-       autocorrelation = autocorrelation,
-       vcv = vcv,
-       scaling = scaling,
-       scaling_increment = scaling_increment,
-       scaling_weight = scaling_weight,
-       min_scaling = min_scaling,
-       log_scaling_update = log_scaling_update,
-       acceptance_target = acceptance_target,
-       forget_rate = forget_rate,
-       forget_end = forget_end,
-       adapt_end = adapt_end,
-       pre_diminish = pre_diminish,
-       history_pars = history_pars,
-       included = included,
-       scaling_history = scaling_history
-       )
+  if (multiple_parameters) {
+    browser()
+  } else {
+    sampler_random_walk_adaptive_state(control, pars, model)
+  }
 }
 
-update_adaptive <- function(adaptive, pars, accept_prob) {
-  adaptive$iteration <- adaptive$iteration + 1
-  adaptive$history_pars <- rbind(adaptive$history_pars, pars)
-  if (adaptive$iteration > adaptive$adapt_end) {
-    adaptive$scaling_history <- c(adaptive$scaling_history, adaptive$scaling)
-    return(adaptive)
+
+sampler_random_walk_adaptive_step <- function(state_chain, state_sampler, control, model, rng) {
+  vcv <- calc_proposal_vcv(state_sampler$scaling,
+                           state_sampler$vcv,
+                           state_sampler$weight,
+                           control$initial_vcv,
+                           control$initial_vcv_weight)
+
+  proposal <-
+    make_random_walk_proposal_fn(vcv, model$domain, control$boundaries)
+  pars_next <- proposal(state_chain$pars, rng)
+
+  u <- monty_random_real(rng)
+  reject_some <- control$boundaries == "reject" &&
+    !all(i <- is_parameters_in_domain(pars_next, model$domain))
+  if (reject_some) {
+    density_next <- rep(-Inf, length(state_chain$density))
+    if (any(i)) {
+      density_next[i] <- model$density(pars_next[, i, drop = FALSE])
+    }
+  } else {
+    density_next <- model$density(pars_next)
   }
 
-  if (adaptive$iteration > adaptive$pre_diminish) {
-    adaptive$scaling_weight <- adaptive$scaling_weight + 1
+  accept_prob <- pmin(1, exp(density_next - state_chain$density))
+
+  accept <- u < accept_prob
+  state_chain <- update_state(state_chain, pars_next, density_next, accept, model, rng)
+
+  update_adaptive(state_sampler, control, state_chain$pars, accept_prob)
+
+  state_chain
+}
+
+
+sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, control, model) {
+  ## TODO: we'll detect this more obviously in the state once it happens
+
+  multiple_parameters <- length(dim2(state_chain$pars)) > 1
+  keep <- c("autocorrelation", "mean", "vcv", "weight", "included",
+            "scaling_history", "scaling_weight")
+
+  if (multiple_parameters) {
+    stop("Some support needed here")
+    ## out <- lapply(out, function(x) x[keep])
+  } else {
+    ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
   }
 
-  is_replacement <- check_replacement(adaptive$iteration, adaptive$forget_rate,
-                                      adaptive$forget_end)
+  ret
+}
+
+
+## State here is the *sampler* state
+update_adaptive <- function(state, control, pars, accept_prob) {
+  state$iteration <- state$iteration + 1
+
+  ## TODO: use a history accumulator here, as repeatedly rbinding will
+  ## be quite slow.  See the hmc case for a worked example.  That
+  ## said, this is a ring buffer so we need to be a bit careful here
+  state$history_pars <- rbind(state$history_pars, pars)
+
+  if (state$iteration > control$adapt_end) {
+    state$scaling_history <-
+      c(state$scaling_history, state$scaling)
+    return(state)
+  }
+
+  if (state$iteration > control$pre_diminish) {
+    state$scaling_weight <- state$scaling_weight + 1
+  }
+
+  is_replacement <- check_replacement(state$iteration, control$forget_rate,
+                                      control$forget_end)
   if (is_replacement) {
-    pars_remove <- adaptive$history_pars[adaptive$included[1L], ]
-    adaptive$included <- c(adaptive$included[-1L], adaptive$iteration)
+    pars_remove <- state$history_pars[state$included[1L], ]
+    state$included <- c(state$included[-1L], state$iteration)
   } else {
     pars_remove <- NULL
-    adaptive$included <- c(adaptive$included, adaptive$iteration)
-    adaptive$weight <- adaptive$weight + 1
+    state$included <- c(state$included, state$iteration)
+    state$weight <- state$weight + 1
   }
 
-  adaptive$scaling <-
-    update_scaling(adaptive$scaling, adaptive$scaling_weight, accept_prob,
-                   adaptive$scaling_increment, adaptive$min_scaling,
-                   adaptive$acceptance_target, adaptive$log_scaling_update)
-  adaptive$scaling_history <- c(adaptive$scaling_history, adaptive$scaling)
-  adaptive$autocorrelation <- update_autocorrelation(
-    pars, adaptive$weight, adaptive$autocorrelation, pars_remove)
-  adaptive$mean <- update_mean(pars, adaptive$weight, adaptive$mean,
-                               pars_remove)
-  adaptive$vcv <- update_vcv(adaptive$mean, adaptive$autocorrelation,
-                             adaptive$weight)
+  state$scaling <-
+    update_scaling(state$scaling, state$scaling_weight, accept_prob,
+                   control$scaling_increment, control$min_scaling,
+                   control$acceptance_target, control$log_scaling_update)
+  state$scaling_history <- c(state$scaling_history, state$scaling)
+  state$autocorrelation <- update_autocorrelation(
+    pars, state$weight, state$autocorrelation, pars_remove)
+  state$mean <- update_mean(pars, state$weight, state$mean, pars_remove)
+  state$vcv <- update_vcv(state$mean, state$autocorrelation, state$weight)
 
-  adaptive
+  state
 }
 
 
@@ -485,4 +392,27 @@ update_vcv <- function(mean, autocorrelation, weight) {
   }
 
   vcv
+}
+
+
+## Initialise
+sampler_random_walk_adaptive_state <- function(control, pars, model) {
+  state <- new.env(parent = emptyenv())
+
+  state$weight <- 0
+  state$iteration <- 0
+  state$mean <- unname(pars)
+
+  n_pars <- length(pars)
+  state$autocorrelation <- array(0, dim(control$initial_vcv))
+  state$vcv <- update_vcv(state$mean, state$autocorrelation, state$weight)
+
+  state$scaling <- control$initial_scaling
+  state$scaling_weight <- control$initial_scaling_weight
+
+  state$history_pars <- NULL
+  state$included <- integer()
+  state$scaling_history <- control$initial_scaling
+
+  state
 }

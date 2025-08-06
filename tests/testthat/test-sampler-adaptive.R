@@ -1,10 +1,10 @@
 test_that("Empirical VCV calculated correctly with forget_rate = 0", {
   m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
-
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0,
                                     log_scaling_update = FALSE)
   res <- monty_sample(m, sampler, 1000)
+
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
 

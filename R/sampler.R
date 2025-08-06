@@ -117,6 +117,12 @@ monty_sampler2 <- function(name, help, control, initialise, step,
     state = list(dump = state_dump %||% monty_sampler2_default_dump,
                  restore = state_restore %||% monty_sampler2_default_restore),
     details = details)
+
+  ## TODO: check that the functions are suitable?
+
+  ## TODO: details should accept fewer arguments, but I am not sure
+  ## which we can get away with dropping.  The state of the chain
+  ## would be ideal.
   class(ret) <- "monty_sampler2"
   ret
 }
@@ -141,7 +147,8 @@ monty_sampler2_default_dump <- function(state_sampler) {
   if (is.null(state_sampler)) {
     state_sampler
   } else {
-    as.list(state_sampler)
+    stopifnot(is.environment(state_sampler))
+    as.list(state_sampler, sorted = TRUE)
   }
 }
 
