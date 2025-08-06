@@ -118,13 +118,12 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
   ## be the same in which case this is the same data replicated n
   ## times.  We could warn, but as there's not a lot of better
   ## alternatives for the user, let's just keep going.
-  sampler_state <- state[[1]]$sampler
   if (is_v2_sampler(sampler)) {
     sampler_state <- sampler$state$restore(
-      chain_state, state$sampler, sampler$control, model)
+      chain_state, state[[1]]$sampler, sampler$control, model)
   } else {
     if (!is.null(sampler_state)) {
-      sampler$set_internal_state(sampler_state)
+      sampler$set_internal_state(state[[1]]$sampler)
     }
     sampler_state <- NULL
   }
@@ -170,7 +169,12 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## I'm not sure about the best name for this
   if (is_v2_sampler) {
-    details <- NULL
+    if (is.null(sampler$details)) {
+      details <- NULL
+    } else {
+      details <- sampler$details(chain_state, sampler_state, sampler$control,
+                                 model)
+    }
     sampler_state <- sampler$state$dump(sampler_state)
   } else {
     details <- sampler$finalise(chain_state, model, rng)

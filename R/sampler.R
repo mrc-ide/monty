@@ -84,10 +84,24 @@
 ##'   * `control`
 ##'   * `model`
 ##'
+##' @param details Optionally, a function to tidy internal state to be
+##'   saved at the end of the run.  If you provide this you almost
+##'   certainly need to provide `state_dump` and `state_restore`.  The
+##'   arguments here must be:
+##'
+##'   * `state_chain`
+##'   * `state_sampler`
+##'   * `control`
+##'   * `model`
+##'
+##'   but we expect that only `state_sampler` will generally be
+##'   needed.  Return whatever you fancy.
+##'
 ##' @return A `monty_sampler2` object
 ##' @export
 monty_sampler2 <- function(name, help, control, initialise, step,
-                           state_dump = NULL, state_restore = NULL) {
+                           state_dump = NULL, state_restore = NULL,
+                           details = NULL) {
   ## TODO: allow functions to be names and accept 'package' as an arg
   ## here, which will help with using the callr runner because we can
   ## organise loading packages and finding functions as required, even
@@ -101,7 +115,8 @@ monty_sampler2 <- function(name, help, control, initialise, step,
     initialise = initialise,
     step = step,
     state = list(dump = state_dump %||% monty_sampler2_default_dump,
-                 restore = state_restore %||% monty_sampler2_default_restore))
+                 restore = state_restore %||% monty_sampler2_default_restore),
+    details = details)
   class(ret) <- "monty_sampler2"
   ret
 }

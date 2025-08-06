@@ -22,169 +22,144 @@
 ##' @export
 monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                               vcv = NULL, debug = FALSE) {
-  internal <- new.env()
-
   if (!is.null(vcv)) {
     check_vcv(vcv, call = environment())
   }
+  assert_scalar_size(n_integration_steps, allow_zero = FALSE)
+  assert_scalar_numeric(epsilon)
+  assert_scalar_logical(debug)
 
-  initialise <- function(pars, model, rng) {
-    require_deterministic(model, "Can't use HMC with stochastic models")
-    require_gradient(model, "Can't use HMC without a gradient")
+  control <- list(epsilon = epsilon,
+                  n_integration_steps = n_integration_steps,
+                  vcv = vcv,
+                  debug = debug)
 
-    internal$multiple_parameters <- length(dim2(pars)) > 1
-    internal$transform <- hmc_transform(model$domain,
-                                        internal$multiple_parameters)
-    n_sets <- if (internal$multiple_parameters) ncol(pars) else 1L
-    n_pars <- if (internal$multiple_parameters) nrow(pars) else length(pars)
-    if (is.null(vcv)) {
-      internal$sample_momentum <- function(rng) {
-        monty_random_n_normal(n_pars, 0, 1, rng)
-      }
-    } else {
-      vcv <- sampler_validate_vcv(vcv, pars)
-      internal$sample_momentum <- make_rmvnorm(vcv)
-    }
-    if (debug) {
-      internal$history <- list()
-    }
-    internal$n_sets <- n_sets
-    initialise_state(pars, model, rng)
-  }
-
-  step <- function(state, model, rng) {
-    ## Just a helper for now
-    compute_gradient <- function(x) {
-      internal$transform$deriv(x) * model$gradient(x)
-    }
-
-    theta <- internal$transform$model2rn(state$pars)
-    pars_next <- state$pars
-    theta_next <- theta
-
-    if (debug) {
-      n_sets <- internal$n_sets
-      n_pars <- length(model$parameters)
-      history <- array(NA_real_, c(n_pars, n_sets, n_integration_steps + 1))
-      history[, , 1] <- pars_next
-    }
-
-    v <- internal$sample_momentum(rng)
-
-    ## Make a half step for momentum at the beginning
-    v_next <- v + epsilon * compute_gradient(pars_next) / 2
-
-    for (i in seq_len(n_integration_steps)) {
-      ## Make a full step for the position
-      theta_next <- theta_next + epsilon * v_next
-      pars_next <- internal$transform$rn2model(theta_next)
-      ## Make a full step for the momentum, except at end of trajectory
-      if (i != n_integration_steps) {
-        v_next <- v_next + epsilon * compute_gradient(pars_next)
-      }
-      if (debug) {
-        history[, , i + 1] <- pars_next
-      }
-    }
-
-    ## Make a half step for momentum at the end.
-    v_next <- v_next + epsilon * compute_gradient(pars_next) / 2
-
-    ## Some treatments would negate momentum at end of trajectory to
-    ## make the proposal symmetric by setting v_next <- -v_next but
-    ## this is not actually needed in practice.
-
-    ## Potential energy at the end of the trajectory
-    density_next <- model$density(pars_next)
-
-    ## Kinetic energies at the start (energy) and end (energy_next) of
-    ## the trajectories
-    if (internal$multiple_parameters) {
-      energy <- colSums(v^2) / 2
-      energy_next <- colSums(v_next^2) / 2
-    } else {
-      energy <- sum(v^2) / 2
-      energy_next <- sum(v_next^2) / 2
-    }
-
-    ## Accept or reject the state at end of trajectory, returning
-    ## either the position at the end of the trajectory or the initial
-    ## position
-    u <- monty_random_real(rng)
-    accept <- u < exp(density_next - state$density + energy - energy_next)
-
-    if (debug) {
-      internal$history <-
-        c(internal$history, list(list(pars = history, accept = accept)))
-    }
-
-    state <- update_state(state, pars_next, density_next, accept,
-                          model, rng)
-
-    state
-  }
-
-  finalise <- function(state, model, rng) {
-    if (debug) {
-      pars <- array_bind(arrays = lapply(internal$history, "[[", "pars"),
-                         after = 3)
-      accept <- lapply(internal$history, function(x) x$accept)
-      if (internal$multiple_parameters) {
-        pars <- aperm(pars, c(1, 3, 4, 2))
-        accept <- matrix(unlist(accept), ncol = internal$n_sets, byrow = TRUE)
-      } else {
-        dim(pars) <- dim(pars)[-2] # redundant sets dimension
-        accept <- vlapply(accept, identity)
-      }
-      rownames(pars) <- model$parameters
-      list(pars = pars, accept = accept)
-    } else {
-      NULL
-    }
-  }
-
-  get_internal_state <- function() {
-    if (!debug) {
-      return(NULL)
-    }
-    history <- internal$history
-    if (internal$multiple_parameters) {
-      ## Split this by chain:
-      lapply(seq_len(internal$n_sets), function(i) {
-        lapply(history, function(x) {
-          list(pars = x$pars[, i, , drop = FALSE], accept = x$accept[[i]])
-        })
-      })
-    } else {
-      history
-    }
-  }
-
-  set_internal_state <- function(state) {
-    if (internal$multiple_parameters && !is.null(state)) {
-      ## Fairly ugly transpose here; there will be other ways of doing
-      ## this to explore later.
-      internal$history <- lapply(seq_len(length(state[[1]])), function(j) {
-        list(pars = array_bind(arrays = lapply(state, function(x) x[[j]]$pars),
-                               on = 2),
-             accept = vlapply(state, function(x) x[[j]]$accept))
-      })
-    } else {
-      internal$history <- state
-    }
-  }
-
-  monty_sampler("Hamiltonian Monte Carlo",
-                "monty_sampler_hmc",
-                initialise,
-                step,
-                finalise,
-                get_internal_state,
-                set_internal_state)
+  monty_sampler2("Hamiltonian Monte Carlo",
+                 "monty_sampler_hmc",
+                 control,
+                 sampler_hmc_initialise,
+                 sampler_hmc_step,
+                 sampler_hmc_dump,
+                 sampler_hmc_restore,
+                 sampler_hmc_details)
 }
 
 
-hmc_transform <- function(domain, multiple_parameters) {
+sampler_hmc_initialise <- function(state_chain, control, model, rng) {
+  require_deterministic(model, "Can't use HMC with stochastic models")
+  require_gradient(model, "Can't use HMC without a gradient")
+
+  pars <- state_chain$pars
+
+  list(transform = hmc_transform(model, pars),
+       sample_momentum = hmc_momentum(vcv, control, model, pars),
+       history = hmc_history_recorder(control, pars))
+}
+
+
+sampler_hmc_step <- function(state_chain, state_sampler, control, model, rng) {
+  gradient <- function(x) {
+    state_sampler$transform$deriv(x) * model$gradient(x)
+  }
+
+  pars <- state_chain$pars
+  theta <- state_sampler$transform$model2rn(pars)
+
+  if (control$debug) {
+    state_sampler$history$add(0, pars)
+  }
+
+  v <- state_sampler$sample_momentum(rng)
+
+  ## Compute kinetic energy at the start; we'll compare with this later at
+  ## the acceptance test.
+  energy0 <- hmc_kinetic_energy(v)
+
+  ## Make a half step for momentum at the beginning
+  v <- v + control$epsilon * gradient(pars) / 2
+
+  for (i in seq_len(control$n_integration_steps)) {
+    ## Make a full step for the position
+    theta <- theta + control$epsilon * v
+    pars <- state_sampler$transform$rn2model(theta)
+    ## Make a full step for the momentum, except at end of trajectory
+    if (i != control$n_integration_steps) {
+      v <- v + control$epsilon * gradient(pars)
+    }
+    if (control$debug) {
+      state_sampler$history$add(i, pars)
+    }
+  }
+
+  ## Make a half step for momentum at the end.
+  v <- v + control$epsilon * gradient(pars) / 2
+
+  ## Some treatments would negate momentum at end of trajectory to
+  ## make the proposal symmetric by setting `v <- -v` but
+  ## this is not actually needed in practice because we never
+  ## reference v again.
+
+  density_next <- model$density(pars)
+  energy_next <- hmc_kinetic_energy(v)
+
+  ## Accept or reject the state at end of trajectory, returning
+  ## either the position at the end of the trajectory or the initial
+  ## position
+  u <- monty_random_real(rng)
+  accept <- u < exp(density_next - state_chain$density + energy0 - energy_next)
+
+  if (control$debug) {
+    state_sampler$history$complete(accept)
+  }
+
+  update_state(state_chain, pars, density_next, accept, model, rng)
+}
+
+
+sampler_hmc_details <- function(state_chain, state_sampler, control, model) {
+  if (is.null(state_sampler$history)) {
+    return(NULL)
+  }
+  state_sampler$history$details(model)
+}
+
+
+sampler_hmc_dump <- function(state_sampler) {
+  if (is.null(state_sampler$history)) {
+    return(NULL)
+  }
+  list(history = state_sampler$history$dump())
+}
+
+
+sampler_hmc_restore <- function(state_chain, state_sampler, control, model) {
+  pars <- state_chain$pars
+  list(transform = hmc_transform(model, pars),
+       sample_momentum = hmc_momentum(vcv, control, model, pars),
+       history = hmc_history_recorder(control, pars, state_sampler$history))
+}
+
+
+hmc_momentum <- function(vcv, control, model, pars) {
+  if (is.null(control$vcv)) {
+    n_pars <- length(model$parameters)
+    sample_momentum <- function(rng) {
+      monty_random_n_normal(n_pars, 0, 1, rng)
+    }
+  } else {
+    vcv <- sampler_validate_vcv(control$vcv, pars)
+    make_rmvnorm(vcv)
+  }
+}
+
+
+hmc_transform <- function(model, pars) {
+  multiple_parameters <- length(dim2(pars)) > 1
+  hmc_transform_fn(model$domain, multiple_parameters)
+}
+
+
+hmc_transform_fn <- function(domain, multiple_parameters) {
   lower <- domain[, 1]
   upper <- domain[, 2]
 
@@ -307,4 +282,87 @@ ilogit_bounded <- function(theta, a, b) {
 ## https://en.wikipedia.org/wiki/Logistic_function#Derivative
 dilogit_bounded <- function(x, a, b) {
   (a - x) * (b - x) / (a - b)
+}
+
+
+hmc_kinetic_energy <- function(v) {
+  if (length(dim(v)) < 2) {
+    sum(v^2) / 2
+  } else {
+    colSums(v^2) / 2
+  }
+}
+
+
+hmc_history_recorder <- function(control, pars, history = NULL) {
+  env <- new.env(parent = emptyenv())
+
+  n_integration_steps <- control$n_integration_steps
+  dim_pars <- dim2(pars)
+  multiple_parameters <- length(dim_pars) > 1
+
+  if (multiple_parameters && !is.null(history)) {
+    env$history <- lapply(seq_along(history[[1]]), function(i) {
+      pars <- array_bind(arrays = lapply(history, function(x) x[[i]]$pars),
+                         on = 2)
+      accept <- vlapply(history, function(x) x[[i]]$accept)
+      list(pars = pars, accept = accept)
+    })
+  } else {
+    env$history <- history %||% list()
+  }
+
+  add <- function(i, pars) {
+    if (i == 0) {
+      env$curr <- array(NA_real_, c(dim_pars, n_integration_steps + 1))
+    }
+    if (multiple_parameters) {
+      env$curr[, , i + 1L] <- pars
+    } else {
+      env$curr[, i + 1L] <- pars
+    }
+  }
+
+  complete <- function(accept) {
+    env$history <- c(env$history, list(list(pars = env$curr, accept = accept)))
+  }
+
+  details <- function(model) {
+    if (length(env$history) == 0) {
+      return(NULL)
+    }
+    pars <- array_bind(arrays = lapply(env$history, "[[", "pars"), after = Inf)
+    if (multiple_parameters) {
+      n_sets <- dim_pars[[2]]
+      pars <- aperm(pars, c(1, 3, 4, 2))
+      accept <- lapply(env$history, "[[", "accept")
+      accept <- matrix(unlist(accept), ncol = n_sets, byrow = TRUE)
+    } else {
+      accept <- vlapply(env$history, "[[", "accept")
+    }
+    rownames(pars) <- model$parameters
+    list(pars = pars, accept = accept)
+  }
+
+  ## There are some pretty grim bits here for saving and loading
+  ## history internals that should be tidied up at some point, but
+  ## that probably requires something like the observer's approach to
+  ## custom combine/split/append support.  Something to put in the
+  ## next iteration, perhaps.
+  dump <- function() {
+    if (multiple_parameters) {
+      lapply(seq_len(dim_pars[[2]]), function(i) {
+        lapply(env$history, function(x) {
+          list(pars = x$pars[, i, , drop = FALSE], accept = x$accept[[i]])
+        })
+      })
+    } else {
+      env$history
+    }
+  }
+
+  list(add = add,
+       complete = complete,
+       details = details,
+       dump = dump)
 }

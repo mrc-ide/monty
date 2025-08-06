@@ -72,6 +72,10 @@ reference:
     - monty_samples_thin
     - with_trace_random
 
+  - subtitle: Advanced
+    contents:
+    - monty_sampler2
+
   - title: Random numbers
   - subsection: Create and manage random number state
     contents:
@@ -141,4 +145,5 @@ articles:
     - migration
   - title: Extending
     navbar: Extending
+    contents:
     - writing-samplers
