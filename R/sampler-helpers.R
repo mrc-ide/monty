@@ -166,3 +166,30 @@ make_rerun <- function(control, model, initial = NULL) {
   }
   ret
 }
+
+
+check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
+                                   call = NULL) {
+  if (!rlang::is_integerish(x)) {
+    cli::cli_abort("Expected '{name}' to be integer-like", call = call)
+  }
+  if (length(x) != n_pars) {
+    cli::cli_abort(
+      paste("Expected '{name}' to have length {n_pars}, but it had length",
+            "{length(x)}"),
+      call = call)
+  }
+  if (min(x) < 0) {
+    cli::cli_abort("Invalid negative group in '{name}'", call = call)
+  }
+  n_groups <- max(x)
+  msg <- setdiff(seq_len(n_groups), x)
+  if (length(msg) > 0) {
+    cli::cli_abort(
+      c("Missing groups from '{name}'",
+        i = paste("I expected all integers from 1 to {n_groups} to be present",
+                  "in your parameter groups vector, but you are missing",
+                  "{msg}")),
+      call = call)
+  }
+}
