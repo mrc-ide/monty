@@ -126,7 +126,7 @@
 ##' lines(drop(res_rw$density), type = "l", col = 2)
 ##'
 ##' # Estimated vcv from the sampler at the end of the simulation
-##' s_adapt$details[[1]]$vcv
+##' res_adapt$details[[1]]$vcv
 ##'
 ##' @examplesIf requireNamespace("coda")
 ##' coda::effectiveSize(coda::as.mcmc.list(res_rw))
