@@ -265,10 +265,38 @@ sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, con
   multiple_parameters <- length(dim2(state_chain$pars)) > 1
   keep <- c("autocorrelation", "mean", "vcv", "weight", "included",
             "scaling_history", "scaling_weight")
-
   ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
-  n_sets <- if (multiple_parameters) ncol(state_chain$pars) else 1
-  ret$scaling_history <- matrix(ret$scaling_history, n_sets)
+
+  if (multiple_parameters) {
+    ## There's an issue here where we need to break up our nice data
+    ## structure into something comparable with the individually run
+    ## chains.  We'll fix this by having explicit 'combine' and
+    ## 'append' support here, as we do in the observer, as it's the
+    ## same basic problem.  But for now, let's be consistent and break
+    ## it all apart.
+    n_pars <- nrow(state_chain$pars)
+    n_sets <- ncol(state_chain$pars)
+    ret$scaling_history <- matrix(ret$scaling_history, n_sets)
+    ret <- lapply(seq_len(n_sets), function(i) {
+      list(
+        autocorrelation = matrix(ret$autocorrelation[, , i], n_pars),
+        mean = ret$mean[, i],
+        vcv = matrix(ret$vcv[, , i], n_pars),
+        ## TODO: this does not need to be a vector, but that will
+        ## require some work to filter through - it does simplfy
+        ## things though.
+        weight = ret$weight[i],
+        included = ret$included,
+        scaling_history = ret$scaling_history[i, ],
+        scaling_weight = ret$scaling_weight[i])
+    })
+  } else {
+    n_pars <- length(state_chain$pars)
+    ret$autocorrelation <- matrix(ret$autocorrelation, n_pars)
+    ret$mean <- as.vector(ret$mean)
+    ret$vcv <- matrix(ret$vcv, n_pars)
+  }
+
   ret
 }
 
