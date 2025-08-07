@@ -206,7 +206,7 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
 
   state <- new.env(parent = emptyenv())
 
-  state$weight <- rep(0, n_sets)
+  state$weight <- 0
   state$mean <- matrix(unname(pars), n_pars, n_sets)
 
   state$autocorrelation <- array(0, c(n_pars, n_pars, n_sets))
@@ -282,10 +282,7 @@ sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, con
         autocorrelation = matrix(ret$autocorrelation[, , i], n_pars),
         mean = ret$mean[, i],
         vcv = matrix(ret$vcv[, , i], n_pars),
-        ## TODO: this does not need to be a vector, but that will
-        ## require some work to filter through - it does simplfy
-        ## things though.
-        weight = ret$weight[i],
+        weight = ret$weight,
         included = ret$included,
         scaling_history = ret$scaling_history[i, ],
         scaling_weight = ret$scaling_weight[i])
@@ -410,9 +407,9 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
     for (i in seq_len(n_sets)) {
       j <- if (shared_initial_vcv) 1L else i
       ret[, , i] <-
-        ((weight[[i]] - 1) * vcv[, , i] +
+        ((weight - 1) * vcv[, , i] +
            (initial_vcv_weight + n_pars + 1) * initial_vcv[, , j]) /
-        (weight[[i]] + initial_vcv_weight + n_pars + 1)
+        (weight + initial_vcv_weight + n_pars + 1)
       ret[, , i] <- 2.38^2 / n_pars * scaling[[i]]^2 * ret[, , i]
     }
   }
@@ -443,26 +440,20 @@ update_scaling <- function(scaling, scaling_weight, accept_prob, control) {
 
 
 update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
-  i <- weight > 2
-  j <- !i
   qp_pars <- qp(pars)
   if (is.null(pars_remove)) {
-    if (any(i)) {
-      autocorrelation[, , i] <-
-        (1 - 1 / (weight[i] - 1)) * autocorrelation[, , i] +
-        1 / (weight[i] - 1) * qp_pars[, , i]
-    }
-    if (any(j)) {
-      autocorrelation[, , j] <- autocorrelation[, , j] + qp_pars[, , j]
+    if (weight > 2) {
+      autocorrelation <- (1 - 1 / (weight - 1)) * autocorrelation +
+        1 / (weight - 1) * qp(pars)
+    } else {
+      autocorrelation <- autocorrelation + qp(pars)
     }
   } else {
-    qp_pars_diff <- qp_pars - qp(pars_remove)
-    if (any(i)) {
-      autocorrelation[, , i] <-
-        autocorrelation[, , i] + 1 / (weight[i] - 1) * qp_pars_diff[, , i]
-    }
-    if (any(j)) {
-      autocorrelation[, , j] <- autocorrelation[, , j] + qp_pars_diff[, , j]
+    qp_pars_diff <- qp(pars) - qp(pars_remove)
+    if (weight > 2) {
+      autocorrelation <- autocorrelation + 1 / (weight - 1) * qp_pars_diff
+    } else {
+      autocorrelation <- autocorrelation + qp_pars_diff
     }
   }
 
@@ -471,28 +462,18 @@ update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
 
 
 update_mean <- function(pars, weight, mean, pars_remove) {
-  if (is.matrix(pars) && nrow(pars) > 1) {
-    ## Allow the calculations to go ahead element-wise:
-    weight <- rep(weight, each = nrow(pars))
-  }
   if (is.null(pars_remove)) {
-    mean <- (1 - 1 / weight) * mean + 1 / weight * pars
+    (1 - 1 / weight) * mean + 1 / weight * pars
   } else {
-    mean <- mean + 1 / weight * (pars - pars_remove)
+    mean + 1 / weight * (pars - pars_remove)
   }
-  mean
 }
 
 
 update_vcv <- function(mean, autocorrelation, weight) {
-  vcv <- 0 * autocorrelation
-
-  i <- weight > 1
-  if (any(i)) {
-    w <- weight[i]
-    vcv[, , i] <- autocorrelation[, , i, drop = FALSE] -
-      w / (w - 1) * qp(mean[, i, drop = FALSE])
+  if (weight > 1) {
+    autocorrelation - weight / (weight - 1) * qp(mean)
+  } else {
+    0 * autocorrelation
   }
-
-  vcv
 }
