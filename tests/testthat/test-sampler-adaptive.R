@@ -211,3 +211,18 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
 
   expect_equal(res, cmp)
 })
+
+
+test_that("can validate forget rate", {
+  expect_equal(validate_forget_rate(0), Inf)
+  expect_equal(validate_forget_rate(0.1), 10)
+  expect_equal(validate_forget_rate(1 / 3), 3)
+  expect_error(validate_forget_rate(1 / pi),
+               "Expected 'forget_rate' to be the inverse of an integer")
+  expect_error(validate_forget_rate(1.2),
+               "Expected 'forget_rate' to be less than 1")
+  expect_error(validate_forget_rate(1),
+               "Expected 'forget_rate' to be less than 1")
+  expect_error(validate_forget_rate(-1),
+               "Expected 'forget_rate' to be positive")
+})

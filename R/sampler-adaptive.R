@@ -493,5 +493,5 @@ validate_forget_rate <- function(forget_rate, call = parent.frame()) {
       "Expected 'forget_rate' to be the inverse of an integer",
       arg = "forget_rate", call = call)
   }
-  ret
+  as.integer(ret)
 }
