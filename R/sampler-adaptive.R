@@ -210,7 +210,7 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
 
   ## Iteration and weight advance the same for all chains
   state$iteration <- 0L
-  state$weight <- 0
+  state$weight <- 0L
 
   ## Everything else varies by the number of parameter sets:
   state$mean <- matrix(unname(pars), n_pars, n_sets)
@@ -220,7 +220,6 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
 
   state$scaling <- rep(control$initial_scaling, n_sets)
   state$scaling_weight <- rep(control$initial_scaling_weight, n_sets)
-
 
   state$history_pars <- NULL
   state$scaling_history <- rep(control$initial_scaling, n_sets)
@@ -328,12 +327,10 @@ update_adaptive <- function(state, control, pars, accept_prob) {
     len_pars <- length(pars)
     i <- seq_len(len_pars) + ((replace - 1) * len_pars)
     pars_remove <- state$history_pars[i]
-    if (!is.null(pars)) {
-      dim(pars_remove) <- dim(pars)
-    }
+    dim(pars_remove) <- dim(pars)
   } else {
     pars_remove <- NULL
-    state$weight <- state$weight + 1
+    state$weight <- state$weight + 1L
   }
 
   state$scaling <-
@@ -414,6 +411,9 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
 }
 
 
+## If this iteration is due to be forgetten, return the index of the
+## element to forget, otherwise return 0 to indicate that nothing will
+## be forgotten.
 check_replacement <- function(iteration, control) {
   is_replacement <-
     iteration <= control$forget_end &&
@@ -436,7 +436,6 @@ update_scaling <- function(scaling, scaling_weight, accept_prob, control) {
 
 
 update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
-  qp_pars <- qp(pars)
   if (is.null(pars_remove)) {
     if (weight > 2) {
       autocorrelation <- (1 - 1 / (weight - 1)) * autocorrelation +
@@ -470,6 +469,7 @@ update_vcv <- function(mean, autocorrelation, weight) {
   if (weight > 1) {
     autocorrelation - weight / (weight - 1) * qp(mean)
   } else {
+    # array of 0's the same shape as the input:
     0 * autocorrelation
   }
 }
