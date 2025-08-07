@@ -428,12 +428,13 @@ update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
       autocorrelation[, , j] <- autocorrelation[, , j] + qp_pars[, , j]
     }
   } else {
-    qp_pars_diff <- qp_pars <- qp(pars_remove)
+    qp_pars_diff <- qp_pars - qp(pars_remove)
     if (any(i)) {
       autocorrelation[, , i] <-
         autocorrelation[, , i] + 1 / (weight[i] - 1) * qp_pars_diff[, , i]
-    } else {
-      autocorrelation <- autocorrelation + qp_pars_diff[, , i]
+    }
+    if (any(j)) {
+      autocorrelation[, , j] <- autocorrelation[, , j] + qp_pars_diff[, , j]
     }
   }
 

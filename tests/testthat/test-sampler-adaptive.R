@@ -18,6 +18,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 
 
 test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
+  set.seed(1)
   m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
@@ -71,7 +72,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   expect_equal(res$details[[1]]$weight, 275)
   expect_equal(res$details[[1]]$included, seq(26, 300, by = 1))
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv, cov(pars[26:300, ]),
+  expect_equal(res$details[[1]]$vcv[, , 1], cov(pars[26:300, ]),
                ignore_attr = TRUE)
 })
 
