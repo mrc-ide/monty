@@ -226,7 +226,8 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
 }
 
 
-sampler_random_walk_adaptive_step <- function(state_chain, state_sampler, control, model, rng) {
+sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
+                                              control, model, rng) {
   vcv <- calc_proposal_vcv(state_sampler$scaling,
                            state_sampler$vcv,
                            state_sampler$weight,
@@ -252,7 +253,8 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler, contro
   accept_prob <- pmin(1, exp(density_next - state_chain$density))
 
   accept <- u < accept_prob
-  state_chain <- update_state(state_chain, pars_next, density_next, accept, model, rng)
+  state_chain <- update_state(
+    state_chain, pars_next, density_next, accept, model, rng)
 
   update_adaptive(state_sampler, control, state_chain$pars, accept_prob)
 
@@ -260,8 +262,8 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler, contro
 }
 
 
-sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, control,
-                                                 model) {
+sampler_random_walk_adaptive_details <- function(state_chain, state_sampler,
+                                                 control, model) {
   multiple_parameters <- length(dim2(state_chain$pars)) > 1
   keep <- c("autocorrelation", "mean", "vcv", "weight", "included",
             "scaling_history", "scaling_weight")
