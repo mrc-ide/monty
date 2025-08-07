@@ -52,7 +52,7 @@ sampler_hmc_initialise <- function(state_chain, control, model, rng) {
   pars <- state_chain$pars
 
   list(transform = hmc_transform(model, pars),
-       sample_momentum = hmc_momentum(vcv, control, model, pars),
+       sample_momentum = hmc_momentum(control, model, pars),
        history = hmc_history_recorder(control, pars))
 }
 
@@ -135,12 +135,12 @@ sampler_hmc_dump <- function(state_sampler) {
 sampler_hmc_restore <- function(state_chain, state_sampler, control, model) {
   pars <- state_chain$pars
   list(transform = hmc_transform(model, pars),
-       sample_momentum = hmc_momentum(vcv, control, model, pars),
+       sample_momentum = hmc_momentum(control, model, pars),
        history = hmc_history_recorder(control, pars, state_sampler$history))
 }
 
 
-hmc_momentum <- function(vcv, control, model, pars) {
+hmc_momentum <- function(control, model, pars) {
   if (is.null(control$vcv)) {
     n_pars <- length(model$parameters)
     sample_momentum <- function(rng) {
