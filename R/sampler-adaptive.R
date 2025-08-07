@@ -145,6 +145,12 @@ monty_sampler_adaptive <- function(initial_vcv,
                                    pre_diminish = 0,
                                    boundaries = "reflect") {
   check_vcv(initial_vcv, allow_3d = TRUE, call = environment())
+  ## Convert to a 3d-array so that we never have to special case
+  ## either the single or multiparameter access:
+  if (length(dim(initial_vcv)) == 2) {
+    initial_vcv <- array(initial_vcv, c(dim(initial_vcv), 1))
+  }
+
   if (is.null(scaling_increment)) {
     n_pars <- nrow(initial_vcv)
     scaling_increment <- calc_scaling_increment(
@@ -154,6 +160,7 @@ monty_sampler_adaptive <- function(initial_vcv,
   if (is.null(initial_scaling_weight)) {
     initial_scaling_weight <- 5 / (acceptance_target * (1 - acceptance_target))
   }
+
 
   control <- list(
     initial_vcv = initial_vcv,
@@ -187,15 +194,35 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
   pars <- state_chain$pars
   multiple_parameters <- length(dim2(pars)) > 1
 
-
-  initial_vcv <- sampler_validate_vcv(control$initial_vcv, pars)
-
+  sampler_validate_vcv(control$initial_vcv, pars)
 
   if (multiple_parameters) {
-    browser()
+    n_pars <- nrow(pars)
+    n_sets <- ncol(pars)
   } else {
-    sampler_random_walk_adaptive_state(control, pars, model)
+    n_pars <- length(pars)
+    n_sets <- 1L
   }
+
+  state <- new.env(parent = emptyenv())
+
+  state$weight <- rep(0, n_sets)
+  state$mean <- matrix(unname(pars), n_pars, n_sets)
+
+  state$autocorrelation <- array(0, c(n_pars, n_pars, n_sets))
+  state$vcv <- update_vcv(state$mean, state$autocorrelation, state$weight)
+
+  state$scaling <- rep(control$initial_scaling, n_sets)
+  state$scaling_weight <- rep(control$initial_scaling_weight, n_sets)
+
+  ## These two advance identically for all chains:
+  state$included <- integer()
+  state$iteration <- 0L
+
+  state$history_pars <- NULL
+  state$scaling_history <- rep(control$initial_scaling, n_sets)
+
+  state
 }
 
 
@@ -233,20 +260,15 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler, contro
 }
 
 
-sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, control, model) {
-  ## TODO: we'll detect this more obviously in the state once it happens
-
+sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, control,
+                                                 model) {
   multiple_parameters <- length(dim2(state_chain$pars)) > 1
   keep <- c("autocorrelation", "mean", "vcv", "weight", "included",
             "scaling_history", "scaling_weight")
 
-  if (multiple_parameters) {
-    stop("Some support needed here")
-    ## out <- lapply(out, function(x) x[keep])
-  } else {
-    ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
-  }
-
+  ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
+  n_sets <- if (multiple_parameters) ncol(state_chain$pars) else 1
+  ret$scaling_history <- matrix(ret$scaling_history, n_sets)
   ret
 }
 
@@ -255,14 +277,8 @@ sampler_random_walk_adaptive_details <- function(state_chain, state_sampler, con
 update_adaptive <- function(state, control, pars, accept_prob) {
   state$iteration <- state$iteration + 1
 
-  ## TODO: use a history accumulator here, as repeatedly rbinding will
-  ## be quite slow.  See the hmc case for a worked example.  That
-  ## said, this is a ring buffer so we need to be a bit careful here
-  state$history_pars <- rbind(state$history_pars, pars)
-
   if (state$iteration > control$adapt_end) {
-    state$scaling_history <-
-      c(state$scaling_history, state$scaling)
+    state$scaling_history <- c(state$scaling_history, state$scaling)
     return(state)
   }
 
@@ -270,10 +286,27 @@ update_adaptive <- function(state, control, pars, accept_prob) {
     state$scaling_weight <- state$scaling_weight + 1
   }
 
+  if (control$forget_rate > 0) {
+    state$history_pars <- c(state$history_pars, pars)
+  }
   is_replacement <- check_replacement(state$iteration, control$forget_rate,
                                       control$forget_end)
   if (is_replacement) {
-    pars_remove <- state$history_pars[state$included[1L], ]
+    ## We store our history in a big flat vector, with each block of
+    ## (len_pars = n_pars * n_pars) being a set of parameters from an
+    ## iteration past.  We can index into these easily enough by
+    ## offsetting by the number of previous iterations, then reshaping
+    ## to match our current pars.
+    ##
+    ## TODO: it should be possible to use integer arithmetic to avoid
+    ## accumulating 'included' here, given 'iteration'; once things
+    ## work swap that in.
+    len_pars <- length(pars)
+    i <- seq_len(len_pars) + ((state$included[[1L]] - 1) * len_pars)
+    pars_remove <- state$history_pars[i]
+    if (!is.null(pars)) {
+      dim(pars_remove) <- dim(pars)
+    }
     state$included <- c(state$included[-1L], state$iteration)
   } else {
     pars_remove <- NULL
@@ -283,8 +316,7 @@ update_adaptive <- function(state, control, pars, accept_prob) {
 
   state$scaling <-
     update_scaling(state$scaling, state$scaling_weight, accept_prob,
-                   control$scaling_increment, control$min_scaling,
-                   control$acceptance_target, control$log_scaling_update)
+                   control)
   state$scaling_history <- c(state$scaling_history, state$scaling)
   state$autocorrelation <- update_autocorrelation(
     pars, state$weight, state$autocorrelation, pars_remove)
@@ -312,19 +344,51 @@ calc_scaling_increment <- function(n_pars, acceptance_target,
 
 
 qp <- function(x) {
-  outer(x, x)
+  if (is.matrix(x)) {
+    dx <- dim(x)
+    if (dx[[2]] == 1) {
+      ox <- outer(x, x)
+    } else {
+      ox <- apply(x, 2, function(xi) outer(xi, xi))
+    }
+    array(ox, dx[c(1, 1, 2)])
+  } else {
+    n <- length(x)
+    array(outer(x, x), c(n, n, 1))
+  }
 }
 
 
 calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
                               initial_vcv_weight) {
   n_pars <- nrow(vcv)
+  n_sets <- dim(vcv)[[3]]
 
-  weighted_vcv <-
-    ((weight - 1) * vcv + (initial_vcv_weight + n_pars + 1) * initial_vcv) /
-    (weight + initial_vcv_weight + n_pars + 1)
+  if (n_sets == 1) {
+    ret <-
+      ((weight - 1) * vcv +
+         (initial_vcv_weight + n_pars + 1) * initial_vcv) /
+      (weight + initial_vcv_weight + n_pars + 1)
+    ret <- 2.38^2 / n_pars * scaling^2 * ret
+  } else {
+    ret <- vcv
+    shared_initial_vcv <- dim(initial_vcv)[[3]] == 1
 
-  2.38^2 / n_pars * scaling^2 * weighted_vcv
+    ## There are a few ways of coping with the multiparameter case.
+    ## One would be to replicate some of the scalars by n_pars^2 so
+    ## that the arithmetic works out, another is this repetitive loop
+    ## here.  It should be "fairly easy" to adjust this as needed if
+    ## this ends up being slow.
+    for (i in seq_len(n_sets)) {
+      j <- if (shared_initial_vcv) 1L else i
+      ret[, , i] <-
+        ((weight[[i]] - 1) * vcv[, , i] +
+           (initial_vcv_weight + n_pars + 1) * initial_vcv[, , j]) /
+        (weight[[i]] + initial_vcv_weight + n_pars + 1)
+      ret[, , i] <- 2.38^2 / n_pars * scaling[[i]]^2 * ret[, , i]
+    }
+  }
+  ret
 }
 
 
@@ -337,35 +401,39 @@ check_replacement <- function(iteration, forget_rate, forget_end) {
 }
 
 
-update_scaling <- function(scaling, scaling_weight, accept_prob,
-                           scaling_increment, min_scaling,
-                           acceptance_target, log_scaling_update) {
-  scaling_change <- scaling_increment * (accept_prob - acceptance_target) /
+update_scaling <- function(scaling, scaling_weight, accept_prob, control) {
+  scaling_change <- control$scaling_increment *
+    (accept_prob - control$acceptance_target) /
     sqrt(scaling_weight)
 
-  if (log_scaling_update) {
-    max(min_scaling, scaling * exp(scaling_change))
+  if (control$log_scaling_update) {
+    pmax(control$min_scaling, scaling * exp(scaling_change))
   } else {
-    max(min_scaling, scaling + scaling_change)
+    pmax(control$min_scaling, scaling + scaling_change)
   }
-
 }
 
 
 update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
-  if (!is.null(pars_remove)) {
-    if (weight > 2) {
-      autocorrelation <-
-        autocorrelation + 1 / (weight - 1) * (qp(pars) - qp(pars_remove))
-    } else {
-      autocorrelation <- autocorrelation + qp(pars) - qp(pars_remove)
+  i <- weight > 2
+  j <- !i
+  qp_pars <- qp(pars)
+  if (is.null(pars_remove)) {
+    if (any(i)) {
+      autocorrelation[, , i] <-
+        (1 - 1 / (weight[i] - 1)) * autocorrelation[, , i] +
+        1 / (weight[i] - 1) * qp_pars[, , i]
+    }
+    if (any(j)) {
+      autocorrelation[, , j] <- autocorrelation[, , j] + qp_pars[, , j]
     }
   } else {
-    if (weight > 2) {
-      autocorrelation <-
-        (1 - 1 / (weight - 1)) * autocorrelation + 1 / (weight - 1) * qp(pars)
+    qp_pars_diff <- qp_pars <- qp(pars_remove)
+    if (any(i)) {
+      autocorrelation[, , i] <-
+        autocorrelation[, , i] + 1 / (weight[i] - 1) * qp_pars_diff[, , i]
     } else {
-      autocorrelation <- autocorrelation + qp(pars)
+      autocorrelation <- autocorrelation + qp_pars_diff[, , i]
     }
   }
 
@@ -374,45 +442,28 @@ update_autocorrelation <- function(pars, weight, autocorrelation, pars_remove) {
 
 
 update_mean <- function(pars, weight, mean, pars_remove) {
-  if (!is.null(pars_remove)) {
-    mean <- mean + 1 / weight * (pars - pars_remove)
-  } else {
-    mean <- (1 - 1 / weight) * mean + 1 / weight * pars
+  if (is.matrix(pars) && nrow(pars) > 1) {
+    ## Allow the calculations to go ahead element-wise:
+    weight <- rep(weight, each = nrow(pars))
   }
-
+  if (is.null(pars_remove)) {
+    mean <- (1 - 1 / weight) * mean + 1 / weight * pars
+  } else {
+    mean <- mean + 1 / weight * (pars - pars_remove)
+  }
   mean
 }
 
 
 update_vcv <- function(mean, autocorrelation, weight) {
-  if (weight > 1) {
-    vcv <- autocorrelation - weight / (weight - 1) * qp(mean)
-  } else {
-    vcv <- 0 * autocorrelation
+  vcv <- 0 * autocorrelation
+
+  i <- weight > 1
+  if (any(i)) {
+    w <- weight[i]
+    vcv[, , i] <- autocorrelation[, , i, drop = FALSE] -
+      w / (w - 1) * qp(mean[, i, drop = FALSE])
   }
 
   vcv
-}
-
-
-## Initialise
-sampler_random_walk_adaptive_state <- function(control, pars, model) {
-  state <- new.env(parent = emptyenv())
-
-  state$weight <- 0
-  state$iteration <- 0
-  state$mean <- unname(pars)
-
-  n_pars <- length(pars)
-  state$autocorrelation <- array(0, dim(control$initial_vcv))
-  state$vcv <- update_vcv(state$mean, state$autocorrelation, state$weight)
-
-  state$scaling <- control$initial_scaling
-  state$scaling_weight <- control$initial_scaling_weight
-
-  state$history_pars <- NULL
-  state$included <- integer()
-  state$scaling_history <- control$initial_scaling
-
-  state
 }
