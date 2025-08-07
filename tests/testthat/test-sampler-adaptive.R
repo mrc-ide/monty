@@ -13,7 +13,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
   expect_equal(res$details[[1]]$weight, 1000)
   expect_equal(res$details[[1]]$included, seq_len(1000))
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv[, , 1], cov(pars), ignore_attr = TRUE)
+  expect_equal(res$details[[1]]$vcv, cov(pars), ignore_attr = TRUE)
 })
 
 
@@ -31,7 +31,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
   expect_equal(res$details[[1]]$weight, 900)
   expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv[, , 1], cov(pars[101:1000, ]),
+  expect_equal(res$details[[1]]$vcv, cov(pars[101:1000, ]),
                ignore_attr = TRUE)
 })
 
@@ -51,7 +51,7 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
   expect_equal(res$details[[1]]$weight, 900)
   expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv[, , 1], cov(pars[101:1000, ]),
+  expect_equal(res$details[[1]]$vcv, cov(pars[101:1000, ]),
                ignore_attr = TRUE)
 })
 
@@ -72,7 +72,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   expect_equal(res$details[[1]]$weight, 275)
   expect_equal(res$details[[1]]$included, seq(26, 300, by = 1))
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv[, , 1], cov(pars[26:300, ]),
+  expect_equal(res$details[[1]]$vcv, cov(pars[26:300, ]),
                ignore_attr = TRUE)
 })
 
