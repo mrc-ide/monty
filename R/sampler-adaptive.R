@@ -151,6 +151,8 @@ monty_sampler_adaptive <- function(initial_vcv,
     initial_vcv <- array(initial_vcv, c(dim(initial_vcv), 1))
   }
 
+  forget_rate_inverse <- validate_forget_rate(forget_rate)
+
   if (is.null(scaling_increment)) {
     n_pars <- nrow(initial_vcv)
     scaling_increment <- calc_scaling_increment(
@@ -160,7 +162,6 @@ monty_sampler_adaptive <- function(initial_vcv,
   if (is.null(initial_scaling_weight)) {
     initial_scaling_weight <- 5 / (acceptance_target * (1 - acceptance_target))
   }
-
 
   control <- list(
     initial_vcv = initial_vcv,
@@ -172,6 +173,7 @@ monty_sampler_adaptive <- function(initial_vcv,
     log_scaling_update = log_scaling_update,
     acceptance_target = acceptance_target,
     forget_rate = forget_rate,
+    forget_rate_inverse = forget_rate_inverse,
     forget_end = forget_end,
     adapt_end = adapt_end,
     pre_diminish = pre_diminish,
@@ -206,7 +208,11 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
 
   state <- new.env(parent = emptyenv())
 
+  ## Iteration and weight advance the same for all chains
+  state$iteration <- 0L
   state$weight <- 0
+
+  ## Everything else varies by the number of parameter sets:
   state$mean <- matrix(unname(pars), n_pars, n_sets)
 
   state$autocorrelation <- array(0, c(n_pars, n_pars, n_sets))
@@ -215,9 +221,6 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
   state$scaling <- rep(control$initial_scaling, n_sets)
   state$scaling_weight <- rep(control$initial_scaling_weight, n_sets)
 
-  ## These two advance identically for all chains:
-  state$included <- integer()
-  state$iteration <- 0L
 
   state$history_pars <- NULL
   state$scaling_history <- rep(control$initial_scaling, n_sets)
@@ -265,7 +268,7 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
 sampler_random_walk_adaptive_details <- function(state_chain, state_sampler,
                                                  control, model) {
   multiple_parameters <- length(dim2(state_chain$pars)) > 1
-  keep <- c("autocorrelation", "mean", "vcv", "weight", "included",
+  keep <- c("autocorrelation", "mean", "vcv", "weight",
             "scaling_history", "scaling_weight")
   ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
 
@@ -285,7 +288,6 @@ sampler_random_walk_adaptive_details <- function(state_chain, state_sampler,
         mean = ret$mean[, i],
         vcv = matrix(ret$vcv[, , i], n_pars),
         weight = ret$weight,
-        included = ret$included,
         scaling_history = ret$scaling_history[i, ],
         scaling_weight = ret$scaling_weight[i])
     })
@@ -316,28 +318,21 @@ update_adaptive <- function(state, control, pars, accept_prob) {
   if (control$forget_rate > 0) {
     state$history_pars <- c(state$history_pars, pars)
   }
-  is_replacement <- check_replacement(state$iteration, control$forget_rate,
-                                      control$forget_end)
-  if (is_replacement) {
+  replace <- check_replacement(state$iteration, control)
+  if (replace > 0) {
     ## We store our history in a big flat vector, with each block of
     ## (len_pars = n_pars * n_pars) being a set of parameters from an
     ## iteration past.  We can index into these easily enough by
     ## offsetting by the number of previous iterations, then reshaping
     ## to match our current pars.
-    ##
-    ## TODO: it should be possible to use integer arithmetic to avoid
-    ## accumulating 'included' here, given 'iteration'; once things
-    ## work swap that in.
     len_pars <- length(pars)
-    i <- seq_len(len_pars) + ((state$included[[1L]] - 1) * len_pars)
+    i <- seq_len(len_pars) + ((replace - 1) * len_pars)
     pars_remove <- state$history_pars[i]
     if (!is.null(pars)) {
       dim(pars_remove) <- dim(pars)
     }
-    state$included <- c(state$included[-1L], state$iteration)
   } else {
     pars_remove <- NULL
-    state$included <- c(state$included, state$iteration)
     state$weight <- state$weight + 1
   }
 
@@ -419,12 +414,11 @@ calc_proposal_vcv <- function(scaling, vcv, weight, initial_vcv,
 }
 
 
-check_replacement <- function(iteration, forget_rate, forget_end) {
-  is_forget_step <- floor(forget_rate * iteration) >
-    floor(forget_rate * (iteration - 1))
-  is_before_forget_end <- iteration <= forget_end
-
-  is_forget_step & is_before_forget_end
+check_replacement <- function(iteration, control) {
+  is_replacement <-
+    iteration <= control$forget_end &&
+    iteration %% control$forget_rate_inverse == 0
+  if (is_replacement) iteration %/% control$forget_rate_inverse else 0L
 }
 
 
@@ -478,4 +472,26 @@ update_vcv <- function(mean, autocorrelation, weight) {
   } else {
     0 * autocorrelation
   }
+}
+
+
+validate_forget_rate <- function(forget_rate, call = parent.frame()) {
+  if (forget_rate == 0) {
+    return(Inf)
+  }
+  if (forget_rate < 0) {
+    cli::cli_abort("Expected 'forget_rate' to be positive",
+                   arg = "forget_rate", call = call)
+  }
+  if (forget_rate >= 1) {
+    cli::cli_abort("Expected 'forget_rate' to be less than 1",
+                   arg = "forget_rate", call = call)
+  }
+  ret <- 1 / forget_rate
+  if (!rlang::is_integerish(ret)) {
+    cli::cli_abort(
+      "Expected 'forget_rate' to be the inverse of an integer",
+      arg = "forget_rate", call = call)
+  }
+  ret
 }
