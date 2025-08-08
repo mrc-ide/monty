@@ -33,14 +33,14 @@ monty_runner_serial <- function(progress = NULL) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state)
+    n_chains <- length(state$rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
     with_progress_fail_on_error(
       pb,
       lapply(
-        seq_along(state),
+        seq_len(n_chains),
         function(i) {
-          monty_continue_chain(i, state[[i]], model, sampler, steps, pb$update)
+          monty_continue_chain(i, state, model, sampler, steps, pb$update)
         }))
   }
 
@@ -125,19 +125,18 @@ monty_runner_parallel <- function(n_workers) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state)
+    n_chains <- length(state$rng)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
     args <- list(model = model,
                  sampler = sampler,
                  steps = steps,
                  progress = progress_bar_none()$update)
-    parallel::clusterMap(
-      cl,
-      monty_continue_chain,
+    stop("FIXME")
+    parallel::clusterApply(
       seq_len(n_chains),
-      state,
-      MoreArgs = args)
+      monty_continue_chain,
+      state, model, sampler, steps, progress_bar_none()$update)
   }
 
   monty_runner("Parallel",
@@ -203,19 +202,32 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
 monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
-  rng <- monty_rng_create(seed = state$rng)
+
+  ## TODO: I think that having the state as a matrix here rather than
+  ## a list would be nice, but that's a small change to make later
+  ## really.
+  rng <- monty_rng_create(seed = state$rng[[chain_id]])
+
+  ## The model might have been serialised and need repair before it is
+  ## used, this allows models to repair any broken pointers:
   model$restore()
+
+  if (model$properties$is_stochastic) {
+    model$rng_state$set(state$model_rng[[chain_id]])
+  }
+
+  ## This is all quite easy because this is the last dimension.
+  state_chain <- lapply(state$chain, array_select_last, chain_id)
+
   if (is_v2_sampler(sampler)) {
     sampler_state <- sampler$state$restore(
-      state$chain, state$sampler, sampler$control, model)
+      chain_id, state_chain, state$sampler, sampler$control, model)
   } else {
     sampler$set_internal_state(state$sampler)
     sampler_state <- NULL
   }
-  if (model$properties$is_stochastic) {
-    model$rng_state$set(state$model_rng)
-  }
-  monty_run_chain2(chain_id, state$chain, sampler_state, model, sampler,
+
+  monty_run_chain2(chain_id, state_chain, sampler_state, model, sampler,
                    steps, progress, rng, r_rng_state)
 }
 
@@ -262,15 +274,8 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
 
   ## I'm not sure about the best name for this, and we need to check
   ## what was actually being done here; I think it was mostly debug!?
-  if (is_v2_sampler) {
-    if (is.null(sampler$details)) {
-      details <- NULL
-    } else {
-      details <- sampler$details(chain_state, sampler_state, sampler$control,
-                                 model)
-    }
-    sampler_state <- sampler$state$dump(sampler_state)
-  } else {
+  if (!is_v2_sampler) {
+    ## This is going to be annoying for any remaining old samplers.
     details <- sampler$finalise(chain_state, model, rng)
     sampler_state <- sampler$get_internal_state()
   }
@@ -279,24 +284,43 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
     history_observation <- model$observer$finalise(history_observation)
   }
 
+  used_r_rng <- !identical(get_r_rng_state(), r_rng_state)
+
   ## This list will hold things that we'll use internally but not
   ## surface to the user in the final object (or summarise them in
   ## some particular way with no guarantees about the format).  We
   ## might hold things like start and stop times here in future.
-  internal <- list(
-    used_r_rng = !identical(get_r_rng_state(), r_rng_state),
-    state = list(
+  if (is_v2_sampler) {
+    history <- list(
+      pars = history_pars,
+      density = history_density,
+      observations = history_observation)
+    state <- list(
       chain = chain_state,
       rng = monty_rng_state(rng),
-      sampler = sampler_state,
-      model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
+      sampler = sampler$state$dump(sampler_state),
+      model_rng = if (model$properties$is_stochastic) model$rng_state$get())
 
-  list(initial = initial,
-       pars = history_pars,
-       density = history_density,
-       details = details,
-       observations = history_observation,
-       internal = internal)
+    list(
+      history = history,
+      state = state,
+      initial = initial,
+      used_r_rng = used_r_rng)
+  } else {
+    internal <- list(
+      used_r_rng = used_r_rng,
+      state = list(
+        chain = chain_state,
+        rng = monty_rng_state(rng),
+        sampler = sampler_state,
+        model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
+
+    list(initial = initial,
+         pars = history_pars,
+         density = history_density,
+         observations = history_observation,
+         internal = internal)
+  }
 }
 
 

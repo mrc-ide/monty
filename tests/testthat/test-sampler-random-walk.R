@@ -2,6 +2,7 @@ test_that("can draw samples from a trivial model", {
   m <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   res <- monty_sample(m, sampler, 100)
+
   expect_equal(names(res),
                c("pars", "density", "initial", "details", "observations"))
   expect_equal(dim(res$pars), c(1, 100, 1))

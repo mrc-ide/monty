@@ -29,7 +29,23 @@ array_bind <- function(..., arrays = list(...), on = NULL,
         "Invalid value for 'before' ({before}), must be in [1, {r}]",
         arg = "before", call = call)
     }
-  } else if (is.null(on)) {
+  } else if (!is.null(on)) {
+    ## Allow people to write on = n to bind as a new dimension 'n'
+    ## just after the max extent, or on = 0 to bind at the min extent.
+    ## This will reduce some logic around aming arguments and allow
+    ## 'on' to be used for anything.
+    if (on == r + 1) {
+      after <- r
+      on <- NULL
+    } else if (on == 0) {
+      before <- 1
+      on <- NULL
+    } else if (on < 1 || on > r) {
+      cli::cli_abort(
+        "Invalid value for 'on' ({on}), must be in [0, {r + 1}]",
+        arg = "on", call = call)
+    }
+  } else {
     on <- r
   }
 
@@ -206,4 +222,21 @@ check_ranks_same <- function(arrays, message = NULL, call = call) {
   }
   r <- r[[1]]
   matrix(unlist(d), r)
+}
+
+
+array_select_last <- function(x, i, scalar = TRUE) {
+  if (scalar && is.list(x) && length(i) == 1 && length(dim2(x)) < 2) {
+    return(x[[i]])
+  }
+  r <- length(dim2(x))
+  if (r == 1) {
+    x[i]
+  } else if (r == 2) {
+    x[, i, drop = FALSE]
+  } else if (r == 3) {
+    x[, , i, drop = FALSE]
+  } else {
+    stop("unsupported access")
+  }
 }

@@ -39,9 +39,11 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                  control,
                  sampler_hmc_initialise,
                  sampler_hmc_step,
-                 sampler_hmc_dump,
-                 sampler_hmc_restore,
-                 sampler_hmc_details)
+                 sampler_hmc_state_dump,
+                 sampler_hmc_state_restore,
+                 sampler_hmc_state_combine,
+                 sampler_hmc_state_split,
+                 sampler_hmc_state_details)
 }
 
 
@@ -124,19 +126,34 @@ sampler_hmc_details <- function(state_chain, state_sampler, control, model) {
 }
 
 
-sampler_hmc_dump <- function(state_sampler) {
+sampler_hmc_state_dump <- function(state_sampler) {
   if (is.null(state_sampler$history)) {
     return(NULL)
   }
-  list(history = state_sampler$history$dump())
+  state_sampler$history$dump()
 }
 
 
-sampler_hmc_restore <- function(state_chain, state_sampler, control, model) {
+sampler_hmc_state_restore <- function(state_chain, state_sampler, control, model) {
   pars <- state_chain$pars
   list(transform = hmc_transform(model, pars),
        sample_momentum = hmc_momentum(control, model, pars),
        history = hmc_history_recorder(control, pars, state_sampler$history))
+}
+
+
+sampler_hmc_state_combine <- function(state) {
+  browser()
+}
+
+
+sampler_hmc_state_split <- function(state) {
+  browser()
+}
+
+
+sampler_hmc_state_details <- function(state, model) {
+  browser()
 }
 
 

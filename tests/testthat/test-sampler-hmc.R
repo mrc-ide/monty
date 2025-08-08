@@ -27,12 +27,12 @@ test_that("can output debug traces", {
 
   set.seed(1)
   sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  res1 <- monty_sample(m, sampler1, 30)
+  res1 <- monty_sample(m, sampler1, 30, n_chains = 2)
 
   set.seed(1)
   sampler2 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                   debug = TRUE)
-  res2 <- monty_sample(m, sampler2, 30)
+  res2 <- monty_sample(m, sampler2, 30, n_chains = 2)
 
   expect_null(res1$details)
   expect_length(res2$details, 1)
