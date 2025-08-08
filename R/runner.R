@@ -216,18 +216,18 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
     model$rng_state$set(state$model_rng[[chain_id]])
   }
 
-  ## This is all quite easy because this is the last dimension.
   state_chain <- lapply(state$chain, array_select_last, chain_id)
+  state_chain$pars <- as.vector(state_chain$pars)
 
   if (is_v2_sampler(sampler)) {
-    sampler_state <- sampler$state$restore(
+    state_sampler <- sampler$state$restore(
       chain_id, state_chain, state$sampler, sampler$control, model)
   } else {
     sampler$set_internal_state(state$sampler)
-    sampler_state <- NULL
+    state_sampler <- NULL
   }
 
-  monty_run_chain2(chain_id, state_chain, sampler_state, model, sampler,
+  monty_run_chain2(chain_id, state_chain, state_sampler, model, sampler,
                    steps, progress, rng, r_rng_state)
 }
 

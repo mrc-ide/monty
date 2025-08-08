@@ -487,8 +487,8 @@ sampler_random_walk_adaptive_state_dump <- function(state) {
   } else if (n_sets == 1) {
     ret$history_pars <- array(ret$history_pars, c(n_pars, n_steps, n_sets))
   } else {
-    ret$history_pars <- aperm(ret$history_pars, c(n_pars, n_sets, n_steps),
-                              c(1, 3, 2))
+    arr <- array(ret$history_pars, c(n_pars, n_sets, n_steps))
+    ret$history_pars <- aperm(arr, c(1, 3, 2))
   }
   ret
 }
@@ -527,7 +527,7 @@ sampler_random_walk_adaptive_state_combine <- function(state) {
        history_pars = join("history_pars", on = 3),
        iteration = join("iteration", on = 1),
        mean = join("mean", on = 2),
-       scaling = join("scaling_weight", on = 1),
+       scaling = join("scaling", on = 1),
        scaling_history = join("scaling_history", on = 2),
        scaling_weight = join("scaling_weight", on = 1),
        vcv = join("vcv", on = 3),

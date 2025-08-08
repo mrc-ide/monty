@@ -203,6 +203,14 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
     samples <- samples_new
   }
 
+  if (restartable) {
+    samples$restart <- list(model = model,
+                            sampler = sampler,
+                            runner = runner,
+                            ## TODO: rethink this; I think it becomes control?
+                            thinning_factor = thinning_factor)
+  }
+
   samples
 }
 
@@ -395,6 +403,7 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
                   density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
                   details = curr$details,
+                  state = curr$state,
                   observations = observations)
   class(samples) <- "monty_samples"
   samples
@@ -540,8 +549,8 @@ monty_samples <- function(pars, density, initial, details, observations,
                   density = density,
                   initial = initial,
                   details = details,
-                  observations = observations,
-                  state = state)
+                  state = state,
+                  observations = observations)
   class(samples) <- "monty_samples"
   samples
 }
