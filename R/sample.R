@@ -377,7 +377,7 @@ combine_chains <- function(res, sampler, observer, include_state) {
   if (is.null(observer)) {
     observations <- NULL
   } else {
-    observations <- observer$combine(lapply(history, "[[", observations))
+    observations <- observer$combine(lapply(history, "[[", "observations"))
   }
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
@@ -389,11 +389,15 @@ combine_chains <- function(res, sampler, observer, include_state) {
   details <- sampler$state$details(sampler_state)
 
   if (include_state) {
+    model_rng <- lapply(state, "[[", "model_rng")
+    if (all(vlapply(model_rng, is.null))) {
+      model_rng <- NULL
+    }
     state <- list(
       chain = combine_state_chain(lapply(state, "[[", "chain")),
       sampler = sampler_state,
       rng = lapply(state, "[[", "rng"),
-      model_rng = lapply(state, "[[", "model_rng"))
+      model_rng = model_rng)
   } else {
     state <- NULL
   }
@@ -544,10 +548,15 @@ tail_and_pool <- function(pars, p, n) {
 
 
 combine_state_chain <- function(state) {
+  observation <- lapply(state, "[[", "observation")
+  if (all(vlapply(observation, is.null))) {
+    observation <- NULL
+  }
+
   list(
     pars = array_bind(arrays = lapply(state, "[[", "pars"), after = Inf),
     density = vnapply(state, "[[", "density"),
-    observation = lapply(state, "[[", "observation"))
+    observation = observation)
 }
 
 

@@ -217,16 +217,16 @@ monty_sampler2_state <- function(dump, restore, combine, details) {
   ret <- list(dump = dump,
               restore = restore,
               combine = combine,
-              details = details)
+              details = details %||% monty_sampler2_default_details)
   class(ret) <- "monty_sampler2_state"
   ret
 }
 
 
 
+## Most of this can probably come out
 monty_sampler2_state_empty <- function() {
   monty_sampler2_state(
-    function(...) NULL,
     function(...) NULL,
     function(...) NULL,
     function(...) NULL,
