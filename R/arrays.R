@@ -100,6 +100,10 @@ array_bind <- function(..., arrays = list(...), on = NULL,
     dimnames(ret) <- dn
   }
 
+  if (length(dim(ret)) == 1) {
+    dim(ret) <- NULL
+  }
+
   ret
 }
 
