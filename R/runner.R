@@ -132,8 +132,8 @@ monty_runner_parallel <- function(n_workers) {
                  sampler = sampler,
                  steps = steps,
                  progress = progress_bar_none()$update)
-    stop("FIXME")
     parallel::clusterApply(
+      cl,
       seq_len(n_chains),
       monty_continue_chain,
       state, model, sampler, steps, progress_bar_none()$update)
