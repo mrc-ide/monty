@@ -117,11 +117,6 @@ test_that("can continue a simultaneous random walk sampler", {
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner,
                         restartable = TRUE)
 
-  ## This is good, except runner which we expect to vary.
-  drop_runner <- function(x) {
-    x$restart$runner <- NULL
-    x
-  }
   expect_equal(drop_runner(res2a), drop_runner(res1a))
 
   res2b <- monty_sample_continue(res2a, 70)

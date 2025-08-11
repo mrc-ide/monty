@@ -173,3 +173,9 @@ scrub_manual_info <- function(x) {
            x)
   x
 }
+
+
+drop_runner <- function(x) {
+  x$restart$runner <- NULL
+  x
+}

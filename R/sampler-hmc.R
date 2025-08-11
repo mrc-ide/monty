@@ -39,11 +39,10 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                  control,
                  sampler_hmc_initialise,
                  sampler_hmc_step,
-                 sampler_hmc_state_dump,
-                 sampler_hmc_state_restore,
-                 sampler_hmc_state_combine,
-                 sampler_hmc_state_split,
-                 sampler_hmc_state_details)
+                 sampler_hmc_dump,
+                 sampler_hmc_combine,
+                 sampler_hmc_restore,
+                 sampler_hmc_details)
 }
 
 
@@ -118,42 +117,48 @@ sampler_hmc_step <- function(state_chain, state_sampler, control, model, rng) {
 }
 
 
-sampler_hmc_details <- function(state_chain, state_sampler, control, model) {
-  if (is.null(state_sampler$history)) {
+sampler_hmc_dump <- function(state) {
+  history <- state$history$dump()
+  if (length(history) == 0) {
     return(NULL)
   }
-  state_sampler$history$details(model)
+  history
 }
 
 
-sampler_hmc_state_dump <- function(state_sampler) {
-  if (is.null(state_sampler$history)) {
+sampler_hmc_combine <- function(state) {
+  if (all(vlapply(state, is.null))) {
     return(NULL)
   }
-  state_sampler$history$dump()
+
+  join <- function(name, ...) {
+    array_bind(arrays = lapply(state, "[[", name), ...)
+  }
+
+  list(pars = join("pars", on = 4),
+       accept = join("accept", on = 2))
 }
 
 
-sampler_hmc_state_restore <- function(state_chain, state_sampler, control, model) {
+sampler_hmc_restore <- function(chain_id, state_chain, state_sampler, control,
+                                model) {
   pars <- state_chain$pars
+
+  if (is.null(state_sampler)) {
+    history <- NULL
+  } else {
+    history <- list(
+      pars = state_sampler$pars[, , , chain_id, drop = FALSE],
+      accept = state_sampler$accept[, chain_id, drop = FALSE])
+  }
   list(transform = hmc_transform(model, pars),
        sample_momentum = hmc_momentum(control, model, pars),
-       history = hmc_history_recorder(control, pars, state_sampler$history))
+       history = hmc_history_recorder(control, pars, history))
 }
 
 
-sampler_hmc_state_combine <- function(state) {
-  browser()
-}
-
-
-sampler_hmc_state_split <- function(state) {
-  browser()
-}
-
-
-sampler_hmc_state_details <- function(state, model) {
-  browser()
+sampler_hmc_details <- function(state) {
+  state
 }
 
 
@@ -312,74 +317,55 @@ hmc_kinetic_energy <- function(v) {
 
 
 hmc_history_recorder <- function(control, pars, history = NULL) {
-  env <- new.env(parent = emptyenv())
+  if (!control$debug) {
+    return(list(add = function(i, pars) NULL,
+                complete = function(accept) NULL,
+                details = function() NULL,
+                dump = function() NULL))
+  }
 
-  n_integration_steps <- control$n_integration_steps
-  dim_pars <- dim2(pars)
-  multiple_parameters <- length(dim_pars) > 1
-
-  if (multiple_parameters && !is.null(history)) {
-    env$history <- lapply(seq_along(history[[1]]), function(i) {
-      pars <- array_bind(arrays = lapply(history, function(x) x[[i]]$pars),
-                         on = 2)
-      accept <- vlapply(history, function(x) x[[i]]$accept)
-      list(pars = pars, accept = accept)
-    })
+  if (length(dim2(pars)) > 1) {
+    n_pars <- nrow(pars)
+    n_sets <- ncol(pars)
   } else {
-    env$history <- history %||% list()
+    n_pars <- length(pars)
+    n_sets <- 1
+  }
+  n_integration <- control$n_integration_steps + 1L
+
+  env <- new.env(parent = emptyenv())
+  if (is.null(history)) {
+    env$pars <- numeric()
+    env$accept <- logical()
+  } else if (n_sets == 1) {
+    env$pars <- as.vector(history$pars)
+    env$accept <- as.vector(history$accept)
+  } else {
+    env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))
+    env$accept <- as.vector(t(history$accept))
   }
 
   add <- function(i, pars) {
     if (i == 0) {
-      env$curr <- array(NA_real_, c(dim_pars, n_integration_steps + 1))
+      env$curr <- array(NA_real_, c(n_pars, n_sets, n_integration))
     }
-    if (multiple_parameters) {
-      env$curr[, , i + 1L] <- pars
-    } else {
-      env$curr[, i + 1L] <- pars
-    }
+    env$curr[, , i + 1L] <- pars
   }
 
   complete <- function(accept) {
-    env$history <- c(env$history, list(list(pars = env$curr, accept = accept)))
+    env$pars <- c(env$pars, env$curr)
+    env$accept <- c(env$accept, accept)
   }
 
-  details <- function(model) {
-    if (length(env$history) == 0) {
-      return(NULL)
-    }
-    pars <- array_bind(arrays = lapply(env$history, "[[", "pars"), after = Inf)
-    if (multiple_parameters) {
-      n_sets <- dim_pars[[2]]
-      pars <- aperm(pars, c(1, 3, 4, 2))
-      accept <- lapply(env$history, "[[", "accept")
-      accept <- matrix(unlist(accept), ncol = n_sets, byrow = TRUE)
-    } else {
-      accept <- vlapply(env$history, "[[", "accept")
-    }
-    rownames(pars) <- model$parameters
-    list(pars = pars, accept = accept)
-  }
-
-  ## There are some pretty grim bits here for saving and loading
-  ## history internals that should be tidied up at some point, but
-  ## that probably requires something like the observer's approach to
-  ## custom combine/split/append support.  Something to put in the
-  ## next iteration, perhaps.
   dump <- function() {
-    if (multiple_parameters) {
-      lapply(seq_len(dim_pars[[2]]), function(i) {
-        lapply(env$history, function(x) {
-          list(pars = x$pars[, i, , drop = FALSE], accept = x$accept[[i]])
-        })
-      })
-    } else {
-      env$history
-    }
+    n_mcmc <- length(env$accept) / n_sets
+    pars <- array(env$pars, c(n_pars, n_sets, n_integration, n_mcmc))
+    pars <- aperm(pars, c(1, 3, 4, 2))
+    list(pars = pars,
+         accept = matrix(env$accept, ncol = n_sets, byrow = TRUE))
   }
 
   list(add = add,
        complete = complete,
-       details = details,
        dump = dump)
 }
