@@ -359,6 +359,15 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 
 
 combine_chains <- function(res, sampler, observer, include_state) {
+  ## If we used the simultaneous sampler, we've already constructed
+  ## something useful here.
+  if (inherits(res, "monty_samples")) {
+    if (!include_state) {
+      res["state"] <- list(NULL)
+    }
+    return(res)
+  }
+
   warn_if_used_r_rng(vlapply(res, "[[", "used_r_rng"))
 
   ## First, process the core history:

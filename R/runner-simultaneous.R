@@ -145,66 +145,43 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   n_chains <- length(chain_state$density)
   n_steps_record <- steps$total
 
-  history_pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
-  history_density <- matrix(NA_real_, n_steps_record, n_chains)
+  pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
+  density <- matrix(NA_real_, n_steps_record, n_chains)
 
   chain_id <- seq_len(n_chains)
-  is_v2_sampler <- is_v2_sampler(sampler)
+  if (!is_v2_sampler(sampler)) {
+    stop("No longer allowing old samplers to be used")
+  }
 
   for (i in seq_len(steps$total)) {
-    if (is_v2_sampler) {
-      chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
-                                  model, rng)
-    } else {
-      chain_state <- sampler$step(chain_state, model, rng)
-    }
-    history_pars[, i, ] <- chain_state$pars
-    history_density[i, ] <- chain_state$density
+    chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                model, rng)
+    pars[, i, ] <- chain_state$pars
+    density[i, ] <- chain_state$density
     ## TODO: also allow observations here if enabled
     progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
-  rownames(history_pars) <- model$parameters
+  rownames(pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
-  if (is_v2_sampler) {
-    if (is.null(sampler$details)) {
-      details <- NULL
-    } else {
-      details <- sampler$details(chain_state, sampler_state, sampler$control,
-                                 model)
-    }
-    sampler_state <- sampler$state$dump(sampler_state)
-  } else {
-    details <- sampler$finalise(chain_state, model, rng)
-    sampler_state <- sampler$get_internal_state()
-  }
+  ## TODO: some of these scalars need to be replicated back out when
+  ## we split the sampler again, and then combined back to a scalar
+  ## when tidying up the sampler state (or we replicate to three
+  ## here)
+  sampler_state <- sampler$state$dump(sampler_state)
+  details <- sampler$state$details(sampler_state)
 
-  ## This simplifies handling later; we might want to make a new
-  ## version of asplit that does not leave stray attributes on later
-  ## though?
-  rng_state <- matrix(monty_rng_state(rng), ncol = n_chains)
-  rng_state <- lapply(asplit(rng_state, 2), as.vector)
+  warn_if_used_r_rng(!identical(get_r_rng_state(), r_rng_state))
 
-  if (!is.null(sampler_state)) {
-    sampler_state <- rep(list(sampler_state), n_chains)
-  }
+  observations <- NULL
+  state <- list(
+    chain = chain_state,
+    sampler = sampler_state,
+    rng = monty_rng_state(rng),
+    model_rng = if (model$properties$is_stochastic) model$rng_state$get())
 
-  ## TODO: observation finalisation; this will be weird
-  internal <- list(
-    used_r_rng = !identical(get_r_rng_state(), r_rng_state),
-    state = list(
-      chain = chain_state,
-      rng = rng_state,
-      sampler = sampler_state,
-      simultaneous = TRUE,
-      model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
-
-  list(initial = initial,
-       pars = history_pars,
-       density = history_density,
-       details = details,
-       observations = NULL,
-       internal = internal)
+  ## Normally, we construct samples elsewhere, but it's least weird
+  ## for now do do it here.
+  monty_samples(pars, density, initial, details, observations, state)
 }
