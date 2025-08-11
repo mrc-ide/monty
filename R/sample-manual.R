@@ -310,11 +310,9 @@ sample_manual_info_chain <- function(complete) {
 ##' @inherit monty_sample_manual_prepare return
 monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
-  ## I am not terribly happy wih the function name here, something for
-  ## the review?
-  ##
-  ## also not happy with save_samples = "nothing"
   restart <- samples$restart
+  state <- samples$state
+  n_chains <- length(samples$state$rng)
   samples <- sample_manual_prepare_check_samples(samples, save_samples)
 
   steps <- monty_sample_steps(n_steps,
@@ -322,7 +320,8 @@ monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                               thinning_factor = restart$thinning_factor)
 
   dat <- list(restart = restart,
-              n_chains = length(restart$state),
+              state = state,
+              n_chains = n_chains,
               steps = steps,
               samples = samples)
   sample_manual_path_create(path, dat)
