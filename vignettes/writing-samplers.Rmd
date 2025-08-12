@@ -85,7 +85,7 @@ Then we can write a constructor, which takes `sd` as the argument:
 ```{r}
 toy_sampler <- function(sd) {
   control <- list(sd = sd)
-  monty_sampler2(
+  monty_sampler(
     "Toy Sampler",
     "toy_sampler",
     control,

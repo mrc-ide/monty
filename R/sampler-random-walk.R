@@ -39,7 +39,7 @@
 ##'   expected number of MCMC steps between reruns but a different
 ##'   pattern.
 ##'
-##' @return A `monty_sampler2` object, which can be used with
+##' @return A `monty_sampler` object, which can be used with
 ##'   [monty_sample]
 ##'
 ##' @export
@@ -57,14 +57,14 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                   rerun_every = rerun_every,
                   rerun_random = rerun_random)
 
-  monty_sampler2("Random walk",
-                 "monty_random_walk",
-                 control,
-                 sampler_random_walk_initialise,
-                 sampler_random_walk_step,
-                 sampler_random_walk_dump,
-                 sampler_random_walk_combine,
-                 sampler_random_walk_restore)
+  monty_sampler("Random walk",
+                "monty_random_walk",
+                control,
+                sampler_random_walk_initialise,
+                sampler_random_walk_step,
+                sampler_random_walk_dump,
+                sampler_random_walk_combine,
+                sampler_random_walk_restore)
 }
 
 

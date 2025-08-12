@@ -81,14 +81,9 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
   n_chains <- length(rng_state)
   rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
-  if (is_v2_sampler(sampler)) {
-    chain_state <- initialise_state(pars, model, rng)
-    sampler_state <-
-      sampler$initialise(chain_state, sampler$control, model, rng)
-  } else {
-    chain_state <- sampler$initialise(pars, model, rng)
-    sampler_state <- NULL
-  }
+  chain_state <- initialise_state(pars, model, rng)
+  sampler_state <-
+    sampler$initialise(chain_state, sampler$control, model, rng)
 
   monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
                                  steps, progress, rng, r_rng_state)
@@ -97,10 +92,6 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
 
 monty_continue_chains_simultaneous <- function(state, model, sampler,
                                                steps, progress) {
-  if (!is_v2_sampler(sampler)) {
-    stop("This is no longer supported")
-  }
-
   r_rng_state <- get_r_rng_state()
   n_chains <- length(state$rng)
   n_pars <- length(model$parameters)
@@ -144,9 +135,6 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   density <- matrix(NA_real_, n_steps_record, n_chains)
 
   chain_id <- seq_len(n_chains)
-  if (!is_v2_sampler(sampler)) {
-    stop("No longer allowing old samplers to be used")
-  }
 
   for (i in seq_len(steps$total)) {
     chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
@@ -160,10 +148,6 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   ## Pop the parameter names on last
   rownames(pars) <- model$parameters
 
-  ## TODO: some of these scalars need to be replicated back out when
-  ## we split the sampler again, and then combined back to a scalar
-  ## when tidying up the sampler state (or we replicate to three
-  ## here)
   sampler_state <- sampler$state$dump(sampler_state)
   details <- sampler$state$details(sampler_state)
 

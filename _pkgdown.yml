@@ -72,7 +72,7 @@ reference:
 
   - subtitle: Advanced
     contents:
-    - monty_sampler2
+    - monty_sampler
 
   - title: Random numbers
   - subsection: Create and manage random number state

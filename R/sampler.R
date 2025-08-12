@@ -1,4 +1,4 @@
-##' A `monty_sampler2` object can be passed into `monty_sample` in
+##' A `monty_sampler` object can be passed into `monty_sample` in
 ##' order to draw samples from a distribution.  The primary role of a
 ##' sampler is to advance the state of a Markov chain one step; in
 ##' doing so they may mutate some internal state (outside the
@@ -11,7 +11,7 @@
 ##'
 ##' Control parameters are used to build the sampler.  These are
 ##' immutable after creation.  The format is unspecified by
-##' `monty_sampler2` but typically this will be a named list.  The
+##' `monty_sampler` but typically this will be a named list.  The
 ##' sampler designer will construct this list and should take care not
 ##' to include anything mutable (e.g. environments) or hard to
 ##' serialise and transfer to another process here.
@@ -101,9 +101,11 @@
 ##'   state, though in some cases it will not need to do very much.
 ##'   It must take arguments:
 ##'
-##'   * `state_chain`: the state of the MCMC chain (TODO: describe)
+##'   * `state_chain`: the state of the MCMC chain, containing
+##'     elements `pars` (a vector or matrix of parameters), `density`
+##'     and possibly `observation`
 ##'   * `control`: the control parameters, as originally passed to
-##'     `monty_sampler2`
+##'     `monty_sampler`
 ##'   * `model`: the model being sampled from
 ##'   * the random number generator state, which the sampler may draw
 ##'     from.
@@ -167,11 +169,11 @@
 ##'   `state_restore`.  This takes the combined state as its only
 ##'   argument.
 ##'
-##' @return A `monty_sampler2` object
+##' @return A `monty_sampler` object
 ##' @export
-monty_sampler2 <- function(name, help, control, initialise, step,
-                           state_dump = NULL, state_combine = NULL,
-                           state_restore = NULL, state_details = NULL) {
+monty_sampler <- function(name, help, control, initialise, step,
+                          state_dump = NULL, state_combine = NULL,
+                          state_restore = NULL, state_details = NULL) {
   ## TODO: allow functions to be names and accept 'package' as an arg
   ## here, which will help with using the callr runner because we can
   ## organise loading packages and finding functions as required, even
@@ -179,10 +181,10 @@ monty_sampler2 <- function(name, help, control, initialise, step,
   assert_scalar_character(name)
   assert_scalar_character(help)
 
-  state <- monty_sampler2_state(state_dump,
-                                state_combine,
-                                state_restore,
-                                state_details)
+  state <- monty_sampler_state(state_dump,
+                               state_combine,
+                               state_restore,
+                               state_details)
 
   ret <- list(
     name = name,
@@ -192,15 +194,13 @@ monty_sampler2 <- function(name, help, control, initialise, step,
     step = step,
     state = state)
 
-  ## TODO: check that the functions are suitable?
-
-  class(ret) <- "monty_sampler2"
+  class(ret) <- "monty_sampler"
   ret
 }
 
 
 ##' @export
-print.monty_sampler2 <- function(x, ...) {
+print.monty_sampler <- function(x, ...) {
   cli::cli_h1("<monty_sampler: {x$name} ({x$help})>")
   cli::cli_alert_info("Use {.help monty_sample} to use this sampler")
   cli::cli_alert_info("See {.help {x$help}} for more information")
@@ -208,14 +208,8 @@ print.monty_sampler2 <- function(x, ...) {
 }
 
 
-## This is used in the compatibility code
-is_v2_sampler <- function(sampler) {
-  inherits(sampler, "monty_sampler2")
-}
-
-
-monty_sampler2_state <- function(dump, combine, restore, details,
-                                 call = parent.frame()) {
+monty_sampler_state <- function(dump, combine, restore, details,
+                                call = parent.frame()) {
   if (is.null(dump)) {
     err <- c(state_combine = !is.null(combine),
              state_details = !is.null(details))

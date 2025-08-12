@@ -159,14 +159,9 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
   r_rng_state <- get_r_rng_state()
   model$restore()
 
-  if (is_v2_sampler(sampler)) {
-    chain_state <- initialise_state(pars, model, rng)
-    sampler_state <-
-      sampler$initialise(chain_state, sampler$control, model, rng)
-  } else {
-    chain_state <- sampler$initialise(pars, model, rng)
-    sampler_state <- NULL
-  }
+  chain_state <- initialise_state(pars, model, rng)
+  sampler_state <-
+    sampler$initialise(chain_state, sampler$control, model, rng)
 
   if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -219,13 +214,8 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   state_chain <- lapply(state$chain, array_select_last, chain_id)
   state_chain$pars <- as.vector(state_chain$pars)
 
-  if (is_v2_sampler(sampler)) {
-    state_sampler <- sampler$state$restore(
-      chain_id, state_chain, state$sampler, sampler$control, model)
-  } else {
-    sampler$set_internal_state(state$sampler)
-    state_sampler <- NULL
-  }
+  state_sampler <- sampler$state$restore(
+    chain_id, state_chain, state$sampler, sampler$control, model)
 
   monty_run_chain2(chain_id, state_chain, state_sampler, model, sampler,
                    steps, progress, rng, r_rng_state)
@@ -248,16 +238,10 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
 
-  is_v2_sampler <- is_v2_sampler(sampler)
-
   j <- 1L
   for (i in seq_len(n_steps)) {
-    if (is_v2_sampler) {
-      chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
-                                  model, rng)
-    } else {
-      chain_state <- sampler$step(chain_state, model, rng)
-    }
+    chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                model, rng)
     if (i > burnin && i %% thinning_factor == 0) {
       history_pars[, j] <- chain_state$pars
       history_density[[j]] <- chain_state$density
@@ -272,14 +256,6 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
-  ## I'm not sure about the best name for this, and we need to check
-  ## what was actually being done here; I think it was mostly debug!?
-  if (!is_v2_sampler) {
-    ## This is going to be annoying for any remaining old samplers.
-    details <- sampler$finalise(chain_state, model, rng)
-    sampler_state <- sampler$get_internal_state()
-  }
-
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
   }
@@ -290,37 +266,21 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## surface to the user in the final object (or summarise them in
   ## some particular way with no guarantees about the format).  We
   ## might hold things like start and stop times here in future.
-  if (is_v2_sampler) {
-    history <- list(
-      pars = history_pars,
-      density = history_density,
-      observations = history_observation)
-    state <- list(
-      chain = chain_state,
-      rng = monty_rng_state(rng),
-      sampler = sampler$state$dump(sampler_state),
-      model_rng = if (model$properties$is_stochastic) model$rng_state$get())
+  history <- list(
+    pars = history_pars,
+    density = history_density,
+    observations = history_observation)
+  state <- list(
+    chain = chain_state,
+    rng = monty_rng_state(rng),
+    sampler = sampler$state$dump(sampler_state),
+    model_rng = if (model$properties$is_stochastic) model$rng_state$get())
 
-    list(
-      history = history,
-      state = state,
-      initial = initial,
-      used_r_rng = used_r_rng)
-  } else {
-    internal <- list(
-      used_r_rng = used_r_rng,
-      state = list(
-        chain = chain_state,
-        rng = monty_rng_state(rng),
-        sampler = sampler_state,
-        model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
-
-    list(initial = initial,
-         pars = history_pars,
-         density = history_density,
-         observations = history_observation,
-         internal = internal)
-  }
+  list(
+    history = history,
+    state = state,
+    initial = initial,
+    used_r_rng = used_r_rng)
 }
 
 
