@@ -138,11 +138,11 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
   with_progress_fail_on_error(
     pb,
     if (is_continue) {
-      state <- restart$state
+      state <- inputs$state
       model <- restart$model
       sampler <- restart$sampler
-      res <- monty_continue_chain(chain_id, state[[chain_id]], model, sampler,
-                                  steps, pb$update)
+      res <- monty_continue_chain(chain_id, state, model, sampler, steps,
+                                  pb$update)
     } else {
       pars <- inputs$pars
       model <- inputs$model
@@ -205,15 +205,18 @@ monty_sample_manual_collect <- function(path, samples = NULL,
 
   observer <- model$observer
   res <- lapply(path$results, readRDS)
-  samples <- combine_chains(res, observer)
+  samples <- combine_chains(res, sampler, observer, restartable)
   if (!is.null(prev)) {
-    samples <- append_chains(prev, samples, observer)
+    samples <- append_chains(prev, samples, sampler, observer)
   }
 
   if (restartable) {
     runner <- NULL
-    samples$restart <- restart_data(res, model, sampler, runner,
-                                    thinning_factor)
+    samples$restart <- list(model = model,
+                            sampler = sampler,
+                            runner = NULL,
+                            ## TODO: rethink this; I think it becomes control?
+                            thinning_factor = thinning_factor)
   }
   samples
 }
@@ -310,11 +313,9 @@ sample_manual_info_chain <- function(complete) {
 ##' @inherit monty_sample_manual_prepare return
 monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
-  ## I am not terribly happy wih the function name here, something for
-  ## the review?
-  ##
-  ## also not happy with save_samples = "nothing"
   restart <- samples$restart
+  state <- samples$state
+  n_chains <- length(samples$state$rng)
   samples <- sample_manual_prepare_check_samples(samples, save_samples)
 
   steps <- monty_sample_steps(n_steps,
@@ -322,7 +323,8 @@ monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                               thinning_factor = restart$thinning_factor)
 
   dat <- list(restart = restart,
-              n_chains = length(restart$state),
+              state = state,
+              n_chains = n_chains,
               steps = steps,
               samples = samples)
   sample_manual_path_create(path, dat)

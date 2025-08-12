@@ -1,9 +1,10 @@
 ##' A `monty_sampler2` object can be passed into `monty_sample` in
-##' order to draw samples from a distribution.  Samplers are stateful
-##' objects that can mutate the state of a markov chain and advance
-##' the MCMC one step.  Ordinarily users will not call this function,
-##' but authors of samplers will call it from the constructor of their
-##' sampler.
+##' order to draw samples from a distribution.  The primary role of a
+##' sampler is to advance the state of a Markov chain one step; in
+##' doing so they may mutate some internal state (outside the
+##' knowledge of the problem being advanced).  Ordinarily users will
+##' not call this function, but authors of samplers will call it from
+##' the constructor of their sampler.
 ##'
 ##' See `vignette("writing-samplers")` for an introduction to writing
 ##' samplers.
@@ -14,6 +15,75 @@
 ##' sampler designer will construct this list and should take care not
 ##' to include anything mutable (e.g. environments) or hard to
 ##' serialise and transfer to another process here.
+##'
+##' # Sampler state
+##'
+##' Your sampler can have internal state.  This is not needed for
+##' simple samplers; a random walk Metropolis-Hastings sampler does
+##' not need this for example as its state is entirely defined by the
+##' (`pars`, `density`) pair that forms the chain state.  Similarly,
+##' simple implemenations of HMC or Gibbs samplers would not need this
+##' functionality.  If you wish to record debug information, or if
+##' your sampler updates some internal state as it runs -- as our
+##' adaptive Metropolis-Hastings sampler does -- then you will need to
+##' configure your sampler to initialise, store, combine and restore
+##' this state.
+##'
+##' There are four state handling functions.  If you provide one, you
+##' probably will need to provide them all, though `details` can be
+##' omitted if you do not want to render out a user-facing summary of
+##' your sampler state at the end of a chain.
+##'
+##' * `state_dump`: this takes the sampler state (which is often an
+##'   environment) and returns a list.  In most cases, this is for a
+##'   single chain, but if your sampler is used with
+##'   [monty_runner_simultaneous()] this will correspond to the state
+##'   for a number of chains at once, in which case your dumped state
+##'   should look like the output from combining chains.
+##'
+##' * `state_combine`: this takes a list of sampler states, each of
+##'   which was dumped with `state_dump` and combines them into a
+##'   single state object.  You need to aim for the case where the
+##'   output of this function is the same as running `state_dump`
+##'   after running with [monty_runner_simultaneous()].  Hopefully we
+##'   can write some things to help with this, or at least example
+##'   tests that will probably satisfy this.
+##'
+##' * `state_restore`: this takes the output of `state_split` (or
+##'   `state_combine` in the case of [monty_runner_simultaneous()])
+##'   and prepares the state for use with the sampler.  This function
+##'   takes arguments:
+##'
+##'   * `chain_id`: one or more chain ids
+##'   * `state_chain`: the state of the chain(s) at the point of
+##'     restoration
+##'   * `state_sampler`: the state from `state_combine`
+##'   * `control`: the sampler control
+##'   * `model`: the model
+##'
+##' * `state_details`: this takes the output of `state_combine` and
+##'   returns a cleaned version of the state back to the user, as the
+##'   `$details` element of the final samples.  Use this to extract a
+##'   fraction of the total state where only some should be
+##'   user-visible.  You do not need to provide this, the default is
+##'   to return nothing.
+##'
+##' State initialisation is handled by `initialise`; however, a
+##' nontrivial return value from this function does not imply that
+##' your sampler needs to worry very much about state.  If you can
+##' entirely construct this from the current state of the chain and
+##' the control parameters, then no state management is required.
+##' However, a nontrivial return value from `initialise` requires a
+##' `state_restore` argument, even if `state_dump` is not present.
+##'
+##' The state manoeuvres may feel tedious, but it will form part of
+##' the core of how the Parallel Tempering algorithm works, where we
+##' need to be ablt to run multiple chains through a sampler at the
+##' same time.
+##'
+##' We will set things up soon so that if you do not provide these
+##' functions (but if you do provide state), then your sampler will
+##' work, but it will fail informatively when you try and continue it.
 ##'
 ##' @title Create a monty sampler
 ##'
@@ -66,10 +136,16 @@
 ##'   Return `state_chain`, updated after acceptance.
 ##'
 ##' @param state_dump Optionally, a function to prepare the chain
-##'   state for serialisation.  If not given, we assume that
-##'   `as.list()` is sufficient and use that (unless your state is
-##'   `NULL`, in which case we use `identity`).  If provided then
-##'   typically you will need to provide `state_restore`, too.
+##'   state for serialisation.  If not given, we assume that nothing
+##'   needs to be saved and that your sampler can be restarted from
+##'   just the state of the chain, the model and `control`.  If
+##'   provided then typically you will need to provide
+##'   `state_restore`, too.
+##'
+##' @param state_combine Optionally, a function to combine the output
+##'   of several chains (a list, where each element has come from
+##'   `state_dump`) into a single object that is consistent with what
+##'   the simultaneous runner would have produced.
 ##'
 ##' @param state_restore Optionally, a function to take a dumped chain
 ##'   state and convert it back into an environment.  If not given, we
@@ -79,50 +155,45 @@
 ##'   provide `state_dump`, too.  The arguments here, if provided,
 ##'   must be
 ##'
+##'   * `chain_id`
 ##'   * `state_chain`
 ##'   * `state_sampler`
 ##'   * `control`
 ##'   * `model`
 ##'
-##' @param details Optionally, a function to tidy internal state to be
-##'   saved at the end of the run.  If you provide this you almost
-##'   certainly need to provide `state_dump` and `state_restore`.  The
-##'   arguments here must be:
-##'
-##'   * `state_chain`
-##'   * `state_sampler`
-##'   * `control`
-##'   * `model`
-##'
-##'   but we expect that only `state_sampler` will generally be
-##'   needed.  Return whatever you fancy.
+##' @param state_details Optionally, a function to tidy internal state
+##'   to be saved at the end of the run.  If you provide this you
+##'   almost certainly need to provide `state_dump` and
+##'   `state_restore`.  This takes the combined state as its only
+##'   argument.
 ##'
 ##' @return A `monty_sampler2` object
 ##' @export
 monty_sampler2 <- function(name, help, control, initialise, step,
-                           state_dump = NULL, state_restore = NULL,
-                           details = NULL) {
+                           state_dump = NULL, state_combine = NULL,
+                           state_restore = NULL, state_details = NULL) {
   ## TODO: allow functions to be names and accept 'package' as an arg
   ## here, which will help with using the callr runner because we can
   ## organise loading packages and finding functions as required, even
   ## where the user has used a devtools-loaded package.
   assert_scalar_character(name)
   assert_scalar_character(help)
+
+  state <- monty_sampler2_state(state_dump,
+                                state_combine,
+                                state_restore,
+                                state_details)
+
   ret <- list(
     name = name,
     help = help,
     control = control,
     initialise = initialise,
     step = step,
-    state = list(dump = state_dump %||% monty_sampler2_default_dump,
-                 restore = state_restore %||% monty_sampler2_default_restore),
-    details = details)
+    state = state)
 
   ## TODO: check that the functions are suitable?
 
-  ## TODO: details should accept fewer arguments, but I am not sure
-  ## which we can get away with dropping.  The state of the chain
-  ## would be ideal.
   class(ret) <- "monty_sampler2"
   ret
 }
@@ -143,21 +214,35 @@ is_v2_sampler <- function(sampler) {
 }
 
 
-monty_sampler2_default_dump <- function(state_sampler) {
-  if (is.null(state_sampler)) {
-    state_sampler
+monty_sampler2_state <- function(dump, combine, restore, details,
+                                 call = parent.frame()) {
+  if (is.null(dump)) {
+    err <- c(state_combine = !is.null(combine),
+             state_details = !is.null(details))
+    if (any(err)) {
+      cli::cli_abort(
+        c(paste("Unexpected state handling function{?s} provided:",
+                "{squote(names(which(err)))}"),
+          i = "'state_dump' was 'NULL', so this is a stateless sampler"),
+        call = call)
+    }
+    dump <- return_null
+    combine <- return_null
+    details <- return_null
+    restore <- restore %||% return_null
   } else {
-    stopifnot(is.environment(state_sampler))
-    as.list(state_sampler, sorted = TRUE)
+    err <- c(state_restore = !is.function(restore),
+             state_combine = !is.function(combine))
+    if (any(err)) {
+      cli::cli_abort(
+        c(paste("Missing state handling function{?s}:",
+                "{squote(names(which(err)))}"),
+          i = "'state_dump' was a function, so this is a stateful sampler"),
+        call = call)
+    }
   }
-}
-
-
-monty_sampler2_default_restore <- function(state_chain, state_sampler,
-                                           control, model) {
-  if (is.null(state_sampler)) {
-    state_sampler
-  } else {
-    list2env(state_sampler, parent = emptyenv())
-  }
+  list(dump = dump,
+       restore = restore,
+       combine = combine,
+       details = details %||% return_null)
 }

@@ -126,7 +126,7 @@
 ##' lines(drop(res_rw$density), type = "l", col = 2)
 ##'
 ##' # Estimated vcv from the sampler at the end of the simulation
-##' res_adapt$details[[1]]$vcv
+##' res_adapt$details$vcv[, , 1]
 ##'
 ##' @examplesIf requireNamespace("coda")
 ##' coda::effectiveSize(coda::as.mcmc.list(res_rw))
@@ -184,7 +184,10 @@ monty_sampler_adaptive <- function(initial_vcv,
                  control,
                  sampler_random_walk_adaptive_initialise,
                  sampler_random_walk_adaptive_step,
-                 details = sampler_random_walk_adaptive_details)
+                 sampler_random_walk_adaptive_state_dump,
+                 sampler_random_walk_adaptive_state_combine,
+                 sampler_random_walk_adaptive_state_restore,
+                 sampler_random_walk_adaptive_details)
 }
 
 
@@ -221,7 +224,7 @@ sampler_random_walk_adaptive_initialise <- function(state_chain, control,
   state$scaling <- rep(control$initial_scaling, n_sets)
   state$scaling_weight <- rep(control$initial_scaling_weight, n_sets)
 
-  state$history_pars <- NULL
+  state$history_pars <- numeric(0)
   state$scaling_history <- rep(control$initial_scaling, n_sets)
 
   state
@@ -264,40 +267,10 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
 }
 
 
-sampler_random_walk_adaptive_details <- function(state_chain, state_sampler,
-                                                 control, model) {
-  multiple_parameters <- length(dim2(state_chain$pars)) > 1
-  keep <- c("autocorrelation", "mean", "vcv", "weight",
-            "scaling_history", "scaling_weight")
-  ret <- set_names(lapply(keep, function(nm) state_sampler[[nm]]), keep)
-
-  if (multiple_parameters) {
-    ## There's an issue here where we need to break up our nice data
-    ## structure into something comparable with the individually run
-    ## chains.  We'll fix this by having explicit 'combine' and
-    ## 'append' support here, as we do in the observer, as it's the
-    ## same basic problem.  But for now, let's be consistent and break
-    ## it all apart.
-    n_pars <- nrow(state_chain$pars)
-    n_sets <- ncol(state_chain$pars)
-    ret$scaling_history <- matrix(ret$scaling_history, n_sets)
-    ret <- lapply(seq_len(n_sets), function(i) {
-      list(
-        autocorrelation = matrix(ret$autocorrelation[, , i], n_pars),
-        mean = ret$mean[, i],
-        vcv = matrix(ret$vcv[, , i], n_pars),
-        weight = ret$weight,
-        scaling_history = ret$scaling_history[i, ],
-        scaling_weight = ret$scaling_weight[i])
-    })
-  } else {
-    n_pars <- length(state_chain$pars)
-    ret$autocorrelation <- matrix(ret$autocorrelation, n_pars)
-    ret$mean <- as.vector(ret$mean)
-    ret$vcv <- matrix(ret$vcv, n_pars)
-  }
-
-  ret
+sampler_random_walk_adaptive_details <- function(state) {
+  ## Dropping these, as we had previously decided to -- we could
+  ## return them too but no real need.
+  state[setdiff(names(state), c("history_pars", "scaling"))]
 }
 
 
@@ -494,4 +467,81 @@ validate_forget_rate <- function(forget_rate, call = parent.frame()) {
       arg = "forget_rate", call = call)
   }
   as.integer(ret)
+}
+
+
+sampler_random_walk_adaptive_state_dump <- function(state) {
+  ret <- as.list(state, sorted = TRUE)
+
+  ## 'history_pars' is stored in a flat vector for easy accumulation,
+  ## but here we reshape to something actually useful.  A bit of work
+  ## in the simultaneous case to get the order <step> x <chain>, as we
+  ## accumulate in the other order (all chains for a given step) and
+  ## need to transpose here.  For the single case it's a unit
+  ## dimension so it doesn't really matter.
+  n_pars <- nrow(state$mean)
+  n_sets <- ncol(state$mean)
+  n_steps <- state$iteration
+  if (length(ret$history_pars) == 0) {
+    ret$history_pars <- array(0, c(n_pars, 0, n_sets))
+  } else if (n_sets == 1) {
+    ret$history_pars <- array(ret$history_pars, c(n_pars, n_steps, n_sets))
+  } else {
+    arr <- array(ret$history_pars, c(n_pars, n_sets, n_steps))
+    ret$history_pars <- aperm(arr, c(1, 3, 2))
+  }
+
+  if (n_sets > 1) {
+    ret$scaling_history <- matrix(ret$scaling_history,
+                                  ncol = n_sets, byrow = TRUE)
+    ret$iteration <- rep(ret$iteration, n_sets)
+    ret$weight <- rep(ret$weight, n_sets)
+  }
+
+  ret
+}
+
+
+sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
+                                                       state_sampler, control,
+                                                       model) {
+  state <- lapply(state_sampler, array_select_last, chain_id)
+  state$history_pars <- as.vector(state$history_pars)
+  if (length(chain_id) > 1) {
+    state$iteration <- state$iteration[[1]]
+    state$weight <- state$weight[[1]]
+  }
+  list2env(state, parent = emptyenv())
+}
+
+
+sampler_random_walk_adaptive_state_combine <- function(state) {
+  ## The dimension order is always <pars>, <step>, <chain> so when
+  ## combining results for single chain we have:
+  ##
+  ## autocorrelation: <pars> x <pars> x 1 -> <pars> x <pars> x <chain>
+  ## history_pars: <pars> x <step> x 1 -> <pars> x <step> x <chain>
+  ## iteration: 1 -> <chain>
+  ## mean: <pars> x 1 -> <pars> x <chain>
+  ## scaling: 1 -> <chain>
+  ## scaling_history: <step> -> <step> x <chain>
+  ## scaling_weight: 1 -> <chain>
+  ## vcv: <pars> x <pars> x 1 -> <pars> x <pars> x <chain>
+  ## weight: 1 -> <chain>
+  join <- function(name, ...) {
+    array_bind(arrays = lapply(state, "[[", name), ...)
+  }
+
+  ## We can probably express this purely in data, which might be
+  ## useful for eventual generalisation, though I think I now have
+  ## them all being simply "bind on the last element"
+  list(autocorrelation = join("autocorrelation", on = 3),
+       history_pars = join("history_pars", on = 3),
+       iteration = join("iteration", on = 1),
+       mean = join("mean", on = 2),
+       scaling = join("scaling", on = 1),
+       scaling_history = join("scaling_history", on = 2),
+       scaling_weight = join("scaling_weight", on = 1),
+       vcv = join("vcv", on = 3),
+       weight = join("weight", on = 1))
 }

@@ -63,6 +63,7 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                  sampler_random_walk_initialise,
                  sampler_random_walk_step,
                  sampler_random_walk_dump,
+                 sampler_random_walk_combine,
                  sampler_random_walk_restore)
 }
 
@@ -119,18 +120,26 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
 }
 
 
-sampler_random_walk_dump <- function(state_sampler) {
-  if (is.null(state_sampler$rerun)) {
+sampler_random_walk_dump <- function(state) {
+  if (is.null(state$rerun)) {
     return(NULL)
   }
-  list(rerun_state = attr(state_sampler$rerun, "data"))$step
+  list(rerun_state = attr(state$rerun, "data"))$step
 }
 
 
-sampler_random_walk_restore <- function(state_chain, state_sampler, control,
+sampler_random_walk_combine <- function(state) {
+  if (all(vlapply(state, is.null))) {
+    return(NULL)
+  }
+  state[[1]]
+}
+
+
+sampler_random_walk_restore <- function(chain_id, state_chain,
+                                        state_sampler, control,
                                         model) {
   pars <- state_chain$pars
-  ## TODO: come up with a pattern for reusing things
   list(proposal = make_random_walk_proposal(control, model, pars),
        rerun = make_rerun(control, model, state_sampler$rerun_state))
 }

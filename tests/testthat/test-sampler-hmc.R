@@ -27,24 +27,22 @@ test_that("can output debug traces", {
 
   set.seed(1)
   sampler1 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
-  res1 <- monty_sample(m, sampler1, 30)
+  res1 <- monty_sample(m, sampler1, 30, n_chains = 2)
 
   set.seed(1)
   sampler2 <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10,
                                   debug = TRUE)
-  res2 <- monty_sample(m, sampler2, 30)
+  res2 <- monty_sample(m, sampler2, 30, n_chains = 2)
 
   expect_null(res1$details)
-  expect_length(res2$details, 1)
-  expect_equal(names(res2$details[[1]]), c("pars", "accept"))
-  expect_equal(res2$details[[1]]$accept, rep(TRUE, 30))
+  expect_equal(names(res2$details), c("pars", "accept"))
+  expect_equal(res2$details$accept, matrix(TRUE, 30, 2))
 
-  pars <- array_drop(res2$pars, 3)
-  debug_pars <- res2$details[[1]]$pars
-  expect_equal(dim(debug_pars), c(2, 11, 30))
-  expect_equal(dimnames(debug_pars), list(c("a", "b"), NULL, NULL))
-  expect_equal(debug_pars[, 1, ], cbind(res2$initial, pars[, -30]))
-  expect_equal(debug_pars[, 11, ], pars)
+  debug_pars <- res2$details$pars
+  expect_equal(dim(debug_pars), c(2, 11, 30, 2))
+  expect_equal(debug_pars[, 1, 1, ], unname(res2$initial))
+  expect_equal(debug_pars[, 1, -1, ], unname(res2$pars)[, -30, ])
+  expect_equal(debug_pars[, 11, , ], unname(res2$pars))
 })
 
 
@@ -261,13 +259,13 @@ test_that("can continue a hmc model simultaneously, with debug", {
   set.seed(1)
   res1a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE)
   res1b <- monty_sample_continue(res1a, 70)
-  ## We don't yet do a good job of auto squashing the details.  I'll
-  ## make this change in a future PR so it's more obvious (mrc-5293)
-  res1b$details <- observer_finalise_auto(res1b$details)
+
   set.seed(1)
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, restartable = TRUE,
                         runner = runner)
   res2b <- monty_sample_continue(res2a, 70)
+
+  expect_equal(drop_runner(res1a), drop_runner(res2a))
 
   expect_equal(res1b, res2b)
   expect_equal(dim(res2b$details$pars), c(2, 11, 100, 3))

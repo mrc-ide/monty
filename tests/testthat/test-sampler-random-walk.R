@@ -2,8 +2,10 @@ test_that("can draw samples from a trivial model", {
   m <- ex_simple_gamma1()
   sampler <- monty_sampler_random_walk(vcv = matrix(0.01, 1, 1))
   res <- monty_sample(m, sampler, 100)
-  expect_equal(names(res),
-               c("pars", "density", "initial", "details", "observations"))
+
+  expect_equal(
+    names(res),
+    c("pars", "density", "initial", "details", "state", "observations"))
   expect_equal(dim(res$pars), c(1, 100, 1))
 })
 
@@ -30,8 +32,9 @@ test_that("can draw samples from a random model", {
   vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
   sampler <- monty_sampler_random_walk(vcv = vcv)
   res <- monty_sample(m, sampler, 20)
-  expect_setequal(names(res),
-                  c("pars", "density", "initial", "details", "observations"))
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "state", "observations"))
 })
 
 
@@ -43,8 +46,9 @@ test_that("can observe a model", {
   ## This takes quite a while, and that seems mostly to be the time
   ## taken to call the filter in dust.
   res <- monty_sample(m, sampler, 20, n_chains = 3)
-  expect_setequal(names(res),
-                  c("pars", "density", "initial", "details", "observations"))
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "state", "observations"))
   expect_equal(names(res$observations),
                "trajectories")
   expect_equal(dim(res$observations$trajectories),
@@ -113,11 +117,8 @@ test_that("can continue a simultaneous random walk sampler", {
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner,
                         restartable = TRUE)
 
-  drop_sampler_state <- function(x) {
-    x[names(x) != "sampler"]
-  }
-  expect_equal(lapply(res2a$restart$state, drop_sampler_state),
-               lapply(res1a$restart$state, drop_sampler_state))
+  expect_equal(drop_runner(res2a), drop_runner(res1a))
+
   res2b <- monty_sample_continue(res2a, 70)
 
   expect_equal(res2b, res1b)

@@ -128,11 +128,16 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples <- combine_chains(res, model$observer)
+  samples <- combine_chains(res, sampler, observer, restartable)
+
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, runner,
-                                    thinning_factor)
+    samples$restart <- list(model = model,
+                            sampler = sampler,
+                            runner = runner,
+                            ## TODO: rethink this; I think it becomes control?
+                            thinning_factor = thinning_factor)
   }
+
   samples
 }
 
@@ -180,7 +185,7 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   } else {
     assert_is(runner, "monty_runner")
   }
-  state <- samples$restart$state
+  state <- samples$state
   model <- samples$restart$model
   sampler <- samples$restart$sampler
 
@@ -190,18 +195,22 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
 
   res <- runner$continue(state, model, sampler, steps)
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples_new <- combine_chains(res, observer)
+  samples_new <- combine_chains(res, sampler, observer, restartable)
 
   if (append) {
-    samples <- append_chains(samples, samples_new, observer)
+    samples <- append_chains(samples, samples_new, sampler, observer)
   } else {
     samples <- samples_new
   }
 
   if (restartable) {
-    samples$restart <- restart_data(res, model, sampler, runner,
-                                    thinning_factor)
+    samples$restart <- list(model = model,
+                            sampler = sampler,
+                            runner = runner,
+                            ## TODO: rethink this; I think it becomes control?
+                            thinning_factor = thinning_factor)
   }
+
   samples
 }
 
@@ -211,7 +220,7 @@ check_can_continue_samples <- function(samples, call = parent.frame()) {
     cli::cli_abort("Expected 'samples' to be a 'monty_samples' object",
                    call = call)
   }
-  if (is.null(samples$restart)) {
+  if (is.null(samples$restart) || is.null(samples$state)) {
     cli::cli_abort(
       c("Your chains are not restartable",
         i = paste("To work with 'monty_sample_continue', you must",
@@ -349,59 +358,55 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 }
 
 
-combine_chains <- function(res, observer = NULL) {
-  if (is.null(names(res))) {
-    pars <- array_bind(arrays = lapply(res, "[[", "pars"), after = 2)
-    density <- array_bind(arrays = lapply(res, "[[", "density"), after = 1)
-    details <- lapply(res, "[[", "details")
-    details <- if (all(vlapply(details, is.null))) NULL else details
-
-    n_pars <- nrow(pars)
-    initial <- vapply(res, "[[", numeric(n_pars), "initial")
-    if (n_pars == 1) {
-      initial <- rbind(initial, deparse.level = 0)
+combine_chains <- function(res, sampler, observer, include_state) {
+  ## If we used the simultaneous sampler, we've already constructed
+  ## something useful here.
+  if (inherits(res, "monty_samples")) {
+    if (!include_state) {
+      res["state"] <- list(NULL)
     }
+    return(res)
+  }
 
-    if (is.null(observer)) {
-      observations <- NULL
-    } else {
-      observations <- observer$combine(lapply(res, "[[", "observations"))
-    }
-    used_r_rng <- vlapply(res, function(x) x$internal$used_r_rng)
+  warn_if_used_r_rng(vlapply(res, "[[", "used_r_rng"))
+
+  ## First, process the core history:
+  history <- lapply(res, "[[", "history")
+  pars <- array_bind(arrays = lapply(history, "[[", "pars"), after = 2)
+  density <- array_bind(arrays = lapply(history, "[[", "density"), after = 1)
+  if (is.null(observer)) {
+    observations <- NULL
   } else {
-    stopifnot(is.null(observer)) # prevented earlier
-    pars <- res$pars
-    density <- res$density
-    details <- res$details
-    observations <- res$observations
-    used_r_rng <- res$internal$used_r_rng
-    initial <- res$initial
+    observations <- observer$combine(lapply(history, "[[", "observations"))
   }
 
-  rownames(initial) <- rownames(pars)
+  initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
 
-  if (any(used_r_rng)) {
-    cli::cli_warn(c(
-      "Detected use of R's random number generators",
-      i = paste("Your model has used R's random number generators (e.g.,",
-                "via rnorm, runif, sample, etc).  This means that your",
-                "results will not be reproducible as you change the sample",
-                "runner"),
-      i = paste("If you are not using a parallel runner, you can debug",
-                "this with 'with_trace_random()'")))
+  ## Then process the internal state of all the components
+  state <- lapply(res, "[[", "state")
+
+  sampler_state <- sampler$state$combine(lapply(state, "[[", "sampler"))
+  details <- sampler$state$details(sampler_state)
+
+  if (include_state) {
+    model_rng <- lapply(state, "[[", "model_rng")
+    if (all(vlapply(model_rng, is.null))) {
+      model_rng <- NULL
+    }
+    state <- list(
+      chain = combine_state_chain(lapply(state, "[[", "chain")),
+      sampler = sampler_state,
+      rng = lapply(state, "[[", "rng"),
+      model_rng = model_rng)
+  } else {
+    state <- NULL
   }
 
-  samples <- list(pars = pars,
-                  density = density,
-                  initial = initial,
-                  details = details,
-                  observations = observations)
-  class(samples) <- "monty_samples"
-  samples
+  monty_samples(pars, density, initial, details, observations, state)
 }
 
 
-append_chains <- function(prev, curr, observer = NULL) {
+append_chains <- function(prev, curr, sampler, observer = NULL) {
   if (is.null(observer)) {
     observations <- NULL
   } else {
@@ -411,6 +416,7 @@ append_chains <- function(prev, curr, observer = NULL) {
                   density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
                   details = curr$details,
+                  state = curr$state,
                   observations = observations)
   class(samples) <- "monty_samples"
   samples
@@ -446,6 +452,7 @@ restart_data <- function(res, model, sampler, runner, thinning_factor) {
        runner = runner,
        thinning_factor = thinning_factor)
 }
+
 
 
 direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
@@ -502,4 +509,46 @@ tail_and_pool <- function(pars, p, n) {
   ret <- pars[, seq(to = n_samples, length.out = n_keep), , drop = FALSE]
   dim(ret) <- c(nrow(ret), prod(dim(ret)[-1]))
   ret
+}
+
+
+
+combine_state_chain <- function(state) {
+  observation <- lapply(state, "[[", "observation")
+  if (all(vlapply(observation, is.null))) {
+    observation <- NULL
+  }
+
+  list(
+    pars = array_bind(arrays = lapply(state, "[[", "pars"), after = Inf),
+    density = vnapply(state, "[[", "density"),
+    observation = observation)
+}
+
+
+monty_samples <- function(pars, density, initial, details, observations,
+                          state) {
+  rownames(initial) <- rownames(pars)
+  samples <- list(pars = pars,
+                  density = density,
+                  initial = initial,
+                  details = details,
+                  state = state,
+                  observations = observations)
+  class(samples) <- "monty_samples"
+  samples
+}
+
+
+warn_if_used_r_rng <- function(used) {
+  if (any(used)) {
+    cli::cli_warn(c(
+      "Detected use of R's random number generators",
+      i = paste("Your model has used R's random number generators (e.g.,",
+                "via rnorm, runif, sample, etc).  This means that your",
+                "results will not be reproducible as you change the sample",
+                "runner"),
+      i = paste("If you are not using a parallel runner, you can debug",
+                "this with 'with_trace_random()'")))
+  }
 }
