@@ -72,7 +72,7 @@ sample_manual_prepare <- function(model, sampler, steps, path, initial,
                                   n_chains, seed = NULL,
                                   call = parent.frame()) {
   assert_is(model, "monty_model", call = call)
-  assert_is(sampler, c("monty_sampler", "monty_sampler2"), call = call)
+  assert_is(sampler, "monty_sampler", call = call)
 
   rng <- initial_rng(n_chains, seed = seed)
   pars <- initial_parameters(initial, model, rng, environment())

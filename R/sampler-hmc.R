@@ -34,15 +34,15 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                   vcv = vcv,
                   debug = debug)
 
-  monty_sampler2("Hamiltonian Monte Carlo",
-                 "monty_sampler_hmc",
-                 control,
-                 sampler_hmc_initialise,
-                 sampler_hmc_step,
-                 sampler_hmc_dump,
-                 sampler_hmc_combine,
-                 sampler_hmc_restore,
-                 sampler_hmc_details)
+  monty_sampler("Hamiltonian Monte Carlo",
+                "monty_sampler_hmc",
+                control,
+                sampler_hmc_initialise,
+                sampler_hmc_step,
+                sampler_hmc_dump,
+                sampler_hmc_combine,
+                sampler_hmc_restore,
+                sampler_hmc_details)
 }
 
 

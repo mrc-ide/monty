@@ -179,15 +179,15 @@ monty_sampler_adaptive <- function(initial_vcv,
     pre_diminish = pre_diminish,
     boundaries = boundaries)
 
-  monty_sampler2("Adaptive Metropolis-Hastings",
-                 "monty_sampler_adaptive",
-                 control,
-                 sampler_random_walk_adaptive_initialise,
-                 sampler_random_walk_adaptive_step,
-                 sampler_random_walk_adaptive_state_dump,
-                 sampler_random_walk_adaptive_state_combine,
-                 sampler_random_walk_adaptive_state_restore,
-                 sampler_random_walk_adaptive_details)
+  monty_sampler("Adaptive Metropolis-Hastings",
+                "monty_sampler_adaptive",
+                control,
+                sampler_random_walk_adaptive_initialise,
+                sampler_random_walk_adaptive_step,
+                sampler_random_walk_adaptive_state_dump,
+                sampler_random_walk_adaptive_state_combine,
+                sampler_random_walk_adaptive_state_restore,
+                sampler_random_walk_adaptive_details)
 }
 
 

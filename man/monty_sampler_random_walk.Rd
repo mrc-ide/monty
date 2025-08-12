@@ -46,7 +46,7 @@ expected number of MCMC steps between reruns but a different
 pattern.}
 }
 \value{
-A \code{monty_sampler2} object, which can be used with
+A \code{monty_sampler} object, which can be used with
 \link{monty_sample}
 }
 \description{

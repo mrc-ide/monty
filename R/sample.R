@@ -114,7 +114,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          restartable = FALSE, burnin = NULL,
                          thinning_factor = NULL) {
   assert_is(model, "monty_model")
-  assert_is(sampler, c("monty_sampler", "monty_sampler2"))
+  assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
     runner <- monty_runner_serial()
   } else {
@@ -125,6 +125,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
@@ -228,29 +229,6 @@ check_can_continue_samples <- function(samples, call = parent.frame()) {
                   "monty_sample()")),
       call = call)
   }
-}
-
-
-monty_sampler <- function(name, help, initialise, step, finalise,
-                          get_internal_state, set_internal_state) {
-  ret <- list(name = name,
-              help = help,
-              initialise = initialise,
-              step = step,
-              finalise = finalise,
-              get_internal_state = get_internal_state,
-              set_internal_state = set_internal_state)
-  class(ret) <- "monty_sampler"
-  ret
-}
-
-
-##' @export
-print.monty_sampler <- function(x, ...) {
-  cli::cli_h1("<monty_sampler: {x$name} ({x$help})>")
-  cli::cli_alert_info("Use {.help monty_sample} to use this sampler")
-  cli::cli_alert_info("See {.help {x$help}} for more information")
-  invisible(x)
 }
 
 
@@ -426,6 +404,12 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
 initial_rng <- function(n_chains, seed = NULL) {
   lapply(monty_rng_distributed_state(n_nodes = n_chains, seed = seed),
          function(s) monty_rng_create(seed = s))
+}
+
+
+initial_rng_state <- function(n_chains, seed = NULL) {
+  matrix(unlist(monty_rng_distributed_state(n_nodes = n_chains, seed = seed)),
+         ncol = n_chains)
 }
 
 
