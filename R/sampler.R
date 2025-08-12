@@ -29,8 +29,10 @@
 ##' configure your sampler to initialise, store, combine and restore
 ##' this state.
 ##'
-##' There are five state functions.  If you provide one, you probably
-##' will need to provide them all.
+##' There are four state handling functions.  If you provide one, you
+##' probably will need to provide them all, though `details` can be
+##' omitted if you do not want to render out a user-facing summary of
+##' your sampler state at the end of a chain.
 ##'
 ##' * `state_dump`: this takes the sampler state (which is often an
 ##'   environment) and returns a list.  In most cases, this is for a
@@ -64,13 +66,15 @@
 ##'   `$details` element of the final samples.  Use this to extract a
 ##'   fraction of the total state where only some should be
 ##'   user-visible.  You do not need to provide this, the default is
-##'   to return everything.
+##'   to return nothing.
 ##'
 ##' State initialisation is handled by `initialise`; however, a
 ##' nontrivial return value from this function does not imply that
-##' your sampler needs to worry about state.  If you can entirely
-##' construct this from the current state of the chain and the control
-##' parameters, then no state management is required.
+##' your sampler needs to worry very much about state.  If you can
+##' entirely construct this from the current state of the chain and
+##' the control parameters, then no state management is required.
+##' However, a nontrivial return value from `initialise` requires a
+##' `state_restore` argument, even if `state_dump` is not present.
 ##'
 ##' The state manoeuvres may feel tedious, but it will form part of
 ##' the core of how the Parallel Tempering algorithm works, where we
@@ -132,10 +136,16 @@
 ##'   Return `state_chain`, updated after acceptance.
 ##'
 ##' @param state_dump Optionally, a function to prepare the chain
-##'   state for serialisation.  If not given, we assume that
-##'   `as.list()` is sufficient and use that (unless your state is
-##'   `NULL`, in which case we use `identity`).  If provided then
-##'   typically you will need to provide `state_restore`, too.
+##'   state for serialisation.  If not given, we assume that nothing
+##'   needs to be saved and that your sampler can be restarted from
+##'   just the state of the chain, the model and `control`.  If
+##'   provided then typically you will need to provide
+##'   `state_restore`, too.
+##'
+##' @param state_combine Optionally, a function to combine the output
+##'   of several chains (a list, where each element has come from
+##'   `state_dump`) into a single object that is consistent with what
+##'   the simultaneous runner would have produced.
 ##'
 ##' @param state_restore Optionally, a function to take a dumped chain
 ##'   state and convert it back into an environment.  If not given, we
@@ -145,23 +155,17 @@
 ##'   provide `state_dump`, too.  The arguments here, if provided,
 ##'   must be
 ##'
+##'   * `chain_id`
 ##'   * `state_chain`
 ##'   * `state_sampler`
 ##'   * `control`
 ##'   * `model`
 ##'
-##' @param details Optionally, a function to tidy internal state to be
-##'   saved at the end of the run.  If you provide this you almost
-##'   certainly need to provide `state_dump` and `state_restore`.  The
-##'   arguments here must be:
-##'
-##'   * `state_chain`
-##'   * `state_sampler`
-##'   * `control`
-##'   * `model`
-##'
-##'   but we expect that only `state_sampler` will generally be
-##'   needed.  Return whatever you fancy.
+##' @param state_details Optionally, a function to tidy internal state
+##'   to be saved at the end of the run.  If you provide this you
+##'   almost certainly need to provide `state_dump` and
+##'   `state_restore`.  This takes the combined state as its only
+##'   argument.
 ##'
 ##' @return A `monty_sampler2` object
 ##' @export
@@ -176,8 +180,8 @@ monty_sampler2 <- function(name, help, control, initialise, step,
   assert_scalar_character(help)
 
   state <- monty_sampler2_state(state_dump,
-                                state_restore,
                                 state_combine,
+                                state_restore,
                                 state_details)
 
   ret <- list(
@@ -210,58 +214,35 @@ is_v2_sampler <- function(sampler) {
 }
 
 
-monty_sampler2_state <- function(dump, restore, combine, details) {
+monty_sampler2_state <- function(dump, combine, restore, details,
+                                 call = parent.frame()) {
   if (is.null(dump)) {
-    return(monty_sampler2_state_empty())
-  }
-  ret <- list(dump = dump,
-              restore = restore,
-              combine = combine,
-              details = details %||% monty_sampler2_default_details)
-  class(ret) <- "monty_sampler2_state"
-  ret
-}
-
-
-
-## Most of this can probably come out
-monty_sampler2_state_empty <- function() {
-  monty_sampler2_state(
-    function(...) NULL,
-    function(...) NULL,
-    function(...) NULL,
-    function(...) NULL)
-}
-
-
-monty_sampler2_default_dump <- function(state_sampler) {
-  if (is.null(state_sampler)) {
-    state_sampler
+    err <- c(state_combine = !is.null(combine),
+             state_details = !is.null(details))
+    if (any(err)) {
+      cli::cli_abort(
+        c(paste("Unexpected state handling function{?s} provided:",
+                "{squote(names(which(err)))}"),
+          i = "'state_dump' was 'NULL', so this is a stateless sampler"),
+        call = call)
+    }
+    dump <- return_null
+    combine <- return_null
+    details <- return_null
+    restore <- restore %||% return_null
   } else {
-    stopifnot(is.environment(state_sampler))
-    as.list(state_sampler, sorted = TRUE)
+    err <- c(state_restore = !is.function(restore),
+             state_combine = !is.function(combine))
+    if (any(err)) {
+      cli::cli_abort(
+        c(paste("Missing state handling function{?s}:",
+                "{squote(names(which(err)))}"),
+          i = "'state_dump' was a function, so this is a stateful sampler"),
+        call = call)
+    }
   }
-}
-
-
-monty_sampler2_default_restore <- function(chain_id, state_chain, state_sampler,
-                                           control, model) {
-  if (is.null(state_sampler)) {
-    state_sampler
-  } else {
-    list2env(state_sampler, parent = emptyenv())
-  }
-}
-
-
-monty_sampler2_default_details <- function(state) {
-  return(NULL)
-}
-
-
-monty_sampler2_default_combine <- function(state) {
-  if (all(vlapply(state, is.null))) {
-    return(NULL)
-  }
-  browser()
+  list(dump = dump,
+       restore = restore,
+       combine = combine,
+       details = details %||% return_null)
 }
