@@ -31,3 +31,24 @@ test_that("Don't allow other functions if dump is missing", {
     monty_sampler2_state(NULL, identity, NULL, identity),
     "Unexpected state handling functions provided: 'state_combine'")
 })
+
+
+test_that("can create a custom sampler", {
+  ## This also acts as a test that we can construct a stateless
+  ## sampler.
+  toy_sampler <- function(sd) {
+    control <- list(sd = sd)
+    monty_sampler2(
+      "Toy Sampler",
+      "toy_sampler",
+      control,
+      toy_sampler_initialise,
+      toy_sampler_step)
+  }
+
+  sampler <- toy_sampler(rep(0.2, 5))
+  model <- monty_example("gaussian", diag(5))
+  samples1 <- monty_sample(model, sampler, 100, restartable = TRUE)
+  samples2 <- monty_sample_continue(samples1, 50)
+  expect_s3_class(samples2, "monty_samples")
+})
