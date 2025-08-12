@@ -11,8 +11,9 @@ monty_sampler2(
   initialise,
   step,
   state_dump = NULL,
+  state_combine = NULL,
   state_restore = NULL,
-  details = NULL
+  state_details = NULL
 )
 }
 \arguments{
@@ -66,10 +67,16 @@ reference.
 Return \code{state_chain}, updated after acceptance.}
 
 \item{state_dump}{Optionally, a function to prepare the chain
-state for serialisation.  If not given, we assume that
-\code{as.list()} is sufficient and use that (unless your state is
-\code{NULL}, in which case we use \code{identity}).  If provided then
-typically you will need to provide \code{state_restore}, too.}
+state for serialisation.  If not given, we assume that nothing
+needs to be saved and that your sampler can be restarted from
+just the state of the chain, the model and \code{control}.  If
+provided then typically you will need to provide
+\code{state_restore}, too.}
+
+\item{state_combine}{Optionally, a function to combine the output
+of several chains (a list, where each element has come from
+\code{state_dump}) into a single object that is consistent with what
+the simultaneous runner would have produced.}
 
 \item{state_restore}{Optionally, a function to take a dumped chain
 state and convert it back into an environment.  If not given, we
@@ -79,36 +86,30 @@ use that (unless your state is \code{NULL}, in which case we use
 provide \code{state_dump}, too.  The arguments here, if provided,
 must be
 \itemize{
+\item \code{chain_id}
 \item \code{state_chain}
 \item \code{state_sampler}
 \item \code{control}
 \item \code{model}
 }}
 
-\item{details}{Optionally, a function to tidy internal state to be
-saved at the end of the run.  If you provide this you almost
-certainly need to provide \code{state_dump} and \code{state_restore}.  The
-arguments here must be:
-\itemize{
-\item \code{state_chain}
-\item \code{state_sampler}
-\item \code{control}
-\item \code{model}
-}
-
-but we expect that only \code{state_sampler} will generally be
-needed.  Return whatever you fancy.}
+\item{state_details}{Optionally, a function to tidy internal state
+to be saved at the end of the run.  If you provide this you
+almost certainly need to provide \code{state_dump} and
+\code{state_restore}.  This takes the combined state as its only
+argument.}
 }
 \value{
 A \code{monty_sampler2} object
 }
 \description{
 A \code{monty_sampler2} object can be passed into \code{monty_sample} in
-order to draw samples from a distribution.  Samplers are stateful
-objects that can mutate the state of a markov chain and advance
-the MCMC one step.  Ordinarily users will not call this function,
-but authors of samplers will call it from the constructor of their
-sampler.
+order to draw samples from a distribution.  The primary role of a
+sampler is to advance the state of a Markov chain one step; in
+doing so they may mutate some internal state (outside the
+knowledge of the problem being advanced).  Ordinarily users will
+not call this function, but authors of samplers will call it from
+the constructor of their sampler.
 }
 \details{
 See \code{vignette("writing-samplers")} for an introduction to writing
@@ -121,3 +122,71 @@ sampler designer will construct this list and should take care not
 to include anything mutable (e.g. environments) or hard to
 serialise and transfer to another process here.
 }
+\section{Sampler state}{
+Your sampler can have internal state.  This is not needed for
+simple samplers; a random walk Metropolis-Hastings sampler does
+not need this for example as its state is entirely defined by the
+(\code{pars}, \code{density}) pair that forms the chain state.  Similarly,
+simple implemenations of HMC or Gibbs samplers would not need this
+functionality.  If you wish to record debug information, or if
+your sampler updates some internal state as it runs -- as our
+adaptive Metropolis-Hastings sampler does -- then you will need to
+configure your sampler to initialise, store, combine and restore
+this state.
+
+There are four state handling functions.  If you provide one, you
+probably will need to provide them all, though \code{details} can be
+omitted if you do not want to render out a user-facing summary of
+your sampler state at the end of a chain.
+\itemize{
+\item \code{state_dump}: this takes the sampler state (which is often an
+environment) and returns a list.  In most cases, this is for a
+single chain, but if your sampler is used with
+\code{\link[=monty_runner_simultaneous]{monty_runner_simultaneous()}} this will correspond to the state
+for a number of chains at once, in which case your dumped state
+should look like the output from combining chains.
+\item \code{state_combine}: this takes a list of sampler states, each of
+which was dumped with \code{state_dump} and combines them into a
+single state object.  You need to aim for the case where the
+output of this function is the same as running \code{state_dump}
+after running with \code{\link[=monty_runner_simultaneous]{monty_runner_simultaneous()}}.  Hopefully we
+can write some things to help with this, or at least example
+tests that will probably satisfy this.
+\item \code{state_restore}: this takes the output of \code{state_split} (or
+\code{state_combine} in the case of \code{\link[=monty_runner_simultaneous]{monty_runner_simultaneous()}})
+and prepares the state for use with the sampler.  This function
+takes arguments:
+\itemize{
+\item \code{chain_id}: one or more chain ids
+\item \code{state_chain}: the state of the chain(s) at the point of
+restoration
+\item \code{state_sampler}: the state from \code{state_combine}
+\item \code{control}: the sampler control
+\item \code{model}: the model
+}
+\item \code{state_details}: this takes the output of \code{state_combine} and
+returns a cleaned version of the state back to the user, as the
+\verb{$details} element of the final samples.  Use this to extract a
+fraction of the total state where only some should be
+user-visible.  You do not need to provide this, the default is
+to return nothing.
+}
+
+State initialisation is handled by \code{initialise}; however, a
+nontrivial return value from this function does not imply that
+your sampler needs to worry very much about state.  If you can
+entirely construct this from the current state of the chain and
+the control parameters, then no state management is required.
+However, a nontrivial return value from \code{initialise} requires a
+\code{state_restore} argument, even if \code{state_dump} is not present.
+
+The state manoeuvres may feel tedious, but it will form part of
+the core of how the Parallel Tempering algorithm works, where we
+need to be ablt to run multiple chains through a sampler at the
+same time.
+
+We will set things up soon so that if you do not provide these
+functions (but if you do provide state), then your sampler will
+work, but it will fail informatively when you try and continue it.
+}
+
