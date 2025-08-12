@@ -454,40 +454,6 @@ restart_data <- function(res, model, sampler, runner, thinning_factor) {
 }
 
 
-restart_data2 <- function(res, model, sampler, runner, thinning_factor) {
-  if (is.null(names(res))) {
-    ## The state of the chain
-    chain <- list(
-      pars = array_bind(arrays = lapply(res, "[[", "pars"), after = 1),
-      density = array_bind(arrays = lapply(res, "[[", "density"), before = 1),
-      observations = lapply(res, "[[", "observations"))
-    rng <- lapply(res, function(x) x$internal$state$rng)
-    sampler <-
-
-
-
-    state <- lapply(res, function(x) x$internal$state)
-  } else {
-    ## Prevented elsewhere, requires the filter to be rewritten a bit.
-    stopifnot(is.null(res$internal$state$model_rng))
-    n_chains <- length(res$internal$state$chain$density)
-    state <- lapply(seq_len(n_chains), function(i) {
-      list(chain = list(
-             pars = res$internal$state$chain$pars[, i],
-             density = res$internal$state$chain$density[i],
-             observation = NULL),
-           rng = res$internal$state$rng[[i]],
-           sampler = res$internal$state$sampler[[i]],
-           model_rng = NULL)
-    })
-  }
-  list(state = state,
-       model = model,
-       sampler = sampler,
-       runner = runner,
-       thinning_factor = thinning_factor)
-}
-
 
 direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
   for (i in seq_len(max_attempts)) {
