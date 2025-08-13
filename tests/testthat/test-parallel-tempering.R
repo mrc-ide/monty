@@ -106,3 +106,9 @@ test_that("can continue a parallel tempering chain", {
 
   expect_equal(res2$pars, cmp$pars)
 })
+
+
+test_that("can validate beta", {
+  expect_equal(validate_parallel_tempering_beta(10, NULL),
+               seq(1, 0, length.out = 11))
+})

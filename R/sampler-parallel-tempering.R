@@ -61,9 +61,10 @@
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_sampler_parallel_tempering <- function(n_rungs, sampler, base = NULL) {
-  assert_scalar_size(n_rungs, allow_zero = FALSE)
+monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
+                                             beta = NULL, base = NULL) {
   assert_is(sampler, "monty_sampler")
+  beta <- validate_parallel_tempering_beta(n_rungs, beta)
 
   if (!is.null(base)) {
     ## These checks also need doing on the split model, perhaps?
@@ -73,12 +74,10 @@ monty_sampler_parallel_tempering <- function(n_rungs, sampler, base = NULL) {
     require_deterministic(base, "Can't use 'base' as a base model")
   }
 
-  control <- list(n_rungs = n_rungs,
-                  beta = seq(1, 0, length.out = n_rungs + 1),
+  control <- list(n_rungs = length(beta) - 1L,
+                  beta = beta,
                   sampler = sampler,
-                  base = base,
-                  idx_cold = 1L,
-                  idx_hot = n_rungs + 1L)
+                  base = base)
 
   monty_sampler(sprintf("Parallel Tempering [%s]", sampler$name),
                 "monty_sampler_parallel_tempering",
@@ -116,7 +115,6 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
             all(beta >= 0),
             all(beta <= 1))
 
-  ## TODO: Tidy this up once we're correct.
   model_base <- parallel_tempering_base(model, control)
   model_scaled <- parallel_tempering_scale(model, control)
 
@@ -431,4 +429,38 @@ parallel_tempering_base <- function(model, control) {
     }
   }
   base
+}
+
+
+validate_parallel_tempering_beta <- function(n_rungs, beta,
+                                             call = parent.frame()) {
+  if (is.null(n_rungs) && is.null(beta)) {
+    cli::cli_abort("One of 'n_rungs' or 'beta' must be provided",
+                   call = call)
+  }
+  if (!is.null(n_rungs) && !is.null(beta) && length(beta) != n_rungs) {
+    cli::cli_abort("Only one of 'n_rungs' or 'beta' may be provided",
+                   call = call)
+  }
+  if (is.null(beta)) {
+    if (n_rungs < 2) {
+      cli::cli_abort("'n_rungs' must be at least 2",
+                     call = call, arg = "n_rungs")
+    }
+    return(seq(1, 0, length.out = n_rungs + 1L))
+  }
+  if (length(beta) < 2) {
+    cli::cli_abort("At least two 'beta' values are required")
+  }
+  if (beta[[1]] != 1) {
+    cli::cli_abort("'beta[1]' must be 1", call = call, arg = "beta")
+  }
+  if (last(beta) != 0) {
+    cli::cli_abort("'beta[{length(beta)}]' (the last value) must be 0",
+                   call = call, arg = "beta")
+  }
+  if (!all(diff(beta) < 0)) {
+    cli::cli_abort("'beta' must be strictly decreasing, with no ties",
+                   call = call, arg = "beta")
+  }
 }
