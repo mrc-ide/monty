@@ -21,7 +21,11 @@ least 1.  We will run a total of \code{n_rungs + 1} chains, with one
 of these being your target distribution and one being a direct
 sample from your base model (often your prior).}
 
-\item{beta}{A vector of beta values}
+\item{beta}{A vector of beta values.  If provided, then \code{n_rungs}
+should not be provided, and \code{beta} should be a vector of at
+least length 2, where the first value is 1, the last value is 0
+and the values in between form a strictly decreasing sequence
+(i.e., no increases, no ties).}
 
 \item{base}{An optional base model, which must be provided if your
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using

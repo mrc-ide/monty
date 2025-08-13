@@ -43,7 +43,11 @@
 ##'   of these being your target distribution and one being a direct
 ##'   sample from your base model (often your prior).
 ##'
-##' @param beta A vector of beta values
+##' @param beta A vector of beta values.  If provided, then `n_rungs`
+##'   should not be provided, and `beta` should be a vector of at
+##'   least length 2, where the first value is 1, the last value is 0
+##'   and the values in between form a strictly decreasing sequence
+##'   (i.e., no increases, no ties).
 ##'
 ##' @param sampler A sampler to use for the underlying chains.  You
 ##'   might use something like `monty_sampler_random_walk(vcv)` for a
@@ -245,11 +249,6 @@ sampler_parallel_tempering_dump <- function(state, control) {
 }
 
 
-## It's not clear that we really want this nicely folded up this way,
-## because we can't really run a PT sampler with the simultaneous
-## runner, so we could probably just return 'state' directly here,
-## which is what I'll do on attempt 1.  One reason not do this is so
-## that we can get the underlying chain details back out?
 sampler_parallel_tempering_combine <- function(state, control) {
   join <- function(name, ...) {
     array_bind(arrays = lapply(state, "[[", name), ...)
