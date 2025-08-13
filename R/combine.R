@@ -106,6 +106,8 @@ monty_model_combine <- function(a, b, properties = NULL,
 
   properties$allow_multiple_parameters <-
     model_combine_allow_multiple_parameters(parts, properties)
+  properties$has_parameter_groups <-
+    model_combine_has_parameter_groups(parts, properties)
 
   domain <- model_combine_domain(parts, parameters)
   density <- model_combine_density(parts, parameters,
@@ -121,6 +123,9 @@ monty_model_combine <- function(a, b, properties = NULL,
     parts, parameters, properties, call)
   restore <- model_combine_restore(
     parts)
+  parameter_groups <- model_combine_parameter_groups(
+    parts, parameters, properties$has_parameter_groups
+  )
 
   data <- list(
     parts = unname(parts),
@@ -130,6 +135,7 @@ monty_model_combine <- function(a, b, properties = NULL,
   monty_model(
     list(data = data,
          parameters = parameters,
+         parameter_groups = parameter_groups,
          domain = domain,
          density = density,
          gradient = gradient,
@@ -234,6 +240,10 @@ model_combine_density <- function(parts, parameters,
   b <- parts[[2]]
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
+  
+  has_density_by_group <- "by_group" %in% names(formals(a$density)) &&
+    "by_group" %in% names(formals(b$density))
+  
   if (allow_multiple_parameters) {
     function(x, ...) {
       if (is.matrix(x)) {
@@ -244,8 +254,23 @@ model_combine_density <- function(parts, parameters,
       }
     }
   } else {
-    function(x, ...) {
-      a$density(x[i_a], ...) + b$density(x[i_b], ...)
+    if (has_density_by_group) {
+      function(x, by_group = FALSE, ...) {
+        density_a <- a$density(x[i_a], by_group, ...)
+        density_b <- b$density(x[i_b], by_group, ...)
+        value <- density_a + density_b
+        if (by_group) {
+          value_by_group <- attr(density_a, "by_group") + 
+            attr(density_b, "by_group")
+          structure(value, "by_group" = value_by_group)
+        } else {
+          value
+        }
+      }
+    } else {
+      function(x, ...) {
+        a$density(x[i_a], ...) + b$density(x[i_b], ...)
+      }
     }
   }
 }
@@ -458,6 +483,74 @@ model_combine_allow_multiple_parameters <- function(parts, properties,
     paste("Can't specify 'allow_multiple_parameters = TRUE' as this is",
           "not supported by both of your models"),
     call = call)
+}
+
+
+model_combine_has_parameter_groups <- function(parts, properties,
+                                               call = parent.frame()) {
+  a <- parts[[1]]
+  b <- parts[[2]]
+  if (isFALSE(properties$has_parameter_groups)) {
+    return(FALSE)
+  }
+  possible <- a$properties$has_parameter_groups &&
+    b$properties$has_parameter_groups
+  if (possible) {
+    return(TRUE)
+  }
+  required <- isTRUE(properties$has_parameter_groups)
+  if (!required) {
+    return(FALSE)
+  }
+  cli::cli_abort(
+    paste("Can't specify 'has_parameter_groups = TRUE' as this is",
+          "not supported by both of your models"),
+    call = call)
+}
+
+
+model_combine_parameter_groups <- function(parts, parameters,
+                                           has_parameter_groups, call = NULL) {
+  
+  if (!has_parameter_groups) {
+    return(NULL)
+  }
+    
+  a <- parts[[1]]
+  b <- parts[[2]]
+  
+  groups_a <- sort(setdiff(unique(a$parameter_groups), 0))
+  groups_b <- sort(setdiff(unique(b$parameter_groups), 0))
+  
+  if (!identical(groups_a, groups_b)) {
+    cli::cli_abort(
+      "Incompatible parameter groups between your two models",
+      call = call)
+  }
+  
+  parameter_groups <- integer(length(parameters))
+  
+  shared <- intersect(a$parameters, b$parameters)
+  parameter_groups_shared_a <- a$parameter_groups[match(shared, a$parameters)]
+  parameter_groups_shared_b <- b$parameter_groups[match(shared, b$parameters)]
+  compatible <- identical(parameter_groups_shared_a, parameter_groups_shared_b)
+  if (compatible) {
+    parameter_groups[match(shared, parameters)] <- parameter_groups_shared_a
+  } else {
+    cli::cli_abort(
+      "Incompatible parameter groups between your two models",
+      call = call)
+  }
+  
+  a_only <- setdiff(a$parameters, b$parameters)
+  parameter_groups[match(a_only, parameters)] <- 
+    a$parameter_groups[match(a_only, a$parameters)]
+  
+  b_only <- setdiff(b$parameters, a$parameters)
+  parameter_groups[match(b_only, parameters)] <- 
+    b$parameter_groups[match(b_only, b$parameters)]
+  
+  parameter_groups
 }
 
 
