@@ -84,28 +84,29 @@ monty_sampler_parallel_tempering <- function(n_rungs, sampler, base = NULL) {
                 "monty_sampler_parallel_tempering",
                 control,
                 sampler_parallel_tempering_initialise,
-                sampler_parallel_tempering_step)
+                sampler_parallel_tempering_step,
+                sampler_parallel_tempering_dump,
+                sampler_parallel_tempering_combine,
+                sampler_parallel_tempering_restore,
+                sampler_parallel_tempering_details)
 }
 
 
 sampler_parallel_tempering_initialise <- function(state_chain, control, model,
                                                   rng) {
+  ## TODO: For dust models this is going to require that they can
+  ## respond appropriately to the number of different parameter sets,
+  ## because on initialisation we'll call them with a single parameter
+  ## set (as a vector) and then later we'll use a matrix of parameter
+  ## sets.  This can be hidden away in the monty part I think, fairly
+  ## easily.  After initialisation they will only require n_rungs
+  ## samples every time.
+  ##
   ## TODO: prevent observers
-  ## TODO: prevent stochastic models; there's some trick there with
-  ## updating the state I think.
   if (length(dim2(state_chain$pars)) > 1) {
     ## This should be advertised by a property of the sampler, and we
     ## should also be able to support this fairly easily.
     cli::cli_abort("Can't use parallel tempering with multiple parameter sets")
-  }
-
-  if (is.null(control$base)) {
-    base <- monty_model_split(model, prior_first = TRUE)[[1L]]
-  } else {
-    ## TODO: we could allow setequal and reorder
-    if (!identical(base$parameters, model$parameters)) {
-      cli::cli_abort("'base' and 'model' must have the same parameters")
-    }
   }
 
   n_rungs <- control$n_rungs
@@ -115,21 +116,16 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
             all(beta >= 0),
             all(beta <= 1))
 
-  ## TODO: For dust models this is going to require that they can
-  ## respond appropriately to the number of different parameter sets,
-  ## because on initialisation we'll call them with a single parameter
-  ## set (as a vector) and then later we'll use a matrix of parameter
-  ## sets.  This can be hidden away in the monty part I think, fairly
-  ## easily.  After initialisation they will only require n_rungs
-  ## samples every time.
+  ## TODO: Tidy this up once we're correct.
+  model_base <- parallel_tempering_base(model, control)
+  model_scaled <- parallel_tempering_scale(model, control)
 
   ## A caching calculator for the hot chain.  This will work in
   ## batches of size 'n_rungs' to match the main sampler.
-  hot <- parallel_tempering_hot(model, base, n_rungs)
+  hot <- parallel_tempering_hot(model, control)
 
-  model_scaled <- parallel_tempering_scale(model, base, beta[-length(beta)])
-
-  pars <- cbind(state_chain$pars, direct_sample_many(n_rungs - 1, base, rng))
+  pars <- cbind(state_chain$pars,
+                direct_sample_many(n_rungs - 1, model_base, rng))
   sub_state_chain <- list(pars = pars, density = model_scaled$density(pars))
 
   ## And initialise the sampler:
@@ -139,12 +135,9 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
     model_scaled,
     rng)
 
-  ## We also need this for the base model:
-  hot <- parallel_tempering_hot(model, base, n_rungs)
-
   env <- new.env(parent = emptyenv())
-  env$model <- model_scaled
-  env$base <- base
+  env$model_scaled <- model_scaled
+  env$model_base <- model_base
   env$sub_state_chain <- sub_state_chain
   env$sub_state_sampler <- sub_state_sampler
   env$hot <- hot
@@ -169,7 +162,7 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## Update step for all chains except the hot chain:
   sub_state_chain <- control$sampler$step(
     sub_state_chain, state_sampler$sub_state_sampler,
-    control$sampler$control, state_sampler$model, rng)
+    control$sampler$control, state_sampler$model_scaled, rng)
 
   ## And draw a sample from the hot chain (which might trigger a run)
   hot <- state_sampler$hot$sample(rng)
@@ -179,7 +172,7 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 
   ## Compute the base density for everything; assume that this is
   ## quick enough that we can just recompute it each time.
-  d_base <- state_sampler$base$density(pars)
+  d_base <- state_sampler$model_base$density(pars)
   d_value <- c(sub_state_chain$density, d_base[[idx_hot]])
   d_target <- (d_value - (1 - beta) * d_base) / beta
   d_target[[idx_hot]] <- hot$density
@@ -241,6 +234,78 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 }
 
 
+sampler_parallel_tempering_dump <- function(state, control) {
+  sub_state_sampler <- control$sampler$state$dump(state$sub_state_sampler,
+                                                  control$sampler$control)
+  list(accept_swap = state$accept_swap,
+       even_step = state$even_step,
+       hot = state$hot$dump(),
+       sub_state_chain = state$sub_state_chain,
+       sub_state_sampler = sub_state_sampler)
+}
+
+
+## It's not clear that we really want this nicely folded up this way,
+## because we can't really run a PT sampler with the simultaneous
+## runner, so we could probably just return 'state' directly here,
+## which is what I'll do on attempt 1.  One reason not do this is so
+## that we can get the underlying chain details back out?
+sampler_parallel_tempering_combine <- function(state, control) {
+  join <- function(name, ...) {
+    array_bind(arrays = lapply(state, "[[", name), ...)
+  }
+  accept_swap <- join("accept_swap", on = 2)
+  even_step <- vlapply(state, "[[", "even_step")
+  hot <- lapply(state, "[[", "hot")
+  sub_state_chain <- lapply(state, "[[", "sub_state_chain")
+  sub_state_sampler <- control$sampler$state$combine(
+    lapply(state, "[[", "sub_state_sampler"))
+  list(accept_swap = accept_swap,
+       even_step = even_step,
+       hot = hot,
+       sub_state_chain = sub_state_chain,
+       sub_state_sampler = sub_state_sampler)
+}
+
+
+sampler_parallel_tempering_restore <- function(chain_id, state_chain,
+                                               state_sampler, control,
+                                               model) {
+  stopifnot(length(chain_id) == 1)
+
+  model_base <- parallel_tempering_base(model, control)
+  model_scaled <- parallel_tempering_scale(model, control)
+
+  sub_state_chain <- state_sampler$sub_state_chain[[chain_id]]
+  sub_state_sampler <- control$sampler$state$restore(
+    chain_id,
+    sub_state_chain,
+    state_sampler$sub_state_sampler,
+    control$sampler$control,
+    model_scaled)
+  hot <- parallel_tempering_hot(model, control, state_sampler$hot[[chain_id]])
+  even_step <- state_sampler$even_step[[chain_id]]
+  accept_swap <- state_sampler$accept_swap[, chain_id]
+
+  env <- new.env(parent = emptyenv())
+  env$model_scaled <- model_scaled
+  env$model_base <- model_base
+  env$sub_state_chain <- sub_state_chain
+  env$sub_state_sampler <- sub_state_sampler
+  env$hot <- hot
+  env$even_step <- even_step
+  env$accept_swap <- accept_swap
+  env
+}
+
+
+sampler_parallel_tempering_details <- function(state, control) {
+  list(accept_swap = state$accept_swap,
+       sampler = control$sampler$state$details(state$sub_state_sampler))
+}
+
+
+
 ## A caching direct sampler; we draw 'size' samples from the base
 ## distribution (perhaps the prior) and compute the true model density
 ## for all of these at once, then return these one at a time (so the
@@ -249,13 +314,16 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 ## threads (which will be the same as 'size') then calculating from
 ## the prior will be as efficient as the samples from the other
 ## chains.
-parallel_tempering_hot <- function(model, base, size) {
-  force(model)
-  force(base)
+parallel_tempering_hot <- function(model, control, state = NULL) {
+  model_base <- parallel_tempering_base(model, control)
+  size <- control$n_rungs
 
   env <- new.env(parent = emptyenv())
-  env$size <- size
   env$index <- size
+
+  if (!is.null(state)) {
+    list2env(state, env)
+  }
 
   sample <- function(rng) {
     if (env$index >= size) {
@@ -272,22 +340,18 @@ parallel_tempering_hot <- function(model, base, size) {
     as.list(env, sorted = TRUE)
   }
 
-  restore <- function(state) {
-    list2env(state, env)
-  }
-
-  list(sample = sample, dump = dump, restore = restore)
+  list(sample = sample, dump = dump)
 }
 
 
 ## This will be used for everything *except* the hottest chain (beta =
 ## 0), and we set this up so that it can present itself as something
 ## that can be used in any of the normal samplers.
-parallel_tempering_scale <- function(target, base, beta) {
-  env <- new.env()
-  env$beta <- beta
+parallel_tempering_scale <- function(target, control) {
+  base <- parallel_tempering_base(target, control)
+  beta <- control$beta[-length(control$beta)]
 
-  density <- function(x, beta = env$beta) {
+  density <- function(x) {
     d_target <- target$density(x)
     d_base <- base$density(x)
     ## equivalently
@@ -354,4 +418,17 @@ direct_sample_many <- function(n, model, rng) {
   matrix(
     vapply(seq_len(n), function(i) model$direct_sample(rng), numeric(n_pars)),
     n_pars)
+}
+
+
+parallel_tempering_base <- function(model, control) {
+  if (is.null(control$base)) {
+    base <- monty_model_split(model, prior_first = TRUE)[[1L]]
+  } else {
+    ## TODO: we could allow setequal and reorder
+    if (!identical(base$parameters, model$parameters)) {
+      cli::cli_abort("'base' and 'model' must have the same parameters")
+    }
+  }
+  base
 }

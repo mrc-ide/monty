@@ -273,7 +273,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   state <- list(
     chain = chain_state,
     rng = monty_rng_state(rng),
-    sampler = sampler$state$dump(sampler_state),
+    sampler = sampler$state$dump(sampler_state, sampler$control),
     model_rng = if (model$properties$is_stochastic) model$rng_state$get())
 
   list(

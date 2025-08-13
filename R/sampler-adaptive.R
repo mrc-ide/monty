@@ -267,7 +267,7 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
 }
 
 
-sampler_random_walk_adaptive_details <- function(state) {
+sampler_random_walk_adaptive_details <- function(state, control) {
   ## Dropping these, as we had previously decided to -- we could
   ## return them too but no real need.
   state[setdiff(names(state), c("history_pars", "scaling"))]
@@ -470,7 +470,7 @@ validate_forget_rate <- function(forget_rate, call = parent.frame()) {
 }
 
 
-sampler_random_walk_adaptive_state_dump <- function(state) {
+sampler_random_walk_adaptive_state_dump <- function(state, control) {
   ret <- as.list(state, sorted = TRUE)
 
   ## 'history_pars' is stored in a flat vector for easy accumulation,
@@ -515,7 +515,7 @@ sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
 }
 
 
-sampler_random_walk_adaptive_state_combine <- function(state) {
+sampler_random_walk_adaptive_state_combine <- function(state, control) {
   ## The dimension order is always <pars>, <step>, <chain> so when
   ## combining results for single chain we have:
   ##

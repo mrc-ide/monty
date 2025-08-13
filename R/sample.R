@@ -363,8 +363,9 @@ combine_chains <- function(res, sampler, observer, include_state) {
   ## Then process the internal state of all the components
   state <- lapply(res, "[[", "state")
 
-  sampler_state <- sampler$state$combine(lapply(state, "[[", "sampler"))
-  details <- sampler$state$details(sampler_state)
+  sampler_state <- sampler$state$combine(lapply(state, "[[", "sampler"),
+                                         sampler$control)
+  details <- sampler$state$details(sampler_state, sampler$control)
 
   if (include_state) {
     model_rng <- lapply(state, "[[", "model_rng")

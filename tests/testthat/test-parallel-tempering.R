@@ -8,12 +8,12 @@ test_that("can run a PT sampler", {
   sampler <- monty_sampler_parallel_tempering(
     n_rungs = 10,
     sampler = monty_sampler_random_walk(vcv = matrix(0.1)))
-  res <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  res <- monty_sample(posterior, sampler, 50, n_chains = 4)
 
-  skip("update state")
   expect_type(res$details, "list")
-  expect_equal(names(res$details[[1]]), "accept_swap")
-  expect_length(res$details[[1]]$accept_swap, 10)
+  expect_setequal(names(res$details), c("accept_swap", "sampler"))
+  expect_equal(dim(res$details$accept_swap), c(10, 4))
+  expect_null(res$details$sampler))
 })
 
 
@@ -36,10 +36,10 @@ test_that("can sample with base model", {
 
   res <- monty_sample(posterior, sampler, 100, n_chains = 4)
 
-  skip("update state")
   expect_type(res$details, "list")
-  expect_equal(names(res$details[[1]]), "accept_swap")
-  expect_length(res$details[[1]]$accept_swap, 10)
+  expect_setequal(names(res$details), c("accept_swap", "sampler"))
+  expect_equal(dim(res$details$accept_swap), c(10, 4))
+  expect_null(res$details$sampler)
 })
 
 
@@ -85,7 +85,6 @@ test_that("base model and target must have same parameters", {
 
 ## This tests get/set of the internal state
 test_that("can continue a parallel tempering chain", {
-  skip("rewrite state")
   likelihood <- ex_mixture(5)
   prior <- monty_dsl({
     x ~ Normal(0, 10)
@@ -93,13 +92,17 @@ test_that("can continue a parallel tempering chain", {
   posterior <- likelihood + prior
 
   set.seed(1)
-  s <- monty_sampler_parallel_tempering(n_rungs = 10, vcv = matrix(0.1))
-  res1 <- monty_sample(posterior, s, 30, n_chains = 4, restartable = TRUE)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_random_walk(vcv = matrix(0.1)))
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
   res2 <- monty_sample_continue(res1, 70)
 
   set.seed(1)
-  s <- monty_sampler_parallel_tempering(n_rungs = 10, vcv = matrix(0.1))
-  cmp <- monty_sample(posterior, s, 100, n_chains = 4)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_random_walk(vcv = matrix(0.1)))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
 
   expect_equal(res2$pars, cmp$pars)
 })
