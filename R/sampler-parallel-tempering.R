@@ -188,18 +188,15 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## Then we need to pool everything to make the bookkeeping here a
   ## bit more palatable:
   pars <- cbind(sub_state_chain$pars, hot$pars)
-  details <- cbind(sub_state_chain$details, hot$details)
 
   ## Compute the base density for everything; assume that this is
   ## quick enough that we can just recompute it each time.
   d_base <- state_sampler$base$density(pars)
-  d_value <- c(sub_state_chain$details["value", ], hot$details[["value"]])
+  d_value <- c(sub_state_chain$details["value", ], d_base[[idx_hot]])
   d_target <- (d_value - (1 - beta) * d_base) / beta
-  d_target[[idx_hot]] <- hot$details[["target"]]
+  d_target[[idx_hot]] <- hot$density
 
-  details2 <- rbind(target = d_target, base = d_base, value = d_value)
-  stopifnot(isTRUE(all.equal(details2, details)))
-  details <- details2
+  details <- rbind(target = d_target, base = d_base, value = d_value)
 
   ## TODO: we can really simplify everything if we tolerate just
   ## computing 'base' again really, and then treating the hot chain a
@@ -285,18 +282,12 @@ parallel_tempering_hot <- function(model, base, size) {
   sample <- function(rng) {
     if (env$index >= size) {
       env$pars <- direct_sample_many(size, model, rng)
-      env$density_model <- model$density(env$pars)
-      env$density_base <- base$density(env$pars)
+      env$density <- model$density(env$pars)
       env$index <- 0L
     }
     i <- env$index <- env$index + 1L
-
-    details <- c(target = env$density_model[[i]],
-                 base = env$density_base[[i]],
-                 value = env$density_base[[i]])
-
     list(pars = env$pars[, i, drop = FALSE],
-         details = details)
+         density = env$density[[i]])
   }
 
   dump <- function() {
