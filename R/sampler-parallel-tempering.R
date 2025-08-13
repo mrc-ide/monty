@@ -303,7 +303,6 @@ sampler_parallel_tempering_details <- function(state, control) {
 }
 
 
-
 ## A caching direct sampler; we draw 'size' samples from the base
 ## distribution (perhaps the prior) and compute the true model density
 ## for all of these at once, then return these one at a time (so the
@@ -419,13 +418,15 @@ direct_sample_many <- function(n, model, rng) {
 }
 
 
-parallel_tempering_base <- function(model, control) {
+parallel_tempering_base <- function(model, control, call = parent.frame()) {
   if (is.null(control$base)) {
     base <- monty_model_split(model, prior_first = TRUE)[[1L]]
   } else {
+    base <- control$base
     ## TODO: we could allow setequal and reorder
     if (!identical(base$parameters, model$parameters)) {
-      cli::cli_abort("'base' and 'model' must have the same parameters")
+      cli::cli_abort("'base' and 'model' must have the same parameters",
+                     call = call)
     }
   }
   base
