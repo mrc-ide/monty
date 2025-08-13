@@ -117,7 +117,7 @@ sampler_hmc_step <- function(state_chain, state_sampler, control, model, rng) {
 }
 
 
-sampler_hmc_dump <- function(state) {
+sampler_hmc_dump <- function(state, control) {
   history <- state$history$dump()
   if (length(history) == 0) {
     return(NULL)
@@ -126,7 +126,7 @@ sampler_hmc_dump <- function(state) {
 }
 
 
-sampler_hmc_combine <- function(state) {
+sampler_hmc_combine <- function(state, control) {
   if (all(vlapply(state, is.null))) {
     return(NULL)
   }
@@ -157,7 +157,7 @@ sampler_hmc_restore <- function(chain_id, state_chain, state_sampler, control,
 }
 
 
-sampler_hmc_details <- function(state) {
+sampler_hmc_details <- function(state, control) {
   state
 }
 
