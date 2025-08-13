@@ -220,13 +220,6 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 
     pars[, i_to] <- pars[, i_from]
     details[, i_to] <- details[, i_from]
-    ## For completeness, write the beta in here, though we could just do
-    ##
-    ## details["beta", ] <- beta
-    ##
-    ## and reset all.  That said, we never look this up, so we might
-    ## also just drop it soon for simplicity.
-    details["beta", i_to] <- details["beta", i_from]
 
     ## The value of 'value' here will be wrong, so update that for the
     ## current 'beta'.  This can also be updated based on some sort of
@@ -319,8 +312,7 @@ parallel_tempering_scale <- function(target, base, beta) {
                      density = value,
                      details = rbind(target = d_target,
                                      base = d_base,
-                                     value = value,
-                                     beta = beta))
+                                     value = value))
 
     value
   }
