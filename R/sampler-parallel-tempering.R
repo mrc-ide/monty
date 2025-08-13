@@ -43,6 +43,8 @@
 ##'   of these being your target distribution and one being a direct
 ##'   sample from your base model (often your prior).
 ##'
+##' @param beta A vector of beta values
+##'
 ##' @param sampler A sampler to use for the underlying chains.  You
 ##'   might use something like [monty_sampler_random_walk(vcv)] for a
 ##'   random walk sampler embedded in this parallel tempering scheme.

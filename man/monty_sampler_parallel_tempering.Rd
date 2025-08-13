@@ -4,17 +4,24 @@
 \alias{monty_sampler_parallel_tempering}
 \title{Parallel Tempering Sampler}
 \usage{
-monty_sampler_parallel_tempering(n_rungs, sampler, base = NULL)
+monty_sampler_parallel_tempering(
+  sampler,
+  n_rungs = NULL,
+  beta = NULL,
+  base = NULL
+)
 }
 \arguments{
+\item{sampler}{A sampler to use for the underlying chains.  You
+might use something like \link{monty_sampler_random_walk(vcv)} for a
+random walk sampler embedded in this parallel tempering scheme.}
+
 \item{n_rungs}{The number of \strong{extra} chains to run, must be at
 least 1.  We will run a total of \code{n_rungs + 1} chains, with one
 of these being your target distribution and one being a direct
 sample from your base model (often your prior).}
 
-\item{sampler}{A sampler to use for the underlying chains.  You
-might use something like \link{monty_sampler_random_walk(vcv)} for a
-random walk sampler embedded in this parallel tempering scheme.}
+\item{beta}{A vector of beta values}
 
 \item{base}{An optional base model, which must be provided if your
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using
