@@ -163,6 +163,9 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   idx_hot <- n_rungs + 1L
   sub_state_chain <- state_sampler$sub_state_chain
 
+  ## At this point, if the chain state and the sub-sampler state
+  ## differ we should do something about it.
+
   ## Update step for all chains except the hot chain:
   sub_state_chain <- control$sampler$step(
     sub_state_chain, state_sampler$sub_state_sampler,
@@ -189,16 +192,10 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
   ##
   ## NOTE: this is done against the *actual* densities, not the ones
-  ## scaled by beta.
-  ##
-  ## TODO: I think that the pmin here can be dropped, because it takes
-  ## a value greater than zero and reduces it to zero, which is still
-  ## higher than any log(U(0, 1)), so does not affect the acceptance.
-  ## We can hash samples later an compare.
-  alpha <- pmin(
-    0,
-    (beta[i2] - beta[i1]) * (
-      (d_target[i1] - d_base[i1]) - (d_target[i2] - d_base[i2])))
+  ## scaled by beta.  This can be wrapped in pmin(alpha, 0) but this
+  ## has no practical effect.
+  alpha <- (beta[i2] - beta[i1]) * (
+    (d_target[i1] - d_base[i1]) - (d_target[i2] - d_base[i2]))
   u <- monty_random_n_real(length(i1), rng)
   accept <- log(u) < alpha
 
@@ -206,34 +203,52 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
     i_to <- c(i1[accept], i2[accept])
     i_from <- c(i2[accept], i1[accept])
 
+    ## Shuffle around pars and the *real* densities 'base' and 'target'
     pars[, i_to] <- pars[, i_from]
-
     d_base[i_to] <- d_base[i_from]
     d_target[i_to] <- d_target[i_from]
+
+    ## But recompute the density that we use in the sub sampler,
+    ## because we've reordered the densities with respect to the
+    ## vector of betas at this point.
     d_value[i_to] <-
       beta[i_to] * d_target[i_to] + (1 - beta[i_to]) * d_base[i_to]
 
-    ## Then we save state for the sub chains
+    ## Then we save state for the sub chains, but we don't save the
+    ## hot chain here at all.
     sub_state_chain$pars <- pars[, -idx_hot, drop = FALSE]
     sub_state_chain$density <- d_value[-idx_hot]
-
-    ## Update the real chain; we're avoiding update_state here though.
-    ## If we have observers, this is the right place to pull from in
-    ## the case where i_to[[1]] is 1, but we need to observe from
-    ## i_from[[1]]; we'll have these all in the sub chain state
-    ## though, I think
-    state_chain$pars <- sub_state_chain$pars[, 1]
-    state_chain$density <- sub_state_chain$density[[1]]
   }
 
+  ## Update the real chain; this will have changed if we have either
+  ## accepted a step from the sub sampler, or if we've swapped between
+  ## chains.  We're avoiding update_state here because of this weird
+  ## acceptance rule, but if we have observers, this is the right
+  ## place to pull from in the case where i_to[[1]] is 1, but we need
+  ## to observe from i_from[[1]]; we'll have these all in the sub
+  ## chain state though, I think.
+  state_chain$pars <- sub_state_chain$pars[, 1]
+  state_chain$density <- sub_state_chain$density[[1]]
+
   state_sampler$sub_state_chain <- sub_state_chain
-  state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
   state_sampler$even_step <- !state_sampler$even_step
+
+  ## We track swap acceptances so that the beta values can be tuned,
+  ## though this not yet implemented.
+  state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
 
   state_chain
 }
 
 
+## A caching direct sampler; we draw 'size' samples from the base
+## distribution (perhaps the prior) and compute the true model density
+## for all of these at once, then return these one at a time (so the
+## actual calculation only happens every 'size' steps).  This means
+## that if the model is configured to run in parallel with 'n_rungs'
+## threads (which will be the same as 'size') then calculating from
+## the prior will be as efficient as the samples from the other
+## chains.
 parallel_tempering_hot <- function(model, base, size) {
   force(model)
   force(base)
@@ -266,7 +281,8 @@ parallel_tempering_hot <- function(model, base, size) {
 
 
 ## This will be used for everything *except* the hottest chain (beta =
-## 0), and we set this up so that we can adva
+## 0), and we set this up so that it can present itself as something
+## that can be used in any of the normal samplers.
 parallel_tempering_scale <- function(target, base, beta) {
   env <- new.env()
   env$beta <- beta
