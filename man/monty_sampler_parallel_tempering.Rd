@@ -20,8 +20,10 @@ random walk sampler embedded in this parallel tempering scheme.}
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using
 this within a Bayesian context and you want to use an
 alternative easy-to-sample-from reference distribution.  We
-require that this model can be directly sampled from, and we
-will assume (soon) that it is cheap to compute.}
+require that this model can be directly sampled from, that it
+accepts multiple parameters (as a matrix), that it is
+deterministic and we assume that it is cheap to compute
+(relative to the target).}
 }
 \value{
 A \code{monty_sampler} object, which can be used with
