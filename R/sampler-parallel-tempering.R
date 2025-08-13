@@ -110,7 +110,10 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
 
   n_rungs <- control$n_rungs
   beta <- control$beta
-  stopifnot(last(beta) == 0)
+  stopifnot(last(beta) == 0,
+            all(diff(beta) < 0),
+            all(beta >= 0),
+            all(beta <= 1))
 
   ## TODO: For dust models this is going to require that they can
   ## respond appropriately to the number of different parameter sets,
@@ -127,15 +130,7 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   model_scaled <- parallel_tempering_scale(model, base, beta[-length(beta)])
 
   pars <- cbind(state_chain$pars, direct_sample_many(n_rungs - 1, base, rng))
-  ## This bit of initialisation could be tidied up I think; in
-  ## particular, who is responsible for tracking the additional state
-  ## associated with the auxillary chains.  For now, leave them in the
-  ## chain state but that is not ideal.
-  density <- model_scaled$density(pars)
-  sub_state_chain <- model_scaled$model$last_density()
-
-  stopifnot(density[[1]] == state_chain$density,
-            sub_state_chain$density[[1]] == state_chain$density)
+  sub_state_chain <- list(pars = pars, density = model_scaled$density(pars))
 
   ## And initialise the sampler:
   sub_state_sampler <- control$sampler$initialise(
@@ -165,6 +160,7 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## Unpack some useful quantities:
   beta <- control$beta
   n_rungs <- control$n_rungs
+  idx_hot <- n_rungs + 1L
   sub_state_chain <- state_sampler$sub_state_chain
 
   ## Update step for all chains except the hot chain:
@@ -172,43 +168,18 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
     sub_state_chain, state_sampler$sub_state_sampler,
     control$sampler$control, state_sampler$model, rng)
 
-  ## Then we update the sub components of density for these where we
-  ## accepted a new point:
-  density <- state_sampler$model$model$last_density()
-  accepted <- apply(density$pars == sub_state_chain$pars, 2, all)
-  if (any(accepted)) {
-    sub_state_chain$details[, accepted] <-
-      density$details[, accepted]
-  }
-
   ## And draw a sample from the hot chain (which might trigger a run)
   hot <- state_sampler$hot$sample(rng)
-  idx_hot <- n_rungs + 1L
 
-  ## Then we need to pool everything to make the bookkeeping here a
-  ## bit more palatable:
+  ## Then we need to pool everything:
   pars <- cbind(sub_state_chain$pars, hot$pars)
 
   ## Compute the base density for everything; assume that this is
   ## quick enough that we can just recompute it each time.
   d_base <- state_sampler$base$density(pars)
-  d_value <- c(sub_state_chain$details["value", ], d_base[[idx_hot]])
+  d_value <- c(sub_state_chain$density, d_base[[idx_hot]])
   d_target <- (d_value - (1 - beta) * d_base) / beta
   d_target[[idx_hot]] <- hot$density
-
-  details <- rbind(target = d_target, base = d_base, value = d_value)
-
-  ## TODO: we can really simplify everything if we tolerate just
-  ## computing 'base' again really, and then treating the hot chain a
-  ## bit separately, because we can do all the calculations without
-  ## having to make the model stateful.
-
-  ## At this point we can easily confirm that the densities have the
-  ## expected relationship:
-  ## details["value", ] -
-  ##   (beta * details["target", ] + (1 - beta) * details["base", ])
-  ## details["value", ] -
-  ##   (beta * (details["target", ] - details["base", ]) + details["base", ])
 
   ## Start the communication step, moving the samples around across
   ## rungs:
@@ -224,11 +195,10 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## a value greater than zero and reduces it to zero, which is still
   ## higher than any log(U(0, 1)), so does not affect the acceptance.
   ## We can hash samples later an compare.
-  target <- details["target", ]
-  base <- details["base", ]
   alpha <- pmin(
     0,
-    (beta[i2] - beta[i1]) * ((target[i1] - base[i1]) - (target[i2] - base[i2])))
+    (beta[i2] - beta[i1]) * (
+      (d_target[i1] - d_base[i1]) - (d_target[i2] - d_base[i2])))
   u <- monty_random_n_real(length(i1), rng)
   accept <- log(u) < alpha
 
@@ -237,22 +207,15 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
     i_from <- c(i2[accept], i1[accept])
 
     pars[, i_to] <- pars[, i_from]
-    details[, i_to] <- details[, i_from]
 
-    ## The value of 'value' here will be wrong, so update that for the
-    ## current 'beta'.  This can also be updated based on some sort of
-    ## ratio of betas but the actual calculation here is easy enough
-    ## compared with everything else that we're doing.  We can do this
-    ## entirely with the 'i_to' index, as that captures all the
-    ## destination indices.
-    details["value", i_to] <- beta[i_to] * details["target", i_to] +
-      (1 - beta[i_to]) * details["base", i_to]
+    d_base[i_to] <- d_base[i_from]
+    d_target[i_to] <- d_target[i_from]
+    d_value[i_to] <-
+      beta[i_to] * d_target[i_to] + (1 - beta[i_to]) * d_base[i_to]
 
     ## Then we save state for the sub chains
-    idx_hot <- n_rungs + 1L
     sub_state_chain$pars <- pars[, -idx_hot, drop = FALSE]
-    sub_state_chain$details <- details[, -idx_hot, drop = FALSE]
-    sub_state_chain$density <- details["value", -idx_hot]
+    sub_state_chain$density <- d_value[-idx_hot]
 
     ## Update the real chain; we're avoiding update_state here though.
     ## If we have observers, this is the right place to pull from in
@@ -328,24 +291,7 @@ parallel_tempering_scale <- function(target, base, beta) {
     ## is fast (fixes NaN and also NA_real_).
     value[is.na(value)] <- -Inf
 
-    ## After accepting or rejecting points, we also need to keep track
-    ## of their consitutent bits.  This is relatively easy to do if we
-    ## are allowed to recompute 'base' and if beta is not zero (in
-    ## which case, the target disappears) but instead here we save all
-    ## the components of the last density calculation and later on
-    ## we'll work out which of these made it through.  We might change
-    ## this approach later though.
-    env$last <- list(pars = x,
-                     density = value,
-                     details = rbind(target = d_target,
-                                     base = d_base,
-                                     value = value))
-
     value
-  }
-
-  last_density <- function() {
-    env$last
   }
 
   properties <- target$properties
@@ -380,9 +326,7 @@ parallel_tempering_scale <- function(target, base, beta) {
          ## Below here is error prone, but should be correct for now
          parameter_groups = target$parameter_groups,
          set_rng_state = target$rng_state$set,
-         get_rng_state = target$rng_state$get,
-         ## Extra for PT:
-         last_density = last_density),
+         get_rng_state = target$rng_state$get),
     properties)
 }
 
