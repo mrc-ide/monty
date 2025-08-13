@@ -13,7 +13,7 @@ monty_sampler_parallel_tempering(
 }
 \arguments{
 \item{sampler}{A sampler to use for the underlying chains.  You
-might use something like \link{monty_sampler_random_walk(vcv)} for a
+might use something like \code{monty_sampler_random_walk(vcv)} for a
 random walk sampler embedded in this parallel tempering scheme.}
 
 \item{n_rungs}{The number of \strong{extra} chains to run, must be at

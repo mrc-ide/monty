@@ -46,7 +46,7 @@
 ##' @param beta A vector of beta values
 ##'
 ##' @param sampler A sampler to use for the underlying chains.  You
-##'   might use something like [monty_sampler_random_walk(vcv)] for a
+##'   might use something like `monty_sampler_random_walk(vcv)` for a
 ##'   random walk sampler embedded in this parallel tempering scheme.
 ##'
 ##' @param base An optional base model, which must be provided if your
