@@ -43,8 +43,6 @@ reference:
     - monty_sampler_random_walk
     - monty_sampler_adaptive
     - monty_sampler_hmc
-    - monty_sampler_nested_random_walk
-    - monty_sampler_nested_adaptive
     - monty_sampler_parallel_tempering
 
   - subtitle: Chain runners
@@ -71,6 +69,10 @@ reference:
     - monty_domain_expand
     - monty_samples_thin
     - with_trace_random
+
+  - subtitle: Advanced
+    contents:
+    - monty_sampler
 
   - title: Random numbers
   - subsection: Create and manage random number state
@@ -139,3 +141,7 @@ articles:
     - dsl-errors
     - samplers
     - migration
+  - title: Extending
+    navbar: Extending
+    contents:
+    - writing-samplers

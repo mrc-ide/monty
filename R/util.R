@@ -224,3 +224,8 @@ last <- function(x) {
 is_testing <- function() {
   identical(Sys.getenv("TESTTHAT"), "true")
 }
+
+
+return_null <- function(...) {
+  NULL
+}

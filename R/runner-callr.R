@@ -117,10 +117,10 @@ monty_runner_callr <- function(n_workers, progress = NULL) {
     restart <- list(state = state,
                     model = model,
                     sampler = sampler)
-    n_chains <- length(state)
+    n_chains <- length(state$rng)
     path <- tempfile()
     monty_sample_manual_prepare_continue(
-      list(restart = restart), steps, path, "nothing")
+      list(state = state, restart = restart), steps, path, "nothing")
     loop(path, n_workers, n_chains, steps, progress)
   }
 
