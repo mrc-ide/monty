@@ -104,6 +104,10 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
     }
   }
 
+  n_rungs <- control$n_rungs
+  beta <- control$beta
+  stopifnot(last(beta) == 0)
+
   ## TODO: For dust models this is going to require that they can
   ## respond appropriately to the number of different parameter sets,
   ## because on initialisation we'll call them with a single parameter
@@ -112,18 +116,19 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   ## easily.  After initialisation they will only require n_rungs
   ## samples every time.
 
-  n_rungs <- control$n_rungs
-  beta <- control$beta
-  stopifnot(last(beta) == 0)
-  model <- parallel_tempering_scale(model, base, beta[-length(beta)])
+  ## A caching calculator for the hot chain.  This will work in
+  ## batches of size 'n_rungs' to match the main sampler.
+  hot <- parallel_tempering_hot(model, base, n_rungs)
+
+  model_scaled <- parallel_tempering_scale(model, base, beta[-length(beta)])
 
   pars <- cbind(state_chain$pars, direct_sample_many(n_rungs - 1, base, rng))
   ## This bit of initialisation could be tidied up I think; in
   ## particular, who is responsible for tracking the additional state
   ## associated with the auxillary chains.  For now, leave them in the
   ## chain state but that is not ideal.
-  density <- model$density(pars)
-  sub_state_chain <- model$model$last_density()
+  density <- model_scaled$density(pars)
+  sub_state_chain <- model_scaled$model$last_density()
 
   stopifnot(density[[1]] == state_chain$density,
             sub_state_chain$density[[1]] == state_chain$density)
@@ -132,14 +137,14 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   sub_state_sampler <- control$sampler$initialise(
     sub_state_chain,
     control$sampler$control,
-    model,
+    model_scaled,
     rng)
 
   ## We also need this for the base model:
-  hot <- parallel_tempering_hot(model, n_rungs)
+  hot <- parallel_tempering_hot(model, base, n_rungs)
 
   env <- new.env(parent = emptyenv())
-  env$model <- model
+  env$model <- model_scaled
   env$base <- base
   env$sub_state_chain <- sub_state_chain
   env$sub_state_sampler <- sub_state_sampler
@@ -253,25 +258,40 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 }
 
 
-parallel_tempering_hot <- function(model, n_rungs) {
+parallel_tempering_hot <- function(model, base, size) {
+  force(model)
+  force(base)
+
   env <- new.env(parent = emptyenv())
-  env$n_rungs <- n_rungs
-  env$index <- n_rungs
+  env$size <- size
+  env$index <- size
 
   sample <- function(rng) {
-    if (env$index >= n_rungs) {
-      pars <- direct_sample_many(n_rungs, model, rng)
-      model$density(pars, beta = rep(0, n_rungs))
-      env$value <- model$model$last_density()
+    if (env$index >= size) {
+      env$pars <- direct_sample_many(size, model, rng)
+      env$density_model <- model$density(env$pars)
+      env$density_base <- base$density(env$pars)
       env$index <- 0L
     }
     i <- env$index <- env$index + 1L
-    list(pars = env$value$pars[, i, drop = FALSE],
-         density = env$value$density[[i]],
-         details = env$value$details[, i, drop = FALSE])
+
+    details <- c(target = env$density_model[[i]],
+                 base = env$density_base[[i]],
+                 value = env$density_base[[i]])
+
+    list(pars = env$pars[, i, drop = FALSE],
+         details = details)
   }
 
-  list(sample = sample)
+  dump <- function() {
+    as.list(env, sorted = TRUE)
+  }
+
+  restore <- function(state) {
+    list2env(state, env)
+  }
+
+  list(sample = sample, dump = dump, restore = restore)
 }
 
 
