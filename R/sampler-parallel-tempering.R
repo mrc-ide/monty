@@ -1,9 +1,9 @@
 ##' Create a "parallel tempering" sampler, which runs multiple chains
 ##' at once to try and improve mixing, or takes advantage of
 ##' vectorisation/parallelisation if your underlying model supports
-##' it.  Currently uses a random walk sampler
-##' [monty_sampler_random_walk] as the underlying sampler, but we will
-##' make this configurable in a future version.
+##' it.  We have tested the implementation with the random walk
+##' sampler ([monty_sampler_random_walk]) but this may work with other
+##' samplers.
 ##'
 ##' We implement the sampler based on https://doi.org/10.1111/rssb.12464
 ##'
@@ -39,53 +39,29 @@
 ##' @title Parallel Tempering Sampler
 ##'
 ##' @param n_rungs The number of **extra** chains to run, must be at
-##'   least 1.
+##'   least 1.  We will run a total of `n_rungs + 1` chains, with one
+##'   of these being your target distribution and one being a direct
+##'   sample from your base model (often your prior).
 ##'
-##' @param vcv The variance covariance matrix for the random walk
-##'   sampler.
+##' @param sampler A sampler to use for the underlying chains.  You
+##'   might use something like [monty_sampler_random_walk(vcv)] for a
+##'   random walk sampler embedded in this parallel tempering scheme.
 ##'
 ##' @param base An optional base model, which must be provided if your
 ##'   model cannot be automatically decomposed into `prior +
 ##'   posterior` using [monty_model_split], or if you are not using
 ##'   this within a Bayesian context and you want to use an
-##'   alternative easy-to-sample-from reference distribution.
+##'   alternative easy-to-sample-from reference distribution.  We
+##'   require that this model can be directly sampled from, and we
+##'   will assume (soon) that it is cheap to compute.
 ##'
 ##' @return A `monty_sampler` object, which can be used with
 ##'   [monty_sample]
 ##'
 ##' @export
-monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
-  testthat::skip("This needs reimplementing")
+monty_sampler_parallel_tempering <- function(n_rungs, sampler, base = NULL) {
   assert_scalar_size(n_rungs, allow_zero = FALSE)
-
-  ## Use a fixed schedule for now, later we'll need to allow this to
-  ## be specified so that a schedule learned from the swapping rates
-  ## can be used.
-  ##
-  ## beta = 1 refers to the target model, while beta = 0 the base
-  ## model ("reference" model in the paper)
-  beta <- seq(1, 0, length.out = n_rungs + 1)
-
-  ## The indexes of swaps at each step odd and even steps:
-  swap <- lapply(1:0, function(i) which(seq_len(n_rungs) %% 2 == i))
-
-  internal <- new.env()
-  internal$even_step <- FALSE
-
-  ## TODO: we might need to accept an initialised sampler here,
-  ## otherwise dots.  Doing that means that control over the us being
-  ## a multichain sampler is tricky and we might need to break apart
-  ## and rebuild the sampler (so samplers might need to "know" how
-  ## many chains they are sampling at the same time, which is fine and
-  ## might help with some validation and definitely with the issue
-  ## around proposals on the hot chain). [mrc-5982]
-  ##
-  ## TODO: we need to tweak this so that the last one does not
-  ## actually use the sampler but instead does a direct sample.
-  ## This is going to require some changes to the sampler code above
-  ## because we simply don't take the step, but ideally we will do
-  ## the calculation at the same time.
-  sampler <- monty_sampler_random_walk(vcv)
+  assert_is(sampler, "monty_sampler")
 
   if (!is.null(base)) {
     assert_is(base, "monty_model")
@@ -93,157 +69,235 @@ monty_sampler_parallel_tempering <- function(n_rungs, vcv, base = NULL) {
     require_multiple_parameters(base, "Can't use 'base' as a base model")
   }
 
-  initialise <- function(pars, model, rng) {
-    if (is.null(base)) {
-      internal$base <- monty_model_split(model, prior_first = TRUE)[[1L]]
-    } else {
-      if (!identical(base$parameters, model$parameters)) {
-        cli::cli_abort("'base' and 'model' must have the same parameters")
-      }
-      internal$base <- base
-    }
+  control <- list(n_rungs = n_rungs,
+                  beta = seq(1, 0, length.out = n_rungs + 1),
+                  sampler = sampler,
+                  base = base,
+                  idx_cold = 1L,
+                  idx_hot = n_rungs + 1L)
 
-    n_pars <- length(model$parameters)
-
-    ## First, augment our parameters with ones sampled from the base
-    ## model for all the extra chains.
-    ##
-    ## TODO: interface for doing this sampling added to all models
-    ## (mrc-5292)
-    pars_extra <- matrix(vapply(seq_len(n_rungs),
-                                function(i) internal$base$direct_sample(rng),
-                                numeric(n_pars)),
-                         n_pars)
-    pars_full <- cbind(pars, pars_extra, deparse.level = 0)
-
-    ## Build a new model which is the scaled multi-parameter version
-    ## of our target model, with the hottest chain being 'base'.  From
-    ## this point we'll ignore the model passed in, which is quite
-    ## weird but we'll fix that later.
-    internal$model <- parallel_tempering_scale(model, internal$base, beta)
-
-    ## Use this new model to initialise our multi-parameter sample
-    state <- sampler$initialise(pars_full, internal$model, rng)
-    internal$state <- state
-    internal$accept_swap <- integer(n_rungs)
-
-    density <- internal$model$model$last_density()
-    internal$last <- internal$model$model$last_density()
-
-    list(pars = state$pars[, 1], density = state$density[[1]])
-  }
-
-  ## I don't like how we're basically just ignoring 'model' and
-  ## 'state' here, and suggests some changes needed for the next
-  ## iteration of samplers, for now it's ok.
-  ##
-  ## In the next version, as we head to something generally useful, we
-  ## might define a base R6 class that everything can inherit from?
-  ##
-  ## Alternatively, initialise could pass back internal state and we
-  ## could receive it here; that might be nicer, actually.
-  step <- function(state, model, rng) {
-    ## Make sure we're in sync.  This could be an assignment or an
-    ## assertion.
-    stopifnot(
-      all(internal$state$pars[, 1] == state$pars),
-      all(internal$state$density[1] == state$density))
-
-    ## Update step, later this will propose/accept hot chain differently
-    state <- sampler$step(internal$state, internal$model, rng)
-
-    ## We can get the uncorrected densities from before here:
-    density <- internal$model$model$last_density()
-
-    ## In the case where we did not accept points, last_density holds
-    ## the density of the proposed point and not that of the retained
-    ## point.  We need to put the versions from the previous step back
-    ## here.
-    not_accepted <- density$pars != state$pars
-    if (any(not_accepted)) {
-      density$pars[, not_accepted] <- internal$last$pars[, not_accepted]
-      density$base[not_accepted] <- internal$last$base[not_accepted]
-      density$target[not_accepted] <- internal$last$target[not_accepted]
-    }
-
-    ## communication step
-    i1 <- swap[[internal$even_step + 1]]
-    i2 <- i1 + 1L
-
-    ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
-    ##
-    ## NOTE: this is done against the *actual* densities, not the ones
-    ## scaled by beta.
-    alpha <- pmin(
-      0,
-      (beta[i2] - beta[i1]) * ((density$target[i1] - density$base[i1]) -
-                               (density$target[i2] - density$base[i2])))
-
-    u <- monty_random_n_real(length(i1), rng)
-    accept <- log(u) < alpha
-
-    if (any(accept)) {
-      i_to <- c(i1[accept], i2[accept])
-      i_from <- c(i2[accept], i1[accept])
-      state$pars[, i_to] <- state$pars[, i_from]
-      d_target <- density$target[i_from]
-      d_base <- density$base[i_from]
-      state$density[i_to] <- beta[i_to] * d_target + (1 - beta[i_to]) * d_base
-      ## We may not have to keep track of pars eventually?
-      density$pars[, i_to] <- density$pars[, i_from] # same as state$pars
-      density$base[i_to] <- d_base
-      density$target[i_to] <- d_target
-    }
-    internal$accept_swap[i1] <- internal$accept_swap[i1] + accept
-    internal$last <- density
-
-    ## For observations here we'll need to pass the swap back into
-    ## 'internal$model', so that it knows if it was index 1 or 2 that
-    ## was the last cold chain and dirct the call to 'observe()' to
-    ## that submodel.
-    internal$even_step <- !internal$even_step
-    internal$state <- state
-
-    list(pars = state$pars[, 1], density = state$density[[1]])
-  }
-
-  finalise <- function(state, model, rng) {
-    list(accept_swap = internal$accept_swap)
-  }
-
-  get_internal_state <- function() {
-    keep <- c("accept_swap", "even_step", "last", "state")
-    set_names(lapply(keep, function(k) internal[[k]]), keep)
-  }
-
-  set_internal_state <- function(state) {
-    list2env(state, internal)
-  }
-
-  monty_sampler("Parallel Tempering",
-                "monty_parallel_tempering",
-                initialise,
-                step,
-                finalise,
-                get_internal_state,
-                set_internal_state)
+  monty_sampler(sprintf("Parallel Tempering [%s]", sampler$name),
+                "monty_sampler_parallel_tempering",
+                control,
+                sampler_parallel_tempering_initialise,
+                sampler_parallel_tempering_step)
 }
 
 
+sampler_parallel_tempering_initialise <- function(state_chain, control, model,
+                                                  rng) {
+  ## TODO: prevent observers
+  ## TODO: prevent stochastic models; there's some trick there with
+  ## updating the state I think.
+  if (length(dim2(state_chain$pars)) > 1) {
+    ## This should be advertised by a property of the sampler, and we
+    ## should also be able to support this fairly easily.
+    cli::cli_abort("Can't use parallel tempering with multiple parameter sets")
+  }
+
+  if (is.null(control$base)) {
+    base <- monty_model_split(model, prior_first = TRUE)[[1L]]
+  } else {
+    ## TODO: we could allow setequal and reorder
+    if (!identical(base$parameters, model$parameters)) {
+      cli::cli_abort("'base' and 'model' must have the same parameters")
+    }
+  }
+
+  ## TODO: For dust models this is going to require that they can
+  ## respond appropriately to the number of different parameter sets,
+  ## because on initialisation we'll call them with a single parameter
+  ## set (as a vector) and then later we'll use a matrix of parameter
+  ## sets.  This can be hidden away in the monty part I think, fairly
+  ## easily.  After initialisation they will only require n_rungs
+  ## samples every time.
+
+  n_rungs <- control$n_rungs
+  beta <- control$beta
+  stopifnot(last(beta) == 0)
+  model <- parallel_tempering_scale(model, base, beta[-length(beta)])
+
+  pars <- cbind(state_chain$pars, direct_sample_many(n_rungs - 1, base, rng))
+  ## This bit of initialisation could be tidied up I think; in
+  ## particular, who is responsible for tracking the additional state
+  ## associated with the auxillary chains.  For now, leave them in the
+  ## chain state but that is not ideal.
+  density <- model$density(pars)
+  sub_state_chain <- model$model$last_density()
+
+  stopifnot(density[[1]] == state_chain$density,
+            sub_state_chain$density[[1]] == state_chain$density)
+
+  ## And initialise the sampler:
+  sub_state_sampler <- control$sampler$initialise(
+    sub_state_chain,
+    control$sampler$control,
+    model,
+    rng)
+
+  ## We also need this for the base model:
+  hot <- parallel_tempering_hot(model, n_rungs)
+
+  env <- new.env(parent = emptyenv())
+  env$model <- model
+  env$base <- base
+  env$sub_state_chain <- sub_state_chain
+  env$sub_state_sampler <- sub_state_sampler
+  env$hot <- hot
+  env$even_step <- FALSE
+  env$accept_swap <- integer(n_rungs)
+
+  env
+}
+
+
+sampler_parallel_tempering_step <- function(state_chain, state_sampler,
+                                            control, model, rng) {
+  ## Unpack some useful quantities:
+  beta <- control$beta
+  n_rungs <- control$n_rungs
+  sub_state_chain <- state_sampler$sub_state_chain
+
+  ## Update step for all chains except the hot chain:
+  sub_state_chain <- control$sampler$step(
+    sub_state_chain, state_sampler$sub_state_sampler,
+    control$sampler$control, state_sampler$model, rng)
+
+  ## Then we update the sub components of density for these where we
+  ## accepted a new point:
+  density <- state_sampler$model$model$last_density()
+  accepted <- apply(density$pars == sub_state_chain$pars, 2, all)
+  if (any(accepted)) {
+    sub_state_chain$details[, accepted] <-
+      density$details[, accepted]
+  }
+
+  ## And draw a sample from the hot chain (which might trigger a run)
+  hot <- state_sampler$hot$sample(rng)
+
+  ## Then we need to pool everything to make the bookkeeping here a
+  ## bit more palatable:
+  pars <- cbind(sub_state_chain$pars, hot$pars)
+  details <- cbind(sub_state_chain$details, hot$details)
+
+  ## TODO: we can really simplify everything if we tolerate just
+  ## computing 'base' again really, and then treating the hot chain a
+  ## bit separately, because we can do all the calculations without
+  ## having to make the model stateful.
+
+  ## At this point we can easily confirm that the densities have the
+  ## expected relationship:
+  ## details["value", ] -
+  ##   (beta * details["target", ] + (1 - beta) * details["base", ])
+  ## details["value", ] -
+  ##   (beta * (details["target", ] - details["base", ]) + details["base", ])
+
+  ## Start the communication step, moving the samples around across
+  ## rungs:
+  i1 <- seq(if (state_sampler$even_step) 2L else 1L, n_rungs, by = 2)
+  i2 <- i1 + 1L
+
+  ## Equation (6) in section 2.3 of https://doi.org/10.1111/rssb.12464
+  ##
+  ## NOTE: this is done against the *actual* densities, not the ones
+  ## scaled by beta.
+  ##
+  ## TODO: I think that the pmin here can be dropped, because it takes
+  ## a value greater than zero and reduces it to zero, which is still
+  ## higher than any log(U(0, 1)), so does not affect the acceptance.
+  ## We can hash samples later an compare.
+  target <- details["target", ]
+  base <- details["base", ]
+  alpha <- pmin(
+    0,
+    (beta[i2] - beta[i1]) * ((target[i1] - base[i1]) - (target[i2] - base[i2])))
+  u <- monty_random_n_real(length(i1), rng)
+  accept <- log(u) < alpha
+
+  if (any(accept)) {
+    i_to <- c(i1[accept], i2[accept])
+    i_from <- c(i2[accept], i1[accept])
+
+    pars[, i_to] <- pars[, i_from]
+    details[, i_to] <- details[, i_from]
+    ## For completeness, write the beta in here, though we could just do
+    ##
+    ## details["beta", ] <- beta
+    ##
+    ## and reset all.  That said, we never look this up, so we might
+    ## also just drop it soon for simplicity.
+    details["beta", i_to] <- details["beta", i_from]
+
+    ## The value of 'value' here will be wrong, so update that for the
+    ## current 'beta'.  This can also be updated based on some sort of
+    ## ratio of betas but the actual calculation here is easy enough
+    ## compared with everything else that we're doing.  We can do this
+    ## entirely with the 'i_to' index, as that captures all the
+    ## destination indices.
+    details["value", i_to] <- beta[i_to] * details["target", i_to] +
+      (1 - beta[i_to]) * details["base", i_to]
+
+    ## Then we save state for the sub chains
+    idx_hot <- n_rungs + 1L
+    sub_state_chain$pars <- pars[, -idx_hot, drop = FALSE]
+    sub_state_chain$details <- details[, -idx_hot, drop = FALSE]
+    sub_state_chain$density <- details["value", -idx_hot]
+
+    ## Update the real chain; we're avoiding update_state here though.
+    ## If we have observers, this is the right place to pull from in
+    ## the case where i_to[[1]] is 1, but we need to observe from
+    ## i_from[[1]]; we'll have these all in the sub chain state
+    ## though, I think
+    state_chain$pars <- sub_state_chain$pars[, 1]
+    state_chain$density <- sub_state_chain$density[[1]]
+  }
+
+  state_sampler$sub_state_chain <- sub_state_chain
+  state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
+  state_sampler$even_step <- !state_sampler$even_step
+
+  state_chain
+}
+
+
+parallel_tempering_hot <- function(model, n_rungs) {
+  env <- new.env(parent = emptyenv())
+  env$n_rungs <- n_rungs
+  env$index <- n_rungs
+
+  sample <- function(rng) {
+    if (env$index >= n_rungs) {
+      pars <- direct_sample_many(n_rungs, model, rng)
+      model$density(pars, beta = rep(0, n_rungs))
+      env$value <- model$model$last_density()
+      env$index <- 0L
+    }
+    i <- env$index <- env$index + 1L
+    list(pars = env$value$pars[, i, drop = FALSE],
+         density = env$value$density[[i]],
+         details = env$value$details[, i, drop = FALSE])
+  }
+
+  list(sample = sample)
+}
+
+
+## This will be used for everything *except* the hottest chain (beta =
+## 0), and we set this up so that we can adva
 parallel_tempering_scale <- function(target, base, beta) {
   env <- new.env()
+  env$beta <- beta
 
-  density <- function(x) {
+  density <- function(x, beta = env$beta) {
     d_target <- target$density(x)
     d_base <- base$density(x)
-    env$density <- list(pars = x, target = d_target, base = d_base)
     ## equivalently
     ##
-    ## > beta * (d_target - d_base) * d_base
+    ## > beta * (d_target - d_base) + d_base
     ## >         ^^^^^^^^^^^^^^^^^
     ##           likelihood           ^^^^^^
     ##                                prior
-    ret <- beta * d_target + (1 - beta) * d_base
+    value <- beta * d_target + (1 - beta) * d_base
     ## We might have -Inf for the log density of the target model in
     ## the hottest chain (beta of 1) but finite log density for the
     ## base model, which means we do 0 * -Inf which is NaN, rather
@@ -252,8 +306,27 @@ parallel_tempering_scale <- function(target, base, beta) {
     ## multiplication by zero happens) and we could only consider
     ## cases where either component is -Inf.  This, however, works and
     ## is fast (fixes NaN and also NA_real_).
-    ret[is.na(ret)] <- -Inf
-    ret
+    value[is.na(value)] <- -Inf
+
+    ## After accepting or rejecting points, we also need to keep track
+    ## of their consitutent bits.  This is relatively easy to do if we
+    ## are allowed to recompute 'base' and if beta is not zero (in
+    ## which case, the target disappears) but instead here we save all
+    ## the components of the last density calculation and later on
+    ## we'll work out which of these made it through.  We might change
+    ## this approach later though.
+    env$last <- list(pars = x,
+                     density = value,
+                     details = rbind(target = d_target,
+                                     base = d_base,
+                                     value = value,
+                                     beta = beta))
+
+    value
+  }
+
+  last_density <- function() {
+    env$last
   }
 
   properties <- target$properties
@@ -264,13 +337,14 @@ parallel_tempering_scale <- function(target, base, beta) {
 
   ## Observer will require more work here and in the sampler to pull
   ## from correct chain
+  ##
+  ## I think that the observer here is actually the right way of doing
+  ## this, but I don't think that it actually works well
   observer <- NULL
   properties$has_observer <- FALSE
 
-  ## Observer will require more work here and in the sampler to pull
-  ## from correct chain
-  direct_sample <- NULL
-  properties$has_direct_sample <- FALSE
+  direct_sample <- base$direct_sample
+  properties$has_direct_sample <- TRUE
 
   ## Combine the domains; this does nothing for the split model case
   ## but will save us some pain in the case where base is given
@@ -289,6 +363,16 @@ parallel_tempering_scale <- function(target, base, beta) {
          set_rng_state = target$rng_state$set,
          get_rng_state = target$rng_state$get,
          ## Extra for PT:
-         last_density = function() env$density),
+         last_density = last_density),
     properties)
+}
+
+
+## Tidy this away somewhere, or better update the models so that this
+## can easily be done without a wrapper.
+direct_sample_many <- function(n, model, rng) {
+  n_pars <- length(model$parameters)
+  matrix(
+    vapply(seq_len(n), function(i) model$direct_sample(rng), numeric(n_pars)),
+    n_pars)
 }

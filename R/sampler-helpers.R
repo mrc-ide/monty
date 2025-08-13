@@ -10,6 +10,7 @@ initialise_state <- function(pars, model, rng) {
 }
 
 
+## TODO: Drop rng here
 update_state <- function(state, pars, density, accept, model, rng) {
   if (any(accept)) {
     if (is.matrix(state$pars)) {

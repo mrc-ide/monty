@@ -4,19 +4,24 @@
 \alias{monty_sampler_parallel_tempering}
 \title{Parallel Tempering Sampler}
 \usage{
-monty_sampler_parallel_tempering(n_rungs, vcv, base = NULL)
+monty_sampler_parallel_tempering(n_rungs, sampler, base = NULL)
 }
 \arguments{
 \item{n_rungs}{The number of \strong{extra} chains to run, must be at
-least 1.}
+least 1.  We will run a total of \code{n_rungs + 1} chains, with one
+of these being your target distribution and one being a direct
+sample from your base model (often your prior).}
 
-\item{vcv}{The variance covariance matrix for the random walk
-sampler.}
+\item{sampler}{A sampler to use for the underlying chains.  You
+might use something like \link{monty_sampler_random_walk(vcv)} for a
+random walk sampler embedded in this parallel tempering scheme.}
 
 \item{base}{An optional base model, which must be provided if your
 model cannot be automatically decomposed into \code{prior + posterior} using \link{monty_model_split}, or if you are not using
 this within a Bayesian context and you want to use an
-alternative easy-to-sample-from reference distribution.}
+alternative easy-to-sample-from reference distribution.  We
+require that this model can be directly sampled from, and we
+will assume (soon) that it is cheap to compute.}
 }
 \value{
 A \code{monty_sampler} object, which can be used with
@@ -26,9 +31,9 @@ A \code{monty_sampler} object, which can be used with
 Create a "parallel tempering" sampler, which runs multiple chains
 at once to try and improve mixing, or takes advantage of
 vectorisation/parallelisation if your underlying model supports
-it.  Currently uses a random walk sampler
-\link{monty_sampler_random_walk} as the underlying sampler, but we will
-make this configurable in a future version.
+it.  We have tested the implementation with the random walk
+sampler (\link{monty_sampler_random_walk}) but this may work with other
+samplers.
 }
 \details{
 We implement the sampler based on https://doi.org/10.1111/rssb.12464
