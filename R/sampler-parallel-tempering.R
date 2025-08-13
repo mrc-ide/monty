@@ -52,8 +52,10 @@
 ##'   posterior` using [monty_model_split], or if you are not using
 ##'   this within a Bayesian context and you want to use an
 ##'   alternative easy-to-sample-from reference distribution.  We
-##'   require that this model can be directly sampled from, and we
-##'   will assume (soon) that it is cheap to compute.
+##'   require that this model can be directly sampled from, that it
+##'   accepts multiple parameters (as a matrix), that it is
+##'   deterministic and we assume that it is cheap to compute
+##'   (relative to the target).
 ##'
 ##' @return A `monty_sampler` object, which can be used with
 ##'   [monty_sample]
@@ -64,9 +66,11 @@ monty_sampler_parallel_tempering <- function(n_rungs, sampler, base = NULL) {
   assert_is(sampler, "monty_sampler")
 
   if (!is.null(base)) {
+    ## These checks also need doing on the split model, perhaps?
     assert_is(base, "monty_model")
     require_direct_sample(base, "Can't use 'base' as a base model")
     require_multiple_parameters(base, "Can't use 'base' as a base model")
+    require_deterministic(base, "Can't use 'base' as a base model")
   }
 
   control <- list(n_rungs = n_rungs,
@@ -179,11 +183,23 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
 
   ## And draw a sample from the hot chain (which might trigger a run)
   hot <- state_sampler$hot$sample(rng)
+  idx_hot <- n_rungs + 1L
 
   ## Then we need to pool everything to make the bookkeeping here a
   ## bit more palatable:
   pars <- cbind(sub_state_chain$pars, hot$pars)
   details <- cbind(sub_state_chain$details, hot$details)
+
+  ## Compute the base density for everything; assume that this is
+  ## quick enough that we can just recompute it each time.
+  d_base <- state_sampler$base$density(pars)
+  d_value <- c(sub_state_chain$details["value", ], hot$details[["value"]])
+  d_target <- (d_value - (1 - beta) * d_base) / beta
+  d_target[[idx_hot]] <- hot$details[["target"]]
+
+  details2 <- rbind(target = d_target, base = d_base, value = d_value)
+  stopifnot(isTRUE(all.equal(details2, details)))
+  details <- details2
 
   ## TODO: we can really simplify everything if we tolerate just
   ## computing 'base' again really, and then treating the hot chain a
