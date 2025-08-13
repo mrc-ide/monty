@@ -441,13 +441,13 @@ validate_parallel_tempering_beta <- function(n_rungs, beta,
     cli::cli_abort("One of 'n_rungs' or 'beta' must be provided",
                    call = call)
   }
-  if (!is.null(n_rungs) && !is.null(beta) && length(beta) != n_rungs) {
+  if (!is.null(n_rungs) && !is.null(beta) && length(beta) != n_rungs + 1) {
     cli::cli_abort("Only one of 'n_rungs' or 'beta' may be provided",
                    call = call)
   }
   if (is.null(beta)) {
-    if (n_rungs < 2) {
-      cli::cli_abort("'n_rungs' must be at least 2",
+    if (n_rungs < 1) {
+      cli::cli_abort("'n_rungs' must be at least 1",
                      call = call, arg = "n_rungs")
     }
     return(seq(1, 0, length.out = n_rungs + 1L))
@@ -466,4 +466,5 @@ validate_parallel_tempering_beta <- function(n_rungs, beta,
     cli::cli_abort("'beta' must be strictly decreasing, with no ties",
                    call = call, arg = "beta")
   }
+  beta
 }

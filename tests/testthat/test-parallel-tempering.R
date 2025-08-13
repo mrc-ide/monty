@@ -111,4 +111,23 @@ test_that("can continue a parallel tempering chain", {
 test_that("can validate beta", {
   expect_equal(validate_parallel_tempering_beta(10, NULL),
                seq(1, 0, length.out = 11))
+  expect_equal(validate_parallel_tempering_beta(10, seq(1, 0, length.out = 11)),
+               seq(1, 0, length.out = 11))
+
+  expect_error(validate_parallel_tempering_beta(NULL, NULL),
+               "One of 'n_rungs' or 'beta' must be provided")
+  expect_error(validate_parallel_tempering_beta(5, 1:4),
+               "Only one of 'n_rungs' or 'beta' may be provided")
+
+  expect_error(validate_parallel_tempering_beta(0, NULL),
+               "'n_rungs' must be at least 1")
+
+  expect_error(validate_parallel_tempering_beta(NULL, 1),
+               "At least two 'beta' values are required")
+  expect_error(validate_parallel_tempering_beta(NULL, seq(0, 1, 0.1)),
+               "'beta[1]' must be 1", fixed = TRUE)
+  expect_error(validate_parallel_tempering_beta(NULL, c(1, 0.5, 0.2)),
+               "'beta[3]' (the last value) must be 0", fixed = TRUE)
+  expect_error(validate_parallel_tempering_beta(NULL, c(1, 0.5, 0.5, 0)),
+               "'beta' must be strictly decreasing, with no ties")
 })
