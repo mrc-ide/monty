@@ -111,7 +111,9 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   if (length(dim2(state_chain$pars)) > 1) {
     ## This should be advertised by a property of the sampler, and we
     ## should also be able to support this fairly easily.
-    cli::cli_abort("Can't use parallel tempering with multiple parameter sets")
+    cli::cli_abort(
+      c("Can't use parallel tempering with multiple parameter sets",
+        i = "Are you using the simultaneous runner? If so, try another runner"))
   }
 
   n_rungs <- control$n_rungs

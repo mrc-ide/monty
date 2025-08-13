@@ -131,3 +131,15 @@ test_that("can validate beta", {
   expect_error(validate_parallel_tempering_beta(NULL, c(1, 0.5, 0.5, 0)),
                "'beta' must be strictly decreasing, with no ties")
 })
+
+
+test_that("prevent use of the simultaneous runner with parallel tempering", {
+  m <- ex_simple_gamma1()
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_random_walk(vcv = matrix(0.1)))
+  runner <- monty_runner_simultaneous()
+  expect_error(
+    monty_sample(m, sampler, 100, n_chains = 3, runner = runner),
+    "Can't use parallel tempering with multiple parameter sets")
+})
