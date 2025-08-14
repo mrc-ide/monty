@@ -124,7 +124,7 @@ sampler_random_walk_dump <- function(state, control) {
   if (is.null(state$rerun)) {
     return(NULL)
   }
-  list(rerun_state = attr(state$rerun, "data"))$step
+  list(rerun_state = attr(state$rerun, "data")$i)
 }
 
 
@@ -132,6 +132,9 @@ sampler_random_walk_combine <- function(state, control) {
   if (all(vlapply(state, is.null))) {
     return(NULL)
   }
+  ## The only state that is saved is the rerun state, which is just a
+  ## counter of the steps taken. That is the same over all chains so
+  ## just get the first.
   state[[1]]
 }
 
