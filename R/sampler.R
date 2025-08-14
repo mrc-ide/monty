@@ -208,6 +208,78 @@ print.monty_sampler <- function(x, ...) {
 }
 
 
+##' Describe properties of a sampler.  This is used from
+##' [monty_sampler] to advertise what your sampler does about state,
+##' what it requires from the runner and from the model, so that monty
+##' can ensure that it is only used where it is appropriate.y
+##'
+##' @title Describe sampler properties
+##'
+##' @param has_state Optional logical, indicating if the sampler has
+##'   state.  This is optional because presence of the state function
+##'   `state_dump` implies this.
+##'
+##' @param restartable Optional logical, indicating if your sampler
+##'   can be restarted.  If `FALSE`, then users cannot use
+##'   `restartable = TRUE` from `monty_sample()` (and therefore cannot
+##'   use `monty_continue`).  This is optional because the presence of
+##'   the state function `state_restore` implies this.
+##'
+##' @param allow_multiple_parameters Logical, indicating if your
+##'   sampler can accept a matrix of parameters in order to run
+##'   multiple chains at once (e.g., with the
+##'   [monty_runner_simultaneous] runner, or as part of a parallel
+##'   tempering scheme with [monty_sampler_parallel_tempering]).
+##'
+##' @param requires_gradient Logical, indicating if the model must
+##'   provide a gradient in order to be used with this sampler.
+##'
+##' @param requires_deterministic Logical, indicating if the model
+##'   must be deterministic in order to be used with this sampler.
+##'
+##' @return A `monty_sampler_properties` object, which should not be modified.
+##'
+##' @export
+##' @examples
+##' monty_sampler_properties()
+monty_sampler_properties <- function(has_state = NULL,
+                                     restartable = NULL,
+                                     allow_multiple_parameters = FALSE,
+                                     requires_gradient = FALSE,
+                                     requires_deterministic = FALSE) {
+  assert_scalar_logical(has_state, allow_null = TRUE)
+  assert_scalar_logical(restartable, allow_null = TRUE)
+  assert_scalar_logical(allow_multiple_parameters)
+  assert_scalar_logical(requires_gradient)
+  assert_scalar_logical(requires_deterministic)
+  ret <- list(restartable = restartable,
+              has_state = has_state,
+              allow_multiple_parameters = allow_multiple_parameters,
+              requires_gradient = requires_gradient,
+              requires_deterministic = requires_deterministic)
+  class(ret) <- "monty_sampler_properties"
+  ret
+}
+
+
+##' @export
+print.monty_sampler_properties <- function(x, ...) {
+  cli::cli_h1("<monty_sampler_properties>")
+  unset <- vlapply(x, is.null)
+  is_set <- !unset
+  if (any(is_set)) {
+    cli::cli_bullets(
+      set_names(sprintf("%s: {.code %s}",
+                        names(x)[is_set], vcapply(x[is_set], as.character)),
+                "*"))
+  }
+  if (any(unset)) {
+    cli::cli_alert_info("Unset: {squote(names(x)[unset])}")
+  }
+  invisible(x)
+}
+
+
 monty_sampler_state <- function(dump, combine, restore, details,
                                 call = parent.frame()) {
   if (is.null(dump)) {
