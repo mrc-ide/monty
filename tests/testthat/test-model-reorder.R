@@ -57,3 +57,10 @@ test_that("don't create gradient function if not present", {
   expect_null(f$gradient)
   expect_null(f$direct_sample)
 })
+
+
+test_that("don't reorder if nothing to do", {
+  f <- monty_model_function(function(a, b) 1)
+  g <- monty_model_reorder(f, c("a", "b"))
+  expect_identical(f, g)
+})

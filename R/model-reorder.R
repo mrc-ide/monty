@@ -1,4 +1,7 @@
 monty_model_reorder <- function(model, parameters) {
+  if (identical(model$parameters, parameters)) {
+    return(model)
+  }
   if (!setequal(model$parameters, parameters)) {
     cli::cli_abort(
       paste("Can't reorder 'model' as 'parameters' contains different values",
