@@ -327,7 +327,7 @@ parallel_tempering_hot <- function(model, control, state = NULL) {
 
   sample <- function(rng) {
     if (env$index >= size) {
-      env$pars <- direct_sample_many(size, model, rng)
+      env$pars <- direct_sample_many(size, model_base, rng)
       env$density <- model$density(env$pars)
       env$index <- 0L
     }
