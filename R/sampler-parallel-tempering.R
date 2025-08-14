@@ -426,13 +426,12 @@ parallel_tempering_base <- function(model, control, call = parent.frame()) {
     base <- monty_model_split(model, prior_first = TRUE)[[1L]]
   } else {
     base <- control$base
-    ## TODO: we could allow setequal and reorder
-    if (!identical(base$parameters, model$parameters)) {
-      cli::cli_abort("'base' and 'model' must have the same parameters",
-                     call = call)
-    }
   }
-  base
+  if (!setequal(base$parameters, model$parameters)) {
+    cli::cli_abort("'base' and 'model' must have the same parameters",
+                   call = call)
+  }
+  monty_model_reorder(base, model$parameters)
 }
 
 
