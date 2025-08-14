@@ -228,3 +228,22 @@ test_that("can validate forget rate", {
   expect_error(validate_forget_rate(-1),
                "Expected 'forget_rate' to be positive")
 })
+
+
+test_that("can continue adaptive sampler simultaneously", {
+  m <- ex_simple_gamma1()
+  sampler <- monty_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
+  runner <- monty_runner_simultaneous()
+
+  set.seed(1)
+  res1a <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res1b <- monty_sample_continue(res1a, 20)
+
+  set.seed(1)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 3, runner = runner,
+                        restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20)
+
+  expect_equal(drop_runner(res1a), drop_runner(res2a))
+  expect_equal(res1b, res2b)
+})

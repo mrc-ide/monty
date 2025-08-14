@@ -505,11 +505,15 @@ sampler_random_walk_adaptive_state_dump <- function(state, control) {
 sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
                                                        state_sampler, control,
                                                        model) {
-  state <- lapply(state_sampler, array_select_last, chain_id)
-  state$history_pars <- as.vector(state$history_pars)
   if (length(chain_id) > 1) {
+    state <- state_sampler
     state$iteration <- state$iteration[[1]]
     state$weight <- state$weight[[1]]
+    state$scaling_history <- as.vector(t(state$scaling_history))
+    state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2)))
+  } else {
+    state <- lapply(state_sampler, array_select_last, chain_id)
+    state$history_pars <- as.vector(state$history_pars)
   }
   list2env(state, parent = emptyenv())
 }
