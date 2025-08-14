@@ -9,6 +9,7 @@ monty_sampler_properties(
   restartable = NULL,
   allow_multiple_parameters = FALSE,
   requires_gradient = FALSE,
+  requires_allow_multiple_parameters = FALSE,
   requires_deterministic = FALSE
 )
 }
@@ -32,11 +33,21 @@ tempering scheme with \link{monty_sampler_parallel_tempering}).}
 \item{requires_gradient}{Logical, indicating if the model must
 provide a gradient in order to be used with this sampler.}
 
+\item{requires_allow_multiple_parameters}{Logical, indicating if
+the model must be able to accept multiple parameters.  This is
+different to \code{allow_multiple_parameters}, which concerns if the
+\emph{sampler} is able to process multiple parameter sets at once.
+For example, \link{monty_sampler_parallel_tempering} sets
+\code{allow_multiple_parameters} to \code{FALSE} but
+\code{requires_allow_multiple_parameters} to \code{FALSE}, while
+\link{monty_sampler_random_walk} sets the opposite!}
+
 \item{requires_deterministic}{Logical, indicating if the model
 must be deterministic in order to be used with this sampler.}
 }
 \value{
-A \code{monty_sampler_properties} object, which should not be modified.
+A \code{monty_sampler_properties} object, which should not be
+modified.
 }
 \description{
 Describe properties of a sampler.  This is used from

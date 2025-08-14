@@ -1,3 +1,30 @@
+test_that("can validate sampler properties", {
+  properties <- validate_sampler_properties(NULL, NULL, NULL)
+  assert_s3_class(properties, "monty_sampler_properties")
+  assert_false(properties$has_state)
+  assert_false(properties$restartable)
+})
+
+
+test_that("can validate sampler properties", {
+  properties <- monty_sampler_properties(has_state = TRUE, restartable = TRUE)
+  expect_error(
+    validate_sampler_properties(properties, NULL, NULL),
+    "A 'state_dump' function is required because sampler properties include")
+  expect_error(
+    validate_sampler_properties(properties, identity, NULL),
+    "A 'state_restore' function is required because sampler properties include")
+})
+
+
+test_that("can validate sampler properties", {
+  properties <- validate_sampler_properties(NULL, NULL, NULL)
+  assert_s3_class(properties, "monty_sampler_properties")
+  assert_false(properties$has_state)
+  assert_false(properties$restartable)
+})
+
+
 test_that("construct empty sampler state", {
   state <- monty_sampler_state(NULL, NULL, NULL, NULL)
   expect_null(state$dump())

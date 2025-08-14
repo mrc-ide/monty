@@ -13,7 +13,8 @@ monty_sampler(
   state_dump = NULL,
   state_combine = NULL,
   state_restore = NULL,
-  state_details = NULL
+  state_details = NULL,
+  properties = NULL
 )
 }
 \arguments{
