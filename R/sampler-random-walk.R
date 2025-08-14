@@ -120,7 +120,7 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
 }
 
 
-sampler_random_walk_dump <- function(state) {
+sampler_random_walk_dump <- function(state, control) {
   if (is.null(state$rerun)) {
     return(NULL)
   }
@@ -128,7 +128,7 @@ sampler_random_walk_dump <- function(state) {
 }
 
 
-sampler_random_walk_combine <- function(state) {
+sampler_random_walk_combine <- function(state, control) {
   if (all(vlapply(state, is.null))) {
     return(NULL)
   }
