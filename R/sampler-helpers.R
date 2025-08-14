@@ -1,12 +1,20 @@
 initialise_state <- function(pars, model, rng) {
   initialise_rng_state(model, rng)
-  density <- model$density(pars)
+  has_parameter_groups <- model$properties$has_parameter_groups
+  if (has_parameter_groups) {
+    density <- model$density(pars, by_group = TRUE)
+    density_by_group <- attr(model$density, "by_group")
+  } else {
+    density <- model$density(pars)
+    density_by_group <- NULL
+  }
   if (model$properties$has_observer) {
     observation <- model$observer$observe()
   } else {
     observation <- NULL
   }
-  list(pars = pars, density = density, observation = observation)
+  list(pars = pars, density = density, density_by_group = density_by_group,
+       observation = observation)
 }
 
 
