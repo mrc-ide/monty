@@ -141,5 +141,18 @@ test_that("prevent use of the simultaneous runner with parallel tempering", {
   runner <- monty_runner_simultaneous()
   expect_error(
     monty_sample(m, sampler, 100, n_chains = 3, runner = runner),
-    "Can't use parallel tempering with multiple parameter sets")
+    "Can't use the simultaneous runner with this sampler")
+})
+
+
+test_that("can't use pt with models that don't accept multiple pars", {
+  set.seed(1)
+  m <- monty_example("gaussian", diag(2))
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_random_walk(vcv = 0.1 * diag(2)))
+  expect_error(
+    monty_sample(m, sampler, 30, n_chains = 3),
+    "Parallel Tempering [Random walk] requires multiple parameters",
+    fixed = TRUE)
 })

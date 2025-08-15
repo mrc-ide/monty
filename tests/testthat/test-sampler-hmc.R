@@ -208,7 +208,7 @@ test_that("can't use hmc with models that lack gradients", {
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   expect_error(
     monty_sample(m, sampler, 30, 1, n_chains = 3),
-    "Can't use HMC without a gradient")
+    "Hamiltonian Monte Carlo requires a gradient but 'model' does not provide")
 })
 
 
@@ -218,7 +218,7 @@ test_that("can't use hmc with stochastic models", {
   sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
   expect_error(
     monty_sample(m, sampler, 30, n_chains = 3),
-    "Can't use HMC with stochastic models")
+    "Hamiltonian Monte Carlo requires deterministic models, but 'model'")
 })
 
 

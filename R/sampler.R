@@ -169,11 +169,20 @@
 ##'   `state_restore`.  This takes the combined state as its only
 ##'   argument.
 ##'
+##' @param properties Optionally, a [monty_sampler_properties] object
+##'   that advertises what your sampler can do and what it requires
+##'   from models that it draws samples from.
+##'
 ##' @return A `monty_sampler` object
 ##' @export
 monty_sampler <- function(name, help, control, initialise, step,
                           state_dump = NULL, state_combine = NULL,
-                          state_restore = NULL, state_details = NULL) {
+                          state_restore = NULL, state_details = NULL,
+                          properties = NULL) {
+  properties <- validate_sampler_properties(properties,
+                                            state_dump, state_restore,
+                                            call)
+
   ## TODO: allow functions to be names and accept 'package' as an arg
   ## here, which will help with using the callr runner because we can
   ## organise loading packages and finding functions as required, even
@@ -192,7 +201,8 @@ monty_sampler <- function(name, help, control, initialise, step,
     control = control,
     initialise = initialise,
     step = step,
-    state = state)
+    state = state,
+    properties = properties)
 
   class(ret) <- "monty_sampler"
   ret
@@ -208,7 +218,93 @@ print.monty_sampler <- function(x, ...) {
 }
 
 
-monty_sampler_state <- function(dump, combine, restore, details,
+##' Describe properties of a sampler.  This is used from
+##' [monty_sampler] to advertise what your sampler does about state,
+##' what it requires from the runner and from the model, so that monty
+##' can ensure that it is only used where it is appropriate.
+##'
+##' @title Describe sampler properties
+##'
+##' @param has_state Optional logical, indicating if the sampler has
+##'   state.  This is optional because presence of the state function
+##'   `state_dump` implies this.
+##'
+##' @param restartable Optional logical, indicating if your sampler
+##'   can be restarted.  If `FALSE`, then users cannot use
+##'   `restartable = TRUE` from `monty_sample()` (and therefore cannot
+##'   use `monty_continue`).  This is optional because the presence of
+##'   the state function `state_restore` implies this.
+##'
+##' @param allow_multiple_parameters Logical, indicating if your
+##'   sampler can accept a matrix of parameters in order to run
+##'   multiple chains at once (e.g., with the
+##'   [monty_runner_simultaneous] runner, or as part of a parallel
+##'   tempering scheme with [monty_sampler_parallel_tempering]).
+##'
+##' @param requires_gradient Logical, indicating if the model must
+##'   provide a gradient in order to be used with this sampler.
+##'
+##' @param requires_allow_multiple_parameters Logical, indicating if
+##'   the model must be able to accept multiple parameters.  This is
+##'   different to `allow_multiple_parameters`, which concerns if the
+##'   *sampler* is able to process multiple parameter sets at once.
+##'   For example, [monty_sampler_parallel_tempering] sets
+##'   `allow_multiple_parameters` to `FALSE` but
+##'   `requires_allow_multiple_parameters` to `TRUE`, while
+##'   [monty_sampler_random_walk] sets the opposite!
+##'
+##' @param requires_deterministic Logical, indicating if the model
+##'   must be deterministic in order to be used with this sampler.
+##'
+##' @return A `monty_sampler_properties` object, which should not be
+##'   modified.
+##'
+##' @export
+##' @examples
+##' monty_sampler_properties()
+monty_sampler_properties <- function(has_state = NULL,
+                                     restartable = NULL,
+                                     allow_multiple_parameters = FALSE,
+                                     requires_gradient = FALSE,
+                                     requires_allow_multiple_parameters = FALSE,
+                                     requires_deterministic = FALSE) {
+  assert_scalar_logical(has_state, allow_null = TRUE)
+  assert_scalar_logical(restartable, allow_null = TRUE)
+  assert_scalar_logical(allow_multiple_parameters)
+  assert_scalar_logical(requires_gradient)
+  assert_scalar_logical(requires_allow_multiple_parameters)
+  assert_scalar_logical(requires_deterministic)
+  ret <- list(
+    restartable = restartable,
+    has_state = has_state,
+    allow_multiple_parameters = allow_multiple_parameters,
+    requires_gradient = requires_gradient,
+    requires_allow_multiple_parameters = requires_allow_multiple_parameters,
+    requires_deterministic = requires_deterministic)
+  class(ret) <- "monty_sampler_properties"
+  ret
+}
+
+
+##' @export
+print.monty_sampler_properties <- function(x, ...) {
+  cli::cli_h1("<monty_sampler_properties>")
+  unset <- vlapply(x, is.null)
+  is_set <- !unset
+  if (any(is_set)) {
+    cli::cli_bullets(
+      set_names(sprintf("%s: {.code %s}",
+                        names(x)[is_set], vcapply(x[is_set], as.character)),
+                "*"))
+  }
+  if (any(unset)) {
+    cli::cli_alert_info("Unset: {squote(names(x)[unset])}")
+  }
+  invisible(x)
+}
+
+
+monty_sampler_state <- function(dump, combine, restore, details, properties,
                                 call = parent.frame()) {
   if (is.null(dump)) {
     err <- c(state_combine = !is.null(combine),
@@ -239,4 +335,55 @@ monty_sampler_state <- function(dump, combine, restore, details,
        restore = restore,
        combine = combine,
        details = details %||% return_null)
+}
+
+
+validate_sampler_properties <- function(properties, state_dump, state_restore,
+                                        call = parent.frame()) {
+  if (is.null(properties)) {
+    properties <- monty_sampler_properties()
+  } else {
+    assert_is(properties, "monty_sampler_properties", call = call)
+  }
+
+  if (is.null(properties$has_state)) {
+    properties$has_state <- !is.null(state_dump)
+  } else if (properties$has_state && is.null(state_dump)) {
+    cli::cli_abort(
+      paste("A 'state_dump' function is required because sampler properties",
+            "include 'has_state = TRUE'"),
+      call = call)
+  }
+
+  if (is.null(properties$restartable)) {
+    properties$restartable <- !is.null(state_restore)
+  } else if (properties$restartable && is.null(state_restore)) {
+    cli::cli_abort(
+      paste("A 'state_restore' function is required because sampler properties",
+            "include 'restartable = TRUE'"),
+      call = call)
+  }
+
+  properties
+}
+
+
+check_sampler_model <- function(model, sampler, name = "model") {
+  require_deterministic(
+    model,
+    sprintf("%s requires deterministic models, but '%s' is stochastic",
+            sampler$name, name),
+    when = sampler$properties$requires_gradient)
+  require_gradient(
+    model,
+    sprintf(
+      "%s requires a gradient but '%s' does not provide one",
+      sampler$name, name),
+    when = sampler$properties$requires_gradient)
+  require_multiple_parameters(
+    model,
+    sprintf(
+      "%s requires multiple parameters at once but '%s' does not allow this",
+      sampler$name, name),
+    when = sampler$properties$requires_allow_multiple_parameters)
 }

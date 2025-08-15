@@ -13,7 +13,8 @@ monty_sampler(
   state_dump = NULL,
   state_combine = NULL,
   state_restore = NULL,
-  state_details = NULL
+  state_details = NULL,
+  properties = NULL
 )
 }
 \arguments{
@@ -100,6 +101,10 @@ to be saved at the end of the run.  If you provide this you
 almost certainly need to provide \code{state_dump} and
 \code{state_restore}.  This takes the combined state as its only
 argument.}
+
+\item{properties}{Optionally, a \link{monty_sampler_properties} object
+that advertises what your sampler can do and what it requires
+from models that it draws samples from.}
 }
 \value{
 A \code{monty_sampler} object

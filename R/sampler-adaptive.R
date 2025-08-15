@@ -179,6 +179,10 @@ monty_sampler_adaptive <- function(initial_vcv,
     pre_diminish = pre_diminish,
     boundaries = boundaries)
 
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = TRUE,
+    requires_deterministic = TRUE)
+
   monty_sampler("Adaptive Metropolis-Hastings",
                 "monty_sampler_adaptive",
                 control,
@@ -187,7 +191,8 @@ monty_sampler_adaptive <- function(initial_vcv,
                 sampler_random_walk_adaptive_state_dump,
                 sampler_random_walk_adaptive_state_combine,
                 sampler_random_walk_adaptive_state_restore,
-                sampler_random_walk_adaptive_details)
+                sampler_random_walk_adaptive_details,
+                properties = properties)
 }
 
 

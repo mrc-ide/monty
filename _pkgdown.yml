@@ -73,6 +73,7 @@ reference:
   - subtitle: Advanced
     contents:
     - monty_sampler
+    - monty_sampler_properties
 
   - title: Random numbers
   - subsection: Create and manage random number state

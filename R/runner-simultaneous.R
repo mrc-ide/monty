@@ -20,7 +20,7 @@
 ##' r <- monty_runner_simultaneous()
 ##' samples <- monty_sample(m, s, 200, runner = r)
 monty_runner_simultaneous <- function(progress = NULL) {
-  validate_suitable <- function(model) {
+  validate_suitable_model <- function(model) {
     require_multiple_parameters(
       model,
       "monty_runner_simultaneous requires support for multiple parameters",
@@ -31,9 +31,20 @@ monty_runner_simultaneous <- function(progress = NULL) {
       "Can't yet use multiple parameter sets with stochastic model",
       call = environment())
   }
+  validate_suitable_sampler <- function(sampler) {
+    if (!sampler$properties$allow_multiple_parameters) {
+      cli::cli_abort(
+        c("Can't use the simultaneous runner with this sampler",
+          i = paste("This runner requires that we can advance several chains",
+                    "at once by passing a matrix of parameters, but",
+                    "the sampler that you are using ({sampler$name})",
+                    "does not support this")))
+    }
+  }
 
   run <- function(pars, model, sampler, steps, rng) {
-    validate_suitable(model)
+    validate_suitable_model(model)
+    validate_suitable_sampler(sampler)
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     rng_state <- lapply(rng, function(r) monty_rng_state(r))
@@ -50,7 +61,8 @@ monty_runner_simultaneous <- function(progress = NULL) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    validate_suitable(model)
+    validate_suitable_model(model)
+    validate_suitable_sampler(sampler)
     n_chains <- length(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     with_progress_fail_on_error(

@@ -122,6 +122,10 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   }
   assert_scalar_logical(restartable)
 
+  ## Compatibility checks; once runners have the same sort of
+  ## properties support we could do this slightly more easily too.
+  check_sampler_model(model, sampler)
+
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor)

@@ -34,6 +34,11 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                   vcv = vcv,
                   debug = debug)
 
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = TRUE,
+    requires_gradient = TRUE,
+    requires_deterministic = TRUE)
+
   monty_sampler("Hamiltonian Monte Carlo",
                 "monty_sampler_hmc",
                 control,
@@ -42,16 +47,13 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                 sampler_hmc_dump,
                 sampler_hmc_combine,
                 sampler_hmc_restore,
-                sampler_hmc_details)
+                sampler_hmc_details,
+                properties = properties)
 }
 
 
 sampler_hmc_initialise <- function(state_chain, control, model, rng) {
-  require_deterministic(model, "Can't use HMC with stochastic models")
-  require_gradient(model, "Can't use HMC without a gradient")
-
   pars <- state_chain$pars
-
   list(transform = hmc_transform(model, pars),
        sample_momentum = hmc_momentum(control, model, pars),
        history = hmc_history_recorder(control, pars))
