@@ -125,7 +125,6 @@
 ##'   It must take arguments:
 ##'
 ##'   * `state_chain`: The state of the MCMC chain (as above)
-##'
 ##'   * `state_sampler`: The state of the sampler, as passed back from
 ##'     `init`.  If your sampler is stateless this is `NULL`,
 ##'     otherwise it is an environment that you will modify by
