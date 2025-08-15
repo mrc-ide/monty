@@ -110,13 +110,7 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   ## samples every time.
   ##
   ## TODO: prevent observers
-
   n_rungs <- control$n_rungs
-  beta <- control$beta
-  stopifnot(last(beta) == 0,
-            all(diff(beta) < 0),
-            all(beta >= 0),
-            all(beta <= 1))
 
   model_base <- parallel_tempering_base(model, control)
   model_scaled <- parallel_tempering_scale(model, control)

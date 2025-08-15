@@ -304,7 +304,7 @@ print.monty_sampler_properties <- function(x, ...) {
 }
 
 
-monty_sampler_state <- function(dump, combine, restore, details, properties,
+monty_sampler_state <- function(dump, combine, restore, details,
                                 call = parent.frame()) {
   if (is.null(dump)) {
     err <- c(state_combine = !is.null(combine),
@@ -373,7 +373,7 @@ check_sampler_model <- function(model, sampler, name = "model") {
     model,
     sprintf("%s requires deterministic models, but '%s' is stochastic",
             sampler$name, name),
-    when = sampler$properties$requires_gradient)
+    when = sampler$properties$requires_deterministic)
   require_gradient(
     model,
     sprintf(
