@@ -107,8 +107,7 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
   }
   accept <- density_next - state_chain$density > log(monty_random_real(rng))
 
-  ## TODO: rng is not needed through here and can be removed
-  update_state(state_chain, pars_next, density_next, accept, model, rng)
+  update_state(state_chain, pars_next, density_next, accept, model)
 }
 
 
