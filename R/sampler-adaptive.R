@@ -198,9 +198,6 @@ monty_sampler_adaptive <- function(initial_vcv,
 
 sampler_random_walk_adaptive_initialise <- function(state_chain, control,
                                                     model, rng) {
-  require_deterministic(model,
-                        "Can't use adaptive sampler with stochastic models")
-
   pars <- state_chain$pars
   multiple_parameters <- length(dim2(pars)) > 1
 

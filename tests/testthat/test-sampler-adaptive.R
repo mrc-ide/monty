@@ -96,7 +96,7 @@ test_that("can't use adaptive sampler with stochastic models", {
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
   expect_error(
     monty_sample(m, sampler, 30, n_chains = 3),
-    "Can't use adaptive sampler with stochastic models")
+    "Adaptive Metropolis-Hastings requires deterministic models")
 })
 
 
