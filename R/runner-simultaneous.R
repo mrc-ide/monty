@@ -125,7 +125,6 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
     chain_id, chain_state, state$sampler, sampler$control, model)
 
   stopifnot(!model$properties$is_stochastic)
-  ## TODO: let's get a test on this while we're at it?
   ## Need to use model$rng_state$set to put state$model_rng into the model
 
   monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
@@ -164,11 +163,9 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   warn_if_used_r_rng(!identical(get_r_rng_state(), r_rng_state))
 
-  if (model$properties$is_stochastic) {
-    model_rng <- matrix(model$rng_state$get(), ncol = n_chains)
-  } else {
-    model_rng <- NULL
-  }
+  ## See above, currently prevented
+  stopifnot(!model$properties$is_stochastic)
+  model_rng <- NULL
 
   observations <- NULL
   state <- list(
