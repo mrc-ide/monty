@@ -221,7 +221,7 @@ print.monty_sampler <- function(x, ...) {
 ##' Describe properties of a sampler.  This is used from
 ##' [monty_sampler] to advertise what your sampler does about state,
 ##' what it requires from the runner and from the model, so that monty
-##' can ensure that it is only used where it is appropriate.y
+##' can ensure that it is only used where it is appropriate.
 ##'
 ##' @title Describe sampler properties
 ##'
@@ -250,7 +250,7 @@ print.monty_sampler <- function(x, ...) {
 ##'   *sampler* is able to process multiple parameter sets at once.
 ##'   For example, [monty_sampler_parallel_tempering] sets
 ##'   `allow_multiple_parameters` to `FALSE` but
-##'   `requires_allow_multiple_parameters` to `FALSE`, while
+##'   `requires_allow_multiple_parameters` to `TRUE`, while
 ##'   [monty_sampler_random_walk] sets the opposite!
 ##'
 ##' @param requires_deterministic Logical, indicating if the model
