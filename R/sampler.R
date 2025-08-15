@@ -169,6 +169,10 @@
 ##'   `state_restore`.  This takes the combined state as its only
 ##'   argument.
 ##'
+##' @param properties Optionally, a [monty_sampler_properties] object
+##'   that advertises what your sampler can do and what it requires
+##'   from models that it draws samples from.
+##'
 ##' @return A `monty_sampler` object
 ##' @export
 monty_sampler <- function(name, help, control, initialise, step,
