@@ -362,3 +362,21 @@ validate_sampler_properties <- function(properties, state_dump, state_restore,
 
   properties
 }
+
+
+check_sampler_model <- function(model, sampler, name = "model") {
+  require_deterministic(
+    model,
+    sprintf("Can't use %s as '%s' is a stochastic model",
+            name, sampler$name),
+    when = sampler$properties$requires_gradient)
+  require_gradient(
+    model,
+    sprintf("Can't use %s as it does not have a gradient", name),
+    when = sampler$properties$requires_gradient)
+  require_multiple_parameters(
+    model,
+    sprintf("Can't use %s as '%s' does not allow multiple parameters",
+            name, sampler$name),
+    when = sampler$properties$requires_allow_multiple_parameters)
+}

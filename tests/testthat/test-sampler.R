@@ -1,8 +1,8 @@
 test_that("can validate sampler properties", {
   properties <- validate_sampler_properties(NULL, NULL, NULL)
-  assert_s3_class(properties, "monty_sampler_properties")
-  assert_false(properties$has_state)
-  assert_false(properties$restartable)
+  expect_s3_class(properties, "monty_sampler_properties")
+  expect_false(properties$has_state)
+  expect_false(properties$restartable)
 })
 
 
@@ -19,9 +19,9 @@ test_that("can validate sampler properties", {
 
 test_that("can validate sampler properties", {
   properties <- validate_sampler_properties(NULL, NULL, NULL)
-  assert_s3_class(properties, "monty_sampler_properties")
-  assert_false(properties$has_state)
-  assert_false(properties$restartable)
+  expect_s3_class(properties, "monty_sampler_properties")
+  expect_false(properties$has_state)
+  expect_false(properties$restartable)
 })
 
 

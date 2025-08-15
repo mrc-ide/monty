@@ -141,5 +141,5 @@ test_that("prevent use of the simultaneous runner with parallel tempering", {
   runner <- monty_runner_simultaneous()
   expect_error(
     monty_sample(m, sampler, 100, n_chains = 3, runner = runner),
-    "Can't use parallel tempering with multiple parameter sets")
+    "Can't use the simultaneous runner with this sampler")
 })

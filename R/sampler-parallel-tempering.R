@@ -73,17 +73,18 @@ monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
   beta <- validate_parallel_tempering_beta(n_rungs, beta)
 
   if (!is.null(base)) {
-    ## These checks also need doing on the split model, perhaps?
     assert_is(base, "monty_model")
-    require_direct_sample(base, "Can't use 'base' as a base model")
-    require_multiple_parameters(base, "Can't use 'base' as a base model")
-    require_deterministic(base, "Can't use 'base' as a base model")
+    check_base_model(base, FALSE)
   }
 
   control <- list(n_rungs = length(beta) - 1L,
                   beta = beta,
                   sampler = sampler,
                   base = base)
+
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = FALSE,
+    requires_allow_multiple_parameters = TRUE)
 
   monty_sampler(sprintf("Parallel Tempering [%s]", sampler$name),
                 "monty_sampler_parallel_tempering",
@@ -93,7 +94,8 @@ monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
                 sampler_parallel_tempering_dump,
                 sampler_parallel_tempering_combine,
                 sampler_parallel_tempering_restore,
-                sampler_parallel_tempering_details)
+                sampler_parallel_tempering_details,
+                properties = properties)
 }
 
 
@@ -427,6 +429,7 @@ parallel_tempering_base <- function(model, control, call = parent.frame()) {
   } else {
     base <- control$base
   }
+  check_base_model(base, split = is.null(control$base), call = call)
   if (!setequal(base$parameters, model$parameters)) {
     cli::cli_abort("'base' and 'model' must have the same parameters",
                    call = call)
@@ -467,4 +470,16 @@ validate_parallel_tempering_beta <- function(n_rungs, beta,
                    call = call, arg = "beta")
   }
   beta
+}
+
+
+check_base_model <- function(base, split, call = parent.frame()) {
+  if (split) {
+    msg <- "Can't use base model split from 'model' as a base model"
+  } else {
+    msg <- "Can't use 'base' as a base model"
+  }
+  require_direct_sample(base, msg, call = call)
+  require_multiple_parameters(base, msg, call = call)
+  require_deterministic(base, msg, call = call)
 }
