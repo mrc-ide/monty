@@ -33,7 +33,7 @@ monty_runner_serial <- function(progress = NULL) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state$rng)
+    n_chains <- n_chains_from_state(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
     with_progress_fail_on_error(
       pb,
@@ -125,7 +125,7 @@ monty_runner_parallel <- function(n_workers) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state$rng)
+    n_chains <- n_chains_from_state(state)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
     args <- list(model = model,
@@ -198,17 +198,14 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
 
-  ## TODO: I think that having the state as a matrix here rather than
-  ## a list would be nice, but that's a small change to make later
-  ## really.
-  rng <- monty_rng_create(seed = state$rng[[chain_id]])
+  rng <- monty_rng_create(seed = state$rng[, chain_id])
 
   ## The model might have been serialised and need repair before it is
   ## used, this allows models to repair any broken pointers:
   model$restore()
 
   if (model$properties$is_stochastic) {
-    model$rng_state$set(state$model_rng[[chain_id]])
+    model$rng_state$set(state$model_rng[, chain_id])
   }
 
   state_chain <- lapply(state$chain, array_select_last, chain_id)
@@ -300,4 +297,9 @@ print.monty_runner <- function(x, ...) {
   cli::cli_alert_info("Use {.help monty_sample} to use this runner")
   cli::cli_alert_info("See {.help {x$help}} for more information")
   invisible(x)
+}
+
+
+n_chains_from_state <- function(state) {
+  ncol(state$rng)
 }

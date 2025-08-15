@@ -315,7 +315,7 @@ monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
   restart <- samples$restart
   state <- samples$state
-  n_chains <- length(samples$state$rng)
+  n_chains <- n_chains_from_state(state)
   samples <- sample_manual_prepare_check_samples(samples, save_samples)
 
   steps <- monty_sample_steps(n_steps,
