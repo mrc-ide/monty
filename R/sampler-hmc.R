@@ -115,7 +115,7 @@ sampler_hmc_step <- function(state_chain, state_sampler, control, model, rng) {
     state_sampler$history$complete(accept)
   }
 
-  update_state(state_chain, pars, density_next, accept, model, rng)
+  update_state(state_chain, pars, density_next, accept, model)
 }
 
 

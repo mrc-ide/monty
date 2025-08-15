@@ -134,7 +134,7 @@ Your sampler can have internal state.  This is not needed for
 simple samplers; a random walk Metropolis-Hastings sampler does
 not need this for example as its state is entirely defined by the
 (\code{pars}, \code{density}) pair that forms the chain state.  Similarly,
-simple implemenations of HMC or Gibbs samplers would not need this
+simple implementations of HMC or Gibbs samplers would not need this
 functionality.  If you wish to record debug information, or if
 your sampler updates some internal state as it runs -- as our
 adaptive Metropolis-Hastings sampler does -- then you will need to
@@ -180,16 +180,16 @@ to return nothing.
 }
 
 State initialisation is handled by \code{initialise}; however, a
-nontrivial return value from this function does not imply that
+non-trivial return value from this function does not imply that
 your sampler needs to worry very much about state.  If you can
 entirely construct this from the current state of the chain and
 the control parameters, then no state management is required.
-However, a nontrivial return value from \code{initialise} requires a
+However, a non-trivial return value from \code{initialise} requires a
 \code{state_restore} argument, even if \code{state_dump} is not present.
 
 The state manoeuvres may feel tedious, but it will form part of
 the core of how the Parallel Tempering algorithm works, where we
-need to be ablt to run multiple chains through a sampler at the
+need to be able to run multiple chains through a sampler at the
 same time.
 
 We will set things up soon so that if you do not provide these

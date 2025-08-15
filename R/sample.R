@@ -375,11 +375,13 @@ combine_chains <- function(res, sampler, observer, include_state) {
     model_rng <- lapply(state, "[[", "model_rng")
     if (all(vlapply(model_rng, is.null))) {
       model_rng <- NULL
+    } else {
+      model_rng <- array_bind(arrays = model_rng, on = 2)
     }
     state <- list(
       chain = combine_state_chain(lapply(state, "[[", "chain")),
       sampler = sampler_state,
-      rng = lapply(state, "[[", "rng"),
+      rng = array_bind(arrays = lapply(state, "[[", "rng"), on = 2),
       model_rng = model_rng)
   } else {
     state <- NULL

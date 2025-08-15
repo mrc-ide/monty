@@ -105,15 +105,13 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
 monty_continue_chains_simultaneous <- function(state, model, sampler,
                                                steps, progress) {
   r_rng_state <- get_r_rng_state()
-  n_chains <- length(state$rng)
+  n_chains <- n_chains_from_state(state)
   n_pars <- length(model$parameters)
 
   ## NOTE this duplicates code in monty_run_chains_simultaneous; we
   ## could move this elsewhere if we change the interface for the
   ## sequential version too?
-  ##
-  ## TODO: this can be tidied away if rng state was stored as a matrix
-  rng <- monty_rng_create(seed = unlist(state$rng), n_streams = n_chains)
+  rng <- monty_rng_create(seed = state$rng, n_streams = n_chains)
 
   chain_state <- state$chain
 
@@ -127,6 +125,7 @@ monty_continue_chains_simultaneous <- function(state, model, sampler,
     chain_id, chain_state, state$sampler, sampler$control, model)
 
   stopifnot(!model$properties$is_stochastic)
+  ## TODO: let's get a test on this while we're at it?
   ## Need to use model$rng_state$set to put state$model_rng into the model
 
   monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
@@ -165,17 +164,18 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   warn_if_used_r_rng(!identical(get_r_rng_state(), r_rng_state))
 
-  ## TODO: This is more work than ideal, it might be nicer to return
-  ## the matrix, with some minor changes required.
-  rng_state <- lapply(asplit(matrix(monty_rng_state(rng), ncol = n_chains), 2),
-                      as.vector)
+  if (model$properties$is_stochastic) {
+    model_rng <- matrix(model$rng_state$get(), ncol = n_chains)
+  } else {
+    model_rng <- NULL
+  }
 
   observations <- NULL
   state <- list(
     chain = chain_state,
     sampler = sampler_state,
-    rng = rng_state,
-    model_rng = if (model$properties$is_stochastic) model$rng_state$get())
+    rng = matrix(monty_rng_state(rng), ncol = n_chains),
+    model_rng = model_rng)
 
   ## Normally, we construct samples elsewhere, but it's least weird
   ## for now do do it here.

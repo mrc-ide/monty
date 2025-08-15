@@ -5,7 +5,7 @@
 ##' sampler ([monty_sampler_random_walk]) but this may work with other
 ##' samplers.
 ##'
-##' We implement the sampler based on https://doi.org/10.1111/rssb.12464
+##' We implement the sampler based on <https://doi.org/10.1111/rssb.12464>
 ##'
 ##' # Efficiency of the sampler
 ##'
@@ -110,13 +110,7 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   ## samples every time.
   ##
   ## TODO: prevent observers
-
   n_rungs <- control$n_rungs
-  beta <- control$beta
-  stopifnot(last(beta) == 0,
-            all(diff(beta) < 0),
-            all(beta >= 0),
-            all(beta <= 1))
 
   model_base <- parallel_tempering_base(model, control)
   model_scaled <- parallel_tempering_scale(model, control)

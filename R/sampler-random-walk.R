@@ -74,17 +74,6 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
 ## The core sampler functions: initalise, step, dump, restore
 sampler_random_walk_initialise <- function(state_chain, control, model, rng) {
   pars <- state_chain$pars
-
-  ## TODO: Samplers need to cope with this, and we could have them
-  ## advertise this I think, as part of their properties, once we have
-  ## that sorted out.
-  multiple_parameters <- length(dim2(pars)) > 1
-  if (multiple_parameters) {
-    ## this is properly enforced elsewhere, but we assert here to be
-    ## safe.
-    stopifnot(model$properties$allow_multiple_parameters)
-  }
-  
   ## We don't actually need to return an environment here, because all
   ## our things that are modified by reference (rerun) will already be
   ## captured in an environment
@@ -118,8 +107,7 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
   }
   accept <- density_next - state_chain$density > log(monty_random_real(rng))
 
-  ## TODO: rng is not needed through here and can be removed
-  update_state(state_chain, pars_next, density_next, accept, model, rng)
+  update_state(state_chain, pars_next, density_next, accept, model)
 }
 
 
