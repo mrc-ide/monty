@@ -49,7 +49,7 @@ sampler (\link{monty_sampler_random_walk}) but this may work with other
 samplers.
 }
 \details{
-We implement the sampler based on https://doi.org/10.1111/rssb.12464
+We implement the sampler based on \url{https://doi.org/10.1111/rssb.12464}
 }
 \section{Efficiency of the sampler}{
 A parallel tempering sampler runs a series of chains at the same

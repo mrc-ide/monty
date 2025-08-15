@@ -5,7 +5,7 @@
 ##' sampler ([monty_sampler_random_walk]) but this may work with other
 ##' samplers.
 ##'
-##' We implement the sampler based on https://doi.org/10.1111/rssb.12464
+##' We implement the sampler based on <https://doi.org/10.1111/rssb.12464>
 ##'
 ##' # Efficiency of the sampler
 ##'
