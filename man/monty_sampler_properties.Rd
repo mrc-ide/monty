@@ -39,7 +39,7 @@ different to \code{allow_multiple_parameters}, which concerns if the
 \emph{sampler} is able to process multiple parameter sets at once.
 For example, \link{monty_sampler_parallel_tempering} sets
 \code{allow_multiple_parameters} to \code{FALSE} but
-\code{requires_allow_multiple_parameters} to \code{FALSE}, while
+\code{requires_allow_multiple_parameters} to \code{TRUE}, while
 \link{monty_sampler_random_walk} sets the opposite!}
 
 \item{requires_deterministic}{Logical, indicating if the model
@@ -53,7 +53,7 @@ modified.
 Describe properties of a sampler.  This is used from
 \link{monty_sampler} to advertise what your sampler does about state,
 what it requires from the runner and from the model, so that monty
-can ensure that it is only used where it is appropriate.y
+can ensure that it is only used where it is appropriate.
 }
 \examples{
 monty_sampler_properties()
