@@ -6,6 +6,18 @@ test_that("can validate sampler properties", {
 })
 
 
+test_that("can print information about model properties", {
+  p <- monty_sampler_properties()
+  res <- evaluate_promise(withVisible(print(p)))
+  expect_equal(res$result, list(value = p, visible = FALSE))
+  expect_match(res$messages, "<monty_sampler_properties>",
+               fixed = TRUE, all = FALSE)
+  expect_true(any(grepl("requires_deterministic:", res$messages)))
+  expect_match(res$messages, "Unset:",
+               fixed = TRUE, all = FALSE)
+})
+
+
 test_that("can validate sampler properties", {
   properties <- monty_sampler_properties(has_state = TRUE, restartable = TRUE)
   expect_error(
