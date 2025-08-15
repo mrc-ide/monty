@@ -1,36 +1,38 @@
 test_that("Empirical VCV calculated correctly with forget_rate = 0", {
+  set.seed(1)
   m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
-
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0,
                                     log_scaling_update = FALSE)
   res <- monty_sample(m, sampler, 1000)
-  expect_equal(names(res),
-               c("pars", "density", "initial", "details", "observations"))
+
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "observations", "state"))
 
   ## forget_rate = 0 so full chain should be included in VCV
-  expect_equal(res$details[[1]]$weight, 1000)
-  expect_equal(res$details[[1]]$included, seq_len(1000))
+  expect_equal(res$details$weight[[1]], 1000)
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv, cov(pars), ignore_attr = TRUE)
+  expect_equal(res$details$vcv[, , 1], cov(unname(pars)))
+  expect_null(res$state)
 })
 
 
 test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
+  set.seed(1)
   m <- monty_example("gaussian", vcv = rbind(c(0.02, 0.01), c(0.01, 0.03)))
 
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)),
                                     forget_rate = 0.1)
   res <- monty_sample(m, sampler, 1000)
-  expect_equal(names(res),
-               c("pars", "density", "initial", "details", "observations"))
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "observations", "state"))
 
   ## forget_rate = 0.1 so VCV should exclude first 100 parameter sets
-  expect_equal(res$details[[1]]$weight, 900)
-  expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
+  expect_equal(res$details$weight[[1]], 900)
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv, cov(pars[101:1000, ]),
-               ignore_attr = TRUE)
+  expect_equal(res$details$vcv[, , 1], cov(unname(pars[101:1000, ])))
 })
 
 
@@ -41,16 +43,15 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
                                     forget_rate = 0.5,
                                     forget_end = 200)
   res <- monty_sample(m, sampler, 1000)
-  expect_equal(names(res),
-               c("pars", "density", "initial", "details", "observations"))
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "observations", "state"))
 
   ## forget_rate = 0.5 and forget_end = 200 so VCV should exclude first
   ## 100 parameter sets
-  expect_equal(res$details[[1]]$weight, 900)
-  expect_equal(res$details[[1]]$included, seq(101, 1000, by = 1))
+  expect_equal(res$details$weight[[1]], 900)
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv, cov(pars[101:1000, ]),
-               ignore_attr = TRUE)
+  expect_equal(res$details$vcv[, , 1], cov(unname(pars[101:1000, ])))
 })
 
 
@@ -62,16 +63,15 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
                                     forget_end = 100,
                                     adapt_end = 300)
   res <- monty_sample(m, sampler, 1000)
-  expect_equal(names(res),
-               c("pars", "density", "initial", "details", "observations"))
+  expect_setequal(
+    names(res),
+    c("pars", "density", "initial", "details", "observations", "state"))
 
   ## forget_rate = 0.25, forget_end = 500 and adapt_end = 300 so VCV should
   ## only include parameter sets 26 to 300
-  expect_equal(res$details[[1]]$weight, 275)
-  expect_equal(res$details[[1]]$included, seq(26, 300, by = 1))
+  expect_equal(res$details$weight[[1]], 275)
   pars <- t(array_drop(res$pars, 3))
-  expect_equal(res$details[[1]]$vcv, cov(pars[26:300, ]),
-               ignore_attr = TRUE)
+  expect_equal(res$details$vcv[, , 1], cov(unname(pars[26:300, ])))
 })
 
 
@@ -96,7 +96,7 @@ test_that("can't use adaptive sampler with stochastic models", {
   sampler <- monty_sampler_adaptive(initial_vcv = diag(c(0.01, 0.01)))
   expect_error(
     monty_sample(m, sampler, 30, n_chains = 3),
-    "Can't use adaptive sampler with stochastic models")
+    "Adaptive Metropolis-Hastings requires deterministic models")
 })
 
 
@@ -212,4 +212,38 @@ test_that("can run sampler with rejecting boundaries simultaneously", {
   cmp <- monty_sample(m, s, n_steps, n_chains = 4)
 
   expect_equal(res, cmp)
+})
+
+
+test_that("can validate forget rate", {
+  expect_equal(validate_forget_rate(0), Inf)
+  expect_equal(validate_forget_rate(0.1), 10)
+  expect_equal(validate_forget_rate(1 / 3), 3)
+  expect_error(validate_forget_rate(1 / pi),
+               "Expected 'forget_rate' to be the inverse of an integer")
+  expect_error(validate_forget_rate(1.2),
+               "Expected 'forget_rate' to be less than 1")
+  expect_error(validate_forget_rate(1),
+               "Expected 'forget_rate' to be less than 1")
+  expect_error(validate_forget_rate(-1),
+               "Expected 'forget_rate' to be positive")
+})
+
+
+test_that("can continue adaptive sampler simultaneously", {
+  m <- ex_simple_gamma1()
+  sampler <- monty_sampler_adaptive(initial_vcv = matrix(0.01, 1, 1))
+  runner <- monty_runner_simultaneous()
+
+  set.seed(1)
+  res1a <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE)
+  res1b <- monty_sample_continue(res1a, 20)
+
+  set.seed(1)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 3, runner = runner,
+                        restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20)
+
+  expect_equal(drop_runner(res1a), drop_runner(res2a))
+  expect_equal(res1b, res2b)
 })

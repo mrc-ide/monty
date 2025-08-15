@@ -5,7 +5,7 @@
 \title{Random Walk Sampler}
 \usage{
 monty_sampler_random_walk(
-  vcv = NULL,
+  vcv,
   boundaries = "reflect",
   rerun_every = Inf,
   rerun_random = TRUE

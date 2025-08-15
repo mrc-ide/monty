@@ -26,7 +26,7 @@ chol_pivot <- function(x) {
 ##
 ## * monty_example_gaussian uses centred
 ## * sampler_hmc also uses centred
-## * make_random_walk_proposal does not use centred, but could
+## * make_random_walk_proposal_fn does not use centred, but could
 
 
 make_rmvnorm <- function(vcv) {

@@ -20,7 +20,7 @@
 ##' r <- monty_runner_simultaneous()
 ##' samples <- monty_sample(m, s, 200, runner = r)
 monty_runner_simultaneous <- function(progress = NULL) {
-  validate_suitable <- function(model) {
+  validate_suitable_model <- function(model) {
     require_multiple_parameters(
       model,
       "monty_runner_simultaneous requires support for multiple parameters",
@@ -31,9 +31,20 @@ monty_runner_simultaneous <- function(progress = NULL) {
       "Can't yet use multiple parameter sets with stochastic model",
       call = environment())
   }
+  validate_suitable_sampler <- function(sampler) {
+    if (!sampler$properties$allow_multiple_parameters) {
+      cli::cli_abort(
+        c("Can't use the simultaneous runner with this sampler",
+          i = paste("This runner requires that we can advance several chains",
+                    "at once by passing a matrix of parameters, but",
+                    "the sampler that you are using ({sampler$name})",
+                    "does not support this")))
+    }
+  }
 
   run <- function(pars, model, sampler, steps, rng) {
-    validate_suitable(model)
+    validate_suitable_model(model)
+    validate_suitable_sampler(sampler)
     n_chains <- length(rng)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     rng_state <- lapply(rng, function(r) monty_rng_state(r))
@@ -50,7 +61,8 @@ monty_runner_simultaneous <- function(progress = NULL) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    validate_suitable(model)
+    validate_suitable_model(model)
+    validate_suitable_sampler(sampler)
     n_chains <- length(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = FALSE)
     with_progress_fail_on_error(
@@ -81,9 +93,11 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
   n_chains <- length(rng_state)
   rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
 
-  chain_state <- sampler$initialise(pars, model, rng)
+  chain_state <- initialise_state(pars, model, rng)
+  sampler_state <-
+    sampler$initialise(chain_state, sampler$control, model, rng)
 
-  monty_run_chains_simultaneous2(chain_state, model, sampler,
+  monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
                                  steps, progress, rng, r_rng_state)
 }
 
@@ -91,40 +105,35 @@ monty_run_chains_simultaneous <- function(pars, model, sampler,
 monty_continue_chains_simultaneous <- function(state, model, sampler,
                                                steps, progress) {
   r_rng_state <- get_r_rng_state()
-  n_chains <- length(state)
+  n_chains <- n_chains_from_state(state)
   n_pars <- length(model$parameters)
 
   ## NOTE this duplicates code in monty_run_chains_simultaneous; we
   ## could move this elsewhere if we change the interface for the
   ## sequential version too?
-  rng_state <- unlist(lapply(state, "[[", "rng"))
-  rng <- monty_rng_create(seed = unlist(rng_state), n_streams = n_chains)
+  rng <- monty_rng_create(seed = state$rng, n_streams = n_chains)
 
-  ## This is the inverse of restart_data really
-  pars <- matrix(vapply(state, function(x) x$chain$pars, numeric(n_pars)),
-                 n_pars, n_chains)
-  density <- vnapply(state, function(x) x$chain$density)
-  chain_state <- list(pars = pars, density = density, observation = NULL)
+  chain_state <- state$chain
 
   ## We have to (at least for now) just take the first sampler state.
   ## This is not totally ideal, but most of the time the runner will
   ## be the same in which case this is the same data replicated n
   ## times.  We could warn, but as there's not a lot of better
   ## alternatives for the user, let's just keep going.
-  sampler_state <- state[[1]]$sampler
-  if (!is.null(sampler_state)) {
-    sampler$set_internal_state(sampler_state)
-  }
+  chain_id <- seq_len(n_chains)
+  sampler_state <- sampler$state$restore(
+    chain_id, chain_state, state$sampler, sampler$control, model)
 
   stopifnot(!model$properties$is_stochastic)
   ## Need to use model$rng_state$set to put state$model_rng into the model
 
-  monty_run_chains_simultaneous2(chain_state, model, sampler,
+  monty_run_chains_simultaneous2(chain_state, sampler_state, model, sampler,
                                  steps, progress, rng, r_rng_state)
 }
 
 
-monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
+monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
+                                           model, sampler,
                                            steps, progress, rng,
                                            r_rng_state) {
   initial <- chain_state$pars
@@ -132,50 +141,40 @@ monty_run_chains_simultaneous2 <- function(chain_state, model, sampler,
   n_chains <- length(chain_state$density)
   n_steps_record <- steps$total
 
-  history_pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
-  history_density <- matrix(NA_real_, n_steps_record, n_chains)
+  pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
+  density <- matrix(NA_real_, n_steps_record, n_chains)
 
   chain_id <- seq_len(n_chains)
 
   for (i in seq_len(steps$total)) {
-    chain_state <- sampler$step(chain_state, model, rng)
-    history_pars[, i, ] <- chain_state$pars
-    history_density[i, ] <- chain_state$density
+    chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                model, rng)
+    pars[, i, ] <- chain_state$pars
+    density[i, ] <- chain_state$density
     ## TODO: also allow observations here if enabled
     progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
-  rownames(history_pars) <- model$parameters
+  rownames(pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
-  details <- sampler$finalise(chain_state, model, rng)
+  sampler_state <- sampler$state$dump(sampler_state)
+  details <- sampler$state$details(sampler_state)
 
-  ## This simplifies handling later; we might want to make a new
-  ## version of asplit that does not leave stray attributes on later
-  ## though?
-  rng_state <- matrix(monty_rng_state(rng), ncol = n_chains)
-  rng_state <- lapply(asplit(rng_state, 2), as.vector)
+  warn_if_used_r_rng(!identical(get_r_rng_state(), r_rng_state))
 
-  sampler_state <- sampler$get_internal_state()
-  if (!is.null(sampler_state)) {
-    sampler_state <- rep(list(sampler_state), n_chains)
-  }
+  ## See above, currently prevented
+  stopifnot(!model$properties$is_stochastic)
+  model_rng <- NULL
 
-  ## TODO: observation finalisation; this will be weird
-  internal <- list(
-    used_r_rng = !identical(get_r_rng_state(), r_rng_state),
-    state = list(
-      chain = chain_state,
-      rng = rng_state,
-      sampler = sampler_state,
-      simultaneous = TRUE,
-      model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
+  observations <- NULL
+  state <- list(
+    chain = chain_state,
+    sampler = sampler_state,
+    rng = matrix(monty_rng_state(rng), ncol = n_chains),
+    model_rng = model_rng)
 
-  list(initial = initial,
-       pars = history_pars,
-       density = history_density,
-       details = details,
-       observations = NULL,
-       internal = internal)
+  ## Normally, we construct samples elsewhere, but it's least weird
+  ## for now do do it here.
+  monty_samples(pars, density, initial, details, observations, state)
 }

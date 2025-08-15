@@ -33,14 +33,14 @@ monty_runner_serial <- function(progress = NULL) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state)
+    n_chains <- n_chains_from_state(state)
     pb <- progress_bar(n_chains, steps$total, progress, show_overall = TRUE)
     with_progress_fail_on_error(
       pb,
       lapply(
-        seq_along(state),
+        seq_len(n_chains),
         function(i) {
-          monty_continue_chain(i, state[[i]], model, sampler, steps, pb$update)
+          monty_continue_chain(i, state, model, sampler, steps, pb$update)
         }))
   }
 
@@ -125,19 +125,18 @@ monty_runner_parallel <- function(n_workers) {
   }
 
   continue <- function(state, model, sampler, steps) {
-    n_chains <- length(state)
+    n_chains <- n_chains_from_state(state)
     cl <- parallel::makeCluster(min(n_chains, n_workers))
     on.exit(parallel::stopCluster(cl))
     args <- list(model = model,
                  sampler = sampler,
                  steps = steps,
                  progress = progress_bar_none()$update)
-    parallel::clusterMap(
+    parallel::clusterApply(
       cl,
-      monty_continue_chain,
       seq_len(n_chains),
-      state,
-      MoreArgs = args)
+      monty_continue_chain,
+      state, model, sampler, steps, progress_bar_none()$update)
   }
 
   monty_runner("Parallel",
@@ -159,7 +158,10 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
                             progress, rng) {
   r_rng_state <- get_r_rng_state()
   model$restore()
-  chain_state <- sampler$initialise(pars, model, rng)
+
+  chain_state <- initialise_state(pars, model, rng)
+  sampler_state <-
+    sampler$initialise(chain_state, sampler$control, model, rng)
 
   if (!is.finite(chain_state$density)) {
     ## Ideally, we'd do slightly better than this; it might be worth
@@ -178,30 +180,47 @@ monty_run_chain <- function(chain_id, pars, model, sampler, steps,
     ## hard to do with the random walk sampler as it's stateless so
     ## there's no real effect, but we'll readdress this once we get
     ## the HMC or adaptive samplers set up.
+    ##
+    ## Having discussed this a bit more, we would like to lift the
+    ## 'initialise_state' part out of this function (so that
+    ## chain_state, and not pars, is passed into run_chain) and then
+    ## have runners look after initialisation themselves with control
+    ## over how many points to try.
     cli::cli_abort("Chain does not have finite starting density")
   }
 
-  monty_run_chain2(chain_id, chain_state, model, sampler, steps, progress,
-                   rng, r_rng_state)
+  monty_run_chain2(chain_id, chain_state, sampler_state, model, sampler,
+                   steps, progress, rng, r_rng_state)
 }
 
 
 monty_continue_chain <- function(chain_id, state, model, sampler, steps,
                                  progress) {
   r_rng_state <- get_r_rng_state()
-  rng <- monty_rng_create(seed = state$rng)
+
+  rng <- monty_rng_create(seed = state$rng[, chain_id])
+
+  ## The model might have been serialised and need repair before it is
+  ## used, this allows models to repair any broken pointers:
   model$restore()
-  sampler$set_internal_state(state$sampler)
+
   if (model$properties$is_stochastic) {
-    model$rng_state$set(state$model_rng)
+    model$rng_state$set(state$model_rng[, chain_id])
   }
-  monty_run_chain2(chain_id, state$chain, model, sampler, steps, progress,
-                   rng, r_rng_state)
+
+  state_chain <- lapply(state$chain, array_select_last, chain_id)
+  state_chain$pars <- as.vector(state_chain$pars)
+
+  state_sampler <- sampler$state$restore(
+    chain_id, state_chain, state$sampler, sampler$control, model)
+
+  monty_run_chain2(chain_id, state_chain, state_sampler, model, sampler,
+                   steps, progress, rng, r_rng_state)
 }
 
 
-monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
-                             progress, rng, r_rng_state) {
+monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
+                             sampler, steps, progress, rng, r_rng_state) {
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
@@ -218,7 +237,8 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
 
   j <- 1L
   for (i in seq_len(n_steps)) {
-    chain_state <- sampler$step(chain_state, model, rng)
+    chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
+                                model, rng)
     if (i > burnin && i %% thinning_factor == 0) {
       history_pars[, j] <- chain_state$pars
       history_density[[j]] <- chain_state$density
@@ -233,31 +253,31 @@ monty_run_chain2 <- function(chain_id, chain_state, model, sampler, steps,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
 
-  ## I'm not sure about the best name for this
-  details <- sampler$finalise(chain_state, model, rng)
-
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
   }
+
+  used_r_rng <- !identical(get_r_rng_state(), r_rng_state)
 
   ## This list will hold things that we'll use internally but not
   ## surface to the user in the final object (or summarise them in
   ## some particular way with no guarantees about the format).  We
   ## might hold things like start and stop times here in future.
-  internal <- list(
-    used_r_rng = !identical(get_r_rng_state(), r_rng_state),
-    state = list(
-      chain = chain_state,
-      rng = monty_rng_state(rng),
-      sampler = sampler$get_internal_state(),
-      model_rng = if (model$properties$is_stochastic) model$rng_state$get()))
+  history <- list(
+    pars = history_pars,
+    density = history_density,
+    observations = history_observation)
+  state <- list(
+    chain = chain_state,
+    rng = monty_rng_state(rng),
+    sampler = sampler$state$dump(sampler_state, sampler$control),
+    model_rng = if (model$properties$is_stochastic) model$rng_state$get())
 
-  list(initial = initial,
-       pars = history_pars,
-       density = history_density,
-       details = details,
-       observations = history_observation,
-       internal = internal)
+  list(
+    history = history,
+    state = state,
+    initial = initial,
+    used_r_rng = used_r_rng)
 }
 
 
@@ -277,4 +297,9 @@ print.monty_runner <- function(x, ...) {
   cli::cli_alert_info("Use {.help monty_sample} to use this runner")
   cli::cli_alert_info("See {.help {x$help}} for more information")
   invisible(x)
+}
+
+
+n_chains_from_state <- function(state) {
+  ncol(state$rng)
 }
