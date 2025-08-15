@@ -56,6 +56,8 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                   rerun = rerun_every < Inf,
                   rerun_every = rerun_every,
                   rerun_random = rerun_random)
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = TRUE)
 
   monty_sampler("Random walk",
                 "monty_random_walk",
@@ -64,7 +66,8 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                 sampler_random_walk_step,
                 sampler_random_walk_dump,
                 sampler_random_walk_combine,
-                sampler_random_walk_restore)
+                sampler_random_walk_restore,
+                properties = properties)
 }
 
 
