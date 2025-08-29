@@ -775,3 +775,12 @@ monty_random_multinomial <- function(size, prob, state) {
 monty_random_n_multinomial <- function(n_samples, size, prob, state) {
   cpp_monty_random_n_multinomial(n_samples, size, prob, state)
 }
+
+
+monty_random_dirichlet <- function(alpha, state) {
+  cpp_monty_random_dirichlet(alpha, state)
+}
+
+monty_random_n_dirichlet <- function(n_samples, alpha, state) {
+  cpp_monty_random_n_dirichlet(n_samples, alpha, state)
+}

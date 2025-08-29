@@ -304,6 +304,14 @@ cpp_monty_random_n_multinomial <- function(n_samples, r_size, r_prob, ptr) {
   .Call(`_monty_cpp_monty_random_n_multinomial`, n_samples, r_size, r_prob, ptr)
 }
 
+cpp_monty_random_dirichlet <- function(r_alpha, ptr) {
+  .Call(`_monty_cpp_monty_random_dirichlet`, r_alpha, ptr)
+}
+
+cpp_monty_random_n_dirichlet <- function(n_samples, r_alpha, ptr) {
+  .Call(`_monty_cpp_monty_random_n_dirichlet`, n_samples, r_alpha, ptr)
+}
+
 test_xoshiro_run <- function(ptr) {
   .Call(`_monty_test_xoshiro_run`, ptr)
 }

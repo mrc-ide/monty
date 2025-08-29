@@ -540,6 +540,20 @@ extern "C" SEXP _monty_cpp_monty_random_n_multinomial(SEXP n_samples, SEXP r_siz
     return cpp11::as_sexp(cpp_monty_random_n_multinomial(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_size), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_prob), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
   END_CPP11
 }
+// random.cpp
+cpp11::doubles cpp_monty_random_dirichlet(cpp11::doubles r_alpha, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_dirichlet(SEXP r_alpha, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_dirichlet(cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_alpha), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
+// random.cpp
+cpp11::doubles cpp_monty_random_n_dirichlet(size_t n_samples, cpp11::doubles r_alpha, cpp11::sexp ptr);
+extern "C" SEXP _monty_cpp_monty_random_n_dirichlet(SEXP n_samples, SEXP r_alpha, SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_monty_random_n_dirichlet(cpp11::as_cpp<cpp11::decay_t<size_t>>(n_samples), cpp11::as_cpp<cpp11::decay_t<cpp11::doubles>>(r_alpha), cpp11::as_cpp<cpp11::decay_t<cpp11::sexp>>(ptr)));
+  END_CPP11
+}
 // test_rng.cpp
 std::vector<std::string> test_xoshiro_run(cpp11::sexp ptr);
 extern "C" SEXP _monty_test_xoshiro_run(SEXP ptr) {
@@ -555,6 +569,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_beta_binomial_prob",          (DL_FUNC) &_monty_cpp_monty_random_beta_binomial_prob,          4},
     {"_monty_cpp_monty_random_binomial",                    (DL_FUNC) &_monty_cpp_monty_random_binomial,                    3},
     {"_monty_cpp_monty_random_cauchy",                      (DL_FUNC) &_monty_cpp_monty_random_cauchy,                      3},
+    {"_monty_cpp_monty_random_dirichlet",                   (DL_FUNC) &_monty_cpp_monty_random_dirichlet,                   2},
     {"_monty_cpp_monty_random_exponential_mean",            (DL_FUNC) &_monty_cpp_monty_random_exponential_mean,            2},
     {"_monty_cpp_monty_random_exponential_rate",            (DL_FUNC) &_monty_cpp_monty_random_exponential_rate,            2},
     {"_monty_cpp_monty_random_gamma_rate",                  (DL_FUNC) &_monty_cpp_monty_random_gamma_rate,                  3},
@@ -567,6 +582,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_monty_cpp_monty_random_n_beta_binomial_prob",        (DL_FUNC) &_monty_cpp_monty_random_n_beta_binomial_prob,        5},
     {"_monty_cpp_monty_random_n_binomial",                  (DL_FUNC) &_monty_cpp_monty_random_n_binomial,                  4},
     {"_monty_cpp_monty_random_n_cauchy",                    (DL_FUNC) &_monty_cpp_monty_random_n_cauchy,                    4},
+    {"_monty_cpp_monty_random_n_dirichlet",                 (DL_FUNC) &_monty_cpp_monty_random_n_dirichlet,                 3},
     {"_monty_cpp_monty_random_n_exponential_mean",          (DL_FUNC) &_monty_cpp_monty_random_n_exponential_mean,          3},
     {"_monty_cpp_monty_random_n_exponential_rate",          (DL_FUNC) &_monty_cpp_monty_random_n_exponential_rate,          3},
     {"_monty_cpp_monty_random_n_gamma_rate",                (DL_FUNC) &_monty_cpp_monty_random_n_gamma_rate,                4},

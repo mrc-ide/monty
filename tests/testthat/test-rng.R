@@ -1712,3 +1712,52 @@ test_that("zero-inflated negative binomial prevents bad inputs", {
   expect_equal(monty_random_zi_negative_binomial_prob(1, NaN, 1, r), 0)
   expect_equal(monty_random_zi_negative_binomial_prob(0.2, 0, NaN, r), 0)
 })
+
+test_that("dirichlet algorithm is correct", {
+  set.seed(1)
+  alpha <- rexp(10)
+  n <- 5
+  
+  ## Separate implementation of the core algorithm:
+  cmp_dirichlet <- function(rng, alpha) {
+    ret <- numeric(length(alpha))
+    for (i in seq_len(length(alpha))) {
+      ret[i] <- monty_random_gamma_scale(alpha[i], 1, rng)
+    }
+    ret <- ret / sum(ret)
+    ret
+  }
+  
+  r1 <- monty_rng_create(seed = 1)
+  r2 <- monty_rng_create(seed = 1)
+  res1 <- monty_random_dirichlet(alpha, r1)
+  res2 <- cmp_dirichlet(r2, alpha)
+  expect_equal(res1, res2)
+  
+  res1 <- monty_random_n_dirichlet(n, alpha, r1)
+  res2 <- replicate(n, cmp_dirichlet(r2, alpha))
+  expect_equal(res1, res2)
+})
+
+
+test_that("dirichlet expectation is correct", {
+  alpha <- rexp(10)
+  n <- 10000
+  rng <- monty_rng_create(seed = 1)
+  res <- monty_random_n_dirichlet(n, alpha, rng)
+  expect_equal(dim(res), c(10, n))
+  expect_equal(colSums(res), rep(1, n))
+  expect_equal(rowMeans(res), alpha / sum(alpha), tolerance = 1e-2)
+})
+
+
+test_that("dirichlet allows zero-values for some shape parameters", {
+  alpha <- rexp(10)
+  alpha[4] <- 0
+  n <- 500
+  rng <- monty_rng_create(seed = 1)
+  res <- monty_random_n_dirichlet(n, alpha, rng)
+  
+  expect_equal(res[4, ], rep(0, n))
+  expect_equal(colSums(res), rep(1, n))
+})

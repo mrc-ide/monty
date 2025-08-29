@@ -932,3 +932,52 @@ cpp11::doubles cpp_monty_random_n_multinomial(size_t n_samples,
 
   return r_y;
 }
+
+// dirichlet
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_dirichlet(cpp11::doubles r_alpha,
+                                            cpp11::sexp ptr) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "dirichlet");
+  const size_t n_streams = rng->size();
+  auto alpha = input_array(r_alpha, n_streams, "alpha");
+  const auto len = alpha.size();
+  
+  cpp11::writable::doubles r_y = cpp11::writable::doubles(n_streams * len);
+  double * y = REAL(r_y);
+  
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    monty::random::dirichlet<double>(state, alpha[i], len, y + i * len);
+  }
+  
+  set_dimensions(len, n_streams, ptr, r_y);
+  
+  return r_y;
+}
+
+
+[[cpp11::register]]
+cpp11::doubles cpp_monty_random_n_dirichlet(size_t n_samples,
+                                              cpp11::doubles r_alpha,
+                                              cpp11::sexp ptr) {
+  auto * rng = safely_read_externalptr<default_rng64>(ptr, "dirichlet");
+  const size_t n_streams = rng->size();
+  auto alpha = input_array(r_alpha, n_streams, "alpha");
+  const auto len = alpha.size();
+  
+  cpp11::writable::doubles r_y =
+    cpp11::writable::doubles(n_samples * n_streams * len);
+  double * y = REAL(r_y);
+  
+  for (size_t i = 0; i < n_streams; ++i) {
+    auto &state = rng->state(i);
+    for (size_t j = 0; j < n_samples; ++j) {
+      auto y_ij = y + len * (n_samples * i + j);
+      monty::random::dirichlet<double>(state, alpha[i], len, y_ij);
+    }
+  }
+  
+  set_dimensions(len, n_samples, n_streams, ptr, r_y);
+  
+  return r_y;
+}

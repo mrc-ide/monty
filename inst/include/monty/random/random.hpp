@@ -7,6 +7,7 @@
 #include "monty/random/beta_binomial.hpp"
 #include "monty/random/binomial.hpp"
 #include "monty/random/cauchy.hpp"
+#include "monty/random/dirichlet.hpp"
 #include "monty/random/exponential.hpp"
 #include "monty/random/gamma.hpp"
 #include "monty/random/hypergeometric.hpp"
