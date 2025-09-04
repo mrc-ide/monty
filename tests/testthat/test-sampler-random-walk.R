@@ -266,3 +266,21 @@ test_that("Can rerun a stochastic model", {
   expect_true(all(change_density1[seq(1, 20, by = 2)]))
   expect_false(all(change_density2[seq(1, 20, by = 2)]))
 })
+
+
+test_that("can continue periodic rerun models", {
+  set.seed(1)
+  m <- ex_sir_filter_posterior()
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- monty_sampler_random_walk(vcv = vcv, rerun_every = 7,
+                                       rerun_random = FALSE)
+
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 30, n_chains = 2)
+
+  set.seed(1)
+  res2a <- monty_sample(m, sampler, 10, n_chains = 2, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 20)
+
+  expect_equal(res1, res2b)
+})

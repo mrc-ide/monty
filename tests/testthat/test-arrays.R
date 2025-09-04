@@ -122,6 +122,12 @@ test_that("can bind together by adding a dimension", {
   res3 <- array_bind(arrays = list(m1, m2), before = 1)
   expect_equal(res3[1, , ], m1)
   expect_equal(res3[2, , ], m2)
+
+  expect_equal(array_bind(m1, m2, on = 0), res3)
+
+  expect_error(array_bind(m1, m2, on = 12),
+               "Invalid value for 'on' (12), must be in [0, 3]",
+               fixed = TRUE)
 })
 
 
@@ -250,4 +256,15 @@ test_that("preserve names dropping to vector", {
   m2 <- random_array(c(1, 5))
   dimnames(m2) <- list("x", letters[1:5])
   expect_equal(array_drop(m2, 1), set_names(c(m2), letters[1:5]))
+})
+
+
+test_that("Can get the last entry in an array", {
+  expect_equal(array_select_last(list(1, 2, 3, 4), 2), 2)
+  expect_equal(array_select_last(1:4, 2), 2)
+  expect_equal(array_select_last(matrix(1:6, 2, 3), 2), cbind(3:4))
+  expect_equal(array_select_last(array(1:24, c(2, 3, 4)), 2),
+               array(7:12, c(2, 3, 1)))
+  expect_error(array_select_last(array(1:120, c(2, 3, 4, 5)), 2),
+               "unsupported access")
 })

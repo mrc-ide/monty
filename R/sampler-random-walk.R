@@ -56,6 +56,8 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                   rerun = rerun_every < Inf,
                   rerun_every = rerun_every,
                   rerun_random = rerun_random)
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = TRUE)
 
   monty_sampler("Random walk",
                 "monty_random_walk",
@@ -64,24 +66,14 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                 sampler_random_walk_step,
                 sampler_random_walk_dump,
                 sampler_random_walk_combine,
-                sampler_random_walk_restore)
+                sampler_random_walk_restore,
+                properties = properties)
 }
 
 
 ## The core sampler functions: initalise, step, dump, restore
 sampler_random_walk_initialise <- function(state_chain, control, model, rng) {
   pars <- state_chain$pars
-
-  ## TODO: Samplers need to cope with this, and we could have them
-  ## advertise this I think, as part of their properties, once we have
-  ## that sorted out.
-  multiple_parameters <- length(dim2(pars)) > 1
-  if (multiple_parameters) {
-    ## this is properly enforced elsewhere, but we assert here to be
-    ## safe.
-    stopifnot(model$properties$allow_multiple_parameters)
-  }
-  
   ## We don't actually need to return an environment here, because all
   ## our things that are modified by reference (rerun) will already be
   ## captured in an environment
@@ -115,23 +107,25 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
   }
   accept <- density_next - state_chain$density > log(monty_random_real(rng))
 
-  ## TODO: rng is not needed through here and can be removed
-  update_state(state_chain, pars_next, density_next, accept, model, rng)
+  update_state(state_chain, pars_next, density_next, accept, model)
 }
 
 
-sampler_random_walk_dump <- function(state) {
+sampler_random_walk_dump <- function(state, control) {
   if (is.null(state$rerun)) {
     return(NULL)
   }
-  list(rerun_state = attr(state$rerun, "data"))$step
+  list(rerun_state = attr(state$rerun, "data")$i)
 }
 
 
-sampler_random_walk_combine <- function(state) {
+sampler_random_walk_combine <- function(state, control) {
   if (all(vlapply(state, is.null))) {
     return(NULL)
   }
+  ## The only state that is saved is the rerun state, which is just a
+  ## counter of the steps taken. That is the same over all chains so
+  ## just get the first.
   state[[1]]
 }
 

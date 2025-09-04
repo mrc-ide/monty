@@ -122,6 +122,10 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   }
   assert_scalar_logical(restartable)
 
+  ## Compatibility checks; once runners have the same sort of
+  ## properties support we could do this slightly more easily too.
+  check_sampler_model(model, sampler)
+
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
@@ -363,18 +367,21 @@ combine_chains <- function(res, sampler, observer, include_state) {
   ## Then process the internal state of all the components
   state <- lapply(res, "[[", "state")
 
-  sampler_state <- sampler$state$combine(lapply(state, "[[", "sampler"))
-  details <- sampler$state$details(sampler_state)
+  sampler_state <- sampler$state$combine(lapply(state, "[[", "sampler"),
+                                         sampler$control)
+  details <- sampler$state$details(sampler_state, sampler$control)
 
   if (include_state) {
     model_rng <- lapply(state, "[[", "model_rng")
     if (all(vlapply(model_rng, is.null))) {
       model_rng <- NULL
+    } else {
+      model_rng <- array_bind(arrays = model_rng, on = 2)
     }
     state <- list(
       chain = combine_state_chain(lapply(state, "[[", "chain")),
       sampler = sampler_state,
-      rng = lapply(state, "[[", "rng"),
+      rng = array_bind(arrays = lapply(state, "[[", "rng"), on = 2),
       model_rng = model_rng)
   } else {
     state <- NULL
@@ -405,38 +412,6 @@ initial_rng <- function(n_chains, seed = NULL) {
   lapply(monty_rng_distributed_state(n_nodes = n_chains, seed = seed),
          function(s) monty_rng_create(seed = s))
 }
-
-
-initial_rng_state <- function(n_chains, seed = NULL) {
-  matrix(unlist(monty_rng_distributed_state(n_nodes = n_chains, seed = seed)),
-         ncol = n_chains)
-}
-
-
-restart_data <- function(res, model, sampler, runner, thinning_factor) {
-  if (is.null(names(res))) {
-    state <- lapply(res, function(x) x$internal$state)
-  } else {
-    ## Prevented elsewhere, requires the filter to be rewritten a bit.
-    stopifnot(is.null(res$internal$state$model_rng))
-    n_chains <- length(res$internal$state$chain$density)
-    state <- lapply(seq_len(n_chains), function(i) {
-      list(chain = list(
-             pars = res$internal$state$chain$pars[, i],
-             density = res$internal$state$chain$density[i],
-             observation = NULL),
-           rng = res$internal$state$rng[[i]],
-           sampler = res$internal$state$sampler[[i]],
-           model_rng = NULL)
-    })
-  }
-  list(state = state,
-       model = model,
-       sampler = sampler,
-       runner = runner,
-       thinning_factor = thinning_factor)
-}
-
 
 
 direct_sample_within_domain <- function(model, rng, max_attempts = 100) {

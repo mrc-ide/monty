@@ -179,6 +179,10 @@ monty_sampler_adaptive <- function(initial_vcv,
     pre_diminish = pre_diminish,
     boundaries = boundaries)
 
+  properties <- monty_sampler_properties(
+    allow_multiple_parameters = TRUE,
+    requires_deterministic = TRUE)
+
   monty_sampler("Adaptive Metropolis-Hastings",
                 "monty_sampler_adaptive",
                 control,
@@ -187,15 +191,13 @@ monty_sampler_adaptive <- function(initial_vcv,
                 sampler_random_walk_adaptive_state_dump,
                 sampler_random_walk_adaptive_state_combine,
                 sampler_random_walk_adaptive_state_restore,
-                sampler_random_walk_adaptive_details)
+                sampler_random_walk_adaptive_details,
+                properties = properties)
 }
 
 
 sampler_random_walk_adaptive_initialise <- function(state_chain, control,
                                                     model, rng) {
-  require_deterministic(model,
-                        "Can't use adaptive sampler with stochastic models")
-
   pars <- state_chain$pars
   multiple_parameters <- length(dim2(pars)) > 1
 
@@ -259,7 +261,7 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
 
   accept <- u < accept_prob
   state_chain <- update_state(
-    state_chain, pars_next, density_next, accept, model, rng)
+    state_chain, pars_next, density_next, accept, model)
 
   update_adaptive(state_sampler, control, state_chain$pars, accept_prob)
 
@@ -267,7 +269,7 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
 }
 
 
-sampler_random_walk_adaptive_details <- function(state) {
+sampler_random_walk_adaptive_details <- function(state, control) {
   ## Dropping these, as we had previously decided to -- we could
   ## return them too but no real need.
   state[setdiff(names(state), c("history_pars", "scaling"))]
@@ -470,7 +472,7 @@ validate_forget_rate <- function(forget_rate, call = parent.frame()) {
 }
 
 
-sampler_random_walk_adaptive_state_dump <- function(state) {
+sampler_random_walk_adaptive_state_dump <- function(state, control) {
   ret <- as.list(state, sorted = TRUE)
 
   ## 'history_pars' is stored in a flat vector for easy accumulation,
@@ -505,17 +507,21 @@ sampler_random_walk_adaptive_state_dump <- function(state) {
 sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
                                                        state_sampler, control,
                                                        model) {
-  state <- lapply(state_sampler, array_select_last, chain_id)
-  state$history_pars <- as.vector(state$history_pars)
   if (length(chain_id) > 1) {
+    state <- state_sampler
     state$iteration <- state$iteration[[1]]
     state$weight <- state$weight[[1]]
+    state$scaling_history <- as.vector(t(state$scaling_history))
+    state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2)))
+  } else {
+    state <- lapply(state_sampler, array_select_last, chain_id)
+    state$history_pars <- as.vector(state$history_pars)
   }
   list2env(state, parent = emptyenv())
 }
 
 
-sampler_random_walk_adaptive_state_combine <- function(state) {
+sampler_random_walk_adaptive_state_combine <- function(state, control) {
   ## The dimension order is always <pars>, <step>, <chain> so when
   ## combining results for single chain we have:
   ##

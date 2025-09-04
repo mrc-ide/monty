@@ -10,7 +10,7 @@ initialise_state <- function(pars, model, rng) {
 }
 
 
-update_state <- function(state, pars, density, accept, model, rng) {
+update_state <- function(state, pars, density, accept, model) {
   if (any(accept)) {
     if (is.matrix(state$pars)) {
       state$pars[, accept] <- pars[, accept]

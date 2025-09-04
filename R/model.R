@@ -565,8 +565,9 @@ require_monty_model <- function(model, arg = deparse(substitute(model)),
 }
 
 
-require_direct_sample <- function(model, message, ..., call = parent.frame()) {
-  if (!model$properties$has_direct_sample) {
+require_direct_sample <- function(model, message, ..., when = TRUE,
+                                  call = parent.frame()) {
+  if (when && !model$properties$has_direct_sample) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide 'direct_sample()', so we",
@@ -576,8 +577,9 @@ require_direct_sample <- function(model, message, ..., call = parent.frame()) {
 }
 
 
-require_deterministic <- function(model, message, ..., call = parent.frame()) {
-  if (model$properties$is_stochastic) {
+require_deterministic <- function(model, message, ..., when = TRUE,
+                                  call = parent.frame()) {
+  if (when && model$properties$is_stochastic) {
     cli::cli_abort(
       c(message,
         i = paste("This model is stochastic (its 'is_stochastic' property",
@@ -588,8 +590,9 @@ require_deterministic <- function(model, message, ..., call = parent.frame()) {
 }
 
 
-require_gradient <- function(model, message, ..., call = parent.frame()) {
-  if (!model$properties$has_gradient) {
+require_gradient <- function(model, message, ..., when = TRUE,
+                             call = parent.frame()) {
+  if (when && !model$properties$has_gradient) {
     cli::cli_abort(
       c(message,
         i = paste("This model does not provide a gradient (its 'has_gradient'",
@@ -600,8 +603,9 @@ require_gradient <- function(model, message, ..., call = parent.frame()) {
 }
 
 
-require_multiple_parameters <- function(model, message, ...) {
-  if (!model$properties$allow_multiple_parameters) {
+require_multiple_parameters <- function(model, message, ..., when = TRUE,
+                                        call = parent.frame()) {
+  if (when && !model$properties$allow_multiple_parameters) {
     cli::cli_abort(
       c(message,
         i = paste("This functionality requires that we can",
@@ -610,7 +614,7 @@ require_multiple_parameters <- function(model, message, ...) {
                   "does not support this (or does not advertise that it",
                   "does), with the property 'allow_multiple_parameters'",
                   "set to FALSE")),
-      ...)
+      ..., call = call)
   }
 }
 
