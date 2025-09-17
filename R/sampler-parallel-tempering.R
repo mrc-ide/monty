@@ -138,6 +138,7 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   env$hot <- hot
   env$even_step <- FALSE
   env$accept_swap <- integer(n_rungs)
+  env$attempt_swap <- integer(n_rungs)
 
   env
 }
@@ -224,6 +225,7 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   ## We track swap acceptances so that the beta values can be tuned,
   ## though this not yet implemented.
   state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
+  state_sampler$attempt_swap[i1] <- state_sampler$attempt_swap[i1] + 1L
 
   state_chain
 }
@@ -233,6 +235,7 @@ sampler_parallel_tempering_dump <- function(state, control) {
   sub_state_sampler <- control$sampler$state$dump(state$sub_state_sampler,
                                                   control$sampler$control)
   list(accept_swap = state$accept_swap,
+       attempt_swap = state$attempt_swap,
        even_step = state$even_step,
        hot = state$hot$dump(),
        sub_state_chain = state$sub_state_chain,
@@ -245,12 +248,14 @@ sampler_parallel_tempering_combine <- function(state, control) {
     array_bind(arrays = lapply(state, "[[", name), ...)
   }
   accept_swap <- join("accept_swap", on = 2)
+  attempt_swap <- join("attempt_swap", on = 2)
   even_step <- vlapply(state, "[[", "even_step")
   hot <- lapply(state, "[[", "hot")
   sub_state_chain <- lapply(state, "[[", "sub_state_chain")
   sub_state_sampler <- control$sampler$state$combine(
     lapply(state, "[[", "sub_state_sampler"))
   list(accept_swap = accept_swap,
+       attempt_swap = attempt_swap,
        even_step = even_step,
        hot = hot,
        sub_state_chain = sub_state_chain,
@@ -276,6 +281,7 @@ sampler_parallel_tempering_restore <- function(chain_id, state_chain,
   hot <- parallel_tempering_hot(model, control, state_sampler$hot[[chain_id]])
   even_step <- state_sampler$even_step[[chain_id]]
   accept_swap <- state_sampler$accept_swap[, chain_id]
+  attempt_swap <- state_sampler$attempt_swap[, chain_id]
 
   env <- new.env(parent = emptyenv())
   env$model_scaled <- model_scaled
@@ -285,12 +291,14 @@ sampler_parallel_tempering_restore <- function(chain_id, state_chain,
   env$hot <- hot
   env$even_step <- even_step
   env$accept_swap <- accept_swap
+  env$attempt_swap <- attempt_swap
   env
 }
 
 
 sampler_parallel_tempering_details <- function(state, control) {
   list(accept_swap = state$accept_swap,
+       attempt_swap = state$attempt_swap,
        sampler = control$sampler$state$details(state$sub_state_sampler))
 }
 
