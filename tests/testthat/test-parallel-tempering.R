@@ -14,6 +14,17 @@ test_that("can run a PT sampler", {
   expect_setequal(names(res$details),
                   c("accept_swap", "attempt_swap", "beta", "sampler"))
   expect_equal(dim(res$details$accept_swap), c(10, 4))
+  expect_equal(dim(res$details$attempt_swap), c(10, 4))
+  expect_true(all(res$details$attempt_swap >= res$details$accept_swap))
+
+  beta <- res$details$beta
+  expect_length(beta, 11)
+  expect_equal(beta[[1]], 1)
+  expect_equal(beta[[11]], 0)
+  expect_true(all(diff(beta) < 0))
+  expect_equal(validate_parallel_tempering_beta(10, beta), beta)
+  expect_equal(which.max(abs(diff(beta))), 1)
+
   expect_null(res$details$sampler)
 })
 
