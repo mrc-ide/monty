@@ -2,48 +2,73 @@
 % Please edit documentation in R/example.R
 \name{monty_example}
 \alias{monty_example}
-\title{Example models}
+\title{Example models for \pkg{monty}}
 \usage{
 monty_example(name, ...)
 }
 \arguments{
-\item{name}{Name of the example, as a string.  See Details for
-supported models.}
+\item{name}{String giving the model name. One of
+\code{"banana"}, \code{"gaussian"}, \code{"ring"}, \code{"mixture2d"}.}
 
-\item{...}{Optional parameters that are passed to create the
-model.  All models can be created with no additional parameters,
-but you can tweak their behaviour by passing named parameters
-here.  See Details.}
+\item{...}{Additional arguments forwarded to the specific model
+constructor (see sections below for each model’s parameters).}
 }
 \value{
-A \link{monty_model} object
+A \link{monty_model} object with fields \code{parameters},
+\code{density} (log-density), \code{gradient}, \code{direct_sample}
+(where available), and \code{domain}. All returned models set
+\code{properties = monty_model_properties(allow_multiple_parameters = TRUE)}
+so they can be evaluated for parameter matrices.
 }
 \description{
-Load example models from monty.  These models exist so that we can
-create (hopefully) interesting examples in the documentation
-without them becoming overwhelming.  You should probably not use
-these for anything other than exploring the package.
+Load small, ready-made target distributions for demonstrations, tests,
+and examples. These models exist so that we can create (hopefully)
+interesting examples in the documentation without them becoming
+overwhelming. All examples contain an analytic gradient and can
+thus be also used to explore gradient-based samplers such as
+\link{monty_sampler_hmc}.
+}
+\details{
+These models are primarily intended for examples, unit tests, and
+teaching materials. They aim to be simple but non‑trivial, and they
+expose analytic gradients when that’s helpful for HMC/NUTS.
 }
 \section{Supported models}{
-\subsection{\code{banana}}{
 
-The banana model is a two-dimensional banana-shaped function,
-picked because it is quite annoying to sample from directly.  The
-model has two parameters \code{alpha} and \code{beta} and is based on two
-successive draws, one conditional on the other.
+\describe{
+\item{\code{"banana"}}{A two-dimensional “banana”-shaped target with
+strong local correlation; useful for illustrating the limitations of
+random-walk proposals. Tunable by \code{sigma}.}
 
-You can vary \code{sigma} for this model on creation, the default is 0.5
-}
+\item{\code{"gaussian"}}{A centred multivariate Gaussian \eqn{N(0, \Sigma)}
+with user-supplied variance–covariance matrix \eqn{\Sigma}.}
 
-\subsection{Gaussian}{
+\item{\code{"ring"}}{A two-dimensional ring-shaped density whose
+log-density is proportional to \eqn{-(\|x\|-r)^2/(2\,sd^2)}. Includes an
+analytic gradient and a direct sampler in polar coordinates.}
 
-A multivariate Gaussian centred at the origin.  Takes a
-variance-covariance-matrix as its argument.  Parameters are
-letters a, b, ... up to the number of dimensions.
+\item{\code{"mixture2d"}}{An equal-weight mixture of \eqn{k} isotropic
+2D Gaussians with standard deviation \code{sd} and centres either
+provided by the user (\code{means}) or drawn uniformly in a square of
+half-width \code{spread}. Includes an analytic gradient.}
 }
 }
 
 \examples{
-monty_example("banana")
-monty_example("gaussian", diag(2))
+# Banana target
+m1 <- monty_example("banana")                   # default sigma = 0.5
+m2 <- monty_example("banana", sigma = 0.2)
+
+# 2D Gaussian with diagonal covariance
+m3 <- monty_example("gaussian", diag(2))
+
+# Ring target with radius 3 and narrow thickness
+m4 <- monty_example("ring", r = 3, sd = 0.25)
+
+# 2D Gaussian mixture with 12 components
+m5 <- monty_example("mixture2d", k = 12, sd = 0.35, spread = 4, seed = 42)
+
+}
+\seealso{
+\link{monty_model}, \link{monty_model_properties}
 }
