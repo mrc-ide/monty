@@ -40,16 +40,21 @@
 ##' A two-dimensional ring-shaped density whose log-density is
 ##' proportional to $-(\|x\|-r)^2/(2\,sd^2)$.  Includes an analytic
 ##' gradient and a direct sampler in polar coordinates.  The
-##' constructor takes that arguments `r` and `sd`, and the parameters
-##' of the `monty_model` are `x1` and `x2` (corresponding to the two
-##' dimensions of the polar coordinates).
+##' constructor takes that arguments `r` (default 3) and `sd` (default
+##' 0.2), and the parameters of the `monty_model` are `x1` and `x2`
+##' (corresponding to the two dimensions of the polar coordinates).
+##'
+##' Increasing `r` or decreasing `sd` will make the ridge of high
+##' probability space narrower; this is easiest to visualise in true
+##' densities (rather than log density).
 ##'
 ##' ## `mixture2d`
 ##'
 ##' An equal-weight mixture of `k` isotropic 2D Gaussians with
 ##' standard deviation `sd` and centres either provided by the
 ##' argument (`means`) or drawn uniformly in a square of half-width
-##' `spread`. Includes an analytic gradient.
+##' `spread` (which must be provided if `means` is not
+##' provided). Includes an analytic gradient.
 ##'
 ##' @param name Name of the example, as a string.  See Details for
 ##'   supported models.
@@ -145,33 +150,29 @@ monty_example_gaussian <- function(vcv) {
 
 
 monty_example_ring <- function(r = 3, sd = 0.2) {
-  stopifnot(sd > 0, r >= 0)
+  assert_scalar_numeric(r, allow_zero = TRUE)
+  assert_scalar_numeric(sd, allow_zero = FALSE)
 
-  ring_log_density <- function(x) {
+  density <- function(x) {
     if (is.matrix(x)) {
       x1  <- x[1, ]
       x2  <- x[2, ]
-      rho <- sqrt(x1 * x1 + x2 * x2)
-      -(rho - r)^2 / (2 * sd * sd)
     } else {
       x1  <- x[[1]]
       x2  <- x[[2]]
-      rho <- sqrt(x1 * x1 + x2 * x2)
-      -(rho - r)^2 / (2 * sd * sd)
     }
+    rho <- sqrt(x1 * x1 + x2 * x2)
+    -(rho - r)^2 / (2 * sd * sd)
   }
 
-  ring_gradient <- function(x) {
+  gradient <- function(x) {
     if (is.matrix(x)) {
       x1  <- x[1, ]
       x2  <- x[2, ]
       rho <- sqrt(x1 * x1 + x2 * x2)
-      # handle rho = 0 gracefully
       rho_safe <- ifelse(rho == 0, 1, rho)
       scale <- -(rho - r) / (sd * sd * rho_safe)
-      gx <- scale * x1
-      gy <- scale * x2
-      rbind(gx, gy, deparse.level = 0)
+      rbind(scale * x1, scale * x2, deparse.level = 0)
     } else {
       x1  <- x[[1]]
       x2  <- x[[2]]
@@ -185,9 +186,9 @@ monty_example_ring <- function(r = 3, sd = 0.2) {
     }
   }
 
-  ring_direct_sample <- function(rng) {
-    theta <- runif(1, 0, 2 * pi)
-    rad   <- monty_random_normal(r, sd, rng)
+  direct_sample <- function(rng) {
+    theta <- monty_random_uniform(0, 2 * pi, rng)
+    rad <- monty_random_normal(r, sd, rng)
     c(rad * cos(theta), rad * sin(theta))
   }
 
@@ -195,23 +196,37 @@ monty_example_ring <- function(r = 3, sd = 0.2) {
 
   monty_model(
     list(parameters = c("x1", "x2"),
-         direct_sample = ring_direct_sample,
-         density = ring_log_density,
-         gradient = ring_gradient,
+         direct_sample = direct_sample,
+         density = log_density,
+         gradient = gradient,
          domain = rbind(c(-Inf, Inf), c(-Inf, Inf))),
     properties = properties)
 }
 
 
-monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = 3,
+monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = NULL,
                                              means = NULL) {
-  ## TODO: use proper assertions
-  stopifnot(k >= 1, sd > 0, spread > 0)
+  assert_scalar_positive_integer(k, allow_zero = FALSE)
+  assert_scalar_positive_numeric(sd, allow_zero = FALSE)
   if (is.null(means)) {
+    assert_scalar_positive_numeric(sd, spread = FALSE)
     means <- cbind(runif(k, -spread, spread), runif(k, -spread, spread))
   } else {
-    means <- as.matrix(means)
-    stopifnot(ncol(means) == 2, nrow(means) == k)
+    if (!is.null(spread)) {
+      cli::cli_abort(
+        c("Do not provide 'spread' if providing 'means'",
+          i = paste("'spread' is used to randomly sample 'means' if it is",
+                    "not given, but you are providing 'means' here already")))
+    }
+    if (!is.matrx(means)) {
+      cli::cli_abort("Expected 'means' to be a matrix")
+    }
+    if (ncol(means) != 2) {
+      cli::cli_abort("Expected 'means' to have two columns")
+    }
+    if (ncol(means) != 2) {
+      cli::cli_abort("Expected 'means' to have {k} row{?s}")
+    }
   }
 
   log_const <- -log(2 * pi * sd * sd)
@@ -230,7 +245,7 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = 3,
   }
 
   ## TODO: try and harmonise the vector and non-multi-parameter forms here
-  density_fun <- function(x) {
+  density <- function(x) {
     if (is.matrix(x)) {
       out <- numeric(ncol(x))
       for (j in seq_len(ncol(x))) {
@@ -244,7 +259,7 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = 3,
     }
   }
 
-  gradient_fun <- function(x) {
+  gradient <- function(x) {
     inv_var <- 1 / (sd * sd)
     if (is.matrix(x)) {
       gx <- numeric(ncol(x))
@@ -286,8 +301,8 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = 3,
   monty_model(
     list(parameters = c("x1", "x2"),
          direct_sample = direct_sample,
-         density  = density_fun,   # proper log-density (mixture is normalised)
-         gradient = gradient_fun,
+         density  = density,
+         gradient = gradient,
          domain   = rbind(c(-Inf, Inf), c(-Inf, Inf))),
     properties = properties)
 }
