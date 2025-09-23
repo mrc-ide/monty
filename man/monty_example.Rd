@@ -59,9 +59,13 @@ letters a, b, ... up to the number of dimensions.
 A two-dimensional ring-shaped density whose log-density is
 proportional to $-(\|x\|-r)^2/(2\,sd^2)$.  Includes an analytic
 gradient and a direct sampler in polar coordinates.  The
-constructor takes that arguments \code{r} and \code{sd}, and the parameters
-of the \code{monty_model} are \code{x1} and \code{x2} (corresponding to the two
-dimensions of the polar coordinates).
+constructor takes that arguments \code{r} (default 3) and \code{sd} (default
+0.2), and the parameters of the \code{monty_model} are \code{x1} and \code{x2}
+(corresponding to the two dimensions of the polar coordinates).
+
+Increasing \code{r} or decreasing \code{sd} will make the ridge of high
+probability space narrower; this is easiest to visualise in true
+densities (rather than log density).
 }
 
 \subsection{\code{mixture2d}}{
@@ -69,23 +73,34 @@ dimensions of the polar coordinates).
 An equal-weight mixture of \code{k} isotropic 2D Gaussians with
 standard deviation \code{sd} and centres either provided by the
 argument (\code{means}) or drawn uniformly in a square of half-width
-\code{spread}. Includes an analytic gradient.
+\code{spread} (which must be provided if \code{means} is not
+provided). Includes an analytic gradient.
 }
 }
 
 \examples{
-# Banana target
-m1 <- monty_example("banana")
-m2 <- monty_example("banana", sigma = 0.2)
+# Small helper function to make the plotting easier
+show_2d_example <- function(m, rx, ry = rx, n = 101) {
+  x <- seq(rx[[1]], rx[[2]], length.out = n)
+  y <- seq(ry[[1]], ry[[2]], length.out = n)
+  xy <- unname(t(as.matrix(expand.grid(x, y))))
+  z <- exp(matrix(monty_model_density(m, xy), n, n))
+  image(x, y, z)
+  contour(x, y, z, add = TRUE, drawlabels = FALSE,
+          lwd = 0.5, col = "#00000088")
+}
 
-# 2D Gaussian with diagonal covariance
-m3 <- monty_example("gaussian", diag(2))
+# Banana target
+m_banana <- monty_example("banana", sigma = 0.2)
+show_2d_example(m_banana, c(-0.5, 1.5), c(-1.5, 1.5))
 
 # Ring target with radius 3 and narrow thickness
-m4 <- monty_example("ring", r = 3, sd = 0.25)
+m_ring <- monty_example("ring", r = 3, sd = 0.25)
+show_2d_example(m_ring, c(-4, 4))
 
-# 2D Gaussian mixture with 12 components
-m5 <- monty_example("mixture2d", k = 12, sd = 0.35, spread = 4)
+# 2D Gaussian mixture with 20 components
+m_mixture <- monty_example("mixture2d", k = 20, sd = 0.5, spread = 4)
+show_2d_example(m_mixture, c(-5, 5))
 }
 \seealso{
 \link{monty_model}, \link{monty_model_properties}
