@@ -214,27 +214,32 @@ monty_example_ring <- function(r = 3, sd = 0.2) {
 
 
 monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = NULL,
-                                             means = NULL) {
+                                             means = NULL,
+                                             call = parent.frame()) {
   assert_scalar_positive_integer(k, allow_zero = FALSE)
   assert_scalar_positive_numeric(sd, allow_zero = FALSE)
   if (is.null(means)) {
-    assert_scalar_positive_numeric(sd, allow_zero = FALSE)
+    assert_scalar_positive_numeric(spread, allow_zero = FALSE, call = call)
     means <- cbind(runif(k, -spread, spread), runif(k, -spread, spread))
   } else {
     if (!is.null(spread)) {
       cli::cli_abort(
         c("Do not provide 'spread' if providing 'means'",
           i = paste("'spread' is used to randomly sample 'means' if it is",
-                    "not given, but you are providing 'means' here already")))
+                    "not given, but you are providing 'means' here already")),
+        arg = "spread", call = call)
     }
-    if (!is.matrx(means)) {
-      cli::cli_abort("Expected 'means' to be a matrix")
+    if (!is.matrix(means)) {
+      cli::cli_abort("Expected 'means' to be a matrix",
+                     arg = "means", call = call)
     }
     if (ncol(means) != 2) {
-      cli::cli_abort("Expected 'means' to have two columns")
+      cli::cli_abort("Expected 'means' to have 2 columns",
+                     arg = "means", call = call)
     }
-    if (ncol(means) != 2) {
-      cli::cli_abort("Expected 'means' to have {k} row{?s}")
+    if (nrow(means) != k) {
+      cli::cli_abort("Expected 'means' to have {k} row{?s}",
+                     arg = "means", call = call)
     }
   }
 
@@ -299,7 +304,7 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = NULL,
   }
 
   direct_sample <- function(rng) {
-    i <- ceiling(monty_random_real(k))
+    i <- ceiling(monty_random_real(rng) * k)
     c(monty_random_normal(means[i, 1], sd, rng),
       monty_random_normal(means[i, 2], sd, rng))
   }
