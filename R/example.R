@@ -70,25 +70,34 @@
 ##' @export
 ##'
 ##' @examples
-##' # Banana target
-##' m1 <- monty_example("banana")
-##' m2 <- monty_example("banana", sigma = 0.2)
+##' # Small helper function to make the plotting easier
+##' show_2d_example <- function(m, rx, ry = rx, n = 101) {
+##'   x <- seq(rx[[1]], rx[[2]], length.out = n)
+##'   y <- seq(ry[[1]], ry[[2]], length.out = n)
+##'   xy <- unname(t(as.matrix(expand.grid(x, y))))
+##'   z <- exp(matrix(monty_model_density(m, xy), n, n))
+##'   image(x, y, z)
+##'   contour(x, y, z, add = TRUE, drawlabels = FALSE,
+##'           lwd = 0.5, col = "#00000088")
+##' }
 ##'
-##' # 2D Gaussian with diagonal covariance
-##' m3 <- monty_example("gaussian", diag(2))
+##' # Banana target
+##' m_banana <- monty_example("banana", sigma = 0.2)
+##' show_2d_example(m_banana, c(-0.5, 1.5), c(-1.5, 1.5))
 ##'
 ##' # Ring target with radius 3 and narrow thickness
-##' m4 <- monty_example("ring", r = 3, sd = 0.25)
+##' m_ring <- monty_example("ring", r = 3, sd = 0.25)
+##' show_2d_example(m_ring, c(-4, 4))
 ##'
-##' # 2D Gaussian mixture with 12 components
-##' m5 <- monty_example("mixture2d", k = 12, sd = 0.35, spread = 4)
+##' # 2D Gaussian mixture with 20 components
+##' m_mixture <- monty_example("mixture2d", k = 20, sd = 0.5, spread = 4)
+##' show_2d_example(m_mixture, c(-5, 5))
 monty_example <- function(name, ...) {
   examples <- list(
     banana = monty_example_banana,
     gaussian = monty_example_gaussian,
     ring = monty_example_ring,
-    mixture2d = monty_example_gaussian_mixture2d
-  )
+    mixture2d = monty_example_gaussian_mixture2d)
   examples[[match_value(name, names(examples))]](...)
 }
 
@@ -150,8 +159,8 @@ monty_example_gaussian <- function(vcv) {
 
 
 monty_example_ring <- function(r = 3, sd = 0.2) {
-  assert_scalar_numeric(r, allow_zero = TRUE)
-  assert_scalar_numeric(sd, allow_zero = FALSE)
+  assert_scalar_positive_numeric(r, allow_zero = TRUE)
+  assert_scalar_positive_numeric(sd, allow_zero = FALSE)
 
   density <- function(x) {
     if (is.matrix(x)) {
@@ -197,7 +206,7 @@ monty_example_ring <- function(r = 3, sd = 0.2) {
   monty_model(
     list(parameters = c("x1", "x2"),
          direct_sample = direct_sample,
-         density = log_density,
+         density = density,
          gradient = gradient,
          domain = rbind(c(-Inf, Inf), c(-Inf, Inf))),
     properties = properties)
@@ -209,7 +218,7 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = NULL,
   assert_scalar_positive_integer(k, allow_zero = FALSE)
   assert_scalar_positive_numeric(sd, allow_zero = FALSE)
   if (is.null(means)) {
-    assert_scalar_positive_numeric(sd, spread = FALSE)
+    assert_scalar_positive_numeric(sd, allow_zero = FALSE)
     means <- cbind(runif(k, -spread, spread), runif(k, -spread, spread))
   } else {
     if (!is.null(spread)) {
@@ -290,8 +299,7 @@ monty_example_gaussian_mixture2d <- function(k = 8, sd = 0.4, spread = NULL,
   }
 
   direct_sample <- function(rng) {
-    ## TODO: don't use R's RNG
-    i <- sample.int(k, 1)
+    i <- ceiling(monty_random_real(k))
     c(monty_random_normal(means[i, 1], sd, rng),
       monty_random_normal(means[i, 2], sd, rng))
   }
