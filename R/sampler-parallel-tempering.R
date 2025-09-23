@@ -427,7 +427,7 @@ parallel_tempering_scale <- function(target, control) {
 
   properties <- target$properties
 
-  ## Gradient follows density above, will implement with HMC support
+  ## Gradient follows density above
   if (properties$has_gradient && base$properties$has_gradient) {
     gradient <- function(x) {
       g_target <- target$gradient(x)

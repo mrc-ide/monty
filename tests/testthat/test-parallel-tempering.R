@@ -202,3 +202,33 @@ test_that("can use hmc with parallel tempering", {
   ## 10 rungs x 7 mcmc steps x 2 chains
   expect_equal(dim(res$details$sampler$accept), c(10, 7, 2))
 })
+
+
+test_that("tempering a model with no gradient produces one with no grad", {
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
+  a <- monty_model(list(parameters = "x",
+                        density = identity,
+                        gradient = identity,
+                        direct_sample = identity),
+                   properties = properties)
+  b <- monty_model(list(parameters = "x",
+                        density = density,
+                        direct_sample = identity),
+                   properties = properties)
+
+  aa <- parallel_tempering_scale(a, list(base = a))
+  expect_true(aa$properties$has_gradient)
+  expect_true(is.function(aa$gradient))
+
+  ab <- parallel_tempering_scale(a, list(base = b))
+  expect_false(ab$properties$has_gradient)
+  expect_null(ab$gradient)
+
+  ba <- parallel_tempering_scale(b, list(base = a))
+  expect_false(ba$properties$has_gradient)
+  expect_null(ba$gradient)
+
+  bb <- parallel_tempering_scale(b, list(base = b))
+  expect_false(bb$properties$has_gradient)
+  expect_null(bb$gradient)
+})
