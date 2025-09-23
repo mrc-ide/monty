@@ -137,11 +137,15 @@ sampler_parallel_tempering_update_beta <- function(beta,
   ## Compute normalised lambda (normalised cumulative rejection rate)
   lambda <- cumsum(r / sum(r))
 
+  ## The final lambda might not be strictly one due to floating point
+  ## issues, so fix that:
+  lambda[[length(lambda)]] <- 1
+
   ## The new betas are an interpolated set of beta values that would
   ## have given an equally spaced set of lambdas -- which is equal
   ## rejection rates for each pair:
-  suppressWarnings(
-    approx(lambda, beta, seq(0, 1, length.out = length(beta))))$y
+  at <- seq(0, 1, length.out = length(beta))
+  suppressWarnings(approx(lambda, beta, at))$y
 }
 
 
