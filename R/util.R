@@ -45,7 +45,7 @@ check_vcv_matrix <- function(vcv, name, call) {
 
 is_positive_definite <- function(x, tol = sqrt(.Machine$double.eps)) {
   ev <- eigen(x, symmetric = TRUE)
-  all(ev$values >= -tol * abs(ev$values[1]))
+  all(ev$values >= -tol * abs(ev$values[1])) && qr(x)$rank == nrow(x)
 }
 
 

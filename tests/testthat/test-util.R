@@ -20,6 +20,22 @@ test_that("reject inappropriate vcv matrices", {
 })
 
 
+test_that("reject matrices with very small negative eigenvalues", {
+  m <- matrix(
+    c(3.1036393552184e-05, -3.88403180949637e-05, 3.46531590129688e-06,
+      -2.36852306981765e-05, -3.88403180949637e-05, 4.86064950549581e-05,
+      -4.33664986492722e-06, 2.96407471738945e-05, 3.46531590129688e-06,
+      -4.33664986492722e-06, 3.86913971676197e-07, -2.64453427638987e-06,
+      -2.36852306981765e-05, 2.96407471738945e-05, -2.64453427638987e-06,
+      1.80752364891431e-05),
+    4, 4)
+  ev <- eigen(m, symmetric = TRUE)
+  expect_true(all(ev$values >= -sqrt(.Machine$double.eps) * abs(ev$values[1])))
+  expect_equal(qr(m)$rank, 1)
+  expect_false(is_positive_definite(m))
+})
+
+
 test_that("reject inappropriate vcv arrays", {
   vcv <- array(0, c(2, 2, 5))
   vcv[1, 1, ] <- 1:5
