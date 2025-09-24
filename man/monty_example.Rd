@@ -30,7 +30,7 @@ thus be also used to explore gradient-based samplers such as
 \link{monty_sampler_hmc}.
 }
 \section{Supported models:}{
-Each model has a \strong{arguments} that are passed through as \code{...} in
+Each model has \strong{arguments} that are passed through as \code{...} in
 \code{monty_example} and are used to set up the example.  This creates
 a \code{monty_model} object that will accept \strong{parameters}, which are
 the values in the argument \code{parameters} passed to

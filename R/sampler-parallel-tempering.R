@@ -272,8 +272,6 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   state_sampler$sub_state_chain <- sub_state_chain
   state_sampler$even_step <- !state_sampler$even_step
 
-  ## We track swap acceptances so that the beta values can be tuned,
-  ## though this not yet implemented.
   state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
   state_sampler$attempt_swap[i1] <- state_sampler$attempt_swap[i1] + 1L
 

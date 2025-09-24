@@ -12,7 +12,7 @@
 ##'
 ##' # Supported models:
 ##'
-##' Each model has a **arguments** that are passed through as `...` in
+##' Each model has **arguments** that are passed through as `...` in
 ##' `monty_example` and are used to set up the example.  This creates
 ##' a `monty_model` object that will accept **parameters**, which are
 ##' the values in the argument `parameters` passed to
