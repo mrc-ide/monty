@@ -36,6 +36,32 @@
 ##' limit, a normal sampler may only explore a single peak in a model
 ##' with many such peaks and will never mix properly.
 ##'
+##' # Tuning the beta values
+##'
+##' The argument `beta` controls the spacing of temperature among
+##' chains.  Ideally, this is set so that adjacent chains all have the
+##' same probability of swapping, which generally means that the
+##' `beta` values themselves will *not* be equidistant.  Creating the
+##' appropriate vector of betas (or "annealing schedule") requires
+##' running a pilot run, then computing new `beta` values, then
+##' running another (new) chain with the new beta values, repeating
+##' this iteration a few times until the beta values stabilise.
+##' Rumour has it, this should only take a few iterations.
+##'
+##' The updated values of `beta` are stored in the `details` of your
+##' samples after running.  So if you have a set of samples called
+##' `s`, then `s$details$beta` will contain new beta values that you
+##' can use on the next run.
+##'
+##' It is important not to concatenate chains that are computed with
+##' different `beta` values as they will not generally represent
+##' samples from the target distribution (as an extreme case, consider
+##' one set of beta values where we never accept swaps onto the target
+##' distribution and another where we always do; we obviously cannot
+##' concatenate these).  Therefore, every time that you change beta
+##' values you should start a new chain.  You can do this with
+##' [monty_sample_continue] so long as you pass `append = FALSE`.
+##'
 ##' @title Parallel Tempering Sampler
 ##'
 ##' @param n_rungs The number of **extra** chains to run, must be at
@@ -99,6 +125,30 @@ monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
 }
 
 
+
+sampler_parallel_tempering_update_beta <- function(beta,
+                                                   accept_swap,
+                                                   attempt_swap) {
+  ## Compute rejection rate (between 0 and 1) for swaps, averaged over
+  ## all chains.  There is an unavoidable fencepost error here, but we
+  ## anchor this at zero which is what the interpolation needs.
+  r <- c(0, 1 - rowSums(accept_swap) / rowSums(attempt_swap))
+
+  ## Compute normalised lambda (normalised cumulative rejection rate)
+  lambda <- cumsum(r / sum(r))
+
+  ## The final lambda might not be strictly one due to floating point
+  ## issues, so fix that:
+  lambda[[length(lambda)]] <- 1
+
+  ## The new betas are an interpolated set of beta values that would
+  ## have given an equally spaced set of lambdas -- which is equal
+  ## rejection rates for each pair:
+  at <- seq(0, 1, length.out = length(beta))
+  suppressWarnings(approx(lambda, beta, at))$y
+}
+
+
 sampler_parallel_tempering_initialise <- function(state_chain, control, model,
                                                   rng) {
   ## TODO: For dust models this is going to require that they can
@@ -138,6 +188,7 @@ sampler_parallel_tempering_initialise <- function(state_chain, control, model,
   env$hot <- hot
   env$even_step <- FALSE
   env$accept_swap <- integer(n_rungs)
+  env$attempt_swap <- integer(n_rungs)
 
   env
 }
@@ -221,9 +272,8 @@ sampler_parallel_tempering_step <- function(state_chain, state_sampler,
   state_sampler$sub_state_chain <- sub_state_chain
   state_sampler$even_step <- !state_sampler$even_step
 
-  ## We track swap acceptances so that the beta values can be tuned,
-  ## though this not yet implemented.
   state_sampler$accept_swap[i1] <- state_sampler$accept_swap[i1] + accept
+  state_sampler$attempt_swap[i1] <- state_sampler$attempt_swap[i1] + 1L
 
   state_chain
 }
@@ -233,6 +283,7 @@ sampler_parallel_tempering_dump <- function(state, control) {
   sub_state_sampler <- control$sampler$state$dump(state$sub_state_sampler,
                                                   control$sampler$control)
   list(accept_swap = state$accept_swap,
+       attempt_swap = state$attempt_swap,
        even_step = state$even_step,
        hot = state$hot$dump(),
        sub_state_chain = state$sub_state_chain,
@@ -245,12 +296,14 @@ sampler_parallel_tempering_combine <- function(state, control) {
     array_bind(arrays = lapply(state, "[[", name), ...)
   }
   accept_swap <- join("accept_swap", on = 2)
+  attempt_swap <- join("attempt_swap", on = 2)
   even_step <- vlapply(state, "[[", "even_step")
   hot <- lapply(state, "[[", "hot")
   sub_state_chain <- lapply(state, "[[", "sub_state_chain")
   sub_state_sampler <- control$sampler$state$combine(
     lapply(state, "[[", "sub_state_sampler"))
   list(accept_swap = accept_swap,
+       attempt_swap = attempt_swap,
        even_step = even_step,
        hot = hot,
        sub_state_chain = sub_state_chain,
@@ -276,6 +329,7 @@ sampler_parallel_tempering_restore <- function(chain_id, state_chain,
   hot <- parallel_tempering_hot(model, control, state_sampler$hot[[chain_id]])
   even_step <- state_sampler$even_step[[chain_id]]
   accept_swap <- state_sampler$accept_swap[, chain_id]
+  attempt_swap <- state_sampler$attempt_swap[, chain_id]
 
   env <- new.env(parent = emptyenv())
   env$model_scaled <- model_scaled
@@ -285,13 +339,18 @@ sampler_parallel_tempering_restore <- function(chain_id, state_chain,
   env$hot <- hot
   env$even_step <- even_step
   env$accept_swap <- accept_swap
+  env$attempt_swap <- attempt_swap
   env
 }
 
 
 sampler_parallel_tempering_details <- function(state, control) {
+  beta_new <- sampler_parallel_tempering_update_beta(
+    control$beta, state$accept_swap, state$attempt_swap)
   list(accept_swap = state$accept_swap,
-       sampler = control$sampler$state$details(state$sub_state_sampler))
+       attempt_swap = state$attempt_swap,
+       sampler = control$sampler$state$details(state$sub_state_sampler),
+       beta = beta_new)
 }
 
 
