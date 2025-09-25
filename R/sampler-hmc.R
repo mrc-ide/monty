@@ -162,9 +162,16 @@ sampler_hmc_restore <- function(chain_id, state_chain, state_sampler, control,
   if (is.null(state_sampler)) {
     history <- NULL
   } else {
-    history <- list(
-      pars = state_sampler$pars[, , , chain_id, drop = FALSE],
-      accept = state_sampler$accept[, chain_id, drop = FALSE])
+    is_parallel_tempering <- length(dim(state_sampler$accept)) > 2
+    if (is_parallel_tempering) {
+      history <- list(
+        pars = state_sampler$pars[, , , , chain_id, drop = FALSE],
+        accept = state_sampler$accept[, , chain_id, drop = FALSE])
+    } else {
+      history <- list(
+        pars = state_sampler$pars[, , , chain_id, drop = FALSE],
+        accept = state_sampler$accept[, chain_id, drop = FALSE])
+    }
   }
   list(transform = hmc_transform(model, pars),
        sample_momentum = hmc_momentum(control, model, pars),
@@ -356,8 +363,15 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
     env$pars <- as.vector(history$pars)
     env$accept <- as.vector(history$accept)
   } else {
-    env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))
-    env$accept <- as.vector(t(history$accept))
+    is_parallel_tempering <- length(dim(history$accept)) > 2
+    if (is_parallel_tempering) {
+      env$pars <- as.vector(aperm(history$pars, c(1, 2, 4, 3, 5)))
+      env$accept <- as.vector(history$accept)
+    } else {
+      env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))
+      env$accept <- as.vector(t(history$accept))
+    }
+    
   }
 
   add <- function(i, pars) {

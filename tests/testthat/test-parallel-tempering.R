@@ -204,6 +204,56 @@ test_that("can use hmc with parallel tempering", {
 })
 
 
+test_that("can continue a parallel tempering chain using hmc", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc())
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(debug = TRUE))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  
+  expect_equal(res2$pars, cmp$pars)
+})
+
+
+test_that("can continue a parallel tempering chain using hmc with debug", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(debug = TRUE))
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(debug = TRUE))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  
+  expect_equal(res2$pars, cmp$pars)
+  expect_equal(res2$details$sampler$pars[, , , 31:100, ], cmp$details$sampler$pars[, , , 31:100, ])
+  expect_equal(res2$details$sampler$accept, cmp$details$sampler$accept)
+})
+
+
 test_that("tempering a model with no gradient produces one with no grad", {
   properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   a <- monty_model(list(parameters = "x",
