@@ -137,8 +137,21 @@ sampler_hmc_combine <- function(state, control) {
     array_bind(arrays = lapply(state, "[[", name), ...)
   }
 
-  list(pars = join("pars", on = 4),
-       accept = join("accept", on = 2))
+  ## With the parallel tempering algorithm we already have more than
+  ## one chain worth and we need to combine differently, pushing the
+  ## apparent chain (which really means rung) *before* the state.  We
+  ## need to do this at combine, rather than dump, because the dump is
+  ## also used in the simultaneous sampler.
+  is_parallel_tempering <- ncol(state[[1]]$accept) > 1
+  if (is_parallel_tempering) {
+    pars <- aperm(join("pars", on = 5), c(1, 2, 4, 3, 5))
+    accept <- aperm(join("accept", on = 3), c(2, 1, 3))
+  } else {
+    pars <- join("pars", on = 4)
+    accept <- join("accept", on = 2)
+  }
+
+  list(pars = pars, accept = accept)
 }
 
 

@@ -169,3 +169,66 @@ test_that("can't use pt with models that don't accept multiple pars", {
     "Parallel Tempering [Random walk] requires multiple parameters",
     fixed = TRUE)
 })
+
+
+test_that("can use hmc with parallel tempering", {
+  ## We just do a short run here at present to make sure that things
+  ## work.  The model here is quite slow, mostly because of the prior;
+  ## something that we can probably improve later.  Proving that this
+  ## does the right thing statistically requires running for a long
+  ## time (a few minutes probably) and we should add some long running
+  ## tests later.
+  set.seed(1)
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(n_integration_steps = 3, debug = TRUE))
+  res <- monty_sample(posterior, sampler, 7, n_chains = 2)
+
+  ## The collection here has not quite behaved as expected, and we can
+  ## probably replicate this in the simultaneous sampler, as it's
+  ## probably in the join there?
+  expect_s3_class(res, "monty_samples")
+  expect_setequal(names(res$details$sampler), c("pars", "accept"))
+  ## 1 parameter x (3 + 1) hmc steps x 10 rungs x 7 mcmc steps x 2 chains
+  ##
+  ## Note that the hot chain never turns up here, as it comes from the
+  ## direct sample
+  expect_equal(dim(res$details$sampler$pars), c(1, 4, 10, 7, 2))
+  ## 10 rungs x 7 mcmc steps x 2 chains
+  expect_equal(dim(res$details$sampler$accept), c(10, 7, 2))
+})
+
+
+test_that("tempering a model with no gradient produces one with no grad", {
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
+  a <- monty_model(list(parameters = "x",
+                        density = identity,
+                        gradient = identity,
+                        direct_sample = identity),
+                   properties = properties)
+  b <- monty_model(list(parameters = "x",
+                        density = density,
+                        direct_sample = identity),
+                   properties = properties)
+
+  aa <- parallel_tempering_scale(a, list(base = a))
+  expect_true(aa$properties$has_gradient)
+  expect_true(is.function(aa$gradient))
+
+  ab <- parallel_tempering_scale(a, list(base = b))
+  expect_false(ab$properties$has_gradient)
+  expect_null(ab$gradient)
+
+  ba <- parallel_tempering_scale(b, list(base = a))
+  expect_false(ba$properties$has_gradient)
+  expect_null(ba$gradient)
+
+  bb <- parallel_tempering_scale(b, list(base = b))
+  expect_false(bb$properties$has_gradient)
+  expect_null(bb$gradient)
+})

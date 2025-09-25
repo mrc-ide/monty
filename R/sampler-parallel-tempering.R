@@ -101,6 +101,7 @@ monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
   if (!is.null(base)) {
     assert_is(base, "monty_model")
     check_base_model(base, FALSE)
+    check_sampler_model(base, sampler)
   }
 
   control <- list(n_rungs = length(beta) - 1L,
@@ -151,6 +152,8 @@ sampler_parallel_tempering_update_beta <- function(beta,
 
 sampler_parallel_tempering_initialise <- function(state_chain, control, model,
                                                   rng) {
+  check_sampler_model(model, control$sampler)
+
   ## TODO: For dust models this is going to require that they can
   ## respond appropriately to the number of different parameter sets,
   ## because on initialisation we'll call them with a single parameter
@@ -424,9 +427,19 @@ parallel_tempering_scale <- function(target, control) {
 
   properties <- target$properties
 
-  ## Gradient follows density above, will implement with HMC support
-  gradient <- NULL
-  properties$has_gradient <- FALSE
+  ## Gradient follows density above
+  if (properties$has_gradient && base$properties$has_gradient) {
+    gradient <- function(x) {
+      g_target <- target$gradient(x)
+      g_base <- base$gradient(x)
+      value <- beta * g_target + (1 - beta) * g_base
+      value[is.na(value)] <- -Inf
+      value
+    }
+  } else {
+    gradient <- NULL
+    properties$has_gradient <- FALSE
+  }
 
   ## Observer will require more work here and in the sampler to pull
   ## from correct chain
@@ -527,5 +540,7 @@ check_base_model <- function(base, split, call = parent.frame()) {
   }
   require_direct_sample(base, msg, call = call)
   require_multiple_parameters(base, msg, call = call)
+  ## The base model must be deterministic, though I forget exactly why
+  ## we need this.
   require_deterministic(base, msg, call = call)
 }
