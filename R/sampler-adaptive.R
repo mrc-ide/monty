@@ -541,13 +541,27 @@ sampler_random_walk_adaptive_state_combine <- function(state, control) {
   ## We can probably express this purely in data, which might be
   ## useful for eventual generalisation, though I think I now have
   ## them all being simply "bind on the last element"
-  list(autocorrelation = join("autocorrelation", on = 3),
-       history_pars = join("history_pars", on = 3),
-       iteration = join("iteration", on = 1),
-       mean = join("mean", on = 2),
-       scaling = join("scaling", on = 1),
-       scaling_history = join("scaling_history", on = 2),
-       scaling_weight = join("scaling_weight", on = 1),
-       vcv = join("vcv", on = 3),
-       weight = join("weight", on = 1))
+  is_parallel_tempering <- length(state[[1]]$scaling) > 1
+  if (is_parallel_tempering) {
+    list(autocorrelation = join("autocorrelation", on = 4),
+         history_pars = join("history_pars", on = 4),
+         iteration = join("iteration", on = 2),
+         mean = join("mean", on = 3),
+         scaling = join("scaling", on = 2),
+         scaling_history = join("scaling_history", on = 3),
+         scaling_weight = join("scaling_weight", on = 2),
+         vcv = join("vcv", on = 4),
+         weight = join("weight", on = 2))  
+  } else {
+    list(autocorrelation = join("autocorrelation", on = 3),
+         history_pars = join("history_pars", on = 3),
+         iteration = join("iteration", on = 1),
+         mean = join("mean", on = 2),
+         scaling = join("scaling", on = 1),
+         scaling_history = join("scaling_history", on = 2),
+         scaling_weight = join("scaling_weight", on = 1),
+         vcv = join("vcv", on = 3),
+         weight = join("weight", on = 1))
+  }
+  
 }
