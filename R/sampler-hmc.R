@@ -365,7 +365,7 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
   } else {
     is_parallel_tempering <- length(dim(history$accept)) > 2
     if (is_parallel_tempering) {
-      env$pars <- as.vector(aperm(history$pars, c(1, 2, 4, 3, 5)))
+      env$pars <- as.vector(aperm(history$pars, c(1, 3, 2, 4, 5)))
       env$accept <- as.vector(history$accept)
     } else {
       env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))

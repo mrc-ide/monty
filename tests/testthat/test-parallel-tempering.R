@@ -212,30 +212,9 @@ test_that("can continue a parallel tempering chain using hmc", {
   posterior <- likelihood + prior
   
   set.seed(1)
-  sampler <- monty_sampler_parallel_tempering(
-    n_rungs = 10,
-    sampler = monty_sampler_hmc())
-  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
-  res2 <- monty_sample_continue(res1, 70)
-  
-  set.seed(1)
-  sampler <- monty_sampler_parallel_tempering(
-    n_rungs = 10,
-    sampler = monty_sampler_hmc(debug = TRUE))
-  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
-  
-  expect_equal(res2$pars, cmp$pars)
-})
-
-
-test_that("can continue a parallel tempering chain using hmc with debug", {
-  likelihood <- ex_mixture(5)
-  prior <- monty_dsl({
-    x ~ Normal(0, 10)
-  })
-  posterior <- likelihood + prior
-  
-  set.seed(1)
+  ## We do this using debug = TRUE in order to test that the sampler details
+  ## are correct. Without debug the results will be the same (just with no
+  ## sampler details) so it's unnecessary to test that as well
   sampler <- monty_sampler_parallel_tempering(
     n_rungs = 10,
     sampler = monty_sampler_hmc(debug = TRUE))
@@ -249,7 +228,7 @@ test_that("can continue a parallel tempering chain using hmc with debug", {
   cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
   
   expect_equal(res2$pars, cmp$pars)
-  expect_equal(res2$details$sampler$pars[, , , 31:100, ], cmp$details$sampler$pars[, , , 31:100, ])
+  expect_equal(res2$details$sampler$pars, cmp$details$sampler$pars)
   expect_equal(res2$details$sampler$accept, cmp$details$sampler$accept)
 })
 
