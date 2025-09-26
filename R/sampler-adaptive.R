@@ -515,7 +515,28 @@ sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
     state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2)))
   } else {
     state <- lapply(state_sampler, array_select_last, chain_id)
-    state$history_pars <- as.vector(state$history_pars)
+
+    is_parallel_tempering <- nrow(state$scaling) > 1
+    if (is_parallel_tempering) {
+      n_pars <- nrow(state_chain$pars)
+      n_rungs <- ncol(state_chain$pars)
+      
+      state$autocorrelation <- 
+        array(state$autocorrelation, c(n_pars, n_pars, n_rungs))
+      state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2, 4)))
+      state$iteration <- state$iteration[[1]]
+      state$mean <- array(state$mean, c(n_pars, n_rungs))
+      state$scaling <- as.vector(state$scaling)
+      state$scaling_history <- 
+        as.vector(aperm(state$scaling_history, c(2, 1, 3)))
+      state$scaling_weight <- as.vector(state$scaling_weight)
+      state$vcv <- array(state$vcv, c(n_pars, n_pars, n_rungs))
+      state$weight <- state$weight[[1]]
+    } else {
+      state$history_pars <- as.vector(state$history_pars)
+    }
+    
+    
   }
   list2env(state, parent = emptyenv())
 }

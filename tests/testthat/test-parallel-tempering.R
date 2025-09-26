@@ -300,3 +300,40 @@ test_that("can use adaptive random walk with parallel tempering", {
   ## 8 samples (7 + 1 for initial) x 10 rungs x 2 chains
   expect_equal(dim(res$details$sampler$scaling_history), c(8, 10, 2))
 })
+
+
+test_that("can continue a parallel tempering chain using adaptive", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  
+  set.seed(1)
+  ## We do this using debug = TRUE in order to test that the sampler details
+  ## are correct. Without debug the results will be the same (just with no
+  ## sampler details) so it's unnecessary to test that as well
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  
+  expect_equal(res2$pars, cmp$pars)
+  expect_equal(res2$details$sampler$autocorrelation, 
+               cmp$details$sampler$autocorrelation)
+  expect_equal(res2$details$sampler$iteration, cmp$details$sampler$iteration)
+  expect_equal(res2$details$sampler$mean, cmp$details$sampler$mean)
+  expect_equal(res2$details$sampler$scaling_history,
+               cmp$details$sampler$scaling_history)
+  expect_equal(res2$details$sampler$scaling_weight,
+               cmp$details$sampler$scaling_weight)
+  expect_equal(res2$details$sampler$vcv, cmp$details$sampler$vcv)
+  expect_equal(res2$details$sampler$weight, cmp$details$sampler$weight)
+})
