@@ -515,8 +515,8 @@ sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
     state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2)))
   } else {
     state <- lapply(state_sampler, array_select_last, chain_id)
-
-    is_parallel_tempering <- nrow(state$scaling) > 1
+    
+    is_parallel_tempering <- ncol(state$scaling_history) > 1
     if (is_parallel_tempering) {
       n_pars <- nrow(state_chain$pars)
       n_rungs <- ncol(state_chain$pars)
