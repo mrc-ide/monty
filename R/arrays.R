@@ -240,6 +240,8 @@ array_select_last <- function(x, i, scalar = TRUE) {
     x[, i, drop = FALSE]
   } else if (r == 3) {
     x[, , i, drop = FALSE]
+  } else if (r == 4) {
+    x[, , , i, drop = FALSE]
   } else {
     stop("unsupported access")
   }
