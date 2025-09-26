@@ -10,6 +10,9 @@ monty_model_density(model, parameters)
 \item{model}{A \link{monty_model} object}
 
 \item{parameters}{A vector or matrix of parameters}
+
+\item{augmented_data}{Augmented data, passed to the model if
+required}
 }
 \value{
 A log-density value, or vector of log-density values

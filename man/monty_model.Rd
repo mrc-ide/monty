@@ -52,8 +52,10 @@ could be anything really.  Models can return \code{-Inf} if things
 are impossible, and we'll try and cope gracefully with that
 wherever possible.  If the property \code{allow_multiple_parameters}
 is \code{TRUE}, then this function must be able to handle the
-argument parameter being a matrix,  and return a vector
-of densities.
+argument parameter being a matrix, and return a vector of
+densities.  If your model required augmented data (i.e.,
+\code{properties$has_augmented_data} is \code{TRUE}), then you will
+recieve the data as an \emph{attribute} \code{data} of the parameters.
 \item \code{parameters}: A character vector of parameter names.  This
 vector is the source of truth for the length of the parameter
 vector.
@@ -87,7 +89,9 @@ want to be stateful so that gradients can be efficiently
 calculated after a density calculation, or density after
 gradient, where these are called with the same parameters.  This
 function is optional (and may not be well defined or possible to
-define).
+define).  If given, and if \code{density} requires \code{augmented_data},
+then this function will also recieve the augmented data as the
+attribute \code{data} on the parameters.
 \item \code{set_rng_state}: A function to set the state (this is in
 contrast to the \code{rng} that is passed through to \code{direct_sample}
 as that is the \emph{sampler's} rng stream, but we assume models will
@@ -110,6 +114,9 @@ parameters with group 0 affect everything (so are accepted or
 rejected as a whole), while parameters in groups 1 to \code{n} are
 independent (for example, changing the parameters in group 2 does
 not affect the density of parameters proposed in group 3).
+\item \code{augmented_data_update}: Optionally, a function accepting \code{pars}
+and \code{rng} that will update (or initialise augmented data).
+Details forthcoming.
 }
 }
 \seealso{
