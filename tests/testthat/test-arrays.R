@@ -265,6 +265,8 @@ test_that("Can get the last entry in an array", {
   expect_equal(array_select_last(matrix(1:6, 2, 3), 2), cbind(3:4))
   expect_equal(array_select_last(array(1:24, c(2, 3, 4)), 2),
                array(7:12, c(2, 3, 1)))
-  expect_error(array_select_last(array(1:120, c(2, 3, 4, 5)), 2),
+  expect_equal(array_select_last(array(1:120, c(2, 3, 4, 5)), 2),
+               array(25:48, c(2, 3, 4, 1)))
+  expect_error(array_select_last(array(1:720, c(2, 3, 4, 5, 6)), 2),
                "unsupported access")
 })
