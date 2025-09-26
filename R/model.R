@@ -25,6 +25,14 @@
 ##'   we may also support this in `gradient`).  Use `NULL` (the
 ##'   default) to detect this from the model.
 ##'
+##' @param has_augmented_data Logical, indicating if the model has
+##'   "augmented data".  This is additional data required to compute
+##'   the likelihood. You will need to provide an
+##'   `update_augmented_data` function, and your density (and gradient
+##'   if your model has one) will need to respond to the `data`
+##'   attribute that will be present with parameters.  We will
+##'   document this more fully in a vignette.
+##'
 ##' @param has_observer Logical, indicating if the model has an
 ##'   "observation" function, which we will describe more fully soon.
 ##'   An observer is a function `observe` which takes no arguments and
@@ -57,19 +65,30 @@ monty_model_properties <- function(has_gradient = NULL,
                                    has_direct_sample = NULL,
                                    is_stochastic = NULL,
                                    has_parameter_groups = NULL,
+                                   has_augmented_data = NULL,
                                    has_observer = NULL,
                                    allow_multiple_parameters = NULL) {
   assert_scalar_logical(has_gradient, allow_null = TRUE)
   assert_scalar_logical(has_direct_sample, allow_null = TRUE)
   assert_scalar_logical(is_stochastic, allow_null = TRUE)
   assert_scalar_logical(has_parameter_groups, allow_null = TRUE)
+  assert_scalar_logical(has_augmented_data, allow_null = TRUE)
   assert_scalar_logical(has_observer, allow_null = TRUE)
   assert_scalar_logical(allow_multiple_parameters, allow_null = TRUE)
 
+  ## It's not obvious here what the correct behaviour is for augmented
+  ## data and allowing multiple parameters; I think that needs to also
+  ## be set up to allow multiple parameters (and therefore multiple
+  ## data sets), and that will be entirely the responsibility of the
+  ## model to keep correct.  However, with things like parallel
+  ## tempering, we need to be able to shuffle the data along with the
+  ## parameters, so we'll need a way to store and references multiple
+  ## copies, but we'll hit this very soon with the sampler.
   ret <- list(has_gradient = has_gradient,
               has_direct_sample = has_direct_sample,
               is_stochastic = is_stochastic,
               has_parameter_groups = has_parameter_groups,
+              has_augmented_data = has_augmented_data,
               has_observer = has_observer,
               allow_multiple_parameters = allow_multiple_parameters)
   class(ret) <- "monty_model_properties"
@@ -94,8 +113,10 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   are impossible, and we'll try and cope gracefully with that
 ##'   wherever possible.  If the property `allow_multiple_parameters`
 ##'   is `TRUE`, then this function must be able to handle the
-##'   argument parameter being a matrix,  and return a vector
-##'   of densities.
+##'   argument parameter being a matrix, and return a vector of
+##'   densities.  If your model required augmented data (i.e.,
+##'   `properties$has_augmented_data` is `TRUE`), then you will
+##'   recieve the data as an *attribute* `data` of the parameters.
 ##'
 ##' * `parameters`: A character vector of parameter names.  This
 ##'   vector is the source of truth for the length of the parameter
@@ -133,7 +154,9 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   calculated after a density calculation, or density after
 ##'   gradient, where these are called with the same parameters.  This
 ##'   function is optional (and may not be well defined or possible to
-##'   define).
+##'   define).  If given, and if `density` requires `augmented_data`,
+##'   then this function will also recieve the augmented data as the
+##'   attribute `data` on the parameters.
 ##'
 ##' * `set_rng_state`: A function to set the state (this is in
 ##'   contrast to the `rng` that is passed through to `direct_sample`
@@ -159,6 +182,10 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   rejected as a whole), while parameters in groups 1 to `n` are
 ##'   independent (for example, changing the parameters in group 2 does
 ##'   not affect the density of parameters proposed in group 3).
+##'
+##' * `augmented_data_update`: Optionally, a function accepting `pars`
+##'   and `rng` that will update (or initialise augmented data).
+##'   Details forthcoming.
 ##'
 ##' @title Create basic model
 ##'
@@ -199,6 +226,8 @@ monty_model <- function(model, properties = NULL) {
   observer <- validate_model_observer(model, properties, call)
   rng_state <- validate_model_rng_state(model, properties, call)
   parameter_groups <- validate_model_parameter_groups(model, properties, call)
+  augmented_data_update <- validate_model_augmented_data(
+    model, properties, call)
   restore <- validate_model_restore(model, properties, call)
 
   ## Update properties based on what we found:
@@ -206,6 +235,7 @@ monty_model <- function(model, properties = NULL) {
   properties$has_direct_sample <- !is.null(direct_sample)
   properties$is_stochastic <- !is.null(rng_state$set)
   properties$has_parameter_groups <- !is.null(parameter_groups)
+  properties$has_augmented_data <- !is.null(augmented_data_update)
   properties$has_observer <- !is.null(observer)
   properties$allow_multiple_parameters <-
     properties$allow_multiple_parameters %||% FALSE
@@ -217,6 +247,7 @@ monty_model <- function(model, properties = NULL) {
               density = density,
               gradient = gradient,
               direct_sample = direct_sample,
+              augmented_data_update = augmented_data_update,
               observer = observer,
               restore = restore,
               rng_state = rng_state,
@@ -235,6 +266,9 @@ monty_model <- function(model, properties = NULL) {
 ##'
 ##' @param parameters A vector or matrix of parameters
 ##'
+##' @param augmented_data Augmented data, passed to the model if
+##'   required
+##'
 ##' @return A log-density value, or vector of log-density values
 ##'
 ##' @seealso [monty_model_gradient] for computing gradients and
@@ -248,6 +282,10 @@ monty_model <- function(model, properties = NULL) {
 monty_model_density <- function(model, parameters) {
   require_monty_model(model)
   check_model_parameters(model, parameters)
+  if (model$properties$has_augmented_data && !has_attr(parameters, "data")) {
+    cli::cli_abort(
+      "'parameters' does not have associated data, but this model requires it")
+  }
   model$density(parameters)
 }
 
@@ -277,7 +315,8 @@ monty_model_density <- function(model, parameters) {
 ##'
 ##' # Nonzero gradient away from the origin:
 ##' monty_model_gradient(m, c(0.4, 0.2))
-monty_model_gradient <- function(model, parameters, named = FALSE) {
+monty_model_gradient <- function(model, parameters, augmented_data = NULL,
+                                 named = FALSE) {
   require_monty_model(model)
   require_gradient(
     model,
@@ -462,6 +501,25 @@ validate_model_direct_sample <- function(model, properties, call) {
 }
 
 
+validate_model_augmented_data <- function(model, properties, call) {
+  if (isFALSE(properties$has_augmented_data)) {
+    ## TODO: error if augmented_data argument present in density or
+    ## gradient
+    return(NULL)
+  }
+  value <- model$augmented_data_update
+  if (is.null(value)) {
+    ## TODO: error if augmented_data argument present in density or
+    ## gradient
+    return(NULL)
+  }
+
+  ## TODO: check that augmented_data is present in density and
+  ## gradient (if gradient is present)
+  value
+}
+
+
 validate_model_observer <- function(model, properties, call) {
   if (isFALSE(properties$has_observer)) {
     return(NULL)
@@ -641,6 +699,7 @@ monty_model_properties_str <- function(properties) {
   c(if (properties$has_gradient) "can compute gradients",
     if (properties$has_direct_sample) "can be directly sampled from",
     if (properties$is_stochastic) "is stochastic",
+    if (properties$has_augmented_data) "uses augmented data",
     if (properties$has_observer) "has an observer",
     if (properties$allow_multiple_parameters) "accepts multiple parameters")
 }
