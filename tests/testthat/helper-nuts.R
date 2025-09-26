@@ -17,7 +17,7 @@ reference_nuts <- function() {
     return(list(theta = theta, r = r))
   }
 
-  build_tree <- function(theta, r, u, v, j, epsilon, theta_0, r_0, model, delta = 1000)
+  build_tree <- function(theta, r, u, v, j, epsilon, theta_0, r_0, model, rng, delta = 1000)
   {
     if(j==0) {
       # base case, one leapfrog in direction v
@@ -37,22 +37,22 @@ reference_nuts <- function() {
                   n_alpha = 1)
              )
     } else { #j>0
-      result_list <- build_tree(theta, r, u, v, j-1, epsilon, theta_0, r_0, model, delta)
+      result_list <- build_tree(theta, r, u, v, j-1, epsilon, theta_0, r_0, model, rng, delta)
       if(result_list$s_prop){ # continue the tree unless stop condition is reached
         if(v==-1){
           alternative_list <- build_tree(result_list$theta_minus, result_list$r_minus,
-                                         u, v, j-1, epsilon, theta_0, r_0, model, delta)
+                                         u, v, j-1, epsilon, theta_0, r_0, model, rng, delta)
           result_list$theta_minus <- alternative_list$theta_minus
           result_list$r_minus <- alternative_list$r_minus
         } else { #v==1
           alternative_list <- build_tree(result_list$theta_plus, result_list$r_plus,
-                                         u, v, j-1, epsilon, theta_0, r_0, model, delta)
+                                         u, v, j-1, epsilon, theta_0, r_0, model, rng, delta)
           result_list$theta_plus <- alternative_list$theta_plus
           result_list$r_plus <- alternative_list$r_plus
         }
         sum_n_prop <- result_list$n_prop+alternative_list$n_prop
         if(sum_n_prop > 0)
-          if(runif(1)<alternative_list$n_prop/sum_n_prop)
+          if(monty_random_real(rng)<alternative_list$n_prop/sum_n_prop)
             result_list$theta_prop <- alternative_list$theta_prop
         result_list$alpha <- result_list$alpha + alternative_list$alpha
         result_list$n_alpha <- result_list$n_alpha + alternative_list$n_alpha
@@ -73,8 +73,8 @@ reference_nuts <- function() {
 
     theta <- state_chain$pars
     theta_prop <- theta
-    r0 <- rnorm(length(theta),0,1)
-    u <- runif(1)*exp(-hamiltonian(theta, r0, model))
+    r0 <- monty_random_n_normal(length(theta), 0, 1, rng)
+    u <- monty_random_real(rng)*exp(-hamiltonian(theta, r0, model))
     tree_list <- list(theta_minus = theta,
                       r_minus = r0,
                       theta_plus = theta,
@@ -84,16 +84,16 @@ reference_nuts <- function() {
     n <- 1
     s <- TRUE
     while(s){
-      v <- sample(c(-1,1),1)
+      v <- if (monty_random_real(rng) < 0.5) -1 else 1
       if(v==-1){
         tree_list <- build_tree(tree_list$theta_minus, tree_list$r_minus,
-                                u, v, j, control$epsilon, theta, r0, model, control$D_max)
+                                u, v, j, control$epsilon, theta, r0, model, rng, control$D_max)
       } else {
         tree_list <- build_tree(tree_list$theta_plus, tree_list$r_plus,
-                                u, v, j, control$epsilon, theta, r0, model, control$D_max)
+                                u, v, j, control$epsilon, theta, r0, model, rng, control$D_max)
       }
       if(tree_list$s_prop)
-        if(runif(1)<min(1,tree_list$n_prop/n))
+        if(monty_random_real(rng)<min(1,tree_list$n_prop/n))
           theta_prop <- tree_list$theta_prop
       n <- n + tree_list$n_prop
       s <- tree_list$s_prop &
