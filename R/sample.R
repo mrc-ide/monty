@@ -361,6 +361,12 @@ combine_chains <- function(res, sampler, observer, include_state) {
   } else {
     observations <- observer$combine(lapply(history, "[[", "observations"))
   }
+  data <- lapply(history, "[[", "data")
+  if (all(vlapply(data, is.null))) {
+    data <- NULL
+  } else {
+    data <- array_bind(arrays = data, after = 2)
+  }
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
 
@@ -387,7 +393,7 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details, observations, data, state)
 }
 
 
@@ -486,13 +492,14 @@ combine_state_chain <- function(state) {
 
 
 monty_samples <- function(pars, density, initial, details, observations,
-                          state) {
+                          data, state) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
                   density = density,
                   initial = initial,
                   details = details,
                   state = state,
+                  data = data,
                   observations = observations)
   class(samples) <- "monty_samples"
   samples

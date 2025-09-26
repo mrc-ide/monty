@@ -229,3 +229,8 @@ is_testing <- function() {
 return_null <- function(...) {
   NULL
 }
+
+
+has_attr <- function(x, name) {
+  !is.null(attr(x, name, exact = TRUE))
+}
