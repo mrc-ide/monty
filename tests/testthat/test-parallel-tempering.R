@@ -310,9 +310,6 @@ test_that("can continue a parallel tempering chain using adaptive", {
   posterior <- likelihood + prior
   
   set.seed(1)
-  ## We do this using debug = TRUE in order to test that the sampler details
-  ## are correct. Without debug the results will be the same (just with no
-  ## sampler details) so it's unnecessary to test that as well
   sampler <- monty_sampler_parallel_tempering(
     n_rungs = 10,
     sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
