@@ -261,3 +261,42 @@ test_that("tempering a model with no gradient produces one with no grad", {
   expect_false(bb$properties$has_gradient)
   expect_null(bb$gradient)
 })
+
+
+test_that("can use adaptive random walk with parallel tempering", {
+  ## We just do a short run here at present to make sure that things
+  ## work.  The model here is quite slow, mostly because of the prior;
+  ## something that we can probably improve later.  Proving that this
+  ## does the right thing statistically requires running for a long
+  ## time (a few minutes probably) and we should add some long running
+  ## tests later.
+  set.seed(1)
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  res <- monty_sample(posterior, sampler, 7, n_chains = 2)
+  
+  expect_s3_class(res, "monty_samples")
+  expect_setequal(names(res$details$sampler),
+                  c("autocorrelation", "iteration", "mean", "scaling_history",
+                    "scaling_weight", "vcv", "weight"))
+  
+  ## Note that the hot chain never turns up here, as it comes from the
+  ## direct sample
+  ## 1 parameter x 1 parameter x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$autocorrelation), c(1, 1, 10, 2))
+  expect_equal(dim(res$details$sampler$vcv), c(1, 1, 10, 2))
+  ## 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$iteration), c(10, 2))
+  expect_equal(dim(res$details$sampler$scaling_weight), c(10, 2))
+  expect_equal(dim(res$details$sampler$weight), c(10, 2))
+  ## 1 parameter x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$mean), c(1, 10, 2))
+  ## 8 samples (7 + 1 for initial) x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$scaling_history), c(8, 10, 2))
+})
