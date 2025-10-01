@@ -515,7 +515,28 @@ sampler_random_walk_adaptive_state_restore <- function(chain_id, state_chain,
     state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2)))
   } else {
     state <- lapply(state_sampler, array_select_last, chain_id)
-    state$history_pars <- as.vector(state$history_pars)
+    
+    is_parallel_tempering <- ncol(state$scaling_history) > 1
+    if (is_parallel_tempering) {
+      n_pars <- nrow(state_chain$pars)
+      n_rungs <- ncol(state_chain$pars)
+      
+      state$autocorrelation <- 
+        array(state$autocorrelation, c(n_pars, n_pars, n_rungs))
+      state$history_pars <- as.vector(aperm(state$history_pars, c(1, 3, 2, 4)))
+      state$iteration <- state$iteration[[1]]
+      state$mean <- array(state$mean, c(n_pars, n_rungs))
+      state$scaling <- as.vector(state$scaling)
+      state$scaling_history <- 
+        as.vector(aperm(state$scaling_history, c(2, 1, 3)))
+      state$scaling_weight <- as.vector(state$scaling_weight)
+      state$vcv <- array(state$vcv, c(n_pars, n_pars, n_rungs))
+      state$weight <- state$weight[[1]]
+    } else {
+      state$history_pars <- as.vector(state$history_pars)
+    }
+    
+    
   }
   list2env(state, parent = emptyenv())
 }
@@ -541,13 +562,27 @@ sampler_random_walk_adaptive_state_combine <- function(state, control) {
   ## We can probably express this purely in data, which might be
   ## useful for eventual generalisation, though I think I now have
   ## them all being simply "bind on the last element"
-  list(autocorrelation = join("autocorrelation", on = 3),
-       history_pars = join("history_pars", on = 3),
-       iteration = join("iteration", on = 1),
-       mean = join("mean", on = 2),
-       scaling = join("scaling", on = 1),
-       scaling_history = join("scaling_history", on = 2),
-       scaling_weight = join("scaling_weight", on = 1),
-       vcv = join("vcv", on = 3),
-       weight = join("weight", on = 1))
+  is_parallel_tempering <- length(state[[1]]$scaling) > 1
+  if (is_parallel_tempering) {
+    list(autocorrelation = join("autocorrelation", on = 4),
+         history_pars = join("history_pars", on = 4),
+         iteration = join("iteration", on = 2),
+         mean = join("mean", on = 3),
+         scaling = join("scaling", on = 2),
+         scaling_history = join("scaling_history", on = 3),
+         scaling_weight = join("scaling_weight", on = 2),
+         vcv = join("vcv", on = 4),
+         weight = join("weight", on = 2))  
+  } else {
+    list(autocorrelation = join("autocorrelation", on = 3),
+         history_pars = join("history_pars", on = 3),
+         iteration = join("iteration", on = 1),
+         mean = join("mean", on = 2),
+         scaling = join("scaling", on = 1),
+         scaling_history = join("scaling_history", on = 2),
+         scaling_weight = join("scaling_weight", on = 1),
+         vcv = join("vcv", on = 3),
+         weight = join("weight", on = 1))
+  }
+  
 }
