@@ -11,9 +11,6 @@ monty_model_gradient(model, parameters, augmented_data = NULL, named = FALSE)
 
 \item{parameters}{A vector or matrix of parameters}
 
-\item{augmented_data}{Augmented data, passed to the model if
-required}
-
 \item{named}{Logical, indicating if the output should be named
 using the parameter names.}
 }

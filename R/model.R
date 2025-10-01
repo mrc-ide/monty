@@ -266,9 +266,6 @@ monty_model <- function(model, properties = NULL) {
 ##'
 ##' @param parameters A vector or matrix of parameters
 ##'
-##' @param augmented_data Augmented data, passed to the model if
-##'   required
-##'
 ##' @return A log-density value, or vector of log-density values
 ##'
 ##' @seealso [monty_model_gradient] for computing gradients and
