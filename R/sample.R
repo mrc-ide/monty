@@ -403,14 +403,20 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   } else {
     observations <- observer$append(prev$observations, curr$observations)
   }
-  samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
-                  density = array_bind(prev$density, curr$density, on = 1),
-                  initial = prev$initial,
-                  details = curr$details,
-                  state = curr$state,
-                  observations = observations)
-  class(samples) <- "monty_samples"
-  samples
+  if (is.null(prev$data)) {
+    data <- NULL
+  } else {
+    ## This should be easy, it's a bind on 2 dimension 2 I think
+    stop("FIXME: add support for appending data")
+    data <- array_bind(prev$data, curr$data, on = 2)
+  }
+  monty_samples(pars = array_bind(prev$pars, curr$pars, on = 2),
+                density = array_bind(prev$density, curr$density, on = 1),
+                initial = prev$initial,
+                details = curr$details,
+                observations = observations,
+                data = data,
+                state = curr$state)
 }
 
 
