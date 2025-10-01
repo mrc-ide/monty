@@ -213,7 +213,13 @@ ex_augmented <- function(p_group_1 = 0.25) {
       ## This recalculates the *old* density, per group.  For an
       ## expensive model that might not be ideal.
       density <- likelihood_fn(p, m1, m2, x, z)
-      p_accept <- pmin(1, exp(density_new - density))
+
+      ## Our proposal ratio is not symmetric, we need to account for
+      ## this here:
+      proposal_ratio <- z * log(p_group_1) + (1 - z) * log(1 - p_group_1) -
+        z_new * log(p_group_1) - (1 - z_new) * log(1 - p_group_1)
+      p_accept <- pmin(1, exp(density_new - density + proposal_ratio))
+
       accept <- monty_random_n_uniform(n, 0, 1, rng) < p_accept
       if (any(accept)) {
         z[accept] <- z_new[accept]
