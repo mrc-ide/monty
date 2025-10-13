@@ -489,9 +489,15 @@ combine_state_chain <- function(state) {
   if (all(vlapply(observation, is.null))) {
     observation <- NULL
   }
+  
+  data <- lapply(state, "[[", "data")
+  if (all(vlapply(data, is.null))) {
+    data <- NULL
+  }
 
   list(
     pars = array_bind(arrays = lapply(state, "[[", "pars"), after = Inf),
+    data = data,
     density = vnapply(state, "[[", "density"),
     observation = observation)
 }
