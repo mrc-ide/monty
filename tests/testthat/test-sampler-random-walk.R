@@ -117,10 +117,6 @@ test_that("can continue a simultaneous random walk sampler", {
   res2a <- monty_sample(m, sampler, 30, n_chains = 3, runner = runner,
                         restartable = TRUE)
 
-  ## TODO: knock 'data' out here from the simultaneous state, but we
-  ## should be consistent ideally.  It's a trivial difference because
-  ## the value is NULL.
-  res2a$state$chain$data <- NULL
   expect_equal(drop_runner(res2a), drop_runner(res1a))
 
   res2b <- monty_sample_continue(res2a, 70)
