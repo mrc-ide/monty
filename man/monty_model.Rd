@@ -55,7 +55,7 @@ is \code{TRUE}, then this function must be able to handle the
 argument parameter being a matrix, and return a vector of
 densities.  If your model required augmented data (i.e.,
 \code{properties$has_augmented_data} is \code{TRUE}), then you will
-recieve the data as an \emph{attribute} \code{data} of the parameters.
+receive the data as an \emph{attribute} \code{data} of the parameters.
 \item \code{parameters}: A character vector of parameter names.  This
 vector is the source of truth for the length of the parameter
 vector.
