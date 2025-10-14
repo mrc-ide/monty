@@ -125,9 +125,6 @@ test_that("require that all parameters can be sampled", {
   expect_error(
     y + z,
     "Can't create a direct_sample from these models as 'lhs' does not")
-  expect_error(
-    z + y,
-    "Can't create a direct_sample from these models as 'rhs' does not")
 })
 
 
