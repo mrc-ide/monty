@@ -394,3 +394,33 @@ test_that("can combine restore functions", {
   cd <- monty_model_combine(c, d)
   expect_equal(capture_messages(cd$restore()), character())
 })
+
+
+test_that("can combine model with augmented data and one without", {
+  m <- ex_augmented()
+  
+  a <- m$likelihood + m$prior
+  
+  expect_true(a$properties$has_augmented_data)
+})
+
+
+test_that("Can't combine two models that both have augmented data", {
+  m <- ex_augmented()
+  
+  a <- m$likelihood
+  
+  expect_error(
+    a + a, 
+    "Can't create a model that uses augmented data from these models")
+})
+
+
+test_that("can't require augmented data if neither model has it", {
+  a <- monty_model(list(parameters = "x",
+                        density = function(x) dnorm(x, log = TRUE)))
+  properties <- monty_model_properties(has_augmented_data = TRUE)
+  expect_error(
+    monty_model_combine(a, a, properties = properties),
+    "Can't create a model that uses augmented data from these models")
+})
