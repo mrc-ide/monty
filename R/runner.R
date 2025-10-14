@@ -208,12 +208,12 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
     model$rng_state$set(state$model_rng[, chain_id])
   }
 
-  if (model$properties$has_augmented_data) {
-    stop("this needs writing")
-  }
-
   state_chain <- lapply(state$chain, array_select_last, chain_id)
   state_chain$pars <- as.vector(state_chain$pars)
+  if (model$properties$has_augmented_data) {
+    state_chain$data <- as.vector(state_chain$data)
+    attr(state_chain$pars, "data") <- state_chain$data
+  }
 
   state_sampler <- sampler$state$restore(
     chain_id, state_chain, state$sampler, sampler$control, model)

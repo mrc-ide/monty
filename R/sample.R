@@ -406,8 +406,6 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   if (is.null(prev$data)) {
     data <- NULL
   } else {
-    ## This should be easy, it's a bind on 2 dimension 2 I think
-    stop("FIXME: add support for appending data")
     data <- array_bind(prev$data, curr$data, on = 2)
   }
   monty_samples(pars = array_bind(prev$pars, curr$pars, on = 2),
@@ -493,6 +491,8 @@ combine_state_chain <- function(state) {
   data <- lapply(state, "[[", "data")
   if (all(vlapply(data, is.null))) {
     data <- NULL
+  } else {
+    data <- array_bind(arrays = data, after = Inf)
   }
 
   list(
