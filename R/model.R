@@ -28,7 +28,7 @@
 ##' @param has_augmented_data Logical, indicating if the model has
 ##'   "augmented data".  This is additional data required to compute
 ##'   the likelihood. You will need to provide an
-##'   `update_augmented_data` function, and your density (and gradient
+##'   `augmented_data_update` function, and your density (and gradient
 ##'   if your model has one) will need to respond to the `data`
 ##'   attribute that will be present with parameters.  We will
 ##'   document this more fully in a vignette.
@@ -116,7 +116,7 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   argument parameter being a matrix, and return a vector of
 ##'   densities.  If your model required augmented data (i.e.,
 ##'   `properties$has_augmented_data` is `TRUE`), then you will
-##'   recieve the data as an *attribute* `data` of the parameters.
+##'   receive the data as an *attribute* `data` of the parameters.
 ##'
 ##' * `parameters`: A character vector of parameter names.  This
 ##'   vector is the source of truth for the length of the parameter
