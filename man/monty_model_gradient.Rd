@@ -4,7 +4,7 @@
 \alias{monty_model_gradient}
 \title{Compute gradient of log density}
 \usage{
-monty_model_gradient(model, parameters, augmented_data = NULL, named = FALSE)
+monty_model_gradient(model, parameters, named = FALSE)
 }
 \arguments{
 \item{model}{A \link{monty_model} object}

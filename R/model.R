@@ -312,8 +312,7 @@ monty_model_density <- function(model, parameters) {
 ##'
 ##' # Nonzero gradient away from the origin:
 ##' monty_model_gradient(m, c(0.4, 0.2))
-monty_model_gradient <- function(model, parameters, augmented_data = NULL,
-                                 named = FALSE) {
+monty_model_gradient <- function(model, parameters, named = FALSE) {
   require_monty_model(model)
   require_gradient(
     model,
