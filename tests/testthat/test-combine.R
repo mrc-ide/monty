@@ -419,8 +419,14 @@ test_that("Can't combine two models that both have augmented data", {
 test_that("can't require augmented data if neither model has it", {
   a <- monty_model(list(parameters = "x",
                         density = function(x) dnorm(x, log = TRUE)))
-  properties <- monty_model_properties(has_augmented_data = TRUE)
+  p <- monty_model_properties(has_augmented_data = TRUE)
   expect_error(
-    monty_model_combine(a, a, properties = properties),
+    monty_model_combine(a, a, p),
     "Can't create a model that uses augmented data from these models")
+  
+  a <- monty_model(list(parameters = "x",
+                        density = function(x) dnorm(x, log = TRUE)))
+  p <- monty_model_properties(has_augmented_data = FALSE)
+  expect_false(monty_model_combine(a, a, p)$properties$has_augmented_data)
+    
 })
