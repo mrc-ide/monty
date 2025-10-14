@@ -394,7 +394,7 @@ check_sampler_model <- function(model, sampler, name = "model") {
   allow_augmented_data(
     sampler,
     sprintf(
-      "%s has augmented data but '%s' does not allow this",
+      "'%s' has augmented data but %s does not allow this",
       name, sampler$name),
     when = model$properties$has_augmented_data)
 }
