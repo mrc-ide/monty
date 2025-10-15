@@ -155,7 +155,7 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   gradient, where these are called with the same parameters.  This
 ##'   function is optional (and may not be well defined or possible to
 ##'   define).  If given, and if `density` requires `augmented_data`,
-##'   then this function will also recieve the augmented data as the
+##'   then this function will also receive the augmented data as the
 ##'   attribute `data` on the parameters.
 ##'
 ##' * `set_rng_state`: A function to set the state (this is in

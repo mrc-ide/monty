@@ -90,7 +90,7 @@ calculated after a density calculation, or density after
 gradient, where these are called with the same parameters.  This
 function is optional (and may not be well defined or possible to
 define).  If given, and if \code{density} requires \code{augmented_data},
-then this function will also recieve the augmented data as the
+then this function will also receive the augmented data as the
 attribute \code{data} on the parameters.
 \item \code{set_rng_state}: A function to set the state (this is in
 contrast to the \code{rng} that is passed through to \code{direct_sample}
