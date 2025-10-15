@@ -410,4 +410,3 @@ allow_augmented_data <- function(sampler, message, ..., when = TRUE,
       ..., call = call)
   }
 }
-  
