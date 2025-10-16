@@ -95,7 +95,7 @@ monty_model_combine <- function(a, b, properties = NULL,
   is_prior <- vlapply(parts, function(el) {
     el$properties$has_direct_sample &&
       !el$properties$is_stochastic &&
-      all(el$parameters %in% parameters)
+      all(parameters %in% el$parameters)
   })
 
   one_is_prior <- sum(is_prior) == 1
