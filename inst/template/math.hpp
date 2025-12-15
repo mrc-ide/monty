@@ -94,14 +94,14 @@ real_type lfactorial(int x) {
 
 template <typename T>
 __host__ __device__
-T beta(T a, T b) {
-  return exp(lbeta(a, b));
+T lbeta(T a, T b) {
+  return lgamma(a) + lgamma(b) - lgamma(a + b);
 }
 
 template <typename T>
 __host__ __device__
-T lbeta(T a, T b) {
-  return lgamma(a) + lgamma(b) - lgamma(a + b);
+T beta(T a, T b) {
+  return exp(lbeta(a, b));
 }
 
 // We can do this (more efficiently!) with copysign, but end up with
