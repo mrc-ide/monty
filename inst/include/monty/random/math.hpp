@@ -16,7 +16,7 @@ namespace math {
 // the monty source repo
 template <typename T>
 __host__ __device__
-T round(T x) {
+real_type round(T x) {
   return std::round(x);
 }
 
@@ -30,7 +30,7 @@ inline float round(float x) {
 
 template <typename T>
 __host__ __device__
-T ceil(T x) {
+real_type ceil(T x) {
   return std::ceil(x);
 }
 
@@ -44,7 +44,7 @@ inline float ceil(float x) {
 
 template <typename T>
 __host__ __device__
-T floor(T x) {
+real_type floor(T x) {
   return std::floor(x);
 }
 
@@ -58,7 +58,7 @@ inline float floor(float x) {
 
 template <typename T>
 __host__ __device__
-T trunc(T x) {
+real_type trunc(T x) {
   return std::trunc(x);
 }
 
@@ -72,7 +72,7 @@ inline float trunc(float x) {
 
 template <typename T>
 __host__ __device__
-T sqrt(T x) {
+real_type sqrt(T x) {
   return std::sqrt(x);
 }
 
@@ -86,7 +86,7 @@ inline float sqrt(float x) {
 
 template <typename T>
 __host__ __device__
-T exp(T x) {
+real_type exp(T x) {
   return std::exp(x);
 }
 
@@ -100,7 +100,7 @@ inline float exp(float x) {
 
 template <typename T>
 __host__ __device__
-T expm1(T x) {
+real_type expm1(T x) {
   return std::expm1(x);
 }
 
@@ -114,7 +114,7 @@ inline float expm1(float x) {
 
 template <typename T>
 __host__ __device__
-T log(T x) {
+real_type log(T x) {
   return std::log(x);
 }
 
@@ -128,7 +128,7 @@ inline float log(float x) {
 
 template <typename T>
 __host__ __device__
-T log2(T x) {
+real_type log2(T x) {
   return std::log2(x);
 }
 
@@ -142,7 +142,7 @@ inline float log2(float x) {
 
 template <typename T>
 __host__ __device__
-T log10(T x) {
+real_type log10(T x) {
   return std::log10(x);
 }
 
@@ -156,7 +156,7 @@ inline float log10(float x) {
 
 template <typename T>
 __host__ __device__
-T log1p(T x) {
+real_type log1p(T x) {
   return std::log1p(x);
 }
 
@@ -170,7 +170,7 @@ inline float log1p(float x) {
 
 template <typename T>
 __host__ __device__
-T erf(T x) {
+real_type erf(T x) {
   return std::erf(x);
 }
 
@@ -184,7 +184,7 @@ inline float erf(float x) {
 
 template <typename T>
 __host__ __device__
-T erfc(T x) {
+real_type erfc(T x) {
   return std::erfc(x);
 }
 
@@ -198,7 +198,7 @@ inline float erfc(float x) {
 
 template <typename T>
 __host__ __device__
-T tgamma(T x) {
+real_type tgamma(T x) {
   return std::tgamma(x);
 }
 
@@ -212,7 +212,7 @@ inline float tgamma(float x) {
 
 template <typename T>
 __host__ __device__
-T cos(T x) {
+real_type cos(T x) {
   return std::cos(x);
 }
 
@@ -226,7 +226,7 @@ inline float cos(float x) {
 
 template <typename T>
 __host__ __device__
-T sin(T x) {
+real_type sin(T x) {
   return std::sin(x);
 }
 
@@ -240,7 +240,7 @@ inline float sin(float x) {
 
 template <typename T>
 __host__ __device__
-T tan(T x) {
+real_type tan(T x) {
   return std::tan(x);
 }
 
@@ -254,7 +254,7 @@ inline float tan(float x) {
 
 template <typename T>
 __host__ __device__
-T acos(T x) {
+real_type acos(T x) {
   return std::acos(x);
 }
 
@@ -268,7 +268,7 @@ inline float acos(float x) {
 
 template <typename T>
 __host__ __device__
-T asin(T x) {
+real_type asin(T x) {
   return std::asin(x);
 }
 
@@ -282,7 +282,7 @@ inline float asin(float x) {
 
 template <typename T>
 __host__ __device__
-T atan(T x) {
+real_type atan(T x) {
   return std::atan(x);
 }
 
@@ -296,7 +296,7 @@ inline float atan(float x) {
 
 template <typename T>
 __host__ __device__
-T cosh(T x) {
+real_type cosh(T x) {
   return std::cosh(x);
 }
 
@@ -310,7 +310,7 @@ inline float cosh(float x) {
 
 template <typename T>
 __host__ __device__
-T sinh(T x) {
+real_type sinh(T x) {
   return std::sinh(x);
 }
 
@@ -324,7 +324,7 @@ inline float sinh(float x) {
 
 template <typename T>
 __host__ __device__
-T tanh(T x) {
+real_type tanh(T x) {
   return std::tanh(x);
 }
 
@@ -338,7 +338,7 @@ inline float tanh(float x) {
 
 template <typename T>
 __host__ __device__
-T acosh(T x) {
+real_type acosh(T x) {
   return std::acosh(x);
 }
 
@@ -352,7 +352,7 @@ inline float acosh(float x) {
 
 template <typename T>
 __host__ __device__
-T asinh(T x) {
+real_type asinh(T x) {
   return std::asinh(x);
 }
 
@@ -366,7 +366,7 @@ inline float asinh(float x) {
 
 template <typename T>
 __host__ __device__
-T atanh(T x) {
+real_type atanh(T x) {
   return std::atanh(x);
 }
 
@@ -380,7 +380,7 @@ inline float atanh(float x) {
 
 template <typename T>
 __host__ __device__
-T copysign(T x) {
+real_type copysign(T x) {
   return std::copysign(x);
 }
 

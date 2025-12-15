@@ -14,7 +14,7 @@ fn2 <- c("atan2")
 
 template1 <- "template <typename T>
 __host__ __device__
-T {{name}}(T x) {
+real_type {{name}}(T x) {
   return std::{{name}}(x);
 }
 
