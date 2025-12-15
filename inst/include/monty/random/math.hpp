@@ -170,6 +170,48 @@ inline float log1p(float x) {
 
 template <typename T>
 __host__ __device__
+T erf(T x) {
+  return std::erf(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float erf(float x) {
+  return ::erff(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T erfc(T x) {
+  return std::erfc(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float erfc(float x) {
+  return ::erfcf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T tgamma(T x) {
+  return std::tgamma(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float tgamma(float x) {
+  return ::tgammaf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
 T cos(T x) {
   return std::cos(x);
 }

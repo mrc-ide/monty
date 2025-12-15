@@ -4,6 +4,7 @@
 ## TODO: tgamma?
 fn1 <- c("round", "ceil", "floor", "trunc", "sqrt",
          "exp", "expm1", "log", "log2", "log10", "log1p",
+         "erf", "erfc", "tgamma",
          "cos", "sin", "tan",
          "acos", "asin", "atan",
          "cosh", "sinh", "tanh",
