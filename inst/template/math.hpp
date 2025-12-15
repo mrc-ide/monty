@@ -86,10 +86,34 @@ inline __device__ double lgamma(double x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type lfactorial(int x) {
+T factorial(T x) {
+  return tgamma(x + 1);
+}
+
+template <typename T>
+__host__ __device__
+T lfactorial(T x) {
   return lgamma(x + 1);
+}
+
+template <typename T>
+__host__ __device__
+T lchoose(T x, T y) {
+  return lfactorial(x) - lfactorial(y) - lfactorial(x - y);
+}
+
+template <typename T>
+__host__ __device__
+T lchoose(T x, T y) {
+  return lfactorial(x) - lfactorial(y) - lfactorial(x - y);
+}
+
+template <typename T>
+__host__ __device__
+T choose(T x, T y) {
+  return exp(lchoose(x, y));
 }
 
 template <typename T>
