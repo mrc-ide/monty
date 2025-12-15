@@ -505,27 +505,5 @@ T sign(T x) {
   return (T(0) < x) - (x < T(0));
 }
 
-
-inline double fmodr(double x, double y) {
-  const auto ret = std::fmod(x, y);
-  if (ret * y < 0) {
-    ret += y;
-  }
-  return ret;
-}
-
-inline float fmodr(float x, float y) {
-  const auto ret = std::fmodf(x, y);
-  if (ret * y < 0) {
-    ret += y;
-  }
-  return ret;
-}
-
-template <typename real_type>
-real_type fintdiv(real_type x, real_type y) {
-  return monty::math::floor(x / y);
-}
-
 }
 }
