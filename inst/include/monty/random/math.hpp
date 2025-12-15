@@ -482,6 +482,18 @@ real_type lfactorial(int x) {
   return lgamma(static_cast<real_type>(x + 1));
 }
 
+template <typename T>
+__host__ __device__
+T beta(T a, T b) {
+  return exp(lbeta(a, b));
+}
+
+template <typename T>
+__host__ __device__
+T lbeta(T a, T b) {
+  return lgamma(a) + lgamma(b) - lgamma(a + b);
+}
+
 // We can do this (more efficiently!) with copysign, but end up with
 // having a bit of fight with different overloads.  This way is fine.
 //
