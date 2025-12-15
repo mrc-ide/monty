@@ -496,12 +496,6 @@ T lchoose(T x, T y) {
 
 template <typename T>
 __host__ __device__
-T lchoose(T x, T y) {
-  return lfactorial(x) - lfactorial(y) - lfactorial(x - y);
-}
-
-template <typename T>
-__host__ __device__
 T choose(T x, T y) {
   return exp(lchoose(x, y));
 }
