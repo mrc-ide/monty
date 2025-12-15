@@ -479,7 +479,7 @@ inline __device__ double lgamma(double x) {
 template <typename real_type>
 __host__ __device__
 real_type lfactorial(int x) {
-  return lgamma(static_cast<real_type>(x + 1));
+  return lgamma(x + 1);
 }
 
 template <typename T>
