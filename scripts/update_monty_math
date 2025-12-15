@@ -41,7 +41,7 @@ inline float {{name}}(float x, float y) {
 #endif"
 
 glue_whisker <- function(template, data) {
-  glue::glue(template, .envir = data, .open = "{{", .close = "}}",
+  glue::glue(template, .envir = as.environment(data), .open = "{{", .close = "}}",
              .trim = FALSE)
 }
 
