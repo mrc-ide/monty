@@ -18,9 +18,10 @@ T {{name}}(T x) {
   return std::{{name}}(x);
 }
 
+template <typename real_type>
 __host__ __device__
-  double {{name}}(int x) {
-  return std::{{name}}(static_cast<double>(x));
+  real_type {{name}}(int x) {
+  return std::{{name}}(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
