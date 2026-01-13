@@ -22,7 +22,7 @@ real_type round(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type round(int x) {
+real_type round(int x) {
   return std::round(static_cast<real_type>(x));
 }
 
@@ -42,7 +42,7 @@ real_type ceil(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type ceil(int x) {
+real_type ceil(int x) {
   return std::ceil(static_cast<real_type>(x));
 }
 
@@ -62,7 +62,7 @@ real_type floor(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type floor(int x) {
+real_type floor(int x) {
   return std::floor(static_cast<real_type>(x));
 }
 
@@ -82,7 +82,7 @@ real_type trunc(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type trunc(int x) {
+real_type trunc(int x) {
   return std::trunc(static_cast<real_type>(x));
 }
 
@@ -102,7 +102,7 @@ real_type sqrt(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type sqrt(int x) {
+real_type sqrt(int x) {
   return std::sqrt(static_cast<real_type>(x));
 }
 
@@ -122,7 +122,7 @@ real_type exp(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type exp(int x) {
+real_type exp(int x) {
   return std::exp(static_cast<real_type>(x));
 }
 
@@ -142,7 +142,7 @@ real_type expm1(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type expm1(int x) {
+real_type expm1(int x) {
   return std::expm1(static_cast<real_type>(x));
 }
 
@@ -162,7 +162,7 @@ real_type log(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type log(int x) {
+real_type log(int x) {
   return std::log(static_cast<real_type>(x));
 }
 
@@ -182,7 +182,7 @@ real_type log2(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type log2(int x) {
+real_type log2(int x) {
   return std::log2(static_cast<real_type>(x));
 }
 
@@ -202,7 +202,7 @@ real_type log10(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type log10(int x) {
+real_type log10(int x) {
   return std::log10(static_cast<real_type>(x));
 }
 
@@ -222,7 +222,7 @@ real_type log1p(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type log1p(int x) {
+real_type log1p(int x) {
   return std::log1p(static_cast<real_type>(x));
 }
 
@@ -242,7 +242,7 @@ real_type erf(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type erf(int x) {
+real_type erf(int x) {
   return std::erf(static_cast<real_type>(x));
 }
 
@@ -262,7 +262,7 @@ real_type erfc(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type erfc(int x) {
+real_type erfc(int x) {
   return std::erfc(static_cast<real_type>(x));
 }
 
@@ -282,7 +282,7 @@ real_type tgamma(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type tgamma(int x) {
+real_type tgamma(int x) {
   return std::tgamma(static_cast<real_type>(x));
 }
 
@@ -302,7 +302,7 @@ real_type cos(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type cos(int x) {
+real_type cos(int x) {
   return std::cos(static_cast<real_type>(x));
 }
 
@@ -322,7 +322,7 @@ real_type sin(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type sin(int x) {
+real_type sin(int x) {
   return std::sin(static_cast<real_type>(x));
 }
 
@@ -342,7 +342,7 @@ real_type tan(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type tan(int x) {
+real_type tan(int x) {
   return std::tan(static_cast<real_type>(x));
 }
 
@@ -362,7 +362,7 @@ real_type acos(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type acos(int x) {
+real_type acos(int x) {
   return std::acos(static_cast<real_type>(x));
 }
 
@@ -382,7 +382,7 @@ real_type asin(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type asin(int x) {
+real_type asin(int x) {
   return std::asin(static_cast<real_type>(x));
 }
 
@@ -402,7 +402,7 @@ real_type atan(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type atan(int x) {
+real_type atan(int x) {
   return std::atan(static_cast<real_type>(x));
 }
 
@@ -422,7 +422,7 @@ real_type cosh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type cosh(int x) {
+real_type cosh(int x) {
   return std::cosh(static_cast<real_type>(x));
 }
 
@@ -442,7 +442,7 @@ real_type sinh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type sinh(int x) {
+real_type sinh(int x) {
   return std::sinh(static_cast<real_type>(x));
 }
 
@@ -462,7 +462,7 @@ real_type tanh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type tanh(int x) {
+real_type tanh(int x) {
   return std::tanh(static_cast<real_type>(x));
 }
 
@@ -482,7 +482,7 @@ real_type acosh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type acosh(int x) {
+real_type acosh(int x) {
   return std::acosh(static_cast<real_type>(x));
 }
 
@@ -502,7 +502,7 @@ real_type asinh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type asinh(int x) {
+real_type asinh(int x) {
   return std::asinh(static_cast<real_type>(x));
 }
 
@@ -522,7 +522,7 @@ real_type atanh(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type atanh(int x) {
+real_type atanh(int x) {
   return std::atanh(static_cast<real_type>(x));
 }
 
@@ -542,7 +542,7 @@ real_type copysign(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type copysign(int x) {
+real_type copysign(int x) {
   return std::copysign(static_cast<real_type>(x));
 }
 

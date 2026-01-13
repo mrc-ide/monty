@@ -20,7 +20,7 @@ real_type {{name}}(real_type x) {
 
 template <typename real_type>
 __host__ __device__
-  real_type {{name}}(int x) {
+real_type {{name}}(int x) {
   return std::{{name}}(static_cast<real_type>(x));
 }
 
