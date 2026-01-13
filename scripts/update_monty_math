@@ -18,6 +18,11 @@ T {{name}}(T x) {
   return std::{{name}}(x);
 }
 
+__host__ __device__
+  double {{name}}(int x) {
+  return std::{{name}}(static_cast<double>(x));
+}
+
 #ifdef __CUDA_ARCH__
 template <>
 __device__
