@@ -495,6 +495,11 @@ T beta(T a, T b) {
   return exp(lbeta(a, b));
 }
 
+template <typename T>
+T fintdiv(T x, T y) {
+  return monty::math::floor(x / y);
+}
+
 // We can do this (more efficiently!) with copysign, but end up with
 // having a bit of fight with different overloads.  This way is fine.
 //
