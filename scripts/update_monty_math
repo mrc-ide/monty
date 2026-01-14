@@ -11,9 +11,9 @@ fn1 <- c("round", "ceil", "floor", "trunc", "sqrt",
          "acosh", "asinh", "atanh")
 fn2 <- c("atan2")
 
-template1 <- "template <typename T>
+template1 <- "template <typename real_type>
 __host__ __device__
-T {{name}}(T x) {
+real_type {{name}}(real_type x) {
   return std::{{name}}(x);
 }
 
