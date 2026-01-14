@@ -67,29 +67,16 @@ T max(T a, T b) {
   return a > b ? a : b;
 }
 
-template <typename real_type>
-__host__ __device__ real_type lgamma(real_type x) {
-  static_assert(std::is_floating_point<real_type>::value,
-                "lgamma should only be used with real types");
-  return std::lgamma(x);
-}
-
-#ifdef __CUDA_ARCH__
-template <>
-inline __device__ float lgamma(float x) {
-  return ::lgammaf(x);
-}
-
-template <>
-inline __device__ double lgamma(double x) {
-  return ::lgamma(x);
-}
-#endif
-
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type lfactorial(int x) {
-  return lgamma(static_cast<real_type>(x + 1));
+T lfactorial(T x) {
+  return lgamma(x + 1);
+}
+
+template <typename T>
+__host__ __device__
+T factorial(T x) {
+  return tgamma(x + 1);
 }
 
 template <typename T>
