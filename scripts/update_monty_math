@@ -8,19 +8,14 @@ fn1 <- c("round", "ceil", "floor", "trunc", "sqrt",
          "cos", "sin", "tan",
          "acos", "asin", "atan",
          "cosh", "sinh", "tanh",
-         "acosh", "asinh", "atanh")
+         "acosh", "asinh", "atanh",
+         "copysign")
 fn2 <- c("atan2")
 
-template1 <- "template <typename real_type>
+template1 <- "template <typename T>
 __host__ __device__
-real_type {{name}}(real_type x) {
+T {{name}}(T x) {
   return std::{{name}}(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type {{name}}(int x) {
-  return std::{{name}}(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__

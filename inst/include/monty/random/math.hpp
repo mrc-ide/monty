@@ -14,16 +14,10 @@ namespace math {
 
 // Automatically generated functions; see scripts/update_monty_math in
 // the monty source repo
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type round(real_type x) {
+T round(T x) {
   return std::round(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type round(int x) {
-  return std::round(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -34,16 +28,10 @@ inline float round(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type ceil(real_type x) {
+T ceil(T x) {
   return std::ceil(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type ceil(int x) {
-  return std::ceil(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -54,16 +42,10 @@ inline float ceil(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type floor(real_type x) {
+T floor(T x) {
   return std::floor(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type floor(int x) {
-  return std::floor(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -74,16 +56,10 @@ inline float floor(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type trunc(real_type x) {
+T trunc(T x) {
   return std::trunc(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type trunc(int x) {
-  return std::trunc(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -94,16 +70,10 @@ inline float trunc(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type sqrt(real_type x) {
+T sqrt(T x) {
   return std::sqrt(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type sqrt(int x) {
-  return std::sqrt(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -114,16 +84,10 @@ inline float sqrt(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type exp(real_type x) {
+T exp(T x) {
   return std::exp(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type exp(int x) {
-  return std::exp(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -134,16 +98,10 @@ inline float exp(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type expm1(real_type x) {
+T expm1(T x) {
   return std::expm1(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type expm1(int x) {
-  return std::expm1(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -154,16 +112,10 @@ inline float expm1(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type log(real_type x) {
+T log(T x) {
   return std::log(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type log(int x) {
-  return std::log(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -174,16 +126,10 @@ inline float log(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type log2(real_type x) {
+T log2(T x) {
   return std::log2(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type log2(int x) {
-  return std::log2(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -194,16 +140,10 @@ inline float log2(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type log10(real_type x) {
+T log10(T x) {
   return std::log10(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type log10(int x) {
-  return std::log10(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -214,16 +154,10 @@ inline float log10(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type log1p(real_type x) {
+T log1p(T x) {
   return std::log1p(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type log1p(int x) {
-  return std::log1p(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -234,16 +168,10 @@ inline float log1p(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type erf(real_type x) {
+T erf(T x) {
   return std::erf(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type erf(int x) {
-  return std::erf(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -254,16 +182,10 @@ inline float erf(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type erfc(real_type x) {
+T erfc(T x) {
   return std::erfc(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type erfc(int x) {
-  return std::erfc(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -274,16 +196,10 @@ inline float erfc(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type tgamma(real_type x) {
+T tgamma(T x) {
   return std::tgamma(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type tgamma(int x) {
-  return std::tgamma(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -294,16 +210,10 @@ inline float tgamma(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type cos(real_type x) {
+T cos(T x) {
   return std::cos(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type cos(int x) {
-  return std::cos(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -314,16 +224,10 @@ inline float cos(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type sin(real_type x) {
+T sin(T x) {
   return std::sin(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type sin(int x) {
-  return std::sin(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -334,16 +238,10 @@ inline float sin(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type tan(real_type x) {
+T tan(T x) {
   return std::tan(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type tan(int x) {
-  return std::tan(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -354,16 +252,10 @@ inline float tan(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type acos(real_type x) {
+T acos(T x) {
   return std::acos(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type acos(int x) {
-  return std::acos(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -374,16 +266,10 @@ inline float acos(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type asin(real_type x) {
+T asin(T x) {
   return std::asin(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type asin(int x) {
-  return std::asin(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -394,16 +280,10 @@ inline float asin(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type atan(real_type x) {
+T atan(T x) {
   return std::atan(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type atan(int x) {
-  return std::atan(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -414,16 +294,10 @@ inline float atan(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type cosh(real_type x) {
+T cosh(T x) {
   return std::cosh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type cosh(int x) {
-  return std::cosh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -434,16 +308,10 @@ inline float cosh(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type sinh(real_type x) {
+T sinh(T x) {
   return std::sinh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type sinh(int x) {
-  return std::sinh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -454,16 +322,10 @@ inline float sinh(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type tanh(real_type x) {
+T tanh(T x) {
   return std::tanh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type tanh(int x) {
-  return std::tanh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -474,16 +336,10 @@ inline float tanh(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type acosh(real_type x) {
+T acosh(T x) {
   return std::acosh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type acosh(int x) {
-  return std::acosh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -494,16 +350,10 @@ inline float acosh(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type asinh(real_type x) {
+T asinh(T x) {
   return std::asinh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type asinh(int x) {
-  return std::asinh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -514,16 +364,10 @@ inline float asinh(float x) {
 }
 #endif
 
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type atanh(real_type x) {
+T atanh(T x) {
   return std::atanh(x);
-}
-
-template <typename real_type>
-__host__ __device__
-  real_type atanh(int x) {
-  return std::atanh(static_cast<real_type>(x));
 }
 
 #ifdef __CUDA_ARCH__
@@ -531,6 +375,20 @@ template <>
 __device__
 inline float atanh(float x) {
   return ::atanhf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T copysign(T x) {
+  return std::copysign(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float copysign(float x) {
+  return ::copysignf(x);
 }
 #endif
 
