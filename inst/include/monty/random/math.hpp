@@ -496,6 +496,18 @@ T beta(T a, T b) {
 }
 
 template <typename T>
+__host__ __device__
+T lchoose(T n, T k) {
+  return lfactorial(n) - lfactorial(k) - lfactorial(n - k);
+}
+
+template <typename T>
+__host__ __device__
+T choose(T n, T k) {
+  return exp(lchoose(n, k));
+}
+
+template <typename T>
 T fintdiv(T x, T y) {
   return monty::math::floor(x / y);
 }
