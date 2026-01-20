@@ -1,0 +1,15 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  dsl-errors: dsl-errors.html
+  dsl: dsl.html
+  migration: migration.html
+  monty: monty.html
+  samplers: samplers.html
+  samples: samples.html
+  writing-samplers: writing-samplers.html
+last_built: 2026-01-20T11:50Z
+urls:
+  reference: https://mrc-ide.github.io/monty/reference
+  article: https://mrc-ide.github.io/monty/articles

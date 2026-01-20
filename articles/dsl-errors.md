@@ -1,0 +1,131 @@
+# DSL parse errors
+
+This vignette outlines errors that might be generated when parsing monty
+DSL code, with more explanation about the error and how they can be
+avoided. Don’t read this top to bottom as it’s quite boring! However, if
+we get errors that benefit from more explanation about why they’ve been
+thrown then we’ll expand on the contents here and arrange for these to
+be linked from the thrown error directly.
+
+The error numbers are arbitrary after the first digit. The first digit
+will correspond to different phases of the parsing:
+
+- `E1xx` - errors during parsing of individual expressions
+- `E2xx` - errors when considering the system as a whole
+
+## `E101`
+
+We found an expression that is neither an assignment (with `<-`) or a
+stochastic relationship (with `~`)
+
+Example:
+
+    a + 1
+
+## `E102`
+
+Invalid left hand side of a relationship operator (`~`). Currently the
+left hand side must be symbol, though this will be relaxed in the future
+once we support an array syntax. However, you may not use things like
+numbers or function calls on the left hand side.
+
+Example:
+
+    1 <- 2
+    f(x) <- g(y)
+
+## `E103`
+
+Your distribution call failed to parse. This can fail for many reasons,
+and the details of the failure come from
+[`monty::monty_dsl_parse_distribution`](https://mrc-ide.github.io/monty/reference/monty_dsl_parse_distribution.md)
+
+Example reasons for failure include the rhs being:
+
+- not a call (e.g., `compare(x) ~ 1`
+- not a call to distribution function (e.g., `compare(x) ~ sqrt(2)`)
+- an invalid call (e.g., `compare(x) ~ Normal(0, 1, 2)`)
+
+The details for the failure will be included in the body of the error
+message.
+
+## `E104`
+
+Invalid left hand side of an assignment with `<-`; this is similar to
+`E102`.
+
+## `E201`
+
+Duplicated relationships (with `~`).
+
+Example:
+
+    a ~ Normal(0, 1)
+    b ~ Uniform(0, 1)
+    a ~ Exponential(1) # <= error here
+
+Relationships must be unique because each represents a parameter, and a
+parameter can’t be represented by two different distributions.
+
+## `E202`
+
+Duplicated assignments (with `<-`). This is similar to `E201`
+
+Example:
+
+    a <- 1
+    b <- 2
+    a <- 3 # <= error here
+
+Assignments must be unique within the DSL code because this makes it
+straightforward to trace usage through the dependency graph and from
+this create a gradient function using automatic differentiation.
+
+This restriction means that you cannot reassign a value either, so this
+is an error:
+
+    a <- 1
+    b <- 10
+    a <- a + b # <= error here
+
+## `E203`
+
+A relationship (with `~`) is shadowing a previous assignment. So after
+assigning to a variable you have declared that the same symbol refers to
+a parameter.
+
+Example:
+
+    a <- 1
+    a ~ Normal(0, 1) # <= error here
+
+## `E204`
+
+An assignment (with `<-`) is shadowing a previous relationship.
+
+Example:
+
+    a ~ Normal(0, 1)
+    a <- 10
+
+## `E205`
+
+Variables are used out of order. If you are using odin this is a big
+departure - at the moment you must declare your expressions (assignments
+and relationships) in order. However, because we forbid multiple
+assignment we may relax this in the future, but no existing programs
+should be changed.
+
+## `E206`
+
+Failed to differentiate the model. This error will only be seen where it
+was not possible to differentiate your model but you requested that a
+gradient be available. Not all functions supported in the DSL can
+currently be differentiated by monty; if you think that yours should be,
+please let us know.
+
+## `E207`
+
+A value in `fixed` is shadowed by an assignment or a relationship. If
+you pass in fixed data it may not be used on the left hand side of any
+expression in your DSL code.
