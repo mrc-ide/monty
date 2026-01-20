@@ -8,7 +8,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "observations", "state"))
+    c("pars", "density", "initial", "details", "data", "observations", "state"))
 
   ## forget_rate = 0 so full chain should be included in VCV
   expect_equal(res$details$weight[[1]], 1000)
@@ -27,7 +27,7 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0.1", {
   res <- monty_sample(m, sampler, 1000)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "observations", "state"))
+    c("pars", "density", "initial", "details", "data", "observations", "state"))
 
   ## forget_rate = 0.1 so VCV should exclude first 100 parameter sets
   expect_equal(res$details$weight[[1]], 900)
@@ -45,7 +45,7 @@ test_that("Empirical VCV correct using both forget_rate and forget_end", {
   res <- monty_sample(m, sampler, 1000)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "observations", "state"))
+    c("pars", "density", "initial", "details", "data", "observations", "state"))
 
   ## forget_rate = 0.5 and forget_end = 200 so VCV should exclude first
   ## 100 parameter sets
@@ -65,7 +65,7 @@ test_that("Empirical VCV correct using forget_rate, forget_end and adapt_end", {
   res <- monty_sample(m, sampler, 1000)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "observations", "state"))
+    c("pars", "density", "initial", "details", "data", "observations", "state"))
 
   ## forget_rate = 0.25, forget_end = 500 and adapt_end = 300 so VCV should
   ## only include parameter sets 26 to 300

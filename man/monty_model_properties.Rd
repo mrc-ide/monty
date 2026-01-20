@@ -9,6 +9,7 @@ monty_model_properties(
   has_direct_sample = NULL,
   is_stochastic = NULL,
   has_parameter_groups = NULL,
+  has_augmented_data = NULL,
   has_observer = NULL,
   allow_multiple_parameters = NULL
 )
@@ -33,6 +34,14 @@ field within the \code{model} object passed to \link{monty_model}, and
 by the presence of a \code{by_group} argument to \code{density} and (later
 we may also support this in \code{gradient}).  Use \code{NULL} (the
 default) to detect this from the model.}
+
+\item{has_augmented_data}{Logical, indicating if the model has
+"augmented data".  This is additional data required to compute
+the likelihood. You will need to provide an
+\code{augmented_data_update} function, and your density (and gradient
+if your model has one) will need to respond to the \code{data}
+attribute that will be present with parameters.  We will
+document this more fully in a vignette.}
 
 \item{has_observer}{Logical, indicating if the model has an
 "observation" function, which we will describe more fully soon.

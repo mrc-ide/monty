@@ -26,13 +26,12 @@ other practical effect.}
 A \link{monty_model} object
 }
 \description{
-Combine two models by multiplication.  We'll need a better name
-here.  In Bayesian inference we will want to create a model that
-represents the multiplication of a likelihood and a prior (in log
-space) and it will be convenient to think about these models
-separately.  Multiplying probabilities (or adding on a log scale)
-is common enough that there may be other situations where we want
-to do this.
+Combine two models by multiplication.  In Bayesian inference we
+will want to create a model that represents the multiplication of
+a likelihood and a prior (in log space) and it will be convenient
+to think about these models separately.  Multiplying probabilities
+(or adding on a log scale) is common enough that there may be
+other situations where we want to do this.
 }
 \details{
 Here we describe the impact of combining a pair of models
@@ -49,6 +48,8 @@ resulting model will not have gradient support.  Set
 that the combination is differentiable.  If the models disagree
 in their parameters, parameters that are missing from a model
 are assumed (reasonably) to have a zero gradient.
+\item augmented_data`: A model uses augmented data if \emph{either}
+component uses augmented data.
 \item \code{direct_sample}: this one is hard to do the right thing for.  If
 neither model can be directly sampled from that's fine, we
 don't directly sample.  If only one model can be sampled from

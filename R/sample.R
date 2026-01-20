@@ -361,6 +361,12 @@ combine_chains <- function(res, sampler, observer, include_state) {
   } else {
     observations <- observer$combine(lapply(history, "[[", "observations"))
   }
+  data <- lapply(history, "[[", "data")
+  if (all(vlapply(data, is.null))) {
+    data <- NULL
+  } else {
+    data <- array_bind(arrays = data, after = 2)
+  }
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
 
@@ -387,7 +393,7 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details, observations, data, state)
 }
 
 
@@ -397,14 +403,18 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   } else {
     observations <- observer$append(prev$observations, curr$observations)
   }
-  samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
-                  density = array_bind(prev$density, curr$density, on = 1),
-                  initial = prev$initial,
-                  details = curr$details,
-                  state = curr$state,
-                  observations = observations)
-  class(samples) <- "monty_samples"
-  samples
+  if (is.null(prev$data)) {
+    data <- NULL
+  } else {
+    data <- array_bind(prev$data, curr$data, on = 2)
+  }
+  monty_samples(pars = array_bind(prev$pars, curr$pars, on = 2),
+                density = array_bind(prev$density, curr$density, on = 1),
+                initial = prev$initial,
+                details = curr$details,
+                observations = observations,
+                data = data,
+                state = curr$state)
 }
 
 
@@ -477,22 +487,31 @@ combine_state_chain <- function(state) {
   if (all(vlapply(observation, is.null))) {
     observation <- NULL
   }
+  
+  data <- lapply(state, "[[", "data")
+  if (all(vlapply(data, is.null))) {
+    data <- NULL
+  } else {
+    data <- array_bind(arrays = data, after = Inf)
+  }
 
   list(
     pars = array_bind(arrays = lapply(state, "[[", "pars"), after = Inf),
+    data = data,
     density = vnapply(state, "[[", "density"),
     observation = observation)
 }
 
 
 monty_samples <- function(pars, density, initial, details, observations,
-                          state) {
+                          data, state) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
                   density = density,
                   initial = initial,
                   details = details,
                   state = state,
+                  data = data,
                   observations = observations)
   class(samples) <- "monty_samples"
   samples
