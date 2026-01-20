@@ -170,6 +170,62 @@ inline float log1p(float x) {
 
 template <typename T>
 __host__ __device__
+T erf(T x) {
+  return std::erf(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float erf(float x) {
+  return ::erff(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T erfc(T x) {
+  return std::erfc(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float erfc(float x) {
+  return ::erfcf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T tgamma(T x) {
+  return std::tgamma(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float tgamma(float x) {
+  return ::tgammaf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
+T lgamma(T x) {
+  return std::lgamma(x);
+}
+
+#ifdef __CUDA_ARCH__
+template <>
+__device__
+inline float lgamma(float x) {
+  return ::lgammaf(x);
+}
+#endif
+
+template <typename T>
+__host__ __device__
 T cos(T x) {
   return std::cos(x);
 }
@@ -415,29 +471,45 @@ T max(T a, T b) {
   return a > b ? a : b;
 }
 
-template <typename real_type>
-__host__ __device__ real_type lgamma(real_type x) {
-  static_assert(std::is_floating_point<real_type>::value,
-                "lgamma should only be used with real types");
-  return std::lgamma(x);
-}
-
-#ifdef __CUDA_ARCH__
-template <>
-inline __device__ float lgamma(float x) {
-  return ::lgammaf(x);
-}
-
-template <>
-inline __device__ double lgamma(double x) {
-  return ::lgamma(x);
-}
-#endif
-
-template <typename real_type>
+template <typename T>
 __host__ __device__
-real_type lfactorial(int x) {
-  return lgamma(static_cast<real_type>(x + 1));
+T lfactorial(T x) {
+  return lgamma(x + 1);
+}
+
+template <typename T>
+__host__ __device__
+T factorial(T x) {
+  return tgamma(x + 1);
+}
+
+template <typename T>
+__host__ __device__
+T lbeta(T a, T b) {
+  return lgamma(a) + lgamma(b) - lgamma(a + b);
+}
+
+template <typename T>
+__host__ __device__
+T beta(T a, T b) {
+  return exp(lbeta(a, b));
+}
+
+template <typename T>
+__host__ __device__
+T lchoose(T n, T k) {
+  return lfactorial(n) - lfactorial(k) - lfactorial(n - k);
+}
+
+template <typename T>
+__host__ __device__
+T choose(T n, T k) {
+  return exp(lchoose(n, k));
+}
+
+template <typename T>
+T fintdiv(T x, T y) {
+  return monty::math::floor(x / y);
 }
 
 // We can do this (more efficiently!) with copysign, but end up with
