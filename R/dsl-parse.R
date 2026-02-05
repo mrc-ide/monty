@@ -35,6 +35,21 @@ dsl_parse_expr <- function(expr, call) {
 
 
 dsl_parse_expr_stochastic <- function(expr, call) {
+  lhs <- dsl_parse_expr_stochastic_lhs(expr, call)
+  
+  rhs <- dsl_parse_expr_stochastic_rhs(expr, call)
+
+  ## Here we might check the arguments to the distribution functions,
+  ## too, but that's also easy enough to do elsewhere.
+  list(type = "stochastic",
+       name = as.character(lhs),
+       distribution = rhs$distribution,
+       depends = rhs$depends,
+       expr = expr)
+}
+
+
+dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
   if (!rlang::is_symbol(lhs)) {
     ## TODO: once we support array expressions this will be relaxed a
@@ -42,39 +57,35 @@ dsl_parse_expr_stochastic <- function(expr, call) {
     dsl_parse_error("Expected lhs of '~' relationship to be a symbol",
                     "E102", expr, call)
   }
+  
+  lhs
+}
+
+
+dsl_parse_expr_stochastic_rhs <- function(expr, call) {
   rhs <- expr[[3]]
-
+  
   res <- monty_dsl_parse_distribution(rhs)
-
+  
   if (!res$success) {
     dsl_parse_error(res$error, "E103", expr, call)
   }
-
+  
   ## This probably requires a little more care in order to know that
   ## we're not picking up too much or too little.  I'm not sure that
   ## we can cope with every expression here too as I think we also
   ## need to be able to invert the expressions?
   depends <- all.vars(rhs)
-
-  ## Here we might check the arguments to the distribution functions,
-  ## too, but that's also easy enough to do elsewhere.
-  list(type = "stochastic",
-       name = as.character(lhs),
-       distribution = res$value,
-       depends = depends,
-       expr = expr)
+  
+  list(depends = depends,
+       distribution = res$value)
 }
 
 
 dsl_parse_expr_assignment <- function(expr, call) {
-  lhs <- expr[[2]]
-  if (!rlang::is_symbol(lhs)) {
-    ## TODO: once we support array expressions this will be relaxed a
-    ## little to allow lhs to be 'symbol[index]'
-    dsl_parse_error("Expected lhs of assignment to be a symbol",
-                   "E104", expr, call)
-  }
-  rhs <- expr[[3]]
+  lhs <- dsl_parse_expr_assignment_lhs(expr, call)
+  
+  rhs <- dsl_parse_expr_assignment_rhs(expr, call)
   ## I suspect we'll need to be quite restrictive about what
   ## expressions are possible, but for now nothing special is done.
   depends <- all.vars(rhs)
@@ -83,6 +94,27 @@ dsl_parse_expr_assignment <- function(expr, call) {
        depends = depends,
        rhs = rhs,
        expr = expr)
+}
+
+
+dsl_parse_expr_assignment_lhs <- function(expr, call) {
+  
+  lhs <- expr[[2]]
+  
+  if (!rlang::is_symbol(lhs)) {
+    ## TODO: once we support array expressions this will be relaxed a
+    ## little to allow lhs to be 'symbol[index]'
+    dsl_parse_error("Expected lhs of assignment to be a symbol",
+                    "E104", expr, call)
+  }
+  
+  lhs
+}
+
+
+dsl_parse_expr_assignment_rhs <- function(expr, call) {
+  rhs <- expr[[3]]
+  rhs
 }
 
 
