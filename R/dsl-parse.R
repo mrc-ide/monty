@@ -84,37 +84,137 @@ dsl_parse_expr_stochastic_rhs <- function(expr, call) {
 
 dsl_parse_expr_assignment <- function(expr, call) {
   lhs <- dsl_parse_expr_assignment_lhs(expr, call)
+  special <- lhs$special
+  lhs$special <- NULL
+  if (identical(special, "dim")) {
+    lhs$name_data <- lhs$name
+    lhs$name <- dsl_parse_dim_name(lhs$name)
+    rhs <- dsl_parse_expr_assignment_rhs_dim(expr, call)
+  } else {
+    rhs <- dsl_parse_expr_assignment_rhs(expr, call)
+  }
   
-  rhs <- dsl_parse_expr_assignment_rhs(expr, call)
   ## I suspect we'll need to be quite restrictive about what
   ## expressions are possible, but for now nothing special is done.
-  depends <- all.vars(rhs)
   list(type = "assignment",
-       name = as.character(lhs),
-       depends = depends,
+       special = special,
+       lhs = lhs,
        rhs = rhs,
        expr = expr)
 }
 
 
 dsl_parse_expr_assignment_lhs <- function(expr, call) {
-  
   lhs <- expr[[2]]
   
-  if (!rlang::is_symbol(lhs)) {
-    ## TODO: once we support array expressions this will be relaxed a
-    ## little to allow lhs to be 'symbol[index]'
-    dsl_parse_error("Expected lhs of assignment to be a symbol",
-                    "E104", expr, call)
+  if (deparse1(lhs[[1]]) == "dim") {
+    special <- "dim"
+    
+    # if (length(lhs) < 2) {
+    #   odin_parse_error(
+    #     "Invalid call to 'dim()' on lhs; no variables given",
+    #     "E1003", src, call)
+    # }
+    lhs <- vcapply(lhs[-1], function(x) {
+      # if (!is.symbol(x)) {
+      #   odin_parse_error(
+      #     "Invalid call to 'dim()' on lhs; '{deparse1(x)}' is not a symbol",
+      #     "E1005", src, call)
+      # }
+      # dsl_parse_expr_check_lhs_name(x, special, is_array, src, call)
+      deparse1(x)
+    })
+    
+    return(list(
+      name_data = lhs[[1]], # may be more than one if dims are aliased
+      names = lhs,
+      special = special))
+  } else {
+    special <- NULL
   }
   
-  lhs
+  is_array <- rlang::is_call(lhs, "[")
+  if (is_array) {
+    name <- deparse1(lhs[[2]])
+    ## name <- dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, src, call)
+    array <- Map(dsl_parse_expr_check_lhs_index,
+                 seq_len(length(lhs) - 2),
+                 lhs[-(1:2)],
+                 MoreArgs = list(name = name, expr = expr, call = call))
+    depends <- join_dependencies(
+      lapply(array, function(x)
+        join_dependencies(lapply(x[c("at", "from", "to")], find_dependencies))))
+  } else {
+    name <- deparse1(lhs[[2]])
+    ## name <- parse_expr_check_lhs_name(lhs, special, is_array, src, call)
+    array <- NULL
+    depends <- NULL
+  }
+  
+  list(name = name,
+       special = special,
+       array = array,
+       depends = depends)
 }
 
 
 dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
   rhs
+}
+
+
+dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
+  rhs <- expr[[3]]
+  
+  throw_no_stochastic <- function() {
+    odin_parse_error(
+      "Array extent cannot be stochastic",
+      "E1039", src, call)
+  }
+  
+  throw_invalid_rhs_dim <- function(err) {
+    odin_parse_error(
+      "Invalid function{?s} used on rhs of 'dim()': {squote(err)}",
+      "E1043", src, call)
+  }
+  
+  throw_bad_dim_arg <- function() {
+    odin_parse_error(
+      "When using 'dim()' on the right-hand-side, it takes only an array name",
+      "E1066", src, call)
+  }
+  
+  if (rlang::is_call(rhs, "c")) {
+    value <- as.list(rhs[-1])
+  } else {
+    value <- list(rhs)
+  }
+  depends <- join_dependencies(lapply(value, find_dependencies))
+  is_stochastic <- any(
+    depends$functions %in% monty_dsl_distributions()$name)
+  if (is_stochastic) {
+    throw_no_stochastic()
+  }
+  
+  if (rlang::is_call(rhs, "dim")) {
+    if (!is.symbol(rhs[[2]])) {
+      throw_bad_dim_arg()
+    }
+    return(list(type = "dim",
+                value = rhs,
+                depends = list(
+                  functions = character(0),
+                  variables = depends$variables)))
+  }
+  allowed <- c("+", "-", "(", "length", "nrow", "ncol")
+  err <- setdiff(depends$functions, allowed)
+  if (length(err) > 0) {
+    throw_invalid_rhs_dim(err)
+  }
+  list(type = "dim",
+       value = value,
+       depends = depends)
 }
 
 
@@ -193,3 +293,106 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
     }
   }
 }
+
+
+dsl_parse_dim_name <- function(name) {
+    sprintf("dim_%s", name)
+}
+
+
+dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
+  ret <- dsl_parse_index(name, dim, index)
+  
+  if (is.null(ret)) {
+    odin_parse_error(
+      "Invalid value for array index lhs",
+      "E1026", src, call)
+  }
+  
+  ## We'll need to repeat most, but not all, of these checks when
+  ## validating indicies used in sum/prod on the *rhs* but we will do
+  ## it again as the checks are simple and the error messages need to
+  ## reflect the context.
+  if (any(lengths(ret$depends) > 0)) {
+    if (":" %in% ret$depends$functions) {
+      ## Previously in odin1 we tried to help disambiguate some calls
+      ## in the error message; we might want to put that back in at
+      ## some point, but it's not a big priority, most of the time
+      ## this is pretty simple.
+      odin_parse_error(
+        c("Invalid use of range operator ':' on lhs of array assignment",
+          paste("If you use ':' as a range operator on the lhs of an",
+                "assignment into an array, then it must be the outermost",
+                "call, for e.g, {.code (a + 1):(b + 1)}, not",
+                "{.code 1 + (a:b)}")),
+        "E1022", src, call)
+    }
+    allowed <- c("+", "-", "(", ":", "length", "nrow", "ncol")
+    err <- setdiff(ret$depends$functions, allowed)
+    if (length(err) > 0) {
+      odin_parse_error(
+        "Invalid function{?s} used in lhs of array assignment: {squote(err)}",
+        "E1023", src, call)
+    }
+    if ("-" %in% ret$depends$functions && uses_unary_minus(index)) {
+      odin_parse_error(
+        "Invalid use of unary minus in lhs of array assignment",
+        "E1024", src, call)
+    }
+    err <- intersect(INDEX, ret$depends$variables)
+    if (length(err) > 0) {
+      odin_parse_error(
+        paste("Invalid use of special variable{?s} in lhs of array",
+              "assignment: {squote(err)}"),
+        "E1025", src, call)
+    }
+  }
+  
+  ret$depends <- NULL
+  ret
+}
+
+
+dsl_parse_index <- function(name_data, dim, value) {
+  name_index <- INDEX[[dim]]
+  if (rlang::is_missing(value)) {
+    to <- call("OdinDim", name_data, dim)
+    list(name = name_index, type = "range", from = 1, to = to, depends = NULL)
+  } else if (rlang::is_call(value, ":")) {
+    from <- value[[2]]
+    to <- value[[3]]
+    depends <- join_dependencies(list(find_dependencies(from),
+                                      find_dependencies(to)))
+    list(name = name_index, type = "range", from = from, to = to,
+         depends = depends)
+  } else if (is.language(value) || is.numeric(value)) {
+    depends <- find_dependencies(value)
+    list(name = name_index, type = "single", at = value, depends = depends)
+  } else {
+    NULL
+  }
+}
+
+
+dsl_parse_expr_check_index_usage <- function(variables, array, src, call) {
+  index_used <- intersect(INDEX, variables)
+  if (length(index_used) > 0) {
+    n <- length(array)
+    err <- if (n == 0) index_used else intersect(index_used, INDEX[-seq_len(n)])
+    if (length(err) > 0) {
+      v <- err[length(err)]
+      i <- match(v, INDEX)
+      odin_parse_error(
+        c("Invalid index access used on rhs of equation: {squote(err)}",
+          i = paste("Your lhs has only {n} dimension{?s}, but index '{v}'",
+                    "would require {match(v, INDEX)}")),
+        "E1021", src, call)
+    }
+    ## index variables are not real dependencies, so remove them:
+    variables <- setdiff(variables, INDEX)
+  }
+  variables
+}
+
+
+INDEX <- c("i", "j", "k", "l", "i5", "i6", "i7", "i8")
