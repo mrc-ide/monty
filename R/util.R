@@ -229,3 +229,13 @@ is_testing <- function() {
 return_null <- function(...) {
   NULL
 }
+
+
+collector <- function(init = character(0)) {
+  env <- new.env(parent = emptyenv())
+  env$res <- init
+  list(
+    add = function(x) env$res <- c(env$res, x),
+    get = function() env$res,
+    length = function() length(env$res))
+}
