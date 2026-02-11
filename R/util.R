@@ -239,3 +239,8 @@ collector <- function(init = character(0)) {
     get = function() env$res,
     length = function() length(env$res))
 }
+
+
+data_frame <- function(...) {
+  data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+}

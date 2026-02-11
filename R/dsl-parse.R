@@ -2,7 +2,11 @@
 dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
                       domain = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
+browser()
 
+
+  exprs <- dsl_parse_arrays(exprs, fixed, call)
+  
   dsl_parse_check_duplicates(exprs, call)
   dsl_parse_check_fixed(exprs, fixed, call)
   dsl_parse_check_usage(exprs, fixed, call)
@@ -35,30 +39,48 @@ dsl_parse_expr <- function(expr, call) {
 
 
 dsl_parse_expr_stochastic <- function(expr, call) {
+  
   lhs <- dsl_parse_expr_stochastic_lhs(expr, call)
   
   rhs <- dsl_parse_expr_stochastic_rhs(expr, call)
+  
+  rhs$depends$variables <- dsl_parse_expr_check_index_usage(
+    rhs$depends$variables, lhs$array, expr, call)
 
   ## Here we might check the arguments to the distribution functions,
   ## too, but that's also easy enough to do elsewhere.
   list(type = "stochastic",
-       name = as.character(lhs),
-       distribution = rhs$distribution,
-       depends = rhs$depends,
+       lhs = lhs,
+       rhs = rhs,
        expr = expr)
 }
 
 
 dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
-  if (!rlang::is_symbol(lhs)) {
-    ## TODO: once we support array expressions this will be relaxed a
-    ## little to allow lhs to be 'symbol[index]'
-    dsl_parse_error("Expected lhs of '~' relationship to be a symbol",
-                    "E102", expr, call)
+  
+  is_array <- rlang::is_call(lhs, "[")
+  if (is_array) {
+    name <- deparse1(lhs[[2]])
+    ## name <- dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, src, call)
+    array <- Map(dsl_parse_expr_check_lhs_index,
+                 seq_len(length(lhs) - 2),
+                 lhs[-(1:2)],
+                 MoreArgs = list(name = name, expr = expr, call = call))
+    depends <- join_dependencies(
+      lapply(array, function(x)
+        join_dependencies(lapply(x[c("at", "from", "to")], find_dependencies))))
+  } else {
+    name <- deparse1(lhs)
+    ## name <- parse_expr_check_lhs_name(lhs, special, is_array, src, call)
+    array <- NULL
+    depends <- NULL
   }
   
-  lhs
+  list(
+    name = name,
+    array = array,
+    depends = depends)
 }
 
 
@@ -75,14 +97,16 @@ dsl_parse_expr_stochastic_rhs <- function(expr, call) {
   ## we're not picking up too much or too little.  I'm not sure that
   ## we can cope with every expression here too as I think we also
   ## need to be able to invert the expressions?
-  depends <- all.vars(rhs)
+  depends <- find_dependencies(rhs)
   
   list(depends = depends,
-       distribution = res$value)
+       distribution = res$value,
+       expr = rhs)
 }
 
 
 dsl_parse_expr_assignment <- function(expr, call) {
+  
   lhs <- dsl_parse_expr_assignment_lhs(expr, call)
   special <- lhs$special
   lhs$special <- NULL
@@ -93,6 +117,9 @@ dsl_parse_expr_assignment <- function(expr, call) {
   } else {
     rhs <- dsl_parse_expr_assignment_rhs(expr, call)
   }
+  
+  rhs$depends$variables <- dsl_parse_expr_check_index_usage(
+    rhs$depends$variables, lhs$array, src, call)
   
   ## I suspect we'll need to be quite restrictive about what
   ## expressions are possible, but for now nothing special is done.
@@ -107,7 +134,7 @@ dsl_parse_expr_assignment <- function(expr, call) {
 dsl_parse_expr_assignment_lhs <- function(expr, call) {
   lhs <- expr[[2]]
   
-  if (deparse1(lhs[[1]]) == "dim") {
+  if (rlang::is_call(lhs, "dim")) {
     special <- "dim"
     
     # if (length(lhs) < 2) {
@@ -145,7 +172,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
       lapply(array, function(x)
         join_dependencies(lapply(x[c("at", "from", "to")], find_dependencies))))
   } else {
-    name <- deparse1(lhs[[2]])
+    name <- deparse1(lhs)
     ## name <- parse_expr_check_lhs_name(lhs, special, is_array, src, call)
     array <- NULL
     depends <- NULL
@@ -160,7 +187,14 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
 
 dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
-  rhs
+  
+  depends <- find_dependencies(rhs)
+  
+  ## rhs <- parse_expr_usage(rhs, src, call)
+  
+  list(expr = rhs,
+       depends = depends)
+  
 }
 
 
@@ -374,7 +408,7 @@ dsl_parse_index <- function(name_data, dim, value) {
 }
 
 
-dsl_parse_expr_check_index_usage <- function(variables, array, src, call) {
+dsl_parse_expr_check_index_usage <- function(variables, array, expr, call) {
   index_used <- intersect(INDEX, variables)
   if (length(index_used) > 0) {
     n <- length(array)
@@ -386,7 +420,7 @@ dsl_parse_expr_check_index_usage <- function(variables, array, src, call) {
         c("Invalid index access used on rhs of equation: {squote(err)}",
           i = paste("Your lhs has only {n} dimension{?s}, but index '{v}'",
                     "would require {match(v, INDEX)}")),
-        "E1021", src, call)
+        "E1021", expr, call)
     }
     ## index variables are not real dependencies, so remove them:
     variables <- setdiff(variables, INDEX)
