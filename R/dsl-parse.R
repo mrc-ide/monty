@@ -390,7 +390,7 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
 dsl_parse_index <- function(name_data, dim, value) {
   name_index <- INDEX[[dim]]
   if (rlang::is_missing(value)) {
-    to <- call("OdinDim", name_data, dim)
+    to <- call("dsl_dim", name_data, dim)
     list(name = name_index, type = "range", from = 1, to = to, depends = NULL)
   } else if (rlang::is_call(value, ":")) {
     from <- value[[2]]

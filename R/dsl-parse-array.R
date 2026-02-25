@@ -9,8 +9,66 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   arrays <- resolve_split_dependencies(arrays, call)
   arrays <- finalise_array_table(arrays, fixed, call)
   
-  is_array <- vlapply(exprs, function(x) !is.null(x$lhs$array))
-  arrays
+  exprs <- lapply(exprs[!is_dim], dsl_parse_expand_arrays, arrays, call)
+  
+  exprs <- unlist(exprs, recursive = FALSE)
+  exprs
+}
+
+
+dsl_parse_expand_arrays <- function(expr, arrays, call) {
+  if (is.null(expr$lhs$array)) {
+    return(list(expr))
+  }
+  
+  idx <- list()
+  for (x in expr$lhs$array) {
+    nm <- x$name
+    from <- x$from
+    to <- x$to
+    if (rlang::is_call(to, "dsl_dim")) {
+      to <- arrays$dims[[which(arrays$name == to[[2]])]][[to[[3]]]]
+    }
+    idx[[nm]] <- seq(from = from, to = to, by = 1)
+  }
+  
+  idx <- idx[match(names(idx), INDEX)]
+  idx <- expand.grid(rev(idx))
+  idx <- idx[, rev(names(idx))]
+  
+  lapply(seq_len(nrow(idx)), function(i) generate_array_loops(expr, idx[i, ]))
+  
+}
+
+
+generate_array_loops <- function (expr, idx, call) {
+  
+  expr$lhs$name <- 
+    paste(expr$lhs$name, "[", paste(idx, collapse = ", "), "]", sep = "")
+  expr$lhs$array <- NULL
+  
+  insert_index_rhs <- function(rhs) {
+    if (length(rhs) == 1) {
+      if (as.character(rhs) %in% names(idx)) {
+        rhs <- idx[[which(rhs == names(idx))]]
+      }
+    } else {
+      for (i in seq_len(length(rhs))) {
+        rhs[[i]] <- insert_index_rhs(rhs[[i]])
+      }
+    }
+    rhs
+  }
+  
+  if (expr$type == "assignment") {
+    expr$rhs$expr <- insert_index_rhs(expr$rhs$expr)
+  } else {
+    expr$rhs$distribution$args <- 
+      lapply(expr$rhs$distribution$args, insert_index_rhs)
+  }
+  
+  
+  expr
 }
 
 build_array_table <- function(exprs, call) {
