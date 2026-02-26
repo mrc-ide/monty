@@ -34,53 +34,98 @@ dsl_parse_expand_arrays <- function(expr, arrays, call) {
   idx <- list()
   for (x in expr$lhs$array) {
     nm <- x$name
-    from <- x$from
-    to <- x$to
+    if (x$type == "single") {
+      from <- x$at
+      to <- x$at
+    } else {
+      from <- x$from
+      to <- x$to
+    }
     if (rlang::is_call(to, "dsl_dim")) {
       to <- arrays$dims[[which(arrays$name == to[[2]])]][[to[[3]]]]
     }
     idx[[nm]] <- seq(from = from, to = to, by = 1)
   }
-  
   idx <- idx[match(names(idx), INDEX)]
   idx <- expand.grid(rev(idx))
-  idx <- idx[, rev(names(idx))]
+  idx <- idx[, rev(names(idx)), drop = FALSE]
+  idx <- split(idx, seq_len(nrow(idx)))
   
-  lapply(seq_len(nrow(idx)), function(i) generate_array_loops(expr, idx[i, ]))
+  lapply(idx, function(x) generate_array_loop(expr, x))
   
 }
 
-generate_array_loops <- function(expr, idx, call) {
-  
+generate_array_loop <- function(expr, idx, call) {
+  type <- expr$type
   name <- paste(expr$lhs$name, "[", paste(idx, collapse = ", "), "]", sep = "")
+  
+  rhs_expr <- generate_array_loop_rhs(expr$rhs$expr, idx)
+  
+  depends <- generate_array_loop_depends(rhs_expr, expr$rhs$depends)
   
   ret <- list(type = expr$type,
               name = name,
-              depends = expr$rhs$depends,
+              depends = depends,
               expr = expr$expr)
   
-  insert_index_rhs <- function(rhs) {
-    if (length(rhs) == 1) {
-      if (as.character(rhs) %in% names(idx)) {
-        rhs <- idx[[which(rhs == names(idx))]]
-      }
-    } else {
-      for (i in seq_len(length(rhs))) {
-        rhs[[i]] <- insert_index_rhs(rhs[[i]])
-      }
-    }
-    rhs
-  }
-  
-  if (expr$type == "assignment") {
-    ret$rhs <- insert_index_rhs(expr$rhs$expr)
+  if (type == "assignment") {
+    ret$rhs <- rhs_expr
   } else {
     ret$distribution <- expr$rhs$distribution
     ret$distribution$args <- 
-      lapply(ret$distribution$args, insert_index_rhs)
+      lapply(ret$distribution$args, generate_array_loop_rhs, idx)
   }
   
   ret
+}
+
+
+generate_array_loop_rhs <- function(rhs, idx) {
+  rhs <- insert_index_rhs(rhs, idx)
+  eval_index_rhs(rhs)
+}
+
+
+insert_index_rhs <- function(rhs, idx) {
+  if (length(rhs) == 1) {
+    if (as.character(rhs) %in% names(idx)) {
+      rhs <- idx[[which(rhs == names(idx))]]
+    }
+  } else {
+    for (i in seq_len(length(rhs))) {
+      rhs[[i]] <- insert_index_rhs(rhs[[i]], idx)
+    }
+  }
+  rhs
+}
+
+
+eval_index_rhs <- function(rhs) {
+  if (length(rhs) > 1) {
+    if (rhs[[1]] == "[") {
+      rhs[3:length(rhs)] <- lapply(rhs[3:length(rhs)], eval)
+    } else {
+      for (i in seq_len(length(rhs))) {
+        rhs[[i]] <- eval_index_rhs(rhs[[i]])
+      }
+    }
+  }
+  rhs
+}
+
+
+generate_array_loop_depends <- function(expr, depends) {
+  if (length(expr) > 1) {
+    if (expr[[1]] == "[") {
+      depends <- depends[depends != expr[[2]]]
+      depends <- c(depends, deparse(expr))
+    } else {
+      for (i in seq_len(length(expr))) {
+        depends <- generate_array_loop_depends(expr[[i]], depends)  
+      }
+    } 
+  }
+  depends
 }
 
 

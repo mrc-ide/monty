@@ -297,7 +297,6 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 
 
 dsl_parse_check_usage <- function(exprs, fixed, call) {
-  browser()
   name <- vcapply(exprs, "[[", "name")
   names_fixed <- names(fixed)
   for (i in seq_along(exprs)) {
