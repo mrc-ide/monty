@@ -5,22 +5,22 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
 browser()
 
 
-  exprs <- dsl_parse_arrays(exprs, fixed, call)
+  dat <- dsl_parse_arrays(exprs, fixed, call)
   
-  dsl_parse_check_duplicates(exprs, call)
-  dsl_parse_check_fixed(exprs, fixed, call)
-  dsl_parse_check_usage(exprs, fixed, call)
+  dsl_parse_check_duplicates(dat$exprs, call)
+  dsl_parse_check_fixed(dat$exprs, fixed, call)
+  dsl_parse_check_usage(dat$exprs, fixed, call)
 
-  name <- vcapply(exprs, "[[", "name")
-  parameters <- name[vcapply(exprs, "[[", "type") == "stochastic"]
+  name <- vcapply(dat$exprs, "[[", "name")
+  parameters <- name[vcapply(dat$exprs, "[[", "type") == "stochastic"]
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, parameters, call = call)
   }
 
-  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
+  adjoint <- dsl_parse_adjoint(parameters, dat$exprs, gradient_required)
 
-  list(parameters = parameters, exprs = exprs, adjoint = adjoint,
+  list(parameters = parameters, exprs = dat$exprs, adjoint = adjoint,
        fixed = fixed, domain = domain)
 }
 
@@ -44,8 +44,8 @@ dsl_parse_expr_stochastic <- function(expr, call) {
   
   rhs <- dsl_parse_expr_stochastic_rhs(expr, call)
   
-  rhs$depends$variables <- dsl_parse_expr_check_index_usage(
-    rhs$depends$variables, lhs$array, expr, call)
+  rhs$depends <- dsl_parse_expr_check_index_usage(
+    rhs$depends, lhs$array, expr, call)
 
   ## Here we might check the arguments to the distribution functions,
   ## too, but that's also easy enough to do elsewhere.
@@ -97,7 +97,7 @@ dsl_parse_expr_stochastic_rhs <- function(expr, call) {
   ## we're not picking up too much or too little.  I'm not sure that
   ## we can cope with every expression here too as I think we also
   ## need to be able to invert the expressions?
-  depends <- find_dependencies(rhs)
+  depends <- all.vars(rhs)
   
   list(depends = depends,
        distribution = res$value,
@@ -118,8 +118,8 @@ dsl_parse_expr_assignment <- function(expr, call) {
     rhs <- dsl_parse_expr_assignment_rhs(expr, call)
   }
   
-  rhs$depends$variables <- dsl_parse_expr_check_index_usage(
-    rhs$depends$variables, lhs$array, src, call)
+  rhs$depends <- dsl_parse_expr_check_index_usage(
+    rhs$depends, lhs$array, src, call)
   
   ## I suspect we'll need to be quite restrictive about what
   ## expressions are possible, but for now nothing special is done.
@@ -188,7 +188,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
 dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
   
-  depends <- find_dependencies(rhs)
+  depends <- all.vars(rhs)
   
   ## rhs <- parse_expr_usage(rhs, src, call)
   
@@ -237,9 +237,7 @@ dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
     }
     return(list(type = "dim",
                 value = rhs,
-                depends = list(
-                  functions = character(0),
-                  variables = depends$variables)))
+                depends = depends$variables))
   }
   allowed <- c("+", "-", "(", "length", "nrow", "ncol")
   err <- setdiff(depends$functions, allowed)
@@ -299,6 +297,7 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 
 
 dsl_parse_check_usage <- function(exprs, fixed, call) {
+  browser()
   name <- vcapply(exprs, "[[", "name")
   names_fixed <- names(fixed)
   for (i in seq_along(exprs)) {

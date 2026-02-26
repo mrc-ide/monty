@@ -1,5 +1,4 @@
 dsl_parse_arrays <- function(exprs, fixed, call) {
-  browser()
   special <- vcapply(exprs, function(x) x$special %||% "")
   is_dim <- special == "dim"
   
@@ -12,13 +11,24 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   exprs <- lapply(exprs[!is_dim], dsl_parse_expand_arrays, arrays, call)
   
   exprs <- unlist(exprs, recursive = FALSE)
-  exprs
+  
+  list(exprs = exprs,
+       arrays = arrays)
 }
 
 
 dsl_parse_expand_arrays <- function(expr, arrays, call) {
   if (is.null(expr$lhs$array)) {
-    return(list(expr))
+    ret <- list(type = expr$type,
+                name = expr$lhs$name,
+                depends = expr$rhs$depends,
+                expr = expr$expr)
+    if (expr$type == "stochastic") {
+      ret$distribution <- expr$rhs$distribution
+    } else {
+      ret$rhs <- expr$rhs$expr
+    }
+    return(list(ret))
   }
   
   idx <- list()
@@ -40,12 +50,14 @@ dsl_parse_expand_arrays <- function(expr, arrays, call) {
   
 }
 
-
-generate_array_loops <- function (expr, idx, call) {
+generate_array_loops <- function(expr, idx, call) {
   
-  expr$lhs$name <- 
-    paste(expr$lhs$name, "[", paste(idx, collapse = ", "), "]", sep = "")
-  expr$lhs$array <- NULL
+  name <- paste(expr$lhs$name, "[", paste(idx, collapse = ", "), "]", sep = "")
+  
+  ret <- list(type = expr$type,
+              name = name,
+              depends = expr$rhs$depends,
+              expr = expr$expr)
   
   insert_index_rhs <- function(rhs) {
     if (length(rhs) == 1) {
@@ -61,15 +73,16 @@ generate_array_loops <- function (expr, idx, call) {
   }
   
   if (expr$type == "assignment") {
-    expr$rhs$expr <- insert_index_rhs(expr$rhs$expr)
+    ret$rhs <- insert_index_rhs(expr$rhs$expr)
   } else {
-    expr$rhs$distribution$args <- 
-      lapply(expr$rhs$distribution$args, insert_index_rhs)
+    ret$distribution <- expr$rhs$distribution
+    ret$distribution$args <- 
+      lapply(ret$distribution$args, insert_index_rhs)
   }
   
-  
-  expr
+  ret
 }
+
 
 build_array_table <- function(exprs, call) {
   dims <- list()
@@ -93,6 +106,7 @@ build_array_table <- function(exprs, call) {
     rank = lengths(dims),
     dims = I(dims))
 }
+
 
 check_duplicate_dims <- function(arrays, exprs, call) {
   throw_duplicate_dim <- function(name, src) {
