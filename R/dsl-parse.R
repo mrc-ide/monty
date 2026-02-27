@@ -1,18 +1,17 @@
 ## The default of gradient_required = TRUE here helps with tests
 dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
                       domain = NULL, call = NULL) {
+  browser()
   exprs <- lapply(exprs, dsl_parse_expr, call)
-browser()
-
 
   dat <- dsl_parse_arrays(exprs, fixed, call)
   
-  dsl_parse_check_duplicates(dat$exprs, call)
-  dsl_parse_check_fixed(dat$exprs, fixed, call)
-  dsl_parse_check_usage(dat$exprs, fixed, call)
+  #dsl_parse_check_duplicates(dat$exprs, call)
+  #dsl_parse_check_fixed(dat$exprs, fixed, call)
+  #dsl_parse_check_usage(dat$exprs, fixed, call)
 
-  name <- vcapply(dat$exprs, "[[", "name")
-  parameters <- name[vcapply(dat$exprs, "[[", "type") == "stochastic"]
+  name <- vcapply(dat$exprs, function(x) x$lhs$name)
+  parameters <- unique(name[vcapply(dat$exprs, "[[", "type") == "stochastic"])
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, parameters, call = call)
@@ -20,8 +19,8 @@ browser()
 
   adjoint <- dsl_parse_adjoint(parameters, dat$exprs, gradient_required)
 
-  list(parameters = parameters, exprs = dat$exprs, adjoint = adjoint,
-       fixed = fixed, domain = domain)
+  list(parameters = parameters, exprs = dat$exprs, arrays = dat$arrays,
+       adjoint = adjoint, fixed = fixed, domain = domain)
 }
 
 

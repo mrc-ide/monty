@@ -8,11 +8,11 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   arrays <- resolve_split_dependencies(arrays, call)
   arrays <- finalise_array_table(arrays, fixed, call)
   
-  exprs <- lapply(exprs[!is_dim], dsl_parse_expand_arrays, arrays, call)
+  #exprs <- lapply(exprs[!is_dim], dsl_parse_expand_arrays, arrays, call)
   
-  exprs <- unlist(exprs, recursive = FALSE)
+  #exprs <- unlist(exprs, recursive = FALSE)
   
-  list(exprs = exprs,
+  list(exprs = exprs[!is_dim],
        arrays = arrays)
 }
 

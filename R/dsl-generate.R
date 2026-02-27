@@ -1,6 +1,7 @@
 dsl_generate <- function(dat) {
+  browser()
   env <- new.env(parent = asNamespace("monty"))
-  env$packer <- monty_packer(dat$parameters)
+  env$packer <- dsl_generate_packer(dat)
   env$fixed <- dat$fixed
 
   meta <- list(
@@ -25,7 +26,22 @@ dsl_generate <- function(dat) {
 }
 
 
+dsl_generate_packer <- function(dat) {
+  is_array <- dat$parameters %in% dat$arrays$name
+  scalar <- if (all(is_array)) NULL else dat$parameters[!is_array]
+  if (any(is_array)) {
+    array <- lapply(dat$parameters[is_array], 
+                    function(x) unlist(dat$arrays$dims[dat$arrays$name == x]))
+    names(array) <- dat$parameters[is_array]
+  } else {
+    array <- NULL
+  }
+  monty_packer(scalar, array)
+}
+
+
 dsl_generate_density <- function(dat, env, meta) {
+  browser()
   exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
   body_exprs <- c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
             call("<-", meta[["density"]], quote(numeric())),
@@ -106,10 +122,9 @@ dsl_generate_sample_expr <- function(expr, meta) {
 
 
 dsl_generate_assignment <- function(expr, dest, meta) {
-  e <- expr$expr
-  e[[2]] <- call("[[", meta[[dest]], as.character(e[[2]]))
-  e[[3]] <- dsl_generate_density_rewrite_lookup(e[[3]], dest, meta)
-  e
+  lhs <- bquote(.(meta[[dest]])[[.(expr$name)]])
+  rlang::call2("<-", lhs,
+               dsl_generate_density_rewrite_lookup(expr$rhs, dest, meta))
 }
 
 
@@ -133,6 +148,9 @@ dsl_generate_sample_stochastic <- function(expr, meta) {
 
 dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
   if (is.recursive(expr)) {
+    if (rlang::is_call(expr, "[")) {
+      browser()
+    }
     expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
                        dest, meta)
     as.call(expr)
