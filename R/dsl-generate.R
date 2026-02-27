@@ -41,7 +41,6 @@ dsl_generate_packer <- function(dat) {
 
 
 dsl_generate_density <- function(dat, env, meta) {
-  browser()
   initial <- dsl_generate_initialise_arrays(dat, "density", meta)
   exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
   
@@ -145,8 +144,8 @@ dsl_generate_assignment <- function(expr, dest, meta) {
 
 dsl_generate_density_stochastic <- function(expr, meta) {
   array <- expr$lhs$array
-  name <- expr$lhs$name
-  lhs <- bquote(.(meta[["density"]])[[.(name)]])
+  name <- as.name(expr$lhs$name)
+  lhs <- bquote(.(meta[["density"]])[[.(expr$lhs$name)]])
   if (!is.null(array)) {
     idx <- lapply(array, function(x) as.name(x$name))
     lhs <- rlang::call2("[", lhs, !!!idx)
