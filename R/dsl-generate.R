@@ -42,11 +42,14 @@ dsl_generate_packer <- function(dat) {
 
 dsl_generate_density <- function(dat, env, meta) {
   browser()
+  initial <- dsl_generate_initialise_arrays(dat, "density", meta)
   exprs <- lapply(dat$exprs, dsl_generate_density_expr, meta)
+  
   body_exprs <- c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
-            call("<-", meta[["density"]], quote(numeric())),
+            call("<-", meta[["density"]], quote(list())),
+            initial,
             exprs,
-            call("sum", meta[["density"]]))
+            call("sum", call("unlist", meta[["density"]])))
   if (is.null(dat$domain)) {
     body <- rlang::call2("{", !!!body_exprs)
   } else {
@@ -122,18 +125,42 @@ dsl_generate_sample_expr <- function(expr, meta) {
 
 
 dsl_generate_assignment <- function(expr, dest, meta) {
-  lhs <- bquote(.(meta[[dest]])[[.(expr$name)]])
-  rlang::call2("<-", lhs,
-               dsl_generate_density_rewrite_lookup(expr$rhs, dest, meta))
+  array <- expr$lhs$array
+  lhs <- bquote(.(meta[[dest]])[[.(expr$lhs$name)]])
+  if (!is.null(array)) {
+    idx <- lapply(array, function(x) as.name(x$name))
+    lhs <- rlang::call2("[", lhs, !!!idx)
+  }
+  rhs <- expr$rhs$expr
+  expr <- rlang::call2("<-", lhs,
+                       dsl_generate_density_rewrite_lookup(rhs, dest, meta))
+
+  
+  if (!is.null(array)) {
+    expr <- dsl_generate_array_loops(expr, array)
+  }
+  expr
 }
 
 
 dsl_generate_density_stochastic <- function(expr, meta) {
-  lhs <- bquote(.(meta[["density"]])[[.(expr$name)]])
-  rhs <- rlang::call2(expr$distribution$density,
-                      as.name(expr$name), !!!expr$distribution$args)
-  rlang::call2("<-", lhs,
-               dsl_generate_density_rewrite_lookup(rhs, "pars", meta))
+  array <- expr$lhs$array
+  name <- expr$lhs$name
+  lhs <- bquote(.(meta[["density"]])[[.(name)]])
+  if (!is.null(array)) {
+    idx <- lapply(array, function(x) as.name(x$name))
+    lhs <- rlang::call2("[", lhs, !!!idx)
+    name <- rlang::call2("[", name, !!!idx)
+  }
+  rhs <- rlang::call2(expr$rhs$distribution$density,
+                      name, !!!expr$rhs$distribution$args)
+  expr <- rlang::call2("<-", lhs,
+                       dsl_generate_density_rewrite_lookup(rhs, "pars", meta))
+    
+  if (!is.null(array)) {
+    expr <- dsl_generate_array_loops(expr, array)
+  }
+  expr
 }
 
 
@@ -148,13 +175,13 @@ dsl_generate_sample_stochastic <- function(expr, meta) {
 
 dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
   if (is.recursive(expr)) {
-    if (rlang::is_call(expr, "[")) {
-      browser()
-    }
     expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
                        dest, meta)
     as.call(expr)
   } else if (is.name(expr)) {
+    if (deparse(expr) %in% INDEX) {
+      return(expr)
+    }
     if (as.character(expr) %in% meta$fixed_contents) {
       dest <- meta$fixed
     }
@@ -162,6 +189,42 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
   } else {
     expr
   }
+}
+
+
+dsl_generate_array_loops <- function(expr, array) {
+  for (x in rev(array)) {
+    if (x$type == "range") {
+      range <- call("seq", x$from, x$to)
+    } else {
+      range <- call("seq", x$at, x$at)
+    }
+    expr <- call("for", as.symbol(x$name), range, call("{", expr))
+  }
+  expr
+}
+
+
+dsl_generate_initialise_arrays <- function(dat, dest, meta) {
+  parameters <- dat$parameters[dat$parameters %in% dat$arrays$name]
+  assigned <- dat$assigned[dat$assigned %in% dat$arrays$name]
+  arrays <- dat$arrays
+  
+  c(lapply(assigned, dsl_generate_initialise_arrays_expr, arrays, "pars", meta),
+    lapply(parameters, dsl_generate_initialise_arrays_expr, arrays, dest, meta))
+}
+
+dsl_generate_initialise_arrays_expr <- function(name, arrays, dest, meta) {
+  dims <- arrays$dims[arrays$name == name][[1]]
+  
+  lhs <- bquote(.(meta[[as.character(dest)]])[[.(name)]])
+  
+  if (length(dims) == 1) {
+    expr <- call("<-", lhs, call("numeric", dims[[1]]))
+  } else {
+    expr <- call("<-", lhs, call("array", 0, rlang::call2("c", !!!dims)))
+  }
+  expr
 }
 
 

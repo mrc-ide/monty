@@ -8,14 +8,33 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   arrays <- resolve_split_dependencies(arrays, call)
   arrays <- finalise_array_table(arrays, fixed, call)
   
-  #exprs <- lapply(exprs[!is_dim], dsl_parse_expand_arrays, arrays, call)
+  exprs <- lapply(exprs[!is_dim], dsl_parse_arrays_index, arrays, call)
   
-  #exprs <- unlist(exprs, recursive = FALSE)
-  
-  list(exprs = exprs[!is_dim],
+  list(exprs = exprs,
        arrays = arrays)
 }
 
+
+dsl_parse_arrays_index <- function(expr, arrays, call) {
+  if (is.null(expr$lhs$array)) {
+    return(expr)
+  }
+  
+  name <- expr$lhs$name
+  
+  eval_dsl_dim <- function(array) {
+    if (array$type == "range") {
+      to <- array$to
+      if (rlang::is_call(to, "dsl_dim")) {
+        array$to <- arrays$dims[[which(arrays$name == to[[2]])]][[to[[3]]]]
+      }
+    }
+    array
+  }
+  
+  expr$lhs$array <- lapply(expr$lhs$array, eval_dsl_dim)
+  expr
+}
 
 dsl_parse_expand_arrays <- function(expr, arrays, call) {
   if (is.null(expr$lhs$array)) {
