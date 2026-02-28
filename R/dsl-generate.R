@@ -3,6 +3,7 @@ dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
   env$packer <- dsl_generate_packer(dat)
   env$fixed <- dat$fixed
+  env$parameters <- dat$parameters
 
   meta <- list(
     pars = quote(pars),
@@ -98,7 +99,9 @@ dsl_generate_direct_sample <- function(dat, env, meta) {
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr, meta)
   body <- c(call("<-", meta[["pars"]], quote(list())),
             exprs,
-            bquote(unlist(.(meta[["pars"]])[packer$names()], FALSE, FALSE)))
+            call("<-", meta[["pars"]], 
+                 bquote(.(meta[["pars"]])[parameters])),
+            bquote(packer$pack(.(meta[["pars"]]))))
   as_function(alist(rng = ), body, env)
 }
 
@@ -164,11 +167,21 @@ dsl_generate_density_stochastic <- function(expr, meta) {
 
 
 dsl_generate_sample_stochastic <- function(expr, meta) {
-  lhs <- bquote(.(meta[["pars"]])[[.(expr$name)]])
-  args <- lapply(expr$distribution$args, dsl_generate_density_rewrite_lookup,
-                 "pars", meta)
-  rhs <- rlang::call2(expr$distribution$sample, !!!args, quote(rng))
-  rlang::call2("<-", lhs, rhs)
+  array <- expr$lhs$array
+  lhs <- bquote(.(meta[["pars"]])[[.(expr$lhs$name)]])
+  if (!is.null(array)) {
+    idx <- lapply(array, function(x) as.name(x$name))
+    lhs <- rlang::call2("[", lhs, !!!idx)
+  }
+  args <- lapply(expr$rhs$distribution$args, 
+                 dsl_generate_density_rewrite_lookup, "pars", meta)
+  rhs <- rlang::call2(expr$rhs$distribution$sample, !!!args, quote(rng))
+  expr <- rlang::call2("<-", lhs, rhs)
+  
+  if (!is.null(array)) {
+    expr <- dsl_generate_array_loops(expr, array)
+  }
+  expr
 }
 
 
