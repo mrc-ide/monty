@@ -15,7 +15,7 @@ dsl_generate <- function(dat) {
   density <- dsl_generate_density(dat, env, meta)
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
   gradient <- dsl_generate_gradient(dat, env, meta)
-  domain <- dsl_generate_domain(dat, meta)
+  domain <- dsl_generate_domain(dat, meta, env$packer)
   properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   monty_model(
     list(parameters = dat$parameters,
@@ -240,23 +240,42 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, dest, meta) {
 }
 
 
-dsl_generate_domain <- function(dat, meta) {
-  n <- length(dat$parameters)
+dsl_generate_domain <- function(dat, meta, packer) {
+  browser()
+  n <- length(packer$names())
   domain <- cbind(rep(-Inf, n), rep(Inf, n))
-  rownames(domain) <- dat$parameters
-  env <- new.env(parent = baseenv())
+  rownames(domain) <- packer$names()
+  if (is.null(dat$fixed)) {
+    env <- new.env(parent = baseenv())
+  } else {
+    env <- list2env(dat$fixed, parent = baseenv())
+  }
+  assigned_arrays <- dat$assigned[dat$assigned %in% dat$arrays$name]
+  if (length(assigned_arrays) > 0) {
+    for (nm in assigned_arrays) {
+      env[[nm]] <- array(NA_real_, 
+                         unlist(dat$arrays$dims[dat$arrays$name == nm]))
+    }
+  }
   for (e in dat$exprs) {
-    if (e$type == "assignment") {
-      env[[e$name]] <- dsl_static_eval(e$rhs, env)
-    } else { # type is "stochastic"
-      e_domain <- e$distribution$domain
-      if (is.function(e_domain)) {
-        args <- lapply(e$distribution$args, dsl_static_eval, env)
-        domain[e$name, ] <- do.call(e_domain, args)
-      } else {
-        domain[e$name, ] <- e_domain
+    if (is.null(e$lhs$array)) {
+      if (e$type == "assignment") {
+        env[[e$lhs$name]] <- dsl_static_eval(e$rhs, env)
+      } else { # type is "stochastic"
+        e_domain <- e$distribution$domain
+        if (is.function(e_domain)) {
+          args <- lapply(e$distribution$args, dsl_static_eval, env)
+          domain[e$name, ] <- do.call(e_domain, args)
+        } else {
+          domain[e$name, ] <- e_domain
+        }
+      }
+    } else {
+      if (e$type == "assignment") {
+        env[[e$lhs$name]] <- dsl_static_eval_array(e, env)
       }
     }
+    
   }
 
   ## Same logic as model_combine_domain
@@ -276,6 +295,29 @@ dsl_static_eval <- function(expr, env) {
   } else {
     NA_real_
   }
+}
+
+
+dsl_static_eval_array <- function(expr, env) {
+  browser()
+  name <- expr$lhs$name
+  array <- expr$lhs$array
+  
+  idx <- list()
+  for (x in array) {
+    from <- x$from %||% x$from
+    to <- x$to  %||% x$at
+    idx[[x$name]] <- seq(from = from, to = to)
+  }
+  idx <- expand.grid(rev(idx))
+  idx <- idx[, rev(names(idx)), drop = FALSE]
+  for (i in seq_len(nrow(idx))) {
+    rhs <- expr$rhs$expr
+    rhs <- substitute(rhs, as.list(idx[i, , drop = FALSE]))
+    rhs_val <- dsl_static_eval(rhs, env)
+    env[[name]] <- do.call(`[<-`, c(list(env[[name]]), idx[ii, ], 99))
+  }
+  
 }
 
 
