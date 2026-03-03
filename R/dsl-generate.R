@@ -1,5 +1,4 @@
 dsl_generate <- function(dat) {
-  browser()
   env <- new.env(parent = asNamespace("monty"))
   env$packer <- dsl_generate_packer(dat)
   env$fixed <- dat$fixed
@@ -18,7 +17,7 @@ dsl_generate <- function(dat) {
   domain <- dsl_generate_domain(dat, meta, env$packer)
   properties <- monty_model_properties(allow_multiple_parameters = TRUE)
   monty_model(
-    list(parameters = dat$parameters,
+    list(parameters = env$packer$names(),
          density = density,
          gradient = gradient,
          domain = domain,
@@ -208,10 +207,12 @@ dsl_generate_array_loops <- function(expr, array) {
   for (x in rev(array)) {
     if (x$type == "range") {
       range <- call("seq", x$from, x$to)
-    } else {
-      range <- call("seq", x$at, x$at)
+      expr <- call("for", as.symbol(x$name), range, call("{", expr))
+    } else { # type is "single"
+      idx <- list()
+      idx[[x$name]] <- x$at
+      expr <- substitute_(expr, idx)
     }
-    expr <- call("for", as.symbol(x$name), range, call("{", expr))
   }
   expr
 }
@@ -241,7 +242,6 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, dest, meta) {
 
 
 dsl_generate_domain <- function(dat, meta, packer) {
-  browser()
   n <- length(packer$names())
   domain <- cbind(rep(-Inf, n), rep(Inf, n))
   rownames(domain) <- packer$names()
@@ -250,40 +250,77 @@ dsl_generate_domain <- function(dat, meta, packer) {
   } else {
     env <- list2env(dat$fixed, parent = baseenv())
   }
-  assigned_arrays <- dat$assigned[dat$assigned %in% dat$arrays$name]
-  if (length(assigned_arrays) > 0) {
-    for (nm in assigned_arrays) {
-      env[[nm]] <- array(NA_real_, 
-                         unlist(dat$arrays$dims[dat$arrays$name == nm]))
-    }
-  }
   for (e in dat$exprs) {
-    if (is.null(e$lhs$array)) {
-      if (e$type == "assignment") {
-        env[[e$lhs$name]] <- dsl_static_eval(e$rhs, env)
-      } else { # type is "stochastic"
-        e_domain <- e$distribution$domain
-        if (is.function(e_domain)) {
-          args <- lapply(e$distribution$args, dsl_static_eval, env)
-          domain[e$name, ] <- do.call(e_domain, args)
-        } else {
-          domain[e$name, ] <- e_domain
-        }
-      }
-    } else {
-      if (e$type == "assignment") {
-        env[[e$lhs$name]] <- dsl_static_eval_array(e, env)
-      }
+    if (e$type == "assignment") {
+      dsl_generate_domain_assignment(e, env, dat$arrays)
+    } else { # type is "stochastic"
+      domain <- dsl_generate_domain_stochastic(domain, e, env)
     }
-    
   }
-
+  
   ## Same logic as model_combine_domain
   if (!is.null(dat$domain)) {
     domain[, 1] <- pmax(domain[, 1], dat$domain[, 1])
     domain[, 2] <- pmin(domain[, 2], dat$domain[, 2])
   }
 
+  domain
+}
+
+
+dsl_generate_domain_assignment <- function(expr, env, arrays) {
+  if (is.null(expr$lhs$array)) {
+    env[[expr$lhs$name]] <- dsl_static_eval(expr$rhs$expr, env) 
+  } else {
+    name <- expr$lhs$name
+    if (is.null(env[[name]])) {
+      dims <- unlist(arrays$dims[arrays$name == name])
+      env[[name]] <- array(NA_real_, dims)
+    }
+    array <- expr$lhs$array
+    
+    idx <- list()
+    for (x in array) {
+      from <- x$from %||% x$at
+      to <- x$to  %||% x$at
+      idx[[x$name]] <- seq(from = from, to = to)
+    }
+    idx <- expand.grid(rev(idx))
+    idx <- idx[, rev(names(idx)), drop = FALSE]
+    for (i in seq_len(nrow(idx))) {
+      rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
+      rhs_val <- dsl_static_eval(rhs, env)
+      env[[name]] <- do.call(`[<-`, c(list(env[[name]]), idx[i, ], rhs_val))
+    }
+  }
+}
+
+
+dsl_generate_domain_stochastic <- function(domain, expr, env) {
+  distr <- expr$rhs$distribution
+  
+  if (is.null(expr$lhs$array)) {
+    domain[expr$lhs$name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
+  } else {
+    array <- expr$lhs$array
+    
+    idx <- list()
+    for (x in array) {
+      from <- x$from %||% x$at
+      to <- x$to  %||% x$at
+      idx[[x$name]] <- seq(from = from, to = to)
+    }
+    idx <- expand.grid(rev(idx))
+    idx <- idx[, rev(names(idx)), drop = FALSE]
+    for (i in seq_len(nrow(idx))) {
+      args <- 
+        lapply(distr$args, 
+               function(x) substitute_(x, as.list(idx[i, , drop = FALSE])))
+      name_i <- paste0(expr$lhs$name, "[", paste(idx[i, ], collapse = ","), "]")
+      domain[name_i, ] <- dsl_domain_eval(distr$domain, args, env)
+    }
+  }
+  
   domain
 }
 
@@ -298,26 +335,13 @@ dsl_static_eval <- function(expr, env) {
 }
 
 
-dsl_static_eval_array <- function(expr, env) {
-  browser()
-  name <- expr$lhs$name
-  array <- expr$lhs$array
-  
-  idx <- list()
-  for (x in array) {
-    from <- x$from %||% x$from
-    to <- x$to  %||% x$at
-    idx[[x$name]] <- seq(from = from, to = to)
+dsl_domain_eval <- function(domain, args, env) {
+  if (is.function(domain)) {
+    args <- lapply(args, dsl_static_eval, env)
+    do.call(domain, args)
+  } else {
+    domain
   }
-  idx <- expand.grid(rev(idx))
-  idx <- idx[, rev(names(idx)), drop = FALSE]
-  for (i in seq_len(nrow(idx))) {
-    rhs <- expr$rhs$expr
-    rhs <- substitute(rhs, as.list(idx[i, , drop = FALSE]))
-    rhs_val <- dsl_static_eval(rhs, env)
-    env[[name]] <- do.call(`[<-`, c(list(env[[name]]), idx[ii, ], 99))
-  }
-  
 }
 
 
