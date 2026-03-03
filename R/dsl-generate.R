@@ -75,7 +75,8 @@ dsl_generate_gradient <- function(dat, env, meta) {
     return(NULL)
   }
 
-  i_main <- match(dat$adjoint$exprs_main, vcapply(dat$exprs, "[[", "name"))
+  i_main <- match(dat$adjoint$exprs_main, 
+                  vcapply(dat$exprs, function(x) x$lhs$name))
   exprs <- c(dat$exprs[i_main], dat$adjoint$exprs)
 
   eqs <- lapply(exprs, dsl_generate_assignment, "data", meta)
