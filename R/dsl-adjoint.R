@@ -60,7 +60,7 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
       }
       rhs <- 
         list(expr = maths$rewrite(substitute_(density_expr, list2env(args))),
-             depends = eq$rhs$depends)
+             depends = c(eq$lhs$name, eq$rhs$depends))
       
       list(type = "assignment",
            special = NULL,
@@ -80,7 +80,6 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
   root <- list(type = "root",
                special = NULL,
                lhs = lhs_root,
-               depends = parts,
                rhs = rhs_root)
   exprs <- lapply(exprs, f)
   names(exprs) <- vcapply(exprs, function(x) x$lhs$name)
@@ -92,14 +91,7 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
 ## the set of equations.
 adjoint_create <- function(parameters, exprs, call = NULL) {
   prefix_adjoint <- "__adjoint_"
-  f <- function(e) {
-    if (nzchar(e$lhs$name)) {
-      c(e$lhs$name, e$rhs$depends)
-    } else {
-      e$rhs$depends
-    }
-  } 
-  deps <- lapply(exprs, f)
+  deps <- lapply(exprs, function(e) e$rhs$depends)
 
   ## Adjoint expressions will be collected here:
   adj <- list()
