@@ -150,7 +150,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
   keep <- nms_gradient
   for (i in rev(names(adj))) {
     if (i %in% keep) {
-      keep <- union(adj[[i]]$depends, keep)
+      keep <- union(adj[[i]]$rhs$depends, keep)
     }
   }
 
