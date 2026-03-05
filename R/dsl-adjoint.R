@@ -2,6 +2,10 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
   if (isFALSE(required)) {
     return(NULL)
   }
+  is_array <- vlapply(exprs, function(e) !is.null(e$lhs$array))
+  if (any(is_array)) {
+    return(NULL)
+  }
   rlang::try_fetch({
     exprs <- adjoint_rewrite_stochastic(parameters, exprs)
     adjoint_create(parameters, exprs)
