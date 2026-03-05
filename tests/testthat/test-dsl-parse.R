@@ -124,13 +124,13 @@ test_that("require that stochastic relationships use known distributions", {
 })
 
 
-test_that("collect all dependncies in rhs", {
+test_that("collect all dependencies in rhs", {
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(a + b * c, a / d)))
-  expect_setequal(res$depends, c("a", "b", "c", "d"))
+  expect_setequal(res$rhs$depends, c("a", "b", "c", "d"))
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(f(a), g(10))))
-  expect_equal(res$depends, "a")
+  expect_equal(res$rhs$depends, "a")
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(0, 1)))
-  expect_equal(res$depends, character())
+  expect_equal(res$rhs$depends, character())
 })
 
 
