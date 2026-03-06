@@ -41,8 +41,16 @@ dsl_parse_error <- function(msg, code, src, call, ...,
 ##' @importFrom rlang cnd_footer
 ##' @export
 cnd_footer.monty_parse_error <- function(cnd, ...) {
-  detail <- c(">" = "In expression",
-              format_error_src(cnd$src))
+  if (is.list(cnd$src)) {
+    detail <- c(">" = "In expressions")
+    for (i in seq_along(cnd$src)) {
+      detail <- c(detail,
+                  format_error_src(cnd$src[[i]]))
+    }
+  } else {
+    detail <- c(">" = "In expression",
+                format_error_src(cnd$src))
+  }
   for (i in seq_along(cnd$context)) {
     detail <- c(detail,
                 "",
