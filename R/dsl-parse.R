@@ -118,7 +118,7 @@ dsl_parse_expr_assignment <- function(expr, call) {
   }
   
   rhs$depends <- dsl_parse_expr_check_index_usage(
-    rhs$depends, lhs$array, src, call)
+    rhs$depends, lhs$array, expr, call)
   
   ## I suspect we'll need to be quite restrictive about what
   ## expressions are possible, but for now nothing special is done.
@@ -193,8 +193,6 @@ dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
   
   depends <- all.vars(rhs)
-  
-  ## rhs <- parse_expr_usage(rhs, src, call)
   
   list(expr = rhs,
        depends = depends)
@@ -407,11 +405,11 @@ dsl_parse_expr_check_index_usage <- function(variables, array, expr, call) {
     if (length(err) > 0) {
       v <- err[length(err)]
       i <- match(v, INDEX)
-      odin_parse_error(
+      dsl_parse_error(
         c("Invalid index access used on rhs of equation: {squote(err)}",
           i = paste("Your lhs has only {n} dimension{?s}, but index '{v}'",
                     "would require {match(v, INDEX)}")),
-        "E1021", expr, call)
+        "E108", expr, call)
     }
     ## index variables are not real dependencies, so remove them:
     variables <- setdiff(variables, INDEX)

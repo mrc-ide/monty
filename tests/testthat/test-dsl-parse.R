@@ -291,3 +291,15 @@ test_that("dimensions of a variable cannot be given multiple times", {
     "The variable x was given dimensions multiple times",
     fixed = TRUE)
 })
+
+
+test_that("index access on rhs determined by dimensions on lhs", {
+  expect_error(
+    dsl_parse(list(quote(x[] <- j))),
+    "Invalid index access used on rhs of equation: 'j'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(x[, ] <- k))),
+    "Invalid index access used on rhs of equation: 'k'",
+    fixed = TRUE)
+})

@@ -94,6 +94,26 @@ dim(a) <- dim(a + 5)
 
 Invalid functions used in expression for `dim()`.  Currently `dim()` is quite limited in what it can accept.  You can use `+`, `-`, `(`, `length`, `nrow` and `ncol` but nothing else.  Let us know if you think you should be able to use more.
 
+# `E108`
+
+Invalid use of a special array access variable (e.g., `i`, `j`, `k`) on the right hand side of an expression.  The available index variables are determined by the rank (number of dimensions) of the variable on the left hand side.  If you have a vector you can only use `i` on the right hand side, if you have a matrix you can use `i` and `j` and so on.
+
+Example causing an error:
+
+```r
+x[, ] <- a[i, k] + a[i, j]
+```
+
+Above, we have used `k` on the rhs, but `x` is only a matrix so this would not work.  Think of the above statement as it might appear in generated pseudo-code:
+
+```
+for i in 1:nrow(x):
+  for j in 1:ncol(x):
+     x[i, j] <- a[i, k] + a[i, j]
+```
+
+and the reason that this is an error should be apparent.
+
 # `E201`
 
 Duplicated relationships (with `~`).
