@@ -62,10 +62,10 @@ build_array_table <- function(exprs, call) {
 
 
 check_duplicate_dims <- function(arrays, exprs, call) {
-  throw_duplicate_dim <- function(name, src) {
-    odin_parse_error(
+  throw_duplicate_dim <- function(name, expr) {
+    dsl_parse_error(
       paste("The variable {name} was given dimensions multiple times."),
-      "E2021", src, call)
+      "E208", expr, call)
   }
   
   names <- unlist(arrays$name)
@@ -75,8 +75,8 @@ check_duplicate_dims <- function(arrays, exprs, call) {
       isTRUE(x$special == "dim" &
                dup_dim %in% c(x$lhs$names))
     })
-    srcs <- lapply(exprs[lines], "[[", "src")
-    throw_duplicate_dim(dup_dim, srcs)
+    e <- lapply(exprs[lines], "[[", "expr")
+    throw_duplicate_dim(dup_dim, e)
   }
 }
 
