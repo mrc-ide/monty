@@ -72,6 +72,28 @@ dim(x = a) <- 1
 dim(f(x)) <- 1
 ```
 
+# `E106`
+
+The `dim` function when used on the right hand side only takes the name of an array whose dimensions are to be copied. For example:
+
+```
+dim(b) <- dim(a)
+dim(c) <- dim(b)
+```
+
+are both valid, resulting in both `b` and `c` having the same dimensions as `a`. Below, however, are all incorrect:
+
+```
+dim(a) <- dim(1)
+dim(a) <- dim(b[])
+dim(a) <- dim(a * 2)
+dim(a) <- dim(a + 5)
+```
+
+# `E107`
+
+Invalid functions used in expression for `dim()`.  Currently `dim()` is quite limited in what it can accept.  You can use `+`, `-`, `(`, `length`, `nrow` and `ncol` but nothing else.  Let us know if you think you should be able to use more.
+
 # `E201`
 
 Duplicated relationships (with `~`).

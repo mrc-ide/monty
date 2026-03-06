@@ -205,22 +205,16 @@ dsl_parse_expr_assignment_rhs <- function(expr, call) {
 dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
   rhs <- expr[[3]]
   
-  throw_no_stochastic <- function() {
-    odin_parse_error(
-      "Array extent cannot be stochastic",
-      "E1039", src, call)
+  throw_bad_dim_arg <- function() {
+    dsl_parse_error(
+      "When using 'dim()' on the right-hand-side, it takes only an array name",
+      "E106", expr, call)
   }
   
   throw_invalid_rhs_dim <- function(err) {
-    odin_parse_error(
+    dsl_parse_error(
       "Invalid function{?s} used on rhs of 'dim()': {squote(err)}",
-      "E1043", src, call)
-  }
-  
-  throw_bad_dim_arg <- function() {
-    odin_parse_error(
-      "When using 'dim()' on the right-hand-side, it takes only an array name",
-      "E1066", src, call)
+      "E107", expr, call)
   }
   
   if (rlang::is_call(rhs, "c")) {
@@ -229,11 +223,6 @@ dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
     value <- list(rhs)
   }
   depends <- join_dependencies(lapply(value, find_dependencies))
-  is_stochastic <- any(
-    depends$functions %in% monty_dsl_distributions()$name)
-  if (is_stochastic) {
-    throw_no_stochastic()
-  }
   
   if (rlang::is_call(rhs, "dim")) {
     if (!is.symbol(rhs[[2]])) {

@@ -263,3 +263,23 @@ test_that("arguments to dim call on lhs must be symbols", {
     "Invalid call to 'dim()' on lhs; 'f(x)' is not a symbol",
     fixed = TRUE)
 })
+
+
+test_that("dim call on rhs only takes a symbol", {
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(b[])))),
+    "When using 'dim()' on the right-hand-side, it takes only an array name",
+    fixed = TRUE)
+})
+
+
+test_that("rhs of dim equation restricts use of functions", {
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- f(1)))),
+    "Invalid function used on rhs of 'dim()': 'f'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- f(1 * a)))),
+    "Invalid functions used on rhs of 'dim()': 'f' and '*'",
+    fixed = TRUE)
+})
