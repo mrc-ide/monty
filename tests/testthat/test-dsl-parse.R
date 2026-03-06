@@ -239,3 +239,27 @@ test_that("assignments cannot shadow names of fixed variables", {
     dsl_parse(list(quote(a <- 1)), fixed = list(a = 1)),
     "Value 'a' in 'fixed' is shadowed by assignment")
 })
+
+
+test_that("dim call on lhs requires variables", {
+  expect_error(
+    dsl_parse(list(quote(dim() <- 1))),
+    "Invalid call to 'dim()' on lhs; no variables given",
+    fixed = TRUE)
+})
+
+
+test_that("arguments to dim call on lhs must be unnamed", {
+  expect_error(
+    dsl_parse(list(quote(dim(x = a) <- 1))),
+    "Invalid call to 'dim()' on lhs; arguments must be unnamed",
+    fixed = TRUE)
+})
+
+
+test_that("arguments to dim call on lhs must be symbols", {
+  expect_error(
+    dsl_parse(list(quote(dim(f(x)) <- 1))),
+    "Invalid call to 'dim()' on lhs; 'f(x)' is not a symbol",
+    fixed = TRUE)
+})
