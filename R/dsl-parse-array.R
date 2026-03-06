@@ -64,7 +64,7 @@ build_array_table <- function(exprs, call) {
 check_duplicate_dims <- function(arrays, exprs, call) {
   throw_duplicate_dim <- function(name, expr) {
     dsl_parse_error(
-      paste("The variable {name} was given dimensions multiple times."),
+      paste("The variable {name} was given dimensions multiple times"),
       "E208", expr, call)
   }
   

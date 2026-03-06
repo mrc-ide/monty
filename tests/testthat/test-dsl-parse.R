@@ -283,3 +283,11 @@ test_that("rhs of dim equation restricts use of functions", {
     "Invalid functions used on rhs of 'dim()': 'f' and '*'",
     fixed = TRUE)
 })
+
+
+test_that("dimensions of a variable cannot be given multiple times", {
+  expect_error(
+    dsl_parse(list(quote(dim(x) <- 1), quote(dim(x) <- 2))),
+    "The variable x was given dimensions multiple times",
+    fixed = TRUE)
+})
