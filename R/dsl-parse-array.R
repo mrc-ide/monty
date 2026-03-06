@@ -6,7 +6,7 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   check_duplicate_dims(arrays, exprs, call)
   arrays <- resolve_array_references(arrays)
   arrays <- resolve_split_dependencies(arrays, call)
-  arrays <- finalise_array_table(arrays, fixed, call)
+  arrays <- eval_array_table(arrays, fixed, call)
   
   exprs <- lapply(exprs[!is_dim], dsl_parse_arrays_index, arrays, call)
   
@@ -140,17 +140,9 @@ resolve_split_dependencies <- function(arrays, call) {
 }
 
 
-finalise_array_table <- function(arrays, fixed, call) {
-  evaluate_symbol_dims <- function(d) {
-    if (is.symbol(d)) {
-      ## TODO: add error for when not in fixed
-      d <- fixed[[deparse1(d)]]
-    }
-    d
-  }
-  
+eval_array_table <- function(arrays, fixed, call) {
   arrays$dims <- 
-    lapply(arrays$dims, function(x) lapply(x, evaluate_symbol_dims))
+    lapply(arrays$dims, function(x) lapply(x, eval, fixed))
   
   is_alias <- arrays$alias != arrays$name
   arrays$dims[is_alias] <- 
