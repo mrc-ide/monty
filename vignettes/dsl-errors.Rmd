@@ -60,6 +60,18 @@ The details for the failure will be included in the body of the error message.
 
 Invalid left hand side of an assignment with `<-`; this is similar to `E102`.
 
+# `E105`
+
+Invalid input to special lhs function `dim()`.  There can be multiple arguments but there must be at least one. All arguments must be symbols, and named arguments are not allowed.
+
+Examples:
+
+```
+dim() <- 1
+dim(x = a) <- 1
+dim(f(x)) <- 1
+```
+
 # `E201`
 
 Duplicated relationships (with `~`).

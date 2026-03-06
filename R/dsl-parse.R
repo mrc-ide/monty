@@ -135,25 +135,30 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
   
   if (rlang::is_call(lhs, "dim")) {
     special <- "dim"
-    
-    # if (length(lhs) < 2) {
-    #   odin_parse_error(
-    #     "Invalid call to 'dim()' on lhs; no variables given",
-    #     "E1003", src, call)
-    # }
-    lhs <- vcapply(lhs[-1], function(x) {
-      # if (!is.symbol(x)) {
-      #   odin_parse_error(
-      #     "Invalid call to 'dim()' on lhs; '{deparse1(x)}' is not a symbol",
-      #     "E1005", src, call)
-      # }
+    if (length(lhs) < 2) {
+      dsl_parse_error(
+        "Invalid call to 'dim()' on lhs; no variables given",
+        "E105", expr, call)
+    }
+    dim_args <- rlang::call_args(lhs)
+    if (any(nzchar(names(dim_args)))) {
+      dsl_parse_error(
+        "Invalid call to 'dim()' on lhs; arguments must be unnamed",
+        "E105", expr, call)
+    }
+    lhs <- vcapply(dim_args, function(x) {
+      if (!is.symbol(x)) {
+        dsl_parse_error(
+          "Invalid call to 'dim()' on lhs; '{deparse1(x)}' is not a symbol",
+          "E105", expr, call)
+      }
       # dsl_parse_expr_check_lhs_name(x, special, is_array, src, call)
       deparse1(x)
     })
     
     return(list(
       name_data = lhs[[1]], # may be more than one if dims are aliased
-      names = lhs,
+      names = unname(lhs),
       special = special))
   } else {
     special <- NULL
