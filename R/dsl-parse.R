@@ -6,21 +6,24 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   dat <- dsl_parse_arrays(exprs, fixed, call)
   
   #dsl_parse_check_duplicates(dat$exprs, call)
-  #dsl_parse_check_fixed(dat$exprs, fixed, call)
+  dsl_parse_check_fixed(dat$exprs, fixed, call)
   #dsl_parse_check_usage(dat$exprs, fixed, call)
 
   name <- vcapply(dat$exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(dat$exprs, "[[", "type") == "stochastic"])
   assigned <- setdiff(unique(name), parameters)
+  
+  packer <- dsl_packer(parameters, dat$arrays)
 
   if (!is.null(domain)) {
-    domain <- validate_domain(domain, parameters, call = call)
+    domain <- validate_domain(domain, packer$names(), call = call)
   }
 
   adjoint <- dsl_parse_adjoint(parameters, dat$exprs, gradient_required)
 
-  list(parameters = parameters, assigned = assigned, exprs = dat$exprs,
-       arrays = dat$arrays, adjoint = adjoint, fixed = fixed, domain = domain)
+  list(parameters = parameters, assigned = assigned, packer = packer,
+       exprs = dat$exprs, arrays = dat$arrays, adjoint = adjoint,
+       fixed = fixed, domain = domain)
 }
 
 
@@ -276,12 +279,12 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
     return()
   }
 
-  name <- vcapply(exprs, "[[", "name")
+  name <- vcapply(exprs, function(e) e$lhs$name)
   err <- name %in% names(fixed)
   if (any(err)) {
     eq <- exprs[[which(err)[[1]]]]
     dsl_parse_error(
-      "Value '{eq$name}' in 'fixed' is shadowed by {eq$type}",
+      "Value '{eq$lhs$name}' in 'fixed' is shadowed by {eq$type}",
       "E207", eq$expr, call)
   }
 }
@@ -315,6 +318,20 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
                       "E205", e$expr, call, context = context)
     }
   }
+}
+
+
+dsl_packer <- function(parameters, arrays) {
+  is_array <- parameters %in% arrays$name
+  scalar <- if (all(is_array)) NULL else parameters[!is_array]
+  if (any(is_array)) {
+    array <- lapply(parameters[is_array], 
+                    function(x) unlist(arrays$dims[arrays$name == x]))
+    names(array) <- parameters[is_array]
+  } else {
+    array <- NULL
+  }
+  monty_packer(scalar, array)
 }
 
 

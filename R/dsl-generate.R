@@ -1,6 +1,6 @@
 dsl_generate <- function(dat) {
   env <- new.env(parent = asNamespace("monty"))
-  env$packer <- dsl_generate_packer(dat)
+  env$packer <- dat$packer
   env$fixed <- dat$fixed
   env$parameters <- dat$parameters
 
@@ -23,20 +23,6 @@ dsl_generate <- function(dat) {
          domain = domain,
          direct_sample = direct_sample),
     properties)
-}
-
-
-dsl_generate_packer <- function(dat) {
-  is_array <- dat$parameters %in% dat$arrays$name
-  scalar <- if (all(is_array)) NULL else dat$parameters[!is_array]
-  if (any(is_array)) {
-    array <- lapply(dat$parameters[is_array], 
-                    function(x) unlist(dat$arrays$dims[dat$arrays$name == x]))
-    names(array) <- dat$parameters[is_array]
-  } else {
-    array <- NULL
-  }
-  monty_packer(scalar, array)
 }
 
 
