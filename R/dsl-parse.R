@@ -62,9 +62,10 @@ dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
   
   is_array <- rlang::is_call(lhs, "[")
+  special <- "~"
   if (is_array) {
-    name <- deparse1(lhs[[2]])
-    ## name <- dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, src, call)
+    name <- 
+      dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, expr, call)
     array <- Map(dsl_parse_expr_check_lhs_index,
                  seq_len(length(lhs) - 2),
                  lhs[-(1:2)],
@@ -73,8 +74,7 @@ dsl_parse_expr_stochastic_lhs <- function(expr, call) {
       lapply(array, function(x)
         join_dependencies(lapply(x[c("at", "from", "to")], find_dependencies))))
   } else {
-    name <- deparse1(lhs)
-    ## name <- parse_expr_check_lhs_name(lhs, special, is_array, src, call)
+    name <- dsl_parse_expr_check_lhs_name(lhs, special, is_array, expr, call)
     array <- NULL
     depends <- NULL
   }
@@ -138,6 +138,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
   
   if (rlang::is_call(lhs, "dim")) {
     special <- "dim"
+    is_array <- FALSE
     if (length(lhs) < 2) {
       dsl_parse_error(
         "Invalid call to 'dim()' on lhs; no variables given",
@@ -155,8 +156,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
           "Invalid call to 'dim()' on lhs; '{deparse1(x)}' is not a symbol",
           "E105", expr, call)
       }
-      # dsl_parse_expr_check_lhs_name(x, special, is_array, src, call)
-      deparse1(x)
+      dsl_parse_expr_check_lhs_name(x, special, is_array, expr, call)
     })
     
     return(list(
@@ -169,8 +169,8 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
   
   is_array <- rlang::is_call(lhs, "[")
   if (is_array) {
-    name <- deparse1(lhs[[2]])
-    ## name <- dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, src, call)
+    name <- 
+      dsl_parse_expr_check_lhs_name(lhs[[2]], special, is_array, expr, call)
     array <- Map(dsl_parse_expr_check_lhs_index,
                  seq_len(length(lhs) - 2),
                  lhs[-(1:2)],
@@ -179,8 +179,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
       lapply(array, function(x)
         join_dependencies(lapply(x[c("at", "from", "to")], find_dependencies))))
   } else {
-    name <- deparse1(lhs)
-    ## name <- parse_expr_check_lhs_name(lhs, special, is_array, src, call)
+    name <- dsl_parse_expr_check_lhs_name(lhs, special, is_array, expr, call)
     array <- NULL
     depends <- NULL
   }
@@ -241,6 +240,70 @@ dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
   list(type = "dim",
        value = value,
        depends = depends)
+}
+
+
+dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
+  is_stochastic <- identical(special, "~")
+  
+  if (!rlang::is_symbol(lhs)) {
+    ## We will error, the only question is how.
+    if (is_array) {
+      if (is_stochastic) {
+        context <- "on the lhs of a `~` array relationship"
+      } else {
+        context <- "on the lhs of array assignment"
+      } 
+    } else {
+      if (is_stochastic) {
+        context <- "on the lhs of a `~` relationship"
+      } else if (is.null(special)) {
+        context <- "on the lhs of assignment"
+      } else {
+        context <- sprintf("within '%s()' on the lhs of assignment", special)
+      }
+    }
+    lhs_str <- deparse1(lhs)
+    
+    
+    if (!rlang::is_call(lhs)) {
+      dsl_parse_error("Invalid target '{lhs_str}' {context}",
+                       "E102", expr, call)
+    }
+    
+    
+    fn_str <- deparse1(lhs[[1]])
+    if (is_stochastic || is.null(special)) {
+      fn_near <- near_match(fn_str, SPECIAL_LHS)
+      if (!is_stochastic && length(fn_near) == 1) {
+        hint <- c(i = "Did you mean '{fn_near}()'?")
+      } else {
+        hint <- NULL
+      }
+      dsl_parse_error(
+        c("Invalid special function '{fn_str}()' {context}",
+          hint),
+        "E102", expr, call)
+    }
+  }
+  name <- deparse1(lhs)
+  
+  if (name %in% RESERVED_MONTY) {
+    err_in <- "the monty DSL"
+    dsl_parse_error(
+      c("Can't assign to reserved name '{name}'",
+        i = "'{name}' is a reserved word in {err_in}"),
+      "E109", expr, call)
+  }
+  
+  if (name == "pi") {
+    dsl_parse_error(
+      "Do not use `pi` on the left-hand-side of an expression",
+      "E110", expr, call)
+  }
+  
+  
+  name
 }
 
 
@@ -433,6 +496,3 @@ dsl_parse_expr_check_index_usage <- function(variables, array, expr, call) {
   }
   variables
 }
-
-
-INDEX <- c("i", "j", "k", "l", "i5", "i6", "i7", "i8")

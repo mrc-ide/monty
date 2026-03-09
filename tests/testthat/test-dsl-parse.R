@@ -109,10 +109,18 @@ test_that("variables must be defined somewhere", {
 test_that("require that stochastic relationships assign to a symbol", {
   expect_error(
     dsl_parse_expr_stochastic(quote(f(a) ~ Normal(0, 1))),
-    "Expected lhs of '~' relationship to be a symbol")
+    "Invalid special function 'f()' on the lhs of a `~` relationship", 
+    fixed = TRUE)
   expect_error(
     dsl_parse_expr_stochastic(quote(1 ~ Normal(0, 1))),
-    "Expected lhs of '~' relationship to be a symbol")
+    "Invalid target '1' on the lhs of a `~` relationship", fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_stochastic(quote(f(a)[] ~ Normal(0, 1))),
+    "Invalid special function 'f()' on the lhs of a `~` array relationship", 
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_stochastic(quote(1[] ~ Normal(0, 1))),
+    "Invalid target '1' on the lhs of a `~` array relationship", fixed = TRUE)
 })
 
 
@@ -137,10 +145,20 @@ test_that("collect all dependencies in rhs", {
 test_that("require that assignments assign to a symbol", {
   expect_error(
     dsl_parse_expr_assignment(quote(f(a) <- 10)),
-    "Expected lhs of assignment to be a symbol")
+    "Invalid special function 'f()' on the lhs of assignment",
+    fixed = TRUE)
   expect_error(
     dsl_parse_expr_assignment(quote(1 <- 10)),
-    "Expected lhs of assignment to be a symbol")
+    "Invalid target '1' on the lhs of assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_assignment(quote(f(a)[] <- 10)),
+    "Invalid special function 'f()' on the lhs of array assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_assignment(call("<-", call("[", 1), 10)),
+    "Invalid target '1' on the lhs of array assignment",
+    fixed = TRUE)
 })
 
 
@@ -301,5 +319,37 @@ test_that("index access on rhs determined by dimensions on lhs", {
   expect_error(
     dsl_parse(list(quote(x[, ] <- k))),
     "Invalid index access used on rhs of equation: 'k'",
+    fixed = TRUE)
+})
+
+
+test_that("cannot use restricted names as lhs target", {
+  expect_error(
+    dsl_parse(list(quote(k <- 5))),
+    "Can't assign to reserved name 'k'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(j[] ~ Poisson(3)))),
+    "Can't assign to reserved name 'j'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(dim <- 1))),
+    "Can't assign to reserved name 'dim'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(pi <- 1))),
+    "Do not use `pi` on the left-hand-side of an expression",
+    fixed = TRUE)
+})
+
+
+test_that("only special functions allowed on lhs", {
+  expect_error(
+    dsl_parse(list(quote(dym(1) <- 1))),
+    "Invalid special function 'dym()' on the lhs of assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(exp(x) <- 1))),
+    "Invalid special function 'exp()' on the lhs of assignment",
     fixed = TRUE)
 })

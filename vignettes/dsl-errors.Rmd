@@ -35,13 +35,40 @@ a + 1
 
 # `E102`
 
-Invalid left hand side of a relationship operator (`~`).  Currently the left hand side must be symbol, though this will be relaxed in the future once we support an array syntax.  However, you may not use things like numbers or function calls on the left hand side.
+Invalid target on lhs of assignment or comparison relationship (`~`).  There are quite a few ways of being an invalid assignment target, and at present they are all grouped within this error.  We may split these into different errors in future where particular types of error are both common and difficult to understand.
 
-Example:
+Examples:
 
 ```
-1 <- 2
-f(x) <- g(y)
+1 <- 10
+```
+
+The code above is valid R (as in, it can be parsed) but it is nonsensical.  Generally, the lhs of an assignment must be a symbol (e.g., `a <- 1`).
+
+This code is also reported if you have a spelling mistake, such as
+
+```
+dym(x) <- 1
+```
+
+instead of `dim(x)`, though we will try and suggest the appropriate function if you have a near miss.
+
+If you assign into an array, then the array name must be a symbol, so this is invalid:
+
+```
+f(x)[] <- 1
+```
+
+as is this:
+
+```
+1[] <- 1
+```
+
+Sometimes you will see this error if you have accidentally nested special functions
+
+```
+dim(dim(x)) <- 1
 ```
 
 # `E103`
@@ -57,6 +84,8 @@ Example reasons for failure include the rhs being:
 The details for the failure will be included in the body of the error message.
 
 # `E104`
+
+**Obsolete since 0.4.10, these problems are now included within [E102](#e102)**
 
 Invalid left hand side of an assignment with `<-`; this is similar to `E102`.
 
@@ -113,6 +142,25 @@ for i in 1:nrow(x):
 ```
 
 and the reason that this is an error should be apparent.
+
+# `E109`
+
+Assignment to reserved words in the monty DSL is not allowed.  Currently the list of reserved words includes `dim` (as this is a special function) and the index variables: `i`, `j`, `k`, `l`, `i5`, `i6`, `i7` and `i8`. So
+
+```
+dim <- 2
+```
+
+is not allowed, nor is
+
+```
+k ~ Poisson(5)
+```
+
+
+# `E110`
+
+You can use the built-in constant `pi` on the right hand side of an expression, without setting it. You should not use it on the left-hand side of any expression. Thus `pi` cannot be used as the name of a variable, but e.g. `pi1` or `pi_1` are allowed.
 
 # `E201`
 
