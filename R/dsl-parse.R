@@ -5,9 +5,9 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
 
   dat <- dsl_parse_arrays(exprs, fixed, call)
   
-  #dsl_parse_check_duplicates(dat$exprs, call)
+  dsl_parse_check_duplicates(dat$exprs, call)
   dsl_parse_check_fixed(dat$exprs, fixed, call)
-  #dsl_parse_check_usage(dat$exprs, fixed, call)
+  dsl_parse_check_usage(dat$exprs, fixed, call)
 
   name <- vcapply(dat$exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(dat$exprs, "[[", "type") == "stochastic"])
@@ -309,7 +309,7 @@ dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
 
 dsl_parse_check_duplicates <- function(exprs, call) {
   type <- vcapply(exprs, "[[", "type")
-  name <- vcapply(exprs, "[[", "name")
+  name <- vcapply(exprs, function(x) x$lhs$name)
   i_err <- anyDuplicated(name)
   if (i_err > 0) {
     name_err <- name[[i_err]]
@@ -354,11 +354,11 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 
 
 dsl_parse_check_usage <- function(exprs, fixed, call) {
-  name <- vcapply(exprs, "[[", "name")
+  name <- vcapply(exprs, function(x) x$lhs$name)
   names_fixed <- names(fixed)
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
-    err <- setdiff(e$depends, c(name[seq_len(i - 1)], names_fixed))
+    err <- setdiff(e$rhs$depends, c(name[seq_len(i - 1)], names_fixed))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)

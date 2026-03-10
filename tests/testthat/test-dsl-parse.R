@@ -85,21 +85,21 @@ test_that("assignments and relationships must be distinct", {
 test_that("variables are not used out of order", {
   res <- expect_error(
     monty_dsl_parse({
-      b <- Normal(a, 1)
-      a <- Normal(0, 1)
+      b ~ Normal(a, 1)
+      a ~ Normal(0, 1)
     }),
     "Invalid use of variable 'a'")
-  expect_equal(res$src, quote(b <- Normal(a, 1)))
+  expect_equal(res$src, quote(b ~ Normal(a, 1)))
   expect_equal(res$context,
-               list("'a' is defined later:" = quote(a <- Normal(0, 1))))
+               list("'a' is defined later:" = quote(a ~ Normal(0, 1))))
 })
 
 
 test_that("variables must be defined somewhere", {
   res <- expect_error(
     monty_dsl_parse({
-      a <- Normal(0, 1)
-      b <- Normal(a, sd)
+      a ~ Normal(0, 1)
+      b ~ Normal(a, sd)
     }),
     "Invalid use of variable 'sd'")
   expect_equal(res$src, quote(b <- Normal(a, sd)))
@@ -351,5 +351,23 @@ test_that("only special functions allowed on lhs", {
   expect_error(
     dsl_parse(list(quote(exp(x) <- 1))),
     "Invalid special function 'exp()' on the lhs of assignment",
+    fixed = TRUE)
+})
+
+
+test_that("arrays require a dim equation", {
+  expect_error(
+    dsl_parse(list(quote(x[] <- Exponential(1)))),
+    "Missing 'dim()' for expression assigned as an array: 'x'",
+    fixed = TRUE)
+}) 
+
+
+test_that("array equations require [] on the lhs", {
+  expect_error(
+    dsl_parse(list(quote(x[] ~ Exponential(1)), 
+                   quote(x ~ Exponential(1)), 
+                   quote(dim(x) <- 3))),
+    "Array expressions must always use '[]' on the lhs",
     fixed = TRUE)
 })

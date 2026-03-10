@@ -231,3 +231,28 @@ Failed to differentiate the model.  This error will only be seen where it was no
 # `E207`
 
 A value in `fixed` is shadowed by an assignment or a relationship.  If you pass in fixed data it may not be used on the left hand side of any expression in your DSL code.
+
+# `E208`
+
+An assignment or relationship expression for an array did not have a corresponding call to `dim()`.  We always need this, even if it looks like we should be able to work out how long your array is.  You probably just need to add a call like
+
+```r
+dim(x) <- ...
+```
+
+# `E209`
+
+You have tried an assignment or relationship expression for an array variable (i.e., something with a `dim()` call) without using `[]` on the left hand side.
+
+Example:
+
+```r
+dim(a) <- 5
+a <- 0
+```
+
+If you wanted a length-5 array of zeros here, you should write
+
+```
+a[] <- 0
+```
