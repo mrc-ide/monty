@@ -213,10 +213,36 @@ test_that("can apply a domain", {
 
 test_that("can use truncated normal in dsl", {
   expect_warning(
-    prior <- monty::monty_dsl({
+    prior <- monty_dsl({
       beta ~ TruncatedNormal(mean = 0.2, sd = 0.1, min = 0.05, max = 0.5)
     }),
     "Not creating a gradient function for this model")
   expect_s3_class(prior, "monty_model")
   expect_false(prior$properties$has_gradient)
+})
+
+
+test_that("can use arrays in dsl", {
+  expect_warning(
+    m <- monty_dsl({
+      lambda[] <- 2 * i
+      x[] ~ Exponential(lambda[i])
+      dim(x, lambda) <- 3
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m$density(seq_len(3)), 
+               sum(dexp(seq_len(3), 2 * seq_len(3), log = TRUE)))
+  domain <- rbind(c(0, Inf), c(0, Inf), c(0, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- vnapply(c(2, 4, 6), function(x) monty_random_exponential_rate(x, r))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
 })
