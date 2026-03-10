@@ -102,7 +102,7 @@ test_that("variables must be defined somewhere", {
       b ~ Normal(a, sd)
     }),
     "Invalid use of variable 'sd'")
-  expect_equal(res$src, quote(b <- Normal(a, sd)))
+  expect_equal(res$src, quote(b ~ Normal(a, sd)))
 })
 
 
