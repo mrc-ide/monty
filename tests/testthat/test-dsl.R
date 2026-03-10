@@ -223,6 +223,7 @@ test_that("can use truncated normal in dsl", {
 
 
 test_that("can use arrays in dsl", {
+  ## 1d arrays
   expect_warning(
     m <- monty_dsl({
       lambda[] <- 2 * i
@@ -245,4 +246,38 @@ test_that("can use arrays in dsl", {
   
   r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
+  
+  ## 2d arrays
+  expect_warning(
+    m2 <- monty_dsl({
+      lambda[, ] <- 2 * i + j
+      x[, ] ~ Exponential(lambda[i, j])
+      dim(x, lambda) <- c(2, 3)
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m2, "monty_model")
+  expect_false(m2$properties$has_gradient)
+  expect_equal(m2$parameters, c("x[1,1]", "x[2,1]", 
+                                "x[1,2]", "x[2,2]",
+                                "x[1,3]", "x[2,3]"))
+  ## calculate lambda[i, j] = 2 * i + j
+  lambda <- array(2 * seq_len(2), c(2, 3)) + t(array(seq_len(3), c(3, 2)))
+  
+  expect_equal(m2$density(seq_len(6)), 
+               sum(dexp(seq_len(6), c(lambda), log = TRUE)))
+  domain <- t(array(c(0, Inf), c(2, 6)))
+  rownames(domain) <- m2$parameters
+  expect_equal(m2$domain, domain)
+  expect_equal(m2$gradient, NULL)
+  
+  ## direct sampling will have i as the outer loop and j as the inner loop
+  ## so we need to sample in that order and then match the model's parameter
+  ## order
+  r <- monty_rng_create(seed = 42)
+  cmp <- 
+    rbind(vnapply(lambda[1, ], function(x) monty_random_exponential_rate(x, r)),
+          vnapply(lambda[2, ], function(x) monty_random_exponential_rate(x, r)))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m2$direct_sample(r), c(cmp))
 })

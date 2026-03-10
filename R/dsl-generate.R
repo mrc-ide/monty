@@ -82,8 +82,10 @@ dsl_generate_direct_sample <- function(dat, env, meta) {
   if (!is.null(dat$domain)) {
     return(NULL)
   }
+  initial <- dsl_generate_initialise_arrays(dat, "pars", meta)
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr, meta)
   body <- c(call("<-", meta[["pars"]], quote(list())),
+            initial,
             exprs,
             call("<-", meta[["pars"]], 
                  bquote(.(meta[["pars"]])[parameters])),
