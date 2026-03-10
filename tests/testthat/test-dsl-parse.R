@@ -371,3 +371,29 @@ test_that("array equations require [] on the lhs", {
     "Array expressions must always use '[]' on the lhs",
     fixed = TRUE)
 })
+
+
+test_that("can alias dims", {
+  res <- dsl_parse(
+    list(quote(a[] <- exp(i)),
+         quote(b[] ~ Normal(0, a[i])),
+         quote(dim(a) <- 3),
+         quote(dim(b) <- dim(a))),
+    gradient_required = FALSE)
+  expect_equal(res$arrays$alias[res$arrays$name == "b"], "a")
+  expect_identical(res$arrays$dims[res$arrays$name == "b"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  
+  res <- dsl_parse(
+    list(quote(a[] <- exp(i)),
+         quote(b[] ~ Normal(0, a[i])),
+         quote(c[] ~ Exponential(3)),
+         quote(dim(a) <- 3),
+         quote(dim(b, c) <- dim(a))),
+    gradient_required = FALSE)
+  expect_equal(res$arrays$alias[res$arrays$name %in% c("b", "c")], c("a", "a"))
+  expect_identical(res$arrays$dims[res$arrays$name == "b"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  expect_identical(res$arrays$dims[res$arrays$name == "c"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+})

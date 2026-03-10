@@ -4,14 +4,12 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
   }
   is_array <- vlapply(exprs, function(e) !is.null(e$lhs$array))
   if (any(is_array)) {
-    if (is.null(required)) {
-      cli::cli_warn(
-        c(paste("Not creating a gradient function for this model as we do not",
-                "support gradient functions for models with arrays yet"),
-          i = paste("Pass 'gradient = FALSE' to disable creating the",
-                    "gradient function, which will disable this warning")))
-      return(NULL)
-    }
+    cli::cli_warn(
+      c(paste("Not creating a gradient function for this model as we do not",
+              "support gradient functions for models with arrays yet"),
+        i = paste("Pass 'gradient = FALSE' to disable creating the",
+                  "gradient function, which will disable this warning")))
+    return(NULL)
   }
   rlang::try_fetch({
     exprs <- adjoint_rewrite_stochastic(parameters, exprs)
