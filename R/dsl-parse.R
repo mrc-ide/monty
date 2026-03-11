@@ -292,10 +292,17 @@ dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
       "E109", expr, call)
   }
   
+  if (grepl(RESERVED_MONTY_PREFIX_RE, name)) {
+    prefix <- sub(RESERVED_MONTY_PREFIX_RE, "\\1", name)
+    dsl_parse_error(
+      "Invalid name '{name}' starts with reserved prefix '{prefix}'",
+      "E110", expr, call)
+  }
+  
   if (name == "pi") {
     dsl_parse_error(
       "Do not use `pi` on the left-hand-side of an expression",
-      "E110", expr, call)
+      "E111", expr, call)
   }
   
   
@@ -492,7 +499,7 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
   if (is.null(ret)) {
     dsl_parse_error(
       "Invalid value for array index lhs",
-      "E111", expr, call)
+      "E112", expr, call)
   }
   
   if (any(lengths(ret$depends) > 0)) {
@@ -503,26 +510,26 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
                 "assignment into an array, then it must be the outermost",
                 "call, for e.g, {.code (a + 1):(b + 1)}, not",
                 "{.code 1 + (a:b)}")),
-        "E112", expr, call)
+        "E113", expr, call)
     }
     allowed <- c("+", "-", "(", ":", "length", "nrow", "ncol")
     err <- setdiff(ret$depends$functions, allowed)
     if (length(err) > 0) {
       dsl_parse_error(
         "Invalid function{?s} used in lhs of array assignment: {squote(err)}",
-        "E113", expr, call)
+        "E114", expr, call)
     }
     if ("-" %in% ret$depends$functions && uses_unary_minus(index)) {
       dsl_parse_error(
         "Invalid use of unary minus in lhs of array assignment",
-        "E114", expr, call)
+        "E115", expr, call)
     }
     err <- intersect(INDEX, ret$depends$variables)
     if (length(err) > 0) {
       dsl_parse_error(
         paste("Invalid use of special variable{?s} in lhs of array",
               "assignment: {squote(err)}"),
-        "E115", expr, call)
+        "E116", expr, call)
     }
   }
   

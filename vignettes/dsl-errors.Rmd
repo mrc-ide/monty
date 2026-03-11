@@ -159,9 +159,19 @@ k ~ Poisson(5)
 
 # `E110`
 
-You can use the built-in constant `pi` on the right hand side of an expression, without setting it. You should not use it on the left-hand side of any expression. Thus `pi` cannot be used as the name of a variable, but e.g. `pi1` or `pi_1` are allowed.
+Assignment to a name that starts with a restricted prefix.  Names cannot begin with `dim_`.
+
+An example that would trigger this:
+
+```
+dim_a <- 10
+```
 
 # `E111`
+
+You can use the built-in constant `pi` on the right hand side of an expression, without setting it. You should not use it on the left-hand side of any expression. Thus `pi` cannot be used as the name of a variable, but e.g. `pi1` or `pi_1` are allowed.
+
+# `E112`
 
 Something unexpected was used as an array index on the left hand side of an array expression, such as:
 
@@ -169,7 +179,7 @@ Something unexpected was used as an array index on the left hand side of an arra
 x[TRUE] <- 1
 ```
 
-# `E112`
+# `E113`
 
 Invalid use of `:` within the left hand side of an array assignment.  We might increase the number of ways you can use this but for now we are quite strict.  If you use `:` it must be the *outermost* operator within an index, so this is fine:
 
@@ -185,11 +195,11 @@ x[a:b + 1]
 
 This is because we can't generally convert the latter type into a `from:to` form, which we need for the code generation to work, and you should use bracketing here to be more specify if you really mean `(a + 1):(b + 1)` or `a:(b + 1)`.
 
-# `E113`
+# `E114`
 
 Invalid functions used within an array index.  At the moment you can only use `:` (the range operator, which must be the outermost function call), `+`, `-` and `(`.  The error will indicate the function that you have tried to use, and if you feel this is unreasonable please let us know.
 
-# `E114`
+# `E115`
 
 Unary minus (`-` as "negative" rather than "minus") detected within arrays.  This error is a special case of [`E113`](#e113) but deserves special mention here because it has special meaning in R's array access.  In R, we can write
 
@@ -199,7 +209,7 @@ x[-1]
 
 and this means "all of `x` except the first element", which is something we might support in future.
 
-# `E115`
+# `E116`
 
 Invalid use of `i`, `j`, etc on the left hand side of an expression, for example:
 

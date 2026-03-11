@@ -326,6 +326,10 @@ test_that("cannot use restricted names as lhs target", {
     "Can't assign to reserved name 'dim'",
     fixed = TRUE)
   expect_error(
+    dsl_parse(list(quote(dim_a <- 1))),
+    "Invalid name 'dim_a' starts with reserved prefix 'dim'",
+    fixed = TRUE)
+  expect_error(
     dsl_parse(list(quote(pi <- 1))),
     "Do not use `pi` on the left-hand-side of an expression",
     fixed = TRUE)
