@@ -3,26 +3,24 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
                       domain = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
-  dat <- dsl_parse_arrays(exprs, fixed, call)
+  arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  dsl_parse_check_duplicates(dat$exprs, call)
-  dsl_parse_check_fixed(dat$exprs, fixed, call)
-  dsl_parse_check_usage(dat$exprs, fixed, call)
-
-  name <- vcapply(dat$exprs, function(x) x$lhs$name)
-  parameters <- unique(name[vcapply(dat$exprs, "[[", "type") == "stochastic"])
+  exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
+  
+  name <- vcapply(exprs, function(x) x$lhs$name)
+  parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
   assigned <- setdiff(unique(name), parameters)
   
-  packer <- dsl_packer(parameters, dat$arrays)
+  packer <- dsl_packer(parameters, arrays)
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, packer$names(), call = call)
   }
 
-  adjoint <- dsl_parse_adjoint(parameters, dat$exprs, gradient_required)
+  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
   list(parameters = parameters, assigned = assigned, packer = packer,
-       exprs = dat$exprs, arrays = dat$arrays, adjoint = adjoint,
+       exprs = exprs, arrays = arrays, adjoint = adjoint,
        fixed = fixed, domain = domain)
 }
 
@@ -307,10 +305,84 @@ dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
 }
 
 
-dsl_parse_check_duplicates <- function(exprs, call) {
+dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
+  special <- vcapply(exprs, function(x) x$special %||% "")
+  is_dim <- special == "dim"
+  
+  exprs <- dsl_parse_check_system_arrays(exprs, arrays, call)
+  dsl_parse_check_duplicates(exprs, arrays, is_dim, call)
+  
+  exprs <- exprs[!is_dim]
+  dsl_parse_check_fixed(exprs, fixed, call)
+  dsl_parse_check_usage(exprs, fixed, call)
+  
+  exprs
+}
+
+
+dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
+  dim_nms <- arrays$name
+  ## First, look for any array calls that do not have a corresponding
+  ## dim()
+  is_array <- !vlapply(exprs, function(x) is.null(x$lhs$array))
+  err <- !vlapply(exprs[is_array], function(x) x$lhs$name %in% dim_nms)
+  if (any(err)) {
+    err_exprs <- exprs[is_array][err]
+    err_nms <- unique(vcapply(err_exprs, function(x) x$lhs$name))
+    dsl_parse_error(
+      paste("Missing 'dim()' for expression{?s} assigned as an array:",
+            "{squote(err_nms)}"),
+      "E208", lapply(err_exprs, "[[", "expr"), call)
+  }
+  
+  ## Next, we collect up any subexpressions, in order, for all arrays,
+  ## and make sure that we are always assigned as an array.
+  nms <- vcapply(exprs, 
+                 function(x) if (isTRUE(x$special == "dim")) "" else x$lhs$name)
+  for (nm in dim_nms) {
+    i <- nms == nm
+    err <- vlapply(exprs[i], function(x) is.null(x$lhs$array))
+    if (any(err)) {
+      err_exprs <- exprs[i][err]
+      dsl_parse_error(
+        c("Array expressions must always use '[]' on the lhs",
+          i = paste("Your expression for '{nm}' has a 'dim()' equation, so it",
+                    "is an array, but {cli::qty(sum(err))}",
+                    "{?this usage assigns/these usages assign} it as if it were a",
+                    "scalar")),
+        "E209", lapply(err_exprs, "[[", "expr"), call)
+    }
+  }
+  
+  ## now we have checked dim calls
+  exprs <- lapply(exprs, dsl_parse_array_index, arrays, call)
+  
+  exprs
+}
+
+
+dsl_parse_check_duplicates <- function(exprs, arrays, is_dim, call) {
   type <- vcapply(exprs, "[[", "type")
-  name <- vcapply(exprs, function(x) x$lhs$name)
-  i_err <- anyDuplicated(name)
+  name <- character(length(exprs))
+  name[!is_dim] <- vcapply(exprs[!is_dim], function(x) x$lhs$name)
+  
+  for (nm in arrays$name) {
+    i <- name == nm
+    index <- which(i)
+    if (any(diff(index) > 1)) {
+      index_others <- Filter(
+        function(j) j > index[[1]] && j < last(index),
+        which(!i))
+      others <- unique(vcapply(exprs[index_others], function(x) x$lhs$name))
+      e_exprs <- lapply(exprs[seq(index[[1]], last(index))], "[[", "expr")
+      dsl_parse_error(
+        paste("Multiline array equations must be contiguous",
+              "statements, but '{nm}' is interleaved with {squote(others)}"),
+        "E210", e_exprs, call)
+    }
+  }
+  
+  i_err <- anyDuplicated(name, incomparables = c("", arrays$name))
   if (i_err > 0) {
     name_err <- name[[i_err]]
     i_prev <- which(name == name_err)[[1]]

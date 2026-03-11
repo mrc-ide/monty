@@ -8,12 +8,7 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   arrays <- resolve_split_dependencies(arrays, call)
   arrays <- eval_array_table(arrays, fixed, call)
   
-  exprs <- exprs[!is_dim]
-  
-  exprs <- dsl_parse_check_system_arrays(exprs[!is_dim], arrays, call)
-  
-  list(exprs = exprs,
-       arrays = arrays)
+  arrays
 }
 
 
@@ -129,47 +124,6 @@ eval_array_table <- function(arrays, fixed, call) {
     arrays$dims[match(arrays$alias[is_alias], arrays$name)]
   
   arrays
-}
-
-
-dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
-  dim_nms <- arrays$name
-  
-  ## First, look for any array calls that do not have a corresponding
-  ## dim()
-  is_array <- !vlapply(exprs, function(x) is.null(x$lhs$array))
-  err <- !vlapply(exprs[is_array], function(x) x$lhs$name %in% dim_nms)
-  if (any(err)) {
-    err_exprs <- exprs[is_array][err]
-    err_nms <- unique(vcapply(err_exprs, function(x) x$lhs$name))
-    dsl_parse_error(
-      paste("Missing 'dim()' for expression{?s} assigned as an array:",
-            "{squote(err_nms)}"),
-      "E208", lapply(err_exprs, "[[", "expr"), call)
-  }
-  
-  ## Next, we collect up any subexpressions, in order, for all arrays,
-  ## and make sure that we are always assigned as an array.
-  nms <- vcapply(exprs, function(x) x$lhs$name)
-  for (nm in dim_nms) {
-    i <- nms == nm
-    err <- vlapply(exprs[i], function(x) is.null(x$lhs$array))
-    if (any(err)) {
-      err_exprs <- exprs[i][err]
-      dsl_parse_error(
-        c("Array expressions must always use '[]' on the lhs",
-          i = paste("Your expression for '{nm}' has a 'dim()' equation, so it",
-                    "is an array, but {cli::qty(sum(err))}",
-                    "{?this usage assigns/these usages assign} it as if it were a",
-                    "scalar")),
-        "E209", lapply(err_exprs, "[[", "expr"), call)
-    }
-  }
-  
-  ## now we have checked dim calls
-  exprs <- lapply(exprs, dsl_parse_array_index, arrays, call)
-  
-  exprs
 }
 
 
