@@ -330,7 +330,7 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
     dsl_parse_error(
       paste("Missing 'dim()' for expression{?s} assigned as an array:",
             "{squote(err_nms)}"),
-      "E208", lapply(err_exprs, "[[", "expr"), call)
+      "E209", lapply(err_exprs, "[[", "expr"), call)
   }
   
   ## Next, we collect up any subexpressions, in order, for all arrays,
@@ -348,7 +348,7 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
                     "is an array, but {cli::qty(sum(err))}",
                     "{?this usage assigns/these usages assign} it as if it were a",
                     "scalar")),
-        "E209", lapply(err_exprs, "[[", "expr"), call)
+        "E210", lapply(err_exprs, "[[", "expr"), call)
     }
   }
   
@@ -376,7 +376,7 @@ dsl_parse_check_duplicates <- function(exprs, arrays, is_dim, call) {
       dsl_parse_error(
         paste("Multiline array equations must be contiguous",
               "statements, but '{nm}' is interleaved with {squote(others)}"),
-        "E210", e_exprs, call)
+        "E211", e_exprs, call)
     }
   }
   
@@ -435,20 +435,33 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
       if (length(out_of_order) > 0) {
         context <- lapply(exprs[name %in% out_of_order], "[[", "expr")
         names(context) <- sprintf("'%s' is defined later:", out_of_order)
+        
+        ## TODO: It would be nice to indicate that we want to highlight
+        ## the variables 'err' here within the expression; that is
+        ## probably something rlang can do for us as it does that with
+        ## the 'arg' argument to rlang::abort already?
+        dsl_parse_error("Invalid use of variable{?s} {squote(err)}",
+                        "E205", e$expr, call, context = context)
       } else {
         ## Could also tell the user about variables found in the
         ## calling env, but that requires detecting and then passing
         ## through the correct environment.
         ##
-        ## Could also tell about near misses.
-        context <- NULL
+        ## If there is just one unknown variable we will try to find a 
+        ## near match
+        if (length(err) == 1) {
+          nm_near <- near_match(err, c(unique(name), names_fixed))
+          if (length(nm_near) == 1) {
+            hint <- c(i = "Did you mean '{nm_near}'?")
+          } else {
+            hint <- NULL
+          }
+        } else {
+          hint <- NULL 
+        }
+        dsl_parse_error(c("Unknown variable{?s} used: {squote(err)}", hint),
+                        "E208", e$expr, call)
       }
-      ## TODO: It would be nice to indicate that we want to highlight
-      ## the variables 'err' here within the expression; that is
-      ## probably something rlang can do for us as it does that with
-      ## the 'arg' argument to rlang::abort already?
-      dsl_parse_error("Invalid use of variable{?s} {squote(err)}",
-                      "E205", e$expr, call, context = context)
     }
   }
 }

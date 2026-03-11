@@ -95,17 +95,6 @@ test_that("variables are not used out of order", {
 })
 
 
-test_that("variables must be defined somewhere", {
-  res <- expect_error(
-    monty_dsl_parse({
-      a ~ Normal(0, 1)
-      b ~ Normal(a, sd)
-    }),
-    "Invalid use of variable 'sd'")
-  expect_equal(res$src, quote(b ~ Normal(a, sd)))
-})
-
-
 test_that("require that stochastic relationships assign to a symbol", {
   expect_error(
     dsl_parse_expr_stochastic(quote(f(a) ~ Normal(0, 1))),
@@ -448,3 +437,19 @@ test_that("lhs indexing for array equations is restricted", {
                fixed = TRUE)
 })
 
+
+test_that("unknown variables result in an error", {
+  expect_error(dsl_parse(list(quote(x ~ Exponential(a)))),
+               "Unknown variable used: 'a'",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x ~ Exponential(a * b)))),
+               "Unknown variables used: 'a' and 'b'",
+               fixed = TRUE)
+  
+  err <- expect_error(dsl_parse(list(quote(x ~ Exponential(aaa))),
+                                fixed = list(aa = 1)),
+                      "Unknown variable used: 'aaa'",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Did you mean 'aa'?"))
+})
