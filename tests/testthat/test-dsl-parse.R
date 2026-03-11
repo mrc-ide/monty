@@ -423,3 +423,28 @@ test_that("array equations cannot be interleaved", {
           "but 'x' is interleaved with 'y'"),
     fixed = TRUE)
 })
+
+
+test_that("lhs indexing for array equations is restricted", {
+  expect_error(dsl_parse(list(quote(x[TRUE] ~ Exponential(1)))),
+    "Invalid value for array index lhs",
+    fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[a:b + 1] ~ Exponential(1)))),
+               "Invalid use of range operator ':' on lhs of array assignment",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[f(1)] ~ Exponential(1)))),
+               "Invalid function used in lhs of array assignment: 'f'",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[-1] ~ Exponential(1)))),
+               "Invalid use of unary minus in lhs of array assignment",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[i] ~ Exponential(1)))),
+               paste("Invalid use of special variable in lhs of array",
+                     "assignment: 'i'"),
+               fixed = TRUE)
+})
+

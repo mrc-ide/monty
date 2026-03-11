@@ -479,47 +479,39 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
   ret <- dsl_parse_index(name, dim, index)
   
   if (is.null(ret)) {
-    odin_parse_error(
+    dsl_parse_error(
       "Invalid value for array index lhs",
-      "E1026", src, call)
+      "E111", expr, call)
   }
   
-  ## We'll need to repeat most, but not all, of these checks when
-  ## validating indicies used in sum/prod on the *rhs* but we will do
-  ## it again as the checks are simple and the error messages need to
-  ## reflect the context.
   if (any(lengths(ret$depends) > 0)) {
     if (":" %in% ret$depends$functions) {
-      ## Previously in odin1 we tried to help disambiguate some calls
-      ## in the error message; we might want to put that back in at
-      ## some point, but it's not a big priority, most of the time
-      ## this is pretty simple.
-      odin_parse_error(
+      dsl_parse_error(
         c("Invalid use of range operator ':' on lhs of array assignment",
           paste("If you use ':' as a range operator on the lhs of an",
                 "assignment into an array, then it must be the outermost",
                 "call, for e.g, {.code (a + 1):(b + 1)}, not",
                 "{.code 1 + (a:b)}")),
-        "E1022", src, call)
+        "E112", expr, call)
     }
     allowed <- c("+", "-", "(", ":", "length", "nrow", "ncol")
     err <- setdiff(ret$depends$functions, allowed)
     if (length(err) > 0) {
-      odin_parse_error(
+      dsl_parse_error(
         "Invalid function{?s} used in lhs of array assignment: {squote(err)}",
-        "E1023", src, call)
+        "E113", expr, call)
     }
     if ("-" %in% ret$depends$functions && uses_unary_minus(index)) {
-      odin_parse_error(
+      dsl_parse_error(
         "Invalid use of unary minus in lhs of array assignment",
-        "E1024", src, call)
+        "E114", expr, call)
     }
     err <- intersect(INDEX, ret$depends$variables)
     if (length(err) > 0) {
-      odin_parse_error(
+      dsl_parse_error(
         paste("Invalid use of special variable{?s} in lhs of array",
               "assignment: {squote(err)}"),
-        "E1025", src, call)
+        "E115", expr, call)
     }
   }
   

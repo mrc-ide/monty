@@ -244,3 +244,14 @@ collector <- function(init = character(0)) {
 data_frame <- function(...) {
   data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
 }
+
+
+uses_unary_minus <- function(expr) {
+  if (rlang::is_call(expr, "-") && length(expr) == 2) {
+    return(TRUE)
+  } else if (is.recursive(expr)) {
+    any(vlapply(expr[-1], uses_unary_minus))
+  } else {
+    FALSE
+  }
+}
