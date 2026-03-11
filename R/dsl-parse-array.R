@@ -2,23 +2,48 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
   is_dim <- special == "dim"
   
-  arrays <- build_array_table(exprs[is_dim], call)
+  arrays <- build_array_table(exprs[is_dim], fixed, call)
   check_duplicate_dims(arrays, exprs, call)
   arrays <- resolve_array_references(arrays)
   arrays <- resolve_split_dependencies(arrays, call)
-  arrays <- eval_array_table(arrays, fixed, call)
   
   arrays
 }
 
 
-build_array_table <- function(exprs, call) {
+build_array_table <- function(exprs, fixed, call) {
   dims <- list()
   names <- list()
   n <- 1
   for (expr in exprs) {
     names_i <- expr$lhs$names
     dims_i <- expr$rhs$value
+    
+    if (!identical(expr$rhs$depends$functions, "dim")) {
+      if (length(expr$rhs$depends$variables) > 0) {
+        err <- setdiff(expr$rhs$depends$variables, names(fixed))
+        if (length(err) > 0) {
+          ## error
+          dsl_parse_error(
+            "Dimension value{?s} not found in 'fixed': {squote(err)}",
+            "E210", expr$expr, call)
+        }
+        
+        fixed_i <- fixed[expr$rhs$depends$variables]
+        err <- lengths(fixed_i[]) != 1
+        if (any(err)) {
+          info <- sprintf("'%s' had length %d",
+                          names(fixed_i)[err], lengths(fixed_i[err]))
+          dsl_parse_error(
+            c("Dimension values in 'fixed' must be scalars",
+              set_names(info, "x")),
+            "E211", expr$expr, call)
+        }
+        
+        dims_i <- lapply(dims_i, eval, fixed)
+      }
+      
+    }
     
     first_dim <- call("dim", as.symbol(expr$lhs$names[1]))
     
@@ -111,14 +136,7 @@ resolve_split_dependencies <- function(arrays, call) {
     arrays$alias[i] <- find_non_alias(arrays$alias[i], arrays$name[i])
   }
   
-  arrays
-}
-
-
-eval_array_table <- function(arrays, fixed, call) {
-  arrays$dims <- 
-    lapply(arrays$dims, function(x) lapply(x, eval, fixed))
-  
+  ## finally evaluate aliased dims
   is_alias <- arrays$alias != arrays$name
   arrays$dims[is_alias] <- 
     arrays$dims[match(arrays$alias[is_alias], arrays$name)]

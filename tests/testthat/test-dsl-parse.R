@@ -232,9 +232,6 @@ test_that("validate fixed data for dsl", {
   expect_error(
     check_dsl_fixed(list(a = 1, b = 2, a = 2)),
     "'fixed' must have unique names")
-  expect_error(
-    check_dsl_fixed(list(a = 1, b = 2:3, c = numeric(10))),
-    "All elements of 'fixed' must currently be scalars")
   expect_equal(
     check_dsl_fixed(list(a = 1, b = 2)),
     list(a = 1, b = 2))
@@ -456,4 +453,15 @@ test_that("unknown variables result in an error", {
                       "Unknown variable used: 'aaa'",
                       fixed = TRUE)
   expect_equal(err$body, c(i = "Did you mean 'aa'?"))
+})
+
+
+test_that("cannot use variables on rhs of dim if not in fixed", {
+  expect_error(dsl_parse(list(quote(dim(x) <- a))),
+               "Dimension value not found in 'fixed': 'a'",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(dim(x) <- a)),
+                         fixed = list(a = c(1, 2))),
+               "Dimension values in 'fixed' must be scalars",
+               fixed = TRUE)
 })

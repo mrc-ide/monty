@@ -189,14 +189,5 @@ check_dsl_fixed <- function(fixed, call) {
     return(NULL)
   }
   assert_named(fixed, unique = TRUE, call = call)
-  err <- lengths(fixed) != 1
-  if (any(err)) {
-    info <- sprintf("'%s' had length %d",
-                    names(fixed)[err], lengths(fixed[err]))
-    cli::cli_abort(
-      c("All elements of 'fixed' must currently be scalars",
-        set_names(info, "x")),
-      arg = "fixed", call = call)
-  }
   fixed
 }

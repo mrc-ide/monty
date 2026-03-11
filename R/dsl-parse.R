@@ -228,7 +228,7 @@ dsl_parse_expr_assignment_rhs_dim <- function(expr, call) {
     }
     return(list(type = "dim",
                 value = rhs,
-                depends = depends$variables))
+                depends = depends))
   }
   allowed <- c("+", "-", "(", "length", "nrow", "ncol")
   err <- setdiff(depends$functions, allowed)
@@ -355,7 +355,7 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
                     "is an array, but {cli::qty(sum(err))}",
                     "{?this usage assigns/these usages assign} it as if it were a",
                     "scalar")),
-        "E210", lapply(err_exprs, "[[", "expr"), call)
+        "E212", lapply(err_exprs, "[[", "expr"), call)
     }
   }
   
@@ -383,7 +383,7 @@ dsl_parse_check_duplicates <- function(exprs, arrays, is_dim, call) {
       dsl_parse_error(
         paste("Multiline array equations must be contiguous",
               "statements, but '{nm}' is interleaved with {squote(others)}"),
-        "E211", e_exprs, call)
+        "E213", e_exprs, call)
     }
   }
   

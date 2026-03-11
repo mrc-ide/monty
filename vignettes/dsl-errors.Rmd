@@ -312,6 +312,44 @@ dim(x) <- ...
 
 # `E210`
 
+You have used a symbol on the lhs of a dim assignment that does not have a value in fixed.
+
+If you have e.g.
+
+```r
+dim(a) <- c(m, n)
+```
+
+then `m` and `n` should be included in `fixed`. We do not allow e.g.
+
+```r
+m <- 4
+n <- 5
+dim(a) <- c(m, n)
+```
+
+as array dimensions are evaluated before all other expressions (and they cannot be stochastic).
+
+# `E211`
+
+You have tried to assign dimensions to an array using a value in fixed that is not scalar.
+
+If you have e.g.
+
+```r
+dim(a) <- d
+```
+
+then the value of `d` in `fixed` should be scalar. If you wanted e.g. `a` to be a two-dimensional array then you could declare dimensions as
+
+```r
+dim(a) <- c(d1, d2)
+```
+
+where the values of `d1` and `d2` would both be scalar. This makes it easier to determine the rank of an array while parsing.
+
+# `E212`
+
 You have tried an assignment or relationship expression for an array variable (i.e., something with a `dim()` call) without using `[]` on the left hand side.
 
 Example:
@@ -327,7 +365,7 @@ If you wanted a length-5 array of zeros here, you should write
 a[] <- 0
 ```
 
-# `E211`
+# `E213`
 
 Multiline array equations must be written as consecutive statements, with no assignments or relationships for other variables in between (comments are fine).  So this is an error:
 
