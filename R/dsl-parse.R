@@ -255,10 +255,8 @@ dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
     } else {
       if (is_stochastic) {
         context <- "on the lhs of a `~` relationship"
-      } else if (is.null(special)) {
-        context <- "on the lhs of assignment"
       } else {
-        context <- sprintf("within '%s()' on the lhs of assignment", special)
+        context <- "on the lhs of assignment"
       }
     }
     lhs_str <- deparse1(lhs)
