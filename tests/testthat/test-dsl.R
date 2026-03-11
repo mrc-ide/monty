@@ -247,28 +247,56 @@ test_that("can use arrays in dsl", {
   r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
   
-  ## 2d arrays
+  
+  ## 1d arrays with multiline
   expect_warning(
     m2 <- monty_dsl({
+      lambda[1:2] <- 2 * i
+      lambda[3] <- 2 * i + 1
+      x[1] ~ Exponential(lambda[i])
+      x[2:3] ~ Exponential(lambda[i]^2)
+      dim(x, lambda) <- 3
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m2, "monty_model")
+  expect_false(m2$properties$has_gradient)
+  expect_equal(m2$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m2$density(seq_len(3)), 
+               sum(dexp(seq_len(3), c(2, 16, 49), log = TRUE)))
+  domain <- rbind(c(0, Inf), c(0, Inf), c(0, Inf))
+  rownames(domain) <- m2$parameters
+  expect_equal(m2$domain, domain)
+  expect_equal(m2$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- vnapply(c(2, 16, 49), function(x) monty_random_exponential_rate(x, r))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m2$direct_sample(r), cmp)
+  
+  
+  ## 2d arrays
+  expect_warning(
+    m3 <- monty_dsl({
       lambda[, ] <- 2 * i + j
       x[, ] ~ Exponential(lambda[i, j])
       dim(x, lambda) <- c(2, 3)
     }),
     "Not creating a gradient function for this model")
-  expect_s3_class(m2, "monty_model")
-  expect_false(m2$properties$has_gradient)
-  expect_equal(m2$parameters, c("x[1,1]", "x[2,1]", 
+  expect_s3_class(m3, "monty_model")
+  expect_false(m3$properties$has_gradient)
+  expect_equal(m3$parameters, c("x[1,1]", "x[2,1]", 
                                 "x[1,2]", "x[2,2]",
                                 "x[1,3]", "x[2,3]"))
   ## calculate lambda[i, j] = 2 * i + j
   lambda <- array(2 * seq_len(2), c(2, 3)) + t(array(seq_len(3), c(3, 2)))
   
-  expect_equal(m2$density(seq_len(6)), 
+  expect_equal(m3$density(seq_len(6)), 
                sum(dexp(seq_len(6), c(lambda), log = TRUE)))
   domain <- t(array(c(0, Inf), c(2, 6)))
-  rownames(domain) <- m2$parameters
-  expect_equal(m2$domain, domain)
-  expect_equal(m2$gradient, NULL)
+  rownames(domain) <- m3$parameters
+  expect_equal(m3$domain, domain)
+  expect_equal(m3$gradient, NULL)
   
   ## direct sampling will have i as the outer loop and j as the inner loop
   ## so we need to sample in that order and then match the model's parameter
@@ -279,5 +307,5 @@ test_that("can use arrays in dsl", {
           vnapply(lambda[2, ], function(x) monty_random_exponential_rate(x, r)))
   
   r <- monty_rng_create(seed = 42)
-  expect_equal(m2$direct_sample(r), c(cmp))
+  expect_equal(m3$direct_sample(r), c(cmp))
 })

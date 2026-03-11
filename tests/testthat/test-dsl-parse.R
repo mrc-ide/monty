@@ -411,3 +411,15 @@ test_that("can alias dims", {
   expect_identical(res$arrays$dims[res$arrays$name == "c"], 
                    res$arrays$dims[res$arrays$name == "a"])
 })
+
+
+test_that("array equations cannot be interleaved", {
+  expect_error(
+    dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                   quote(y ~ Uniform(0, 1)),
+                   quote(x[2:3] ~ Exponential(3)), 
+                   quote(dim(x) <- 3))),
+    paste("Multiline array equations must be contiguous statements,",
+          "but 'x' is interleaved with 'y'"),
+    fixed = TRUE)
+})

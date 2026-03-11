@@ -256,3 +256,15 @@ If you wanted a length-5 array of zeros here, you should write
 ```
 a[] <- 0
 ```
+
+# `E210`
+
+Multiline array equations must be written as consecutive statements, with no assignments or relationships for other variables in between (comments are fine).  So this is an error:
+
+```
+a[1] <- 1
+b <- 10
+a[2] <- b
+```
+
+Because the assignment to `b` occurs within the block of assignments to `a[]`.
