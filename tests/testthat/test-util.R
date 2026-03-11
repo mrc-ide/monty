@@ -154,3 +154,9 @@ test_that("can poll for callr result", {
   mockery::expect_called(rs$is_alive, 3)
   mockery::expect_called(rs$get_result, 1)
 })
+
+
+test_that("detect unary minus", {
+  expect_false(uses_unary_minus(quote(a - b)))
+  expect_true(uses_unary_minus(quote(-a - b)))
+})
