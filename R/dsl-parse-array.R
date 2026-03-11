@@ -152,7 +152,7 @@ finalise_arrays_table <- function(arrays, exprs, call) {
     nm <- arrays$name[i_err]
     expr <- exprs[[which(vlapply(exprs, function(x) nm %in% x$lhs$names))]]
     dsl_parse_error(paste("No dim assignment found for variable",
-                          "{squote(deps[i_err])} used in dim() on rhs"),
+                          "{squote(deps[[i_err]])} used in dim() on rhs"),
                     "E212", expr$expr, call)
   }
   
