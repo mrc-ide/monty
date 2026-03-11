@@ -6,6 +6,7 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   check_duplicate_dims(arrays, exprs, call)
   arrays <- resolve_array_references(arrays)
   arrays <- resolve_split_dependencies(arrays, call)
+  arrays <- finalise_arrays_table(arrays, exprs, call)
   
   arrays
 }
@@ -134,6 +135,25 @@ resolve_split_dependencies <- function(arrays, call) {
   wrong <- arrays$name != arrays$alias & !(arrays$alias %in% not_aliased)
   for (i in which(wrong)) {
     arrays$alias[i] <- find_non_alias(arrays$alias[i], arrays$name[i])
+  }
+  
+  arrays
+}
+
+finalise_arrays_table <- function(arrays, exprs, call) {
+  
+  deps <- 
+    lapply(arrays$dims, 
+            function(x) if (rlang::is_call(x, "dim")) deparse1(x[[2]]) else "")
+  
+  err <- !(deps %in% c(arrays$name, ""))
+  if (any(err)) {
+    i_err <- which(err)[1]
+    nm <- arrays$name[i_err]
+    expr <- exprs[[which(vlapply(exprs, function(x) nm %in% x$lhs$names))]]
+    dsl_parse_error(paste("No dim assignment found for variable",
+                          "{squote(deps[i_err])} used in dim() on rhs"),
+                    "E212", expr$expr, call)
   }
   
   ## finally evaluate aliased dims

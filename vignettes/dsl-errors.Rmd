@@ -350,6 +350,18 @@ where the values of `d1` and `d2` would both be scalar. This makes it easier to 
 
 # `E212`
 
+In a dim assignment you have used a variable in `dim()` on the rhs that does not has a dimensions assignment expression itself.
+
+If you have e.g.
+
+```r
+dim(a) <- dim(b)
+```
+
+then there must also be a `dim` assignment for `b`.
+
+# `E213`
+
 You have tried an assignment or relationship expression for an array variable (i.e., something with a `dim()` call) without using `[]` on the left hand side.
 
 Example:
@@ -365,7 +377,7 @@ If you wanted a length-5 array of zeros here, you should write
 a[] <- 0
 ```
 
-# `E213`
+# `E214`
 
 Multiline array equations must be written as consecutive statements, with no assignments or relationships for other variables in between (comments are fine).  So this is an error:
 

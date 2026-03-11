@@ -391,9 +391,9 @@ test_that("can alias dims", {
     list(quote(a[] <- exp(i)),
          quote(b[] ~ Normal(0, a[i])),
          quote(c[] ~ Exponential(3)),
-         quote(dim(a) <- 3),
+         quote(dim(c) <- dim(b)),
          quote(dim(b) <- dim(a)),
-         quote(dim(c) <- dim(b))),
+         quote(dim(a) <- 3)),
     gradient_required = FALSE)
   expect_equal(res$arrays$alias[res$arrays$name %in% c("b", "c")], c("a", "a"))
   expect_identical(res$arrays$dims[res$arrays$name == "b"], 
@@ -463,5 +463,13 @@ test_that("cannot use variables on rhs of dim if not in fixed", {
   expect_error(dsl_parse(list(quote(dim(x) <- a)),
                          fixed = list(a = c(1, 2))),
                "Dimension values in 'fixed' must be scalars",
+               fixed = TRUE)
+})
+
+
+test_that("dim() on rhs requires on dim assignment", {
+  expect_error(dsl_parse(list(quote(dim(a) <- dim(b)),
+                              quote(dim(b) <- dim(c)))),
+               "No dim assignment found for variable 'c' used in dim() on rhs",
                fixed = TRUE)
 })
