@@ -453,6 +453,12 @@ test_that("unknown variables result in an error", {
                       "Unknown variable used: 'aaa'",
                       fixed = TRUE)
   expect_equal(err$body, c(i = "Did you mean 'aa'?"))
+  
+  expect_error(dsl_parse(list(quote(aab <- 1),
+                              quote(x ~ Exponential(aaa))),
+                         fixed = list(aa = 1)),
+               "Unknown variable used: 'aaa'",
+               fixed = TRUE)
 })
 
 
