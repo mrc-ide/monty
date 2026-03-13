@@ -255,3 +255,16 @@ uses_unary_minus <- function(expr) {
     FALSE
   }
 }
+
+rank_description <- function(rank) {
+  if (rank == 0) {
+    "scalar"
+  } else if (rank == 1) {
+    "vector"
+  } else if (rank == 2) {
+    "matrix"
+  } else {
+    sprintf("%d-dimensional array", rank)
+  }
+}
+

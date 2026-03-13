@@ -319,7 +319,7 @@ dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
   is_dim <- special == "dim"
   
-  exprs <- dsl_parse_check_system_arrays(exprs, arrays, call)
+  exprs <- dsl_parse_check_system_arrays(exprs, arrays, is_dim, call)
   dsl_parse_check_duplicates(exprs, arrays, is_dim, call)
   
   exprs <- exprs[!is_dim]
@@ -330,7 +330,7 @@ dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
 }
 
 
-dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
+dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
   dim_nms <- arrays$name
   ## First, look for any array calls that do not have a corresponding
   ## dim()
@@ -364,10 +364,138 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
     }
   }
   
-  ## now we have checked dim calls
+  for (e in exprs[!is_dim]) {
+    dsl_parse_check_consistent_dimensions_lhs(e, arrays, call)
+    dsl_parse_check_consistent_dimensions_rhs(e, arrays, call)
+  }
+  
+  ## now we have checked dim calls and ranks
   exprs <- lapply(exprs, dsl_parse_array_index, arrays, call)
   
   exprs
+}
+
+
+dsl_parse_check_consistent_dimensions_lhs <- function(expr, arrays, call) {
+  throw_mismatch <- function(var, dim_rank, array_rank) {
+    dsl_parse_error(
+      c("Array rank in expression differs from the rank declared with `dim`",
+        i = paste("'{var}' has rank '{dim_rank}' in the `dim` call, but the",
+                  "line below assumes on lhs it has rank '{array_rank}'.")),
+      "E217", expr$expr, call)
+  }
+  
+  check <- function(expr) {
+    if (!is.null(expr$array)) {
+      rank <- length(expr$array)
+      dim_rank <- arrays$rank[arrays$name == expr$name]
+      if (rank != dim_rank) {
+        throw_mismatch(expr$name, dim_rank, rank)
+      }
+    }
+  }
+  check(expr$lhs)
+}
+
+
+dsl_parse_check_consistent_dimensions_rhs <- function(expr, arrays, call) {
+  if (identical(expr$type, "stochastic")) {
+    lapply(expr$rhs$distribution$args, 
+           dsl_parse_check_consistent_dimensions_expr,
+           expr$expr, arrays, call)
+  } else {
+    dsl_parse_check_consistent_dimensions_expr(expr$rhs$expr, expr$expr, 
+                                               arrays, call)
+  }
+}
+
+
+dsl_parse_check_consistent_dimensions_expr <- function(expr, src, 
+                                                       arrays, call) {
+  throw_mismatch <- function(var, dim_rank, array_rank) {
+    dsl_parse_error(
+      c("Array rank in expression differs from the rank declared with `dim`",
+        i = paste("'{var}' has rank '{dim_rank}' in the `dim` call, but the",
+                  "line below assumes on rhs it has rank {array_rank}'.")),
+      "E217", src, call)
+  }
+  
+  throw_non_array_arg <- function(func, var) {
+    dsl_parse_error(
+      c("The function `{func}()` expects an array name without indexes.",
+        i = "{var} is not a simple array name"),
+      "E218", src, call)
+  }
+  
+  throw_array_as_scalar <- function(var, rank) {
+    what <- rank_description(rank)
+    if (rank == 1) {
+      dummy_index <- "..."
+    } else {
+      dummy_index <- paste(rep(".", rank), collapse = ", ")
+    }
+    dsl_parse_error(
+      c("Trying to use {what} '{var}' without index",
+        i = sprintf("Did you mean '{var}[%s]'", dummy_index)),
+      "E219", src, call)
+  }
+  
+  throw_empty_index_rhs <- function(name, expr) {
+    dsl_parse_error(
+      c("Can't use an empty index while accessing arrays on the rhs",
+        x = "In access of '{name}' as '{deparse(expr)}'"),
+      "E220", src, call)
+  }
+  
+  throw_range_access_rhs <- function(name, expr) {
+    dsl_parse_error(
+      c("Can't use the range operator `:` while accessing arrays on the rhs",
+        x = "In access of '{name}' as '{deparse(expr)}'"),
+      "E220", src, call)
+  }
+  
+  fn_use_whole_array <- c("length", "nrow", "ncol")
+  
+  dim_ranks <- set_names(as.list(arrays$rank),
+                         arrays$name)
+  
+  check <- function(expr) {
+    if (is.recursive(expr)) {
+      if (rlang::is_call(expr, "[")) {
+        array_rank <- length(expr) - 2L
+        array_name <- deparse(expr[[2]])
+        
+        dim_rank <- dim_ranks[[array_name]]
+        if (array_rank != dim_rank) {
+            throw_mismatch(array_name, dim_rank, array_rank)
+        }
+        
+        args <- as.list(expr[-(1:2)])
+        if (any(vlapply(args, rlang::is_missing))) {
+          throw_empty_index_rhs(array_name, expr)
+        }
+        if (any(vlapply(args, rlang::is_call, ":"))) {
+          throw_range_access_rhs(array_name, expr)
+        }
+        
+        lapply(args, check)
+      } else if (rlang::is_call(expr, fn_use_whole_array)) {
+        func <- deparse(expr[[1]])
+        arg <- expr[[2]]
+        if (is.recursive(arg) || !is.symbol(arg)) {
+          throw_non_array_arg(func, deparse(arg))
+        }
+      } else {
+        lapply(expr[-1], check)
+      }
+    } else if (is.symbol(expr)) {
+      nm <- as.character(expr)
+      if (nm %in% arrays$name) {
+        throw_array_as_scalar(nm, dim_ranks[[nm]])
+      }
+    }
+  }
+  check(expr)
 }
 
 

@@ -410,3 +410,76 @@ Because the assignment to `b` occurs within the block of assignments to `a[]`.
 # `E216`
 
 There are no stochastic relationships (with `~`) in your model, and you have only included assignments (with `<-`). Your model code should have at least one stochastic relationship.
+
+# `E217`
+
+Array rank in expression differs from the rank declared with `dim`
+
+Here, the number of dimensions for a variable in an expression is different from the number declared with the `dim` function, which is the source of truth for rank. For example, you might declare a matrix and a vector like this:-
+
+```
+dim(x) <- c(5,5)
+dim(y) <- 3
+```
+
+When you use these in other expressions, the rank must match the declaration above. So these examples would be valid syntax:-
+
+```
+x[, ] <- 0
+y[1:2] ~ Exponential(1)
+y[3] ~ Exponential(y[2])
+```
+
+but these would not:-
+
+```
+x[] <- 1
+y[1, 2] <- Exponential(1)
+y[3] ~ Exponential(y[1, 2])
+```
+
+# `E218`
+
+The `length`, `ncol` and `nrow` functions take as their argument a whole array, matrix, or higher-order structure, without brackets or indexing.
+
+So 
+```
+dim(x) <- c(5,5)
+y <- length(x)
+```
+
+is valid, but 
+
+```
+y <- length(x[, 1]
+y <- length(x[])
+```
+
+are both invalid.
+
+# `E219`
+
+Trying to access an array without using square bracket indexes.  For example if you write:
+
+```r
+dim(b) <- 10
+a[] <- b
+```
+
+you would see this error, as you should have used `b[i]` on the right hand side (*probably!*; you might have meant `a[] <- b[1]`, too).
+
+# `E220`
+
+Invalid use of the empty index or range operator on the right hand side of an array expression.  You cannot, for example, write
+
+```r
+a[] <- b + c[i, ]
+```
+
+or
+
+```r
+a[] <- b + c[i, 2:3]
+```
+
+Here, the accesses of `c` are problematic because they would refer to a vector.

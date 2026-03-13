@@ -505,3 +505,51 @@ test_that("cannot have model without any stochastic relationships", {
                "No stochastic relationships (with '~') found in your model",
                fixed = TRUE)
 })
+
+
+test_that("array rank usage matches dim declaration", {
+  expect_error(dsl_parse(list(quote(x[, ] <- 1),
+                              quote(dim(x) <- 2))),
+               paste("Array rank in expression differs from the rank declared",
+                     "with `dim`"),
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x),
+                              quote(dim(x, y) <- 2))),
+               "Trying to use vector 'x' without index",
+               fixed = TRUE)
+})
+
+
+test_that("can't use empty index or : on rhs", {
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x[]),
+                              quote(dim(x, y) <- 2))),
+               "Can't use an empty index while accessing arrays on the rhs",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x[1:2]),
+                              quote(dim(x, y) <- 2))),
+               paste("Can't use the range operator `:` while accessing arrays",
+                     "on the rhs"),
+               fixed = TRUE)
+})
+
+
+test_that("length, nrow, ncol must only apply to array symbols", {
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- length(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `length()` expects an array name without indexes.",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- nrow(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `nrow()` expects an array name without indexes.",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- ncol(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `ncol()` expects an array name without indexes.",
+               fixed = TRUE)
+})
