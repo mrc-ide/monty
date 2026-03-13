@@ -467,9 +467,28 @@ test_that("cannot use variables on rhs of dim if not in fixed", {
 })
 
 
-test_that("dim() on rhs requires on dim assignment", {
+test_that("dim() on rhs requires a dim assignment", {
   expect_error(dsl_parse(list(quote(dim(a) <- dim(b)),
                               quote(dim(b) <- dim(c)))),
                "No dim assignment found for variable 'c' used in dim() on rhs",
                fixed = TRUE)
+  
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(c)),
+                   quote(dim(b) <- dim(d)))),
+    "No dim assignments found for variables 'c' and 'd' used in dim() on rhs",
+    fixed = TRUE)
+})
+
+
+test_that("dim assignments cannot be cyclic", {
+  expect_error(dsl_parse(list(quote(dim(a) <- dim(a)))),
+               "Cyclic dependency detected within dim equation for 'a'",
+               fixed = TRUE)
+  
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(b)),
+                   quote(dim(b) <- dim(a)))),
+    "Cyclic dependency detected within dim equations for 'a' and 'b'",
+    fixed = TRUE)
 })

@@ -362,6 +362,24 @@ then there must also be a `dim` assignment for `b`.
 
 # `E213`
 
+Cyclic dependency detected within dim equations.  There are a few ways this can happen.  The simplest is that your equation references itself, for example:
+
+```r
+dim(a) <- dim(a)
+```
+
+You can get more complicated cycles, for example:
+
+```r
+dim(a) <- dim(b)
+dim(b) <- dim(c)
+dim(c) <- dim(a)
+```
+
+It is possible that there is more than one cycle within the reported expressions.
+
+# `E214`
+
 You have tried an assignment or relationship expression for an array variable (i.e., something with a `dim()` call) without using `[]` on the left hand side.
 
 Example:
@@ -377,7 +395,7 @@ If you wanted a length-5 array of zeros here, you should write
 a[] <- 0
 ```
 
-# `E214`
+# `E215`
 
 Multiline array equations must be written as consecutive statements, with no assignments or relationships for other variables in between (comments are fine).  So this is an error:
 

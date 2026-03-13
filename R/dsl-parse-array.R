@@ -145,15 +145,36 @@ finalise_arrays_table <- function(arrays, exprs, call) {
   deps <- 
     lapply(arrays$dims, 
             function(x) if (rlang::is_call(x, "dim")) deparse1(x[[2]]) else "")
+  names(deps) <- arrays$name
   
+  ## check that for situation where dim(a) <- dim(b) but we have
+  ## no dim(b) equation
   err <- !(deps %in% c(arrays$name, ""))
   if (any(err)) {
-    i_err <- which(err)[1]
-    nm <- arrays$name[i_err]
-    expr <- exprs[[which(vlapply(exprs, function(x) nm %in% x$lhs$names))]]
-    dsl_parse_error(paste("No dim assignment found for variable",
-                          "{squote(deps[[i_err]])} used in dim() on rhs"),
-                    "E212", expr$expr, call)
+    nms <- unname(unlist(deps[err]))
+    e_exprs <- lapply(exprs[err], "[[", "expr")
+    msg <- paste("No dim assignment{?s} found for variable{?s} {squote(nms)}",
+                 "used in dim() on rhs")
+    dsl_parse_error(msg, "E212", e_exprs, call)
+  }
+  
+  ## check for circular dependency e.g.
+  ## dim(a) <- dim(b)
+  ## dim(b) <- dim(a)
+  res <- topological_order(deps)
+  if (!res$success) {
+    nms <- names(deps)[res$error]
+    details <- vcapply(nms, function(x) {
+      sprintf("dim(%s) depends on dim(%s)", x, paste(deps[[x]], collapse = ", "))
+    })
+    i_exprs <- 
+      vnapply(nms,
+              function(x) which(vlapply(exprs, function(y) x %in% y$lhs$names)))
+    e_exprs <- lapply(exprs[unname(i_exprs)], "[[", "expr")
+    dsl_parse_error(
+      c("Cyclic dependency detected within dim equation{?s} for {squote(nms)}",
+        set_names(details, "i")),
+      "E213", e_exprs, call)
   }
   
   ## finally evaluate aliased dims

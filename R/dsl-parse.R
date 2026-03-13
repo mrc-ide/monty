@@ -355,7 +355,7 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, call) {
                     "is an array, but {cli::qty(sum(err))}",
                     "{?this usage assigns/these usages assign} it as if it were a",
                     "scalar")),
-        "E213", lapply(err_exprs, "[[", "expr"), call)
+        "E214", lapply(err_exprs, "[[", "expr"), call)
     }
   }
   
@@ -383,7 +383,7 @@ dsl_parse_check_duplicates <- function(exprs, arrays, is_dim, call) {
       dsl_parse_error(
         paste("Multiline array equations must be contiguous",
               "statements, but '{nm}' is interleaved with {squote(others)}"),
-        "E214", e_exprs, call)
+        "E215", e_exprs, call)
     }
   }
   
