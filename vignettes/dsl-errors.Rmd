@@ -406,3 +406,7 @@ a[2] <- b
 ```
 
 Because the assignment to `b` occurs within the block of assignments to `a[]`.
+
+# `E216`
+
+There are no stochastic relationships (with `~`) in your model, and you have only included assignments (with `<-`). Your model code should have at least one stochastic relationship.

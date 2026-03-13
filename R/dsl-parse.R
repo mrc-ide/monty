@@ -9,6 +9,11 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   
   name <- vcapply(exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
+  if (length(parameters) == 0) {
+    dsl_parse_error(
+      "No stochastic relationships (with '~') found in your model",
+      "E216", NULL, call)
+  }
   assigned <- setdiff(unique(name), parameters)
   
   packer <- dsl_packer(parameters, arrays)

@@ -492,3 +492,10 @@ test_that("dim assignments cannot be cyclic", {
     "Cyclic dependency detected within dim equations for 'a' and 'b'",
     fixed = TRUE)
 })
+
+
+test_that("cannot have model without any stochastic relationships", {
+  expect_error(dsl_parse(list(quote(x <- 1))),
+               "No stochastic relationships (with '~') found in your model",
+               fixed = TRUE)
+})
