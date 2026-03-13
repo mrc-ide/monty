@@ -309,3 +309,12 @@ test_that("can use arrays in dsl", {
   r <- monty_rng_create(seed = 42)
   expect_equal(m3$direct_sample(r), c(cmp))
 })
+
+
+test_that("cannot use reserved words in fixed", {
+  expect_error(
+    monty_dsl({a <- 1}, 
+              fixed = list(i = 1, j = 2, dim = 3, dim_a = 4)),
+    "Element names 'i', 'j', 'dim', and 'dim_a' in 'fixed' not allowed",
+    fixed = TRUE)
+})
