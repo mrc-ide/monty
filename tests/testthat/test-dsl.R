@@ -255,8 +255,8 @@ test_that("can use arrays in dsl", {
       lambda[3] <- 2 * i + 1
       x[1] ~ Exponential(lambda[i])
       x[2:3] ~ Exponential(lambda[i]^2)
-      dim(x, lambda) <- 3
-    }),
+      dim(x, lambda) <- n
+    }, fixed = list(n = 3)),
     "Not creating a gradient function for this model")
   expect_s3_class(m2, "monty_model")
   expect_false(m2$properties$has_gradient)
