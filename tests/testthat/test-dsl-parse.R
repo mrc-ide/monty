@@ -524,6 +524,11 @@ test_that("array rank usage matches dim declaration", {
                               quote(dim(x, y) <- 2))),
                "Trying to use vector 'x' without index",
                fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[, ] <- 1),
+                              quote(y[, ] <- x),
+                              quote(dim(x, y) <- c(2, 2)))),
+               "Trying to use matrix 'x' without index",
+               fixed = TRUE)
 })
 
 
