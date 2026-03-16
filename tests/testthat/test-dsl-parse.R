@@ -600,3 +600,23 @@ test_that("out-of-bounds access is prevented", {
                            x = "Trying to access element: 0"))
   
 })
+
+
+test_that("array coverage is checked", {
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                              quote(x[] ~ Exponential(5)),
+                              quote(dim(x) <- 4))),
+               "Multiple definitions for array element x[1]",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[1:3] ~ Exponential(1)),
+                              quote(dim(x) <- 4))),
+               "Missing definition for array element x[4]",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[1:2] ~ Exponential(1)),
+                              quote(x[3:4] <- 1),
+                              quote(dim(x) <- 4))),
+               paste("Equations for an array must all be of the same type, but",
+                     "'x' has some elements defined by assignment (with '<-'),",
+                     "and some by stochastic relationship (with '~')"),
+               fixed = TRUE)
+})

@@ -515,3 +515,64 @@ dim(a) <- 4
 ```
 
 errors as you are trying to access `a[0]`, which is out-of-bounds.
+
+# `E222`
+
+An element of an array does not have an equation defining it.
+
+Example:
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+dim(x) <- 5
+```
+
+Here the `dim` equation for `x` tells us to expect a definition for `x[5]` but it is not defined by the existing equations for `x`. It could be possible that you meant to cover it in the existing equations, e.g.
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+dim(x) <- 5
+```
+
+or that you meant to include a separate equation defining it (and possibly other undefined elements of `x`) e.g.
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+x[5] ~ Exponential(9)
+dim(x) <- 5
+```
+
+# `E223`
+
+An element of an array has multiple definitions (across multiple equations). This could arise from having defined the entire array more than once, e.g.
+
+```r
+a[] <- i
+a[] <- 3
+dim(a) <- 4
+```
+
+or it could be that your have defined part of it more than once, e.g.
+
+```r
+a[] <- i
+a[4] <- 3
+dim(a) <- 4
+```
+
+# `E223`
+
+An array has some elements defined as an assignment (with `<-`) and some defined as a stochastic relationship (with `~`).
+
+Example:
+
+```r
+a[1:2] <- i
+a[3:4] ~ Uniform(0, 1)
+dim(a) <- 4
+```
+
+An array variable must be either entirely defined with assignments or entirely with stochastic relationships.

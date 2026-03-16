@@ -385,12 +385,13 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
         "E215", e_exprs, call)
     }
     
-    ## Can now eject the dim equations
-    exprs <- exprs[!is_dim]
-    
-    dims <- unlist(arrays$dims[arrays$name == nm])
-    dsl_parse_check_system_array_bounds(nm, dims, exprs, call)
   }
+   
+   ## Can now eject the dim equations
+  exprs <- exprs[!is_dim]
+  
+  dsl_parse_check_system_array_bounds(exprs, arrays, call)
+  dsl_parse_check_system_array_coverage(exprs, arrays, call)
   
   exprs
 }
@@ -519,14 +520,20 @@ dsl_parse_check_consistent_dimensions_expr <- function(expr, src,
 }
 
 
-dsl_parse_check_system_array_bounds <- function(nm, dims, exprs, call) {
+dsl_parse_check_system_array_bounds <- function(exprs, arrays, call) {
   
   name <- lapply(exprs, function(x) x$lhs$name)
-  i <- nm == name
-  lapply(exprs[i], dsl_parse_check_system_array_bounds_lhs, dims, call)
   
-  i <- vlapply(exprs, function(x) nm %in% x$rhs$depends)
-  lapply(exprs[i], dsl_parse_check_system_array_bounds_rhs, nm, dims, call)
+  for(nm in arrays$name) {
+    dims <- unlist(arrays$dims[arrays$name == nm], recursive = FALSE)
+    
+    i <- nm == name
+    lapply(exprs[i], dsl_parse_check_system_array_bounds_lhs, dims, call)
+    
+    i <- vlapply(exprs, function(x) nm %in% x$rhs$depends)
+    lapply(exprs[i], dsl_parse_check_system_array_bounds_rhs, nm, dims, call)
+  }
+  
 }
 
 
@@ -583,6 +590,55 @@ dsl_parse_check_system_array_bounds_rhs <- function(expr, nm, dims, call) {
 }
 
 
+dsl_parse_check_system_array_coverage <- function(exprs, arrays, call) {
+  name <- lapply(exprs, function(x) x$lhs$name)
+  type <- lapply(exprs, "[[", "type")
+  
+  row_match <- function(df, row) {
+    apply(df, 1, function(y) all(y == row))
+  }
+  
+  for(nm in arrays$name) {
+    dims <- unlist(arrays$dims[arrays$name == nm], recursive = FALSE)
+    
+    i <- which(nm == name)
+    if (length(i) > 0) {
+      idx_expected <- lapply(dims, seq_len)
+      names(idx_expected) <- INDEX[seq_along(dims)]
+      idx_expected <- expand.grid(rev(idx_expected))
+      idx_expected <- idx_expected[, rev(names(idx_expected)), drop = FALSE]
+      
+      idx <- lapply(exprs[i], function(x) generate_index_grid(x$lhs$array))
+      
+      for (j in seq_len(nrow(idx_expected))) {
+        is_covered <- 
+          vlapply(idx, function(x) any(row_match(x, idx_expected[j, ])))
+        if (!any(is_covered)) {
+          msg <- paste0("Missing definition for array element ", nm, "[",
+                       paste(idx_expected[j, ], collapse = ", "), "]")
+          hint <- paste0(nm, " has dimensions c(",
+                         paste(unlist(dims), collapse = ", "), ")")
+          dsl_parse_error(c(msg, i = hint), "E222", NULL, call)
+        } else if (sum(is_covered) > 1) {
+          msg <- paste0("Multiple definitions for array element ", nm, "[",
+                        paste(idx_expected[j, ], collapse = ", "), "]")
+          e_exprs <- lapply(exprs[is_covered], "[[", "expr")
+          dsl_parse_error(msg, "E223", e_exprs, call)
+        }
+      }
+      
+      if (length(unique(type[i])) > 1) {
+        msg <- paste("Equations for an array must all be of the same",
+                     "type, but '{nm}' has some elements defined by assignment",
+                     "(with '<-'), and some by stochastic relationship",
+                     "(with '~')")
+        e_exprs <- lapply(exprs[i], "[[", "expr")
+        dsl_parse_error(msg, "E224", e_exprs, call)
+      }
+    }
+    
+  }
+}
 
 
 dsl_parse_check_duplicates <- function(exprs, arrays, call) {
