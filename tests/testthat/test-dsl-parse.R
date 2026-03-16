@@ -553,3 +553,39 @@ test_that("length, nrow, ncol must only apply to array symbols", {
                "The function `ncol()` expects an array name without indexes.",
                fixed = TRUE)
 })
+
+
+test_that("out-of-bounds access is prevented", {
+  err <- expect_error(dsl_parse(list(quote(x[1:5] ~ Exponential(5)),
+                                     quote(dim(x) <- 4))),
+                      "Out-of-bounds access of 'x' on lhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'x' has size 4",
+                           x = "Trying to access element: 5"))
+  
+  err <- expect_error(dsl_parse(list(quote(x[5] ~ Exponential(5)),
+                                     quote(dim(x) <- 4))),
+                      "Out-of-bounds access of 'x' on lhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'x' has size 4",
+                           x = "Trying to access element: 5"))
+  
+  err <- expect_error(dsl_parse(list(quote(a[] <- 2),
+                                     quote(x[] ~ Exponential(a[i])),
+                                     quote(dim(x) <- 4),
+                                     quote(dim(a) <- 3))),
+                      "Out-of-bounds access of 'a' on rhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'a' has size 3",
+                           x = "Trying to access element: 4"))
+  
+  err <- expect_error(dsl_parse(list(quote(a[] <- 2),
+                                     quote(x[] ~ Exponential(a[i - 1])),
+                                     quote(dim(x) <- 4),
+                                     quote(dim(a) <- 3))),
+                      "Out-of-bounds access of 'a' on rhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'a' has size 3",
+                           x = "Trying to access element: 0"))
+  
+})

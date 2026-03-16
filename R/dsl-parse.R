@@ -320,9 +320,7 @@ dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
   is_dim <- special == "dim"
   
   exprs <- dsl_parse_check_system_arrays(exprs, arrays, is_dim, call)
-  dsl_parse_check_duplicates(exprs, arrays, is_dim, call)
-  
-  exprs <- exprs[!is_dim]
+  dsl_parse_check_duplicates(exprs, arrays, call)
   dsl_parse_check_fixed(exprs, fixed, call)
   dsl_parse_check_usage(exprs, fixed, call)
   
@@ -371,6 +369,28 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
   
   ## now we have checked dim calls and ranks
   exprs <- lapply(exprs, dsl_parse_array_index, arrays, call)
+  
+  for (nm in arrays$name) {
+    i <- nms == nm
+    index <- which(i)
+    if (any(diff(index) > 1)) {
+      index_others <- Filter(
+        function(j) j > index[[1]] && j < last(index),
+        which(!i))
+      others <- unique(vcapply(exprs[index_others], function(x) x$lhs$name))
+      e_exprs <- lapply(exprs[seq(index[[1]], last(index))], "[[", "expr")
+      dsl_parse_error(
+        paste("Multiline array equations must be contiguous",
+              "statements, but '{nm}' is interleaved with {squote(others)}"),
+        "E215", e_exprs, call)
+    }
+    
+    ## Can now eject the dim equations
+    exprs <- exprs[!is_dim]
+    
+    dims <- unlist(arrays$dims[arrays$name == nm])
+    dsl_parse_check_system_array_bounds(nm, dims, exprs, call)
+  }
   
   exprs
 }
@@ -499,26 +519,75 @@ dsl_parse_check_consistent_dimensions_expr <- function(expr, src,
 }
 
 
-dsl_parse_check_duplicates <- function(exprs, arrays, is_dim, call) {
-  type <- vcapply(exprs, "[[", "type")
-  name <- character(length(exprs))
-  name[!is_dim] <- vcapply(exprs[!is_dim], function(x) x$lhs$name)
+dsl_parse_check_system_array_bounds <- function(nm, dims, exprs, call) {
   
-  for (nm in arrays$name) {
-    i <- name == nm
-    index <- which(i)
-    if (any(diff(index) > 1)) {
-      index_others <- Filter(
-        function(j) j > index[[1]] && j < last(index),
-        which(!i))
-      others <- unique(vcapply(exprs[index_others], function(x) x$lhs$name))
-      e_exprs <- lapply(exprs[seq(index[[1]], last(index))], "[[", "expr")
+  name <- lapply(exprs, function(x) x$lhs$name)
+  i <- nm == name
+  lapply(exprs[i], dsl_parse_check_system_array_bounds_lhs, dims, call)
+  
+  i <- vlapply(exprs, function(x) nm %in% x$rhs$depends)
+  lapply(exprs[i], dsl_parse_check_system_array_bounds_rhs, nm, dims, call)
+}
+
+
+dsl_parse_check_system_array_bounds_lhs <- function(expr, dims, call) {
+  name <- expr$lhs$name
+  
+  max_index <- lapply(expr$lhs$array, 
+                      function(x) max(x$from %||% x$at, x$to %||% x$at))
+  
+  for (i in seq_along(max_index)) {
+    if (max_index[[i]] > dims[[i]]) {
       dsl_parse_error(
-        paste("Multiline array equations must be contiguous",
-              "statements, but '{nm}' is interleaved with {squote(others)}"),
-        "E215", e_exprs, call)
+        c("Out-of-bounds access of '{name}' on lhs",
+          i = "Dimension {i} of '{name}' has size {dims[[i]]}",
+          x = "Trying to access element: {max_index[[i]]}"),
+        "E221", expr$expr, call)
     }
   }
+}
+
+
+dsl_parse_check_system_array_bounds_rhs <- function(expr, nm, dims, call) {
+  array <- expr$lhs$array
+  index <- generate_index_grid(expr$lhs$array)
+  
+  check_expr <- function(e) {
+    if (is.recursive(e)) {
+      if (rlang::is_call(e, "[")) {
+        if (deparse(e[[2]]) == nm) {
+          idx <- lapply(rlang::call_args(e)[-1], eval, index)
+          for (i in seq_along(idx)) {
+            for (j in seq_along(idx[[i]])) {
+              if (idx[[i]][j] > dims[[i]] || idx[[i]][j] < 1) {
+                dsl_parse_error(
+                  c("Out-of-bounds access of '{nm}' on rhs",
+                    i = "Dimension {i} of '{nm}' has size {dims[[i]]}",
+                    x = "Trying to access element: {idx[[i]][j]}"),
+                  "E221", expr$expr, call)
+              }
+            }
+          }
+        }
+      } else {
+        lapply(rlang::call_args(e), check_expr)
+      }
+    }
+  }
+  
+  if (expr$type == "stochastic") {
+    lapply(expr$rhs$distribution$args, check_expr)
+  } else {
+    check_expr(expr$rhs$expr)
+  }
+}
+
+
+
+
+dsl_parse_check_duplicates <- function(exprs, arrays, call) {
+  type <- vcapply(exprs, "[[", "type")
+  name <- vcapply(exprs, function(x) x$lhs$name)
   
   i_err <- anyDuplicated(name, incomparables = c("", arrays$name))
   if (i_err > 0) {

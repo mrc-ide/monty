@@ -268,14 +268,7 @@ dsl_generate_domain_assignment <- function(expr, env, arrays) {
     }
     array <- expr$lhs$array
     
-    idx <- list()
-    for (x in array) {
-      from <- x$from %||% x$at
-      to <- x$to  %||% x$at
-      idx[[x$name]] <- seq(from = from, to = to)
-    }
-    idx <- expand.grid(rev(idx))
-    idx <- idx[, rev(names(idx)), drop = FALSE]
+    idx <- generate_index_grid(array)
     for (i in seq_len(nrow(idx))) {
       rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
       rhs_val <- dsl_static_eval(rhs, env)
@@ -339,6 +332,18 @@ fold_c <- function(x) {
 }
 
 
+generate_index_grid <- function(array) {
+  idx <- list()
+  for (x in array) {
+    from <- x$from %||% x$at
+    to <- x$to  %||% x$at
+    idx[[x$name]] <- seq(from = from, to = to)
+  }
+  idx <- expand.grid(rev(idx))
+  idx[, rev(names(idx)), drop = FALSE]
+}
+
+
 ## We can actually do much better than this, but it feels best to wait
 ## until the rest of the DSL is written, especially arrays.  For
 ## simple models with scalars we should be able to just pass through
@@ -366,3 +371,4 @@ vectorise_gradient_over_parameters <- function(gradient, len) {
     }
   }
 }
+

@@ -483,3 +483,35 @@ a[] <- b + c[i, 2:3]
 ```
 
 Here, the accesses of `c` are problematic because they would refer to a vector.
+
+# `E221`
+
+An array access would be out of bounds.  This error is thrown where your code would result in you reading or writing out of bounds on an array (or a dimension of an array).
+
+Example:
+
+```r
+x[1:3] ~ Exponential(1)
+x[4] <- Exponential(3)
+dim(x) <- 3
+```
+
+errors because `x[4]` is outside the bounds defined by your `dim` equation for `x`.
+
+```r
+x[] <- a[i]
+dim(x) <- 5
+dim(a) <- 4
+```
+
+errors on the rhs as in `x[] <- a[i]` we loop over the first dimension of `x` which is defined to have size 5 but `a` only has 4 elements so `a[5]` is out-of-bounds.
+
+Similarly
+
+```r
+x[] <- a[i - 1]
+dim(x) <- 5
+dim(a) <- 4
+```
+
+errors as you are trying to access `a[0]`, which is out-of-bounds.
