@@ -513,6 +513,12 @@ test_that("array rank usage matches dim declaration", {
                paste("Array rank in expression differs from the rank declared",
                      "with `dim`"),
                fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- a[1, 1]),
+                              quote(dim(x) <- 2),
+                              quote(dim(a) <- 2))),
+               paste("Array rank in expression differs from the rank declared",
+                     "with `dim`"),
+               fixed = TRUE)
   expect_error(dsl_parse(list(quote(x[] <- 1),
                               quote(y[] <- x),
                               quote(dim(x, y) <- 2))),
