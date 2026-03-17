@@ -651,7 +651,6 @@ dsl_parse_check_system_array_order <- function(i, exprs, idx, call) {
           e_idx <- unlist(lapply(rlang::call_args(e)[-1], eval, idx_j))
           is_out_of_order <- is.null(defined) || !any(row_match(defined, e_idx))
           if (is_out_of_order) {
-            browser()
             element_name <- paste0(nm, "[", paste(e_idx, collapse = ", "), "]")
             msg <- paste("Array element", element_name,
                          "used on the rhs before being defined")
@@ -743,12 +742,20 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
   names_fixed <- names(fixed)
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
-    err <- setdiff(e$rhs$depends, c(name[seq_len(i - 1)], names_fixed))
+    if (!is.null(e$lhs$array)) {
+      depends <- setdiff(e$rhs$depends, name[i])
+    } else {
+      depends <- e$rhs$depends
+    }
+    err <- setdiff(depends, c(name[seq_len(i - 1)], names_fixed))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
       if (length(out_of_order) > 0) {
-        context <- lapply(exprs[name %in% out_of_order], "[[", "expr")
+        f <- function(nm) {
+          unlist(lapply(exprs[name == nm], "[[", "expr"), recursive = FALSE)
+        }
+        context <- lapply(out_of_order, f)
         names(context) <- sprintf("'%s' is defined later:", out_of_order)
         
         ## TODO: It would be nice to indicate that we want to highlight

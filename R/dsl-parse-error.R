@@ -57,8 +57,17 @@ cnd_footer.monty_parse_error <- function(cnd, ...) {
     for (i in seq_along(cnd$context)) {
       detail <- c(detail,
                   "",
-                  i = names(cnd$context)[[i]],
-                  format_error_src(cnd$context[[i]]))
+                  i = names(cnd$context)[[i]])
+      if (is.list(cnd$context[[i]])) {
+        for (j in seq_along(cnd$context[[i]])) {
+          detail <- c(detail,
+                      format_error_src(cnd$context[[i]][[j]]))
+        }
+      } else {
+        detail <- c(detail,
+                    format_error_src(cnd$context[[i]]))
+      }
+      
     }
     ## Annoyingly, there's no way of marking text as whitespace
     ## preserving within cli, so we need to do a substitution here for
