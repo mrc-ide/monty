@@ -81,7 +81,7 @@ vcapply <- function(...) {
 
 
 rbind_list <- function(x) {
-  stopifnot(all(vlapply(x, is.matrix)))
+  stopifnot(all(vlapply(x, is.matrix)) || all(vlapply(x, is.data.frame)))
   if (length(x) == 1) {
     return(x[[1]])
   }
@@ -268,3 +268,7 @@ rank_description <- function(rank) {
   }
 }
 
+
+row_match <- function(df, row) {
+  apply(df, 1, function(y) all(y == row))
+}

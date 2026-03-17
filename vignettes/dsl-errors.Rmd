@@ -563,7 +563,7 @@ a[4] <- 3
 dim(a) <- 4
 ```
 
-# `E223`
+# `E224`
 
 An array has some elements defined as an assignment (with `<-`) and some defined as a stochastic relationship (with `~`).
 
@@ -576,3 +576,22 @@ dim(a) <- 4
 ```
 
 An array variable must be either entirely defined with assignments or entirely with stochastic relationships.
+
+# `E225`
+
+You are trying to use an array element on the rhs before it has been defined. A simple example is
+
+```r
+x[1] <- x[2]
+x[2] <- 1
+```
+
+In the `monty` DSL, equations are evaluated in the order in which they appear so here it will evaluate `x[1] <- x[2]` first, before `x[2]` has been defined.
+
+The error may also arise from array loops, e.g.
+
+```r
+x[1:4] <- x[i + 1]
+```
+
+Since the equation is evaluated as a loop in order from `i = 1` to `i = 4`, so first `x[1]` (`i = 1`) will be evaluated but it depends upon `x[2]` which has yet to be defined.

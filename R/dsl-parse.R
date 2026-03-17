@@ -356,8 +356,8 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
         c("Array expressions must always use '[]' on the lhs",
           i = paste("Your expression for '{nm}' has a 'dim()' equation, so it",
                     "is an array, but {cli::qty(sum(err))}",
-                    "{?this usage assigns/these usages assign} it as if it were a",
-                    "scalar")),
+                    "{?this usage assigns/these usages assign} it as if it",
+                    "were a scalar")),
         "E214", lapply(err_exprs, "[[", "expr"), call)
     }
   }
@@ -391,7 +391,7 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
   exprs <- exprs[!is_dim]
   
   dsl_parse_check_system_array_bounds(exprs, arrays, call)
-  dsl_parse_check_system_array_coverage(exprs, arrays, call)
+  dsl_parse_check_system_array_usage(exprs, arrays, call)
   
   exprs
 }
@@ -590,13 +590,9 @@ dsl_parse_check_system_array_bounds_rhs <- function(expr, nm, dims, call) {
 }
 
 
-dsl_parse_check_system_array_coverage <- function(exprs, arrays, call) {
+dsl_parse_check_system_array_usage <- function(exprs, arrays, call) {
   name <- lapply(exprs, function(x) x$lhs$name)
   type <- lapply(exprs, "[[", "type")
-  
-  row_match <- function(df, row) {
-    apply(df, 1, function(y) all(y == row))
-  }
   
   for(nm in arrays$name) {
     dims <- unlist(arrays$dims[arrays$name == nm], recursive = FALSE)
@@ -635,8 +631,62 @@ dsl_parse_check_system_array_coverage <- function(exprs, arrays, call) {
         e_exprs <- lapply(exprs[i], "[[", "expr")
         dsl_parse_error(msg, "E224", e_exprs, call)
       }
+      
+      
+      lapply(seq_along(i), dsl_parse_check_system_array_order,
+             exprs[i], idx, call)
     }
     
+  }
+}
+
+
+dsl_parse_check_system_array_order <- function(i, exprs, idx, call) {
+  nm <- exprs[[i]]$lhs$name
+  
+  check_order <- function(e, idx_j, defined) {
+    if (is.recursive(e)) {
+      if (rlang::is_call(e, "[")) {
+        if (deparse(e[[2]]) == nm) {
+          e_idx <- unlist(lapply(rlang::call_args(e)[-1], eval, idx_j))
+          is_out_of_order <- is.null(defined) || !any(row_match(defined, e_idx))
+          if (is_out_of_order) {
+            browser()
+            element_name <- paste0(nm, "[", paste(e_idx, collapse = ", "), "]")
+            msg <- paste("Array element", element_name,
+                         "used on the rhs before being defined")
+            
+            k <- which(vlapply(idx, function(x) any(row_match(x, e_idx))))
+            context <- list(exprs[[k]]$expr)
+            names(context) <- paste(element_name, "is defined later")
+            
+            dsl_parse_error(msg, "E225", exprs[[i]]$expr, call, 
+                            context = context)
+          }
+        }
+      } else {
+        lapply(rlang::call_args(e), check_order, idx_j, defined)
+      }
+    }  
+  }
+  
+  if (nm %in% exprs[[i]]$rhs$depends) {
+    if (i > 1) {
+      defined <- rbind_list(idx[seq_len(i - 1)])
+    } else {
+      defined <- c()
+    }
+    
+    for (j in seq_len(nrow(idx[[i]]))) {
+      idx_j <- idx[[i]][j, , drop = FALSE]
+      if (exprs[[i]]$type == "stochastic") {
+        lapply(exprs[[i]]$rhs$distribution$args,
+               check_order, idx_j, defined)
+      } else {
+        check_order(exprs[[i]]$rhs$expr, idx_j, defined)
+      }
+      defined <- rbind(defined, idx_j)
+    }
   }
 }
 
