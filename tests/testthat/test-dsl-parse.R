@@ -592,7 +592,7 @@ test_that("out-of-bounds access is prevented", {
                            x = "Trying to access element: 4"))
   
   err <- expect_error(dsl_parse(list(quote(a[] <- 2),
-                                     quote(x[] ~ Exponential(a[i - 1])),
+                                     quote(x[] <- a[i - 1]),
                                      quote(dim(x) <- 4),
                                      quote(dim(a) <- 3))),
                       "Out-of-bounds access of 'a' on rhs",
@@ -628,5 +628,24 @@ test_that("cannot use array elements out-of-order", {
                               quote(x[2] ~ Exponential(1)),
                               quote(dim(x) <- 2))),
                "Array element x[2] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                              quote(x[2] ~ Exponential(x[3])),
+                              quote(x[3] ~ Exponential(x[2])),
+                              quote(dim(x) <- 3))),
+               "Array element x[3] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1, ] <- exp(x[2, 2])),
+                              quote(x[2, ] <- 1),
+                              quote(dim(x) <- c(2, 2)))),
+               "Array element x[2, 2] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1, ] <- 1),
+                              quote(x[2, ] <- x[j, i]),
+                              quote(dim(x) <- c(2, 2)))),
+               "Array element x[2, 2] used on the rhs before being defined",
                fixed = TRUE)
 })
