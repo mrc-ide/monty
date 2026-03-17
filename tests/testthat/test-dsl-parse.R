@@ -90,8 +90,9 @@ test_that("variables are not used out of order", {
     }),
     "Invalid use of variable 'a'")
   expect_equal(res$src, quote(b ~ Normal(a, 1)))
-  expect_equal(res$context,
-               list("'a' is defined later:" = quote(a ~ Normal(0, 1))))
+  expect_equal(names(res$context),
+               "'a' is defined later:")
+  expect_equal(res$context[[1]], list(quote(a ~ Normal(0, 1))))
 })
 
 

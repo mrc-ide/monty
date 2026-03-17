@@ -752,10 +752,8 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
       ## Out of order:
       out_of_order <- intersect(name, err)
       if (length(out_of_order) > 0) {
-        f <- function(nm) {
-          unlist(lapply(exprs[name == nm], "[[", "expr"), recursive = FALSE)
-        }
-        context <- lapply(out_of_order, f)
+        context <- lapply(out_of_order, 
+                          function (nm) lapply(exprs[name == nm], "[[", "expr"))
         names(context) <- sprintf("'%s' is defined later:", out_of_order)
         
         ## TODO: It would be nice to indicate that we want to highlight
