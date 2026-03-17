@@ -620,3 +620,12 @@ test_that("array coverage is checked", {
                      "and some by stochastic relationship (with '~')"),
                fixed = TRUE)
 })
+
+
+test_that("cannot use array elements out-of-order", {
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(x[2])),
+                              quote(x[2] ~ Exponential(1)),
+                              quote(dim(x) <- 2))),
+               "Array element x[2] used on the rhs before being defined",
+               fixed = TRUE)
+})
