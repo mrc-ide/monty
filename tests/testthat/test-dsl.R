@@ -275,6 +275,36 @@ test_that("can use arrays in dsl", {
   expect_equal(m2$direct_sample(r), cmp)
   
   
+  ## sequentially-dependent 1d arrays
+  expect_warning(
+    m <- monty_dsl({
+      lambda[1] <- 1
+      lambda[2:3] <- lambda[i - 1] + 1
+      x[1] ~ Normal(0, lambda[i])
+      x[2:3] ~ Normal(x[i - 1], lambda[i])
+      dim(x, lambda) <- 3
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m$density(seq_len(3)), 
+               sum(dnorm(seq_len(3), c(0, 1, 2), seq_len(3), log = TRUE)))
+  domain <- rbind(c(-Inf, Inf), c(-Inf, Inf), c(-Inf, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- numeric(3)
+  cmp[1] <- monty_random_normal(0, 1, r)
+  cmp[2] <- monty_random_normal(cmp[1], 2, r)
+  cmp[3] <- monty_random_normal(cmp[2], 3, r)
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
+  
+  
   ## 2d arrays
   expect_warning(
     m3 <- monty_dsl({
