@@ -315,6 +315,98 @@ dsl_parse_expr_check_lhs_name <- function(lhs, special, is_array, expr, call) {
 }
 
 
+dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
+  ret <- dsl_parse_index(name, dim, index)
+  
+  if (is.null(ret)) {
+    dsl_parse_error(
+      "Invalid value for array index lhs",
+      "E112", expr, call)
+  }
+  
+  if (any(lengths(ret$depends) > 0)) {
+    if (":" %in% ret$depends$functions) {
+      dsl_parse_error(
+        c("Invalid use of range operator ':' on lhs of array assignment",
+          paste("If you use ':' as a range operator on the lhs of an",
+                "assignment into an array, then it must be the outermost",
+                "call, for e.g, {.code (a + 1):(b + 1)}, not",
+                "{.code 1 + (a:b)}")),
+        "E113", expr, call)
+    }
+    allowed <- c("+", "-", "(", ":", "length", "nrow", "ncol")
+    err <- setdiff(ret$depends$functions, allowed)
+    if (length(err) > 0) {
+      dsl_parse_error(
+        "Invalid function{?s} used in lhs of array assignment: {squote(err)}",
+        "E114", expr, call)
+    }
+    if ("-" %in% ret$depends$functions && uses_unary_minus(index)) {
+      dsl_parse_error(
+        "Invalid use of unary minus in lhs of array assignment",
+        "E115", expr, call)
+    }
+    err <- intersect(INDEX, ret$depends$variables)
+    if (length(err) > 0) {
+      dsl_parse_error(
+        paste("Invalid use of special variable{?s} in lhs of array",
+              "assignment: {squote(err)}"),
+        "E116", expr, call)
+    }
+  }
+  
+  ret$depends <- NULL
+  ret
+}
+
+
+dsl_parse_index <- function(name_data, dim, value) {
+  name_index <- INDEX[[dim]]
+  if (rlang::is_missing(value)) {
+    to <- call("dsl_dim", name_data, dim)
+    list(name = name_index, type = "range", from = 1, to = to, depends = NULL)
+  } else if (rlang::is_call(value, ":")) {
+    from <- value[[2]]
+    to <- value[[3]]
+    depends <- join_dependencies(list(find_dependencies(from),
+                                      find_dependencies(to)))
+    list(name = name_index, type = "range", from = from, to = to,
+         depends = depends)
+  } else if (is.language(value) || is.numeric(value)) {
+    depends <- find_dependencies(value)
+    list(name = name_index, type = "single", at = value, depends = depends)
+  } else {
+    NULL
+  }
+}
+
+
+dsl_parse_expr_check_index_usage <- function(variables, array, expr, call) {
+  index_used <- intersect(INDEX, variables)
+  if (length(index_used) > 0) {
+    n <- length(array)
+    err <- if (n == 0) index_used else intersect(index_used, INDEX[-seq_len(n)])
+    if (length(err) > 0) {
+      v <- err[length(err)]
+      i <- match(v, INDEX)
+      dsl_parse_error(
+        c("Invalid index access used on rhs of equation: {squote(err)}",
+          i = paste("Your lhs has only {n} dimension{?s}, but index '{v}'",
+                    "would require {match(v, INDEX)}")),
+        "E108", expr, call)
+    }
+    ## index variables are not real dependencies, so remove them:
+    variables <- setdiff(variables, INDEX)
+  }
+  variables
+}
+
+
+dsl_parse_dim_name <- function(name) {
+  sprintf("dim_%s", name)
+}
+
+
 dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
   is_dim <- special == "dim"
@@ -798,96 +890,4 @@ dsl_packer <- function(parameters, arrays) {
     array <- NULL
   }
   monty_packer(scalar, array)
-}
-
-
-dsl_parse_dim_name <- function(name) {
-    sprintf("dim_%s", name)
-}
-
-
-dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
-  ret <- dsl_parse_index(name, dim, index)
-  
-  if (is.null(ret)) {
-    dsl_parse_error(
-      "Invalid value for array index lhs",
-      "E112", expr, call)
-  }
-  
-  if (any(lengths(ret$depends) > 0)) {
-    if (":" %in% ret$depends$functions) {
-      dsl_parse_error(
-        c("Invalid use of range operator ':' on lhs of array assignment",
-          paste("If you use ':' as a range operator on the lhs of an",
-                "assignment into an array, then it must be the outermost",
-                "call, for e.g, {.code (a + 1):(b + 1)}, not",
-                "{.code 1 + (a:b)}")),
-        "E113", expr, call)
-    }
-    allowed <- c("+", "-", "(", ":", "length", "nrow", "ncol")
-    err <- setdiff(ret$depends$functions, allowed)
-    if (length(err) > 0) {
-      dsl_parse_error(
-        "Invalid function{?s} used in lhs of array assignment: {squote(err)}",
-        "E114", expr, call)
-    }
-    if ("-" %in% ret$depends$functions && uses_unary_minus(index)) {
-      dsl_parse_error(
-        "Invalid use of unary minus in lhs of array assignment",
-        "E115", expr, call)
-    }
-    err <- intersect(INDEX, ret$depends$variables)
-    if (length(err) > 0) {
-      dsl_parse_error(
-        paste("Invalid use of special variable{?s} in lhs of array",
-              "assignment: {squote(err)}"),
-        "E116", expr, call)
-    }
-  }
-  
-  ret$depends <- NULL
-  ret
-}
-
-
-dsl_parse_index <- function(name_data, dim, value) {
-  name_index <- INDEX[[dim]]
-  if (rlang::is_missing(value)) {
-    to <- call("dsl_dim", name_data, dim)
-    list(name = name_index, type = "range", from = 1, to = to, depends = NULL)
-  } else if (rlang::is_call(value, ":")) {
-    from <- value[[2]]
-    to <- value[[3]]
-    depends <- join_dependencies(list(find_dependencies(from),
-                                      find_dependencies(to)))
-    list(name = name_index, type = "range", from = from, to = to,
-         depends = depends)
-  } else if (is.language(value) || is.numeric(value)) {
-    depends <- find_dependencies(value)
-    list(name = name_index, type = "single", at = value, depends = depends)
-  } else {
-    NULL
-  }
-}
-
-
-dsl_parse_expr_check_index_usage <- function(variables, array, expr, call) {
-  index_used <- intersect(INDEX, variables)
-  if (length(index_used) > 0) {
-    n <- length(array)
-    err <- if (n == 0) index_used else intersect(index_used, INDEX[-seq_len(n)])
-    if (length(err) > 0) {
-      v <- err[length(err)]
-      i <- match(v, INDEX)
-      dsl_parse_error(
-        c("Invalid index access used on rhs of equation: {squote(err)}",
-          i = paste("Your lhs has only {n} dimension{?s}, but index '{v}'",
-                    "would require {match(v, INDEX)}")),
-        "E108", expr, call)
-    }
-    ## index variables are not real dependencies, so remove them:
-    variables <- setdiff(variables, INDEX)
-  }
-  variables
 }
