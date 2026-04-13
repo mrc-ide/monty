@@ -221,12 +221,7 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, dest, meta) {
   
   lhs <- bquote(.(meta[[as.character(dest)]])[[.(name)]])
   
-  if (length(dims) == 1) {
-    expr <- call("<-", lhs, call("numeric", dims[[1]]))
-  } else {
-    expr <- call("<-", lhs, call("array", 0, rlang::call2("c", !!!dims)))
-  }
-  expr
+  call("<-", lhs, call("array", 0, rlang::call2("c", !!!dims)))
 }
 
 
