@@ -35,13 +35,40 @@ a + 1
 
 # `E102`
 
-Invalid left hand side of a relationship operator (`~`).  Currently the left hand side must be symbol, though this will be relaxed in the future once we support an array syntax.  However, you may not use things like numbers or function calls on the left hand side.
+Invalid target on lhs of assignment or comparison relationship (`~`).  There are quite a few ways of being an invalid assignment target, and at present they are all grouped within this error.  We may split these into different errors in future where particular types of error are both common and difficult to understand.
 
-Example:
+Examples:
 
 ```
-1 <- 2
-f(x) <- g(y)
+1 <- 10
+```
+
+The code above is valid R (as in, it can be parsed) but it is nonsensical.  Generally, the lhs of an assignment must be a symbol (e.g., `a <- 1`).
+
+This code is also reported if you have a spelling mistake, such as
+
+```
+dym(x) <- 1
+```
+
+instead of `dim(x)`, though we will try and suggest the appropriate function if you have a near miss.
+
+If you assign into an array, then the array name must be a symbol, so this is invalid:
+
+```
+f(x)[] <- 1
+```
+
+as is this:
+
+```
+1[] <- 1
+```
+
+Sometimes you will see this error if you have accidentally nested special functions
+
+```
+dim(dim(x)) <- 1
 ```
 
 # `E103`
@@ -58,7 +85,144 @@ The details for the failure will be included in the body of the error message.
 
 # `E104`
 
+**Obsolete since 0.4.10, these problems are now included within [E102](#e102)**
+
 Invalid left hand side of an assignment with `<-`; this is similar to `E102`.
+
+# `E105`
+
+Invalid input to special lhs function `dim()`.  There can be multiple arguments but there must be at least one. All arguments must be symbols, and named arguments are not allowed.
+
+Examples:
+
+```
+dim() <- 1
+dim(x = a) <- 1
+dim(f(x)) <- 1
+```
+
+# `E106`
+
+The `dim` function when used on the right hand side only takes the name of an array whose dimensions are to be copied. For example:
+
+```
+dim(b) <- dim(a)
+dim(c) <- dim(b)
+```
+
+are both valid, resulting in both `b` and `c` having the same dimensions as `a`. Below, however, are all incorrect:
+
+```
+dim(a) <- dim(1)
+dim(a) <- dim(b[])
+dim(a) <- dim(a * 2)
+dim(a) <- dim(a + 5)
+```
+
+# `E107`
+
+Invalid functions used in expression for `dim()`.  Currently `dim()` is quite limited in what it can accept.  You can use `+`, `-`, `(`, `length`, `nrow` and `ncol` but nothing else.  Let us know if you think you should be able to use more.
+
+# `E108`
+
+Invalid use of a special array access variable (e.g., `i`, `j`, `k`) on the right hand side of an expression.  The available index variables are determined by the rank (number of dimensions) of the variable on the left hand side.  If you have a vector you can only use `i` on the right hand side, if you have a matrix you can use `i` and `j` and so on.
+
+Example causing an error:
+
+```r
+x[, ] <- a[i, k] + a[i, j]
+```
+
+Above, we have used `k` on the rhs, but `x` is only a matrix so this would not work.  Think of the above statement as it might appear in generated pseudo-code:
+
+```
+for i in 1:nrow(x):
+  for j in 1:ncol(x):
+     x[i, j] <- a[i, k] + a[i, j]
+```
+
+and the reason that this is an error should be apparent.
+
+# `E109`
+
+Assignment to reserved words in the monty DSL is not allowed.  Currently the list of reserved words includes `dim` (as this is a special function) and the index variables: `i`, `j`, `k`, `l`, `i5`, `i6`, `i7` and `i8`. So
+
+```
+dim <- 2
+```
+
+is not allowed, nor is
+
+```
+k ~ Poisson(5)
+```
+
+# `E110`
+
+Assignment to a name that starts with a restricted prefix.  Names cannot begin with `dim_`.
+
+An example that would trigger this:
+
+```
+dim_a <- 10
+```
+
+# `E111`
+
+You can use the built-in constant `pi` on the right hand side of an expression, without setting it. You should not use it on the left-hand side of any expression. Thus `pi` cannot be used as the name of a variable, but e.g. `pi1` or `pi_1` are allowed.
+
+# `E112`
+
+Something unexpected was used as an array index on the left hand side of an array expression, such as:
+
+```r
+x[TRUE] <- 1
+```
+
+# `E113`
+
+Invalid use of `:` within the left hand side of an array assignment.  We might increase the number of ways you can use this but for now we are quite strict.  If you use `:` it must be the *outermost* operator within an index, so this is fine:
+
+```r
+x[a:b]
+```
+
+but this is not
+
+```r
+x[a:b + 1]
+```
+
+This is because we can't generally convert the latter type into a `from:to` form, which we need for the code generation to work, and you should use bracketing here to be more specify if you really mean `(a + 1):(b + 1)` or `a:(b + 1)`.
+
+# `E114`
+
+Invalid functions used within an array index.  At the moment you can only use `:` (the range operator, which must be the outermost function call), `+`, `-` and `(`.  The error will indicate the function that you have tried to use, and if you feel this is unreasonable please let us know.
+
+# `E115`
+
+Unary minus (`-` as "negative" rather than "minus") detected within arrays.  This error is a special case of [`E113`](#e113) but deserves special mention here because it has special meaning in R's array access.  In R, we can write
+
+```
+x[-1]
+```
+
+and this means "all of `x` except the first element", which is something we might support in future.
+
+# `E116`
+
+Invalid use of `i`, `j`, etc on the left hand side of an expression, for example:
+
+```r
+x[i] <- 2 * a[i]
+```
+
+Usually, this error can be fixed by omitting the `i` from the left hand side as you probably meant
+
+```r
+x[] <- 2 * a[i]
+```
+
 
 # `E201`
 
@@ -129,3 +293,305 @@ Failed to differentiate the model.  This error will only be seen where it was no
 # `E207`
 
 A value in `fixed` is shadowed by an assignment or a relationship.  If you pass in fixed data it may not be used on the left hand side of any expression in your DSL code.
+
+# `E208`
+
+Undefined variable used in an equation.  This error means that you have referenced some variable that does not exist within your code.  Common reasons for this error include:
+
+* A spelling mistake: you've referenced a variable that is very similar to the one that you meant to.
+* You forgot to include an equation defining the variable.
+* You forgot to include a value in `fixed`.
+
+# `E209`
+
+An assignment or relationship expression for an array did not have a corresponding call to `dim()`.  We always need this, even if it looks like we should be able to work out how long your array is.  You probably just need to add a call like
+
+```r
+dim(x) <- ...
+```
+
+# `E210`
+
+You have used a symbol on the lhs of a dim assignment that does not have a value in fixed.
+
+If you have e.g.
+
+```r
+dim(a) <- c(m, n)
+```
+
+then `m` and `n` should be included in `fixed`. We do not allow e.g.
+
+```r
+m <- 4
+n <- 5
+dim(a) <- c(m, n)
+```
+
+as array dimensions are evaluated before all other expressions (and they cannot be stochastic).
+
+# `E211`
+
+You have tried to assign dimensions to an array using a value in fixed that is not scalar.
+
+If you have e.g.
+
+```r
+dim(a) <- d
+```
+
+then the value of `d` in `fixed` should be scalar. If you wanted e.g. `a` to be a two-dimensional array then you could declare dimensions as
+
+```r
+dim(a) <- c(d1, d2)
+```
+
+where the values of `d1` and `d2` would both be scalar. This makes it easier to determine the rank of an array while parsing.
+
+# `E212`
+
+In a dim assignment you have used a variable in `dim()` on the rhs that does not has a dimensions assignment expression itself.
+
+If you have e.g.
+
+```r
+dim(a) <- dim(b)
+```
+
+then there must also be a `dim` assignment for `b`.
+
+# `E213`
+
+Cyclic dependency detected within dim equations.  There are a few ways this can happen.  The simplest is that your equation references itself, for example:
+
+```r
+dim(a) <- dim(a)
+```
+
+You can get more complicated cycles, for example:
+
+```r
+dim(a) <- dim(b)
+dim(b) <- dim(c)
+dim(c) <- dim(a)
+```
+
+It is possible that there is more than one cycle within the reported expressions.
+
+# `E214`
+
+You have tried an assignment or relationship expression for an array variable (i.e., something with a `dim()` call) without using `[]` on the left hand side.
+
+Example:
+
+```r
+dim(a) <- 5
+a <- 0
+```
+
+If you wanted a length-5 array of zeros here, you should write
+
+```
+a[] <- 0
+```
+
+# `E215`
+
+Multiline array equations must be written as consecutive statements, with no assignments or relationships for other variables in between (comments are fine).  So this is an error:
+
+```
+a[1] <- 1
+b <- 10
+a[2] <- b
+```
+
+Because the assignment to `b` occurs within the block of assignments to `a[]`.
+
+# `E216`
+
+There are no stochastic relationships (with `~`) in your model, and you have only included assignments (with `<-`). Your model code should have at least one stochastic relationship.
+
+# `E217`
+
+Array rank in expression differs from the rank declared with `dim`
+
+Here, the number of dimensions for a variable in an expression is different from the number declared with the `dim` function, which is the source of truth for rank. For example, you might declare a matrix and a vector like this:-
+
+```
+dim(x) <- c(5,5)
+dim(y) <- 3
+```
+
+When you use these in other expressions, the rank must match the declaration above. So these examples would be valid syntax:-
+
+```
+x[, ] <- 0
+y[1:2] ~ Exponential(1)
+y[3] ~ Exponential(y[2])
+```
+
+but these would not:-
+
+```
+x[] <- 1
+y[1, 2] <- Exponential(1)
+y[3] ~ Exponential(y[1, 2])
+```
+
+# `E218`
+
+The `length`, `ncol` and `nrow` functions take as their argument a whole array, matrix, or higher-order structure, without brackets or indexing.
+
+So 
+```
+dim(x) <- c(5,5)
+y <- length(x)
+```
+
+is valid, but 
+
+```
+y <- length(x[, 1]
+y <- length(x[])
+```
+
+are both invalid.
+
+# `E219`
+
+Trying to access an array without using square bracket indexes.  For example if you write:
+
+```r
+dim(b) <- 10
+a[] <- b
+```
+
+you would see this error, as you should have used `b[i]` on the right hand side (*probably!*; you might have meant `a[] <- b[1]`, too).
+
+# `E220`
+
+Invalid use of the empty index or range operator on the right hand side of an array expression.  You cannot, for example, write
+
+```r
+a[] <- b + c[i, ]
+```
+
+or
+
+```r
+a[] <- b + c[i, 2:3]
+```
+
+Here, the accesses of `c` are problematic because they would refer to a vector.
+
+# `E221`
+
+An array access would be out of bounds.  This error is thrown where your code would result in you reading or writing out of bounds on an array (or a dimension of an array).
+
+Example:
+
+```r
+x[1:3] ~ Exponential(1)
+x[4] <- Exponential(3)
+dim(x) <- 3
+```
+
+errors because `x[4]` is outside the bounds defined by your `dim` equation for `x`.
+
+```r
+x[] <- a[i]
+dim(x) <- 5
+dim(a) <- 4
+```
+
+errors on the rhs as in `x[] <- a[i]` we loop over the first dimension of `x` which is defined to have size 5 but `a` only has 4 elements so `a[5]` is out-of-bounds.
+
+Similarly
+
+```r
+x[] <- a[i - 1]
+dim(x) <- 5
+dim(a) <- 4
+```
+
+errors as you are trying to access `a[0]`, which is out-of-bounds.
+
+# `E222`
+
+An element of an array does not have an equation defining it.
+
+Example:
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+dim(x) <- 5
+```
+
+Here the `dim` equation for `x` tells us to expect a definition for `x[5]` but it is not defined by the existing equations for `x`. It could be possible that you meant to cover it in the existing equations, e.g.
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+dim(x) <- 5
+```
+
+or that you meant to include a separate equation defining it (and possibly other undefined elements of `x`) e.g.
+
+```r
+x[1:2] ~ Exponential(5)
+x[3:4] ~ Exponential(7)
+x[5] ~ Exponential(9)
+dim(x) <- 5
+```
+
+# `E223`
+
+An element of an array has multiple definitions (across multiple equations). This could arise from having defined the entire array more than once, e.g.
+
+```r
+a[] <- i
+a[] <- 3
+dim(a) <- 4
+```
+
+or it could be that your have defined part of it more than once, e.g.
+
+```r
+a[] <- i
+a[4] <- 3
+dim(a) <- 4
+```
+
+# `E224`
+
+An array has some elements defined as an assignment (with `<-`) and some defined as a stochastic relationship (with `~`).
+
+Example:
+
+```r
+a[1:2] <- i
+a[3:4] ~ Uniform(0, 1)
+dim(a) <- 4
+```
+
+An array variable must be either entirely defined with assignments or entirely with stochastic relationships.
+
+# `E225`
+
+You are trying to use an array element on the rhs before it has been defined. A simple example is
+
+```r
+x[1] <- x[2]
+x[2] <- 1
+```
+
+In the `monty` DSL, equations are evaluated in the order in which they appear so here it will evaluate `x[1] <- x[2]` first, before `x[2]` has been defined.
+
+The error may also arise from array loops, e.g.
+
+```r
+x[1:4] <- x[i + 1]
+```
+
+Since the equation is evaluated as a loop in order from `i = 1` to `i = 4`, so first `x[1]` (`i = 1`) will be evaluated but it depends upon `x[2]` which has yet to be defined.
