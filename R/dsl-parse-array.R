@@ -6,7 +6,7 @@ dsl_parse_arrays <- function(exprs, fixed, call) {
   check_duplicate_dims(arrays, exprs, call)
   arrays <- resolve_array_references(arrays)
   arrays <- resolve_split_dependencies(arrays, call)
-  arrays <- finalise_arrays_table(arrays, exprs, call)
+  arrays <- finalise_arrays_table(arrays, exprs[is_dim], call)
   
   arrays
 }
