@@ -127,7 +127,7 @@ dsl_generate_assignment <- function(expr, dest, meta) {
 
   
   if (!is.null(array)) {
-    expr <- dsl_generate_array_loops(expr, array)
+    expr <- dsl_generate_array_loops(expr, array, meta)
   }
   expr
 }
@@ -148,7 +148,7 @@ dsl_generate_density_stochastic <- function(expr, meta) {
                        dsl_generate_density_rewrite_lookup(rhs, "pars", meta))
     
   if (!is.null(array)) {
-    expr <- dsl_generate_array_loops(expr, array)
+    expr <- dsl_generate_array_loops(expr, array, meta)
   }
   expr
 }
@@ -167,7 +167,7 @@ dsl_generate_sample_stochastic <- function(expr, meta) {
   expr <- rlang::call2("<-", lhs, rhs)
   
   if (!is.null(array)) {
-    expr <- dsl_generate_array_loops(expr, array)
+    expr <- dsl_generate_array_loops(expr, array, meta)
   }
   expr
 }
@@ -192,14 +192,15 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
 }
 
 
-dsl_generate_array_loops <- function(expr, array) {
+dsl_generate_array_loops <- function(expr, array, meta) {
   for (x in rev(array)) {
     if (x$type == "range") {
       range <- call("seq", x$from, x$to)
+      range <- dsl_generate_density_rewrite_lookup(range, "pars", meta)
       expr <- call("for", as.symbol(x$name), range, call("{", expr))
     } else { # type is "single"
       idx <- list()
-      idx[[x$name]] <- x$at
+      idx[[x$name]] <- dsl_generate_density_rewrite_lookup(x$at, "pars", meta)
       expr <- substitute_(expr, idx)
     }
   }
@@ -236,9 +237,9 @@ dsl_generate_domain <- function(dat, meta, packer) {
   }
   for (e in dat$exprs) {
     if (e$type == "assignment") {
-      dsl_generate_domain_assignment(e, env, dat$arrays)
+      dsl_generate_domain_assignment(e, env, dat$fixed, dat$arrays)
     } else { # type is "stochastic"
-      domain <- dsl_generate_domain_stochastic(domain, e, env)
+      domain <- dsl_generate_domain_stochastic(domain, e, env, dat$fixed)
     }
   }
   
@@ -252,7 +253,7 @@ dsl_generate_domain <- function(dat, meta, packer) {
 }
 
 
-dsl_generate_domain_assignment <- function(expr, env, arrays) {
+dsl_generate_domain_assignment <- function(expr, env, fixed, arrays) {
   if (is.null(expr$lhs$array)) {
     env[[expr$lhs$name]] <- dsl_static_eval(expr$rhs$expr, env) 
   } else {
@@ -263,7 +264,7 @@ dsl_generate_domain_assignment <- function(expr, env, arrays) {
     }
     array <- expr$lhs$array
     
-    idx <- generate_index_grid(array)
+    idx <- generate_index_grid(array, fixed)
     for (i in seq_len(nrow(idx))) {
       rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
       rhs_val <- dsl_static_eval(rhs, env)
@@ -273,7 +274,7 @@ dsl_generate_domain_assignment <- function(expr, env, arrays) {
 }
 
 
-dsl_generate_domain_stochastic <- function(domain, expr, env) {
+dsl_generate_domain_stochastic <- function(domain, expr, env, fixed) {
   distr <- expr$rhs$distribution
   
   if (is.null(expr$lhs$array)) {
@@ -283,8 +284,8 @@ dsl_generate_domain_stochastic <- function(domain, expr, env) {
     
     idx <- list()
     for (x in array) {
-      from <- x$from %||% x$at
-      to <- x$to  %||% x$at
+      from <- eval(x$from %||% x$at, fixed)
+      to <- eval(x$to  %||% x$at, fixed)
       idx[[x$name]] <- seq(from = from, to = to)
     }
     idx <- expand.grid(rev(idx))
@@ -327,11 +328,11 @@ fold_c <- function(x) {
 }
 
 
-generate_index_grid <- function(array) {
+generate_index_grid <- function(array, fixed) {
   idx <- list()
   for (x in array) {
-    from <- x$from %||% x$at
-    to <- x$to  %||% x$at
+    from <- eval(x$from %||% x$at, fixed)
+    to <- eval(x$to  %||% x$at, fixed)
     idx[[x$name]] <- seq(from = from, to = to)
   }
   idx <- expand.grid(rev(idx))

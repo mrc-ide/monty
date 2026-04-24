@@ -411,7 +411,7 @@ dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
   is_dim <- special == "dim"
   
-  exprs <- dsl_parse_check_system_arrays(exprs, arrays, is_dim, call)
+  exprs <- dsl_parse_check_system_arrays(exprs, fixed, arrays, is_dim, call)
   dsl_parse_check_duplicates(exprs, arrays, call)
   dsl_parse_check_fixed(exprs, fixed, call)
   dsl_parse_check_usage(exprs, fixed, call)
@@ -420,7 +420,7 @@ dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
 }
 
 
-dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
+dsl_parse_check_system_arrays <- function(exprs, fixed, arrays, is_dim, call) {
   dim_nms <- arrays$name
   ## First, look for any array calls that do not have a corresponding
   ## dim()
@@ -482,8 +482,8 @@ dsl_parse_check_system_arrays <- function(exprs, arrays, is_dim, call) {
    ## Can now eject the dim equations
   exprs <- exprs[!is_dim]
   
-  dsl_parse_check_system_array_bounds(exprs, arrays, call)
-  dsl_parse_check_system_array_usage(exprs, arrays, call)
+  dsl_parse_check_system_array_bounds(exprs, fixed, arrays, call)
+  dsl_parse_check_system_array_usage(exprs, fixed, arrays, call)
   
   exprs
 }
@@ -612,7 +612,7 @@ dsl_parse_check_consistent_dimensions_expr <- function(expr, src,
 }
 
 
-dsl_parse_check_system_array_bounds <- function(exprs, arrays, call) {
+dsl_parse_check_system_array_bounds <- function(exprs, fixed, arrays, call) {
   
   name <- lapply(exprs, function(x) x$lhs$name)
   
@@ -620,20 +620,26 @@ dsl_parse_check_system_array_bounds <- function(exprs, arrays, call) {
     dims <- unlist(arrays$dims[arrays$name == nm], recursive = FALSE)
     
     i <- nm == name
-    lapply(exprs[i], dsl_parse_check_system_array_bounds_lhs, dims, call)
+    lapply(exprs[i], dsl_parse_check_system_array_bounds_lhs, fixed, dims, call)
     
     i <- vlapply(exprs, function(x) nm %in% x$rhs$depends)
-    lapply(exprs[i], dsl_parse_check_system_array_bounds_rhs, nm, dims, call)
+    lapply(exprs[i], dsl_parse_check_system_array_bounds_rhs, 
+           fixed, nm, dims, call)
   }
   
 }
 
 
-dsl_parse_check_system_array_bounds_lhs <- function(expr, dims, call) {
+dsl_parse_check_system_array_bounds_lhs <- function(expr, fixed, dims, call) {
   name <- expr$lhs$name
   
-  max_index <- lapply(expr$lhs$array, 
-                      function(x) max(x$from %||% x$at, x$to %||% x$at))
+  eval_max_index <- function (x) {
+    from <- eval(x$from %||% x$at, fixed)
+    to <- eval(x$to %||% x$at, fixed)
+    max(from, to)
+  }
+  
+  max_index <- lapply(expr$lhs$array, eval_max_index)
   
   for (i in seq_along(max_index)) {
     if (max_index[[i]] > dims[[i]]) {
@@ -647,15 +653,16 @@ dsl_parse_check_system_array_bounds_lhs <- function(expr, dims, call) {
 }
 
 
-dsl_parse_check_system_array_bounds_rhs <- function(expr, nm, dims, call) {
+dsl_parse_check_system_array_bounds_rhs <- function(expr, fixed, nm, 
+                                                    dims, call) {
   array <- expr$lhs$array
-  index <- generate_index_grid(expr$lhs$array)
+  index <- generate_index_grid(expr$lhs$array, fixed)
   
   check_expr <- function(e) {
     if (is.recursive(e)) {
       if (rlang::is_call(e, "[")) {
         if (deparse(e[[2]]) == nm) {
-          idx <- lapply(rlang::call_args(e)[-1], eval, index)
+          idx <- lapply(rlang::call_args(e)[-1], eval, c(index, fixed))
           for (i in seq_along(idx)) {
             for (j in seq_along(idx[[i]])) {
               if (idx[[i]][j] > dims[[i]] || idx[[i]][j] < 1) {
@@ -682,7 +689,7 @@ dsl_parse_check_system_array_bounds_rhs <- function(expr, nm, dims, call) {
 }
 
 
-dsl_parse_check_system_array_usage <- function(exprs, arrays, call) {
+dsl_parse_check_system_array_usage <- function(exprs, fixed, arrays, call) {
   name <- lapply(exprs, function(x) x$lhs$name)
   type <- lapply(exprs, "[[", "type")
   
@@ -696,7 +703,8 @@ dsl_parse_check_system_array_usage <- function(exprs, arrays, call) {
       idx_expected <- expand.grid(rev(idx_expected))
       idx_expected <- idx_expected[, rev(names(idx_expected)), drop = FALSE]
       
-      idx <- lapply(exprs[i], function(x) generate_index_grid(x$lhs$array))
+      idx <- lapply(exprs[i], 
+                    function(x) generate_index_grid(x$lhs$array, fixed))
       
       for (j in seq_len(nrow(idx_expected))) {
         is_covered <- 

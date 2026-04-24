@@ -252,9 +252,9 @@ test_that("can use arrays in dsl", {
   expect_warning(
     m2 <- monty_dsl({
       lambda[1:2] <- 2 * i
-      lambda[3] <- 2 * i + 1
+      lambda[n] <- 2 * i + 1
       x[1] ~ Exponential(lambda[i])
-      x[2:3] ~ Exponential(lambda[i]^2)
+      x[2:n] ~ Exponential(lambda[i]^2)
       dim(x, lambda) <- n
     }, fixed = list(n = 3)),
     "Not creating a gradient function for this model")
