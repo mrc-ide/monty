@@ -69,6 +69,15 @@ test_that("can directly sample from a model", {
                m$direct_sample(r2))
   expect_equal(monty_model_direct_sample(m, r1, named = TRUE),
                c(gamma = m$direct_sample(r2)))
+  
+  m <- monty_example("banana")
+  r1 <- monty_rng_create(n_streams = 3, seed = 42)
+  r2 <- monty_rng_create(n_streams = 3, seed = 42)
+  
+  expect_equal(monty_model_direct_sample(m, r1),
+               m$direct_sample(r2))
+  expect_equal(monty_model_direct_sample(m, r1, named = TRUE),
+               m$direct_sample(r2))
 })
 
 
