@@ -19,7 +19,7 @@ test_that("sampler return value contains history", {
   res <- monty_sample(model, sampler, 100, 1)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "state", "observations"))
+    c("pars", "density", "initial", "details", "state", "data", "observations"))
   expect_equal(dim(res$pars), c(1, 100, 1))
   expect_equal(dimnames(res$pars), list("gamma", NULL, NULL))
   expect_equal(dim(res$density), c(100, 1))

@@ -57,6 +57,7 @@ monty_sampler_random_walk <- function(vcv, boundaries = "reflect",
                   rerun_every = rerun_every,
                   rerun_random = rerun_random)
   properties <- monty_sampler_properties(
+    allow_augmented_data = TRUE,
     allow_multiple_parameters = TRUE)
 
   monty_sampler("Random walk",

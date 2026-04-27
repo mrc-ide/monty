@@ -136,6 +136,7 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
                                            model, sampler,
                                            steps, progress, rng,
                                            r_rng_state) {
+  stopifnot(!model$properties$has_augmented_data)
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   n_chains <- length(chain_state$density)
@@ -168,6 +169,7 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   model_rng <- NULL
 
   observations <- NULL
+  data <- NULL
   state <- list(
     chain = chain_state,
     sampler = sampler_state,
@@ -176,5 +178,5 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## Normally, we construct samples elsewhere, but it's least weird
   ## for now do do it here.
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details, observations, data, state)
 }
