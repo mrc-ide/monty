@@ -41,19 +41,40 @@ dsl_parse_error <- function(msg, code, src, call, ...,
 ##' @importFrom rlang cnd_footer
 ##' @export
 cnd_footer.monty_parse_error <- function(cnd, ...) {
-  detail <- c(">" = "In expression",
-              format_error_src(cnd$src))
-  for (i in seq_along(cnd$context)) {
-    detail <- c(detail,
-                "",
-                i = names(cnd$context)[[i]],
-                format_error_src(cnd$context[[i]]))
+  if (is.null(cnd$src)) {
+    detail <- c()
+  } else {
+    if (is.list(cnd$src)) {
+      detail <- c(">" = "In expressions")
+      for (i in seq_along(cnd$src)) {
+        detail <- c(detail,
+                    format_error_src(cnd$src[[i]]))
+      }
+    } else {
+      detail <- c(">" = "In expression",
+                  format_error_src(cnd$src))
+    }
+    for (i in seq_along(cnd$context)) {
+      detail <- c(detail,
+                  "",
+                  i = names(cnd$context)[[i]])
+      if (is.list(cnd$context[[i]])) {
+        for (j in seq_along(cnd$context[[i]])) {
+          detail <- c(detail,
+                      format_error_src(cnd$context[[i]][[j]]))
+        }
+      } else {
+        detail <- c(detail,
+                    format_error_src(cnd$context[[i]]))
+      }
+      
+    }
+    ## Annoyingly, there's no way of marking text as whitespace
+    ## preserving within cli, so we need to do a substitution here for
+    ## "nonbreaking space" which does ok.  We should also convert tabs
+    ## to some number of spaces, probably.
+    detail <- gsub(" ", "\u00a0", detail)
   }
-  ## Annoyingly, there's no way of marking text as whitespace
-  ## preserving within cli, so we need to do a substitution here for
-  ## "nonbreaking space" which does ok.  We should also convert tabs
-  ## to some number of spaces, probably.
-  detail <- gsub(" ", "\u00a0", detail)
 
   code <- cnd$code
   ## See https://cli.r-lib.org/reference/links.html#click-to-run-code
