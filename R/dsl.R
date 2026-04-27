@@ -189,14 +189,27 @@ check_dsl_fixed <- function(fixed, call) {
     return(NULL)
   }
   assert_named(fixed, unique = TRUE, call = call)
-  err <- lengths(fixed) != 1
+  
+  f_info <- function(name) {
+    if (name %in% INDEX) {
+      paste(squote(name), "is a reserved index variable in the monty DSL")
+    } else if (name %in% RESERVED_MONTY) {
+      paste(squote(name), "is a reserved word in the monty DSL")
+    } else {
+      prefix <- sub(RESERVED_MONTY_PREFIX_RE, "\\1", name)
+      paste(squote(prefix),  "is a reserved prefix in the monty DSL")
+    }
+  }
+  
+  err <- any(names(fixed) %in% c(RESERVED_MONTY, RESERVED_MONTY_PREFIX_RE))
   if (any(err)) {
-    info <- sprintf("'%s' had length %d",
-                    names(fixed)[err], lengths(fixed[err]))
+    info <- vcapply(names(fixed)[err], f_info)
     cli::cli_abort(
-      c("All elements of 'fixed' must currently be scalars",
-        set_names(info, "x")),
+      c("Element name{?s} {squote(names(fixed)[err])} in 'fixed' not allowed",
+        set_names(info, "i")),
       arg = "fixed", call = call)
   }
   fixed
 }
+
+
