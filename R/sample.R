@@ -62,6 +62,12 @@
 ##'   `thinning_factor` is 10, then `n_steps` must be a multiple of
 ##'   10.  This ensures that the last step is in the sample.  The
 ##'   thinning factor cannot be changed when continuing a chain.
+##'   
+##' @param save_full_chains Logical, indicating whether or not the full chains
+##'   of the parameters (without discarding the burnin and thinning) should
+##'   additionally be saved. This is useful if you are thinning to reduce the
+##'   size of observations but still want to retain the full chains of the
+##'   parameters for evaluation purposes.
 ##'
 ##' @return A list of parameters and densities.  We provide conversion
 ##'   to formats used by other packages, notably
@@ -75,6 +81,10 @@
 ##'   `i`th parameter from the `j`th sample from the `k`th chain.  The
 ##'   rows will be named with the names of the parameters, from your
 ##'   model.
+##'
+##' * `pars_full`: If `save_full_chains = TRUE`, an array representing `pars`
+##'   without discarding the burnin and thinning. If `save_full_chains = FALSE`,
+##'   this will be `NULL`.
 ##'
 ##' * `density`: A matrix of model log densities, with `n_steps` rows
 ##'   and `n_chains` columns.

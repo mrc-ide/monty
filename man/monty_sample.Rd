@@ -13,7 +13,8 @@ monty_sample(
   runner = NULL,
   restartable = FALSE,
   burnin = NULL,
-  thinning_factor = NULL
+  thinning_factor = NULL,
+  save_full_chains = FALSE
 )
 }
 \arguments{
@@ -72,6 +73,12 @@ is an even multiple of \code{thinning_factor}; so if
 \code{thinning_factor} is 10, then \code{n_steps} must be a multiple of
 10.  This ensures that the last step is in the sample.  The
 thinning factor cannot be changed when continuing a chain.}
+
+\item{save_full_chains}{Logical, indicating whether or not the full chains
+of the parameters (without discarding the burnin and thinning) should
+additionally be saved. This is useful if you are thinning to reduce the
+size of observations but still want to retain the full chains of the
+parameters for evaluation purposes.}
 }
 \value{
 A list of parameters and densities.  We provide conversion
@@ -86,6 +93,9 @@ parameter, sample and chain, so that \code{pars[i, j, k]} is the
 \code{i}th parameter from the \code{j}th sample from the \code{k}th chain.  The
 rows will be named with the names of the parameters, from your
 model.
+\item \code{pars_full}: If \code{save_full_chains = TRUE}, an array representing \code{pars}
+without discarding the burnin and thinning. If \code{save_full_chains = FALSE},
+this will be \code{NULL}.
 \item \code{density}: A matrix of model log densities, with \code{n_steps} rows
 and \code{n_chains} columns.
 \item \code{initial}: A record of the initial conditions, a matrix with as
@@ -118,7 +128,7 @@ plot(pars, pch = 19, cex = 0.75, col = "#0000ff55")
 
 # If you have the posterior package you might prefer converting to
 # its format for performing diagnoses:
-\dontshow{if (requireNamespace("posterior")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("posterior")) withAutoprint(\{ # examplesIf}
 res <- posterior::as_draws_df(samples)
 posterior::summarise_draws(res)
 
