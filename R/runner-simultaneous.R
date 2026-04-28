@@ -140,8 +140,14 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   n_pars <- length(model$parameters)
   n_chains <- length(chain_state$density)
   n_steps_record <- steps$total
-
+  save_full_chains <- steps$save_full_chains
+  
   pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
+  if (save_full_chains) {
+    pars_full <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
+  } else {
+    pars_full <- NULL
+  }
   density <- matrix(NA_real_, n_steps_record, n_chains)
 
   chain_id <- seq_len(n_chains)
@@ -150,6 +156,9 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
     chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
                                 model, rng)
     pars[, i, ] <- chain_state$pars
+    if (save_full_chains) {
+      pars_full[, i, ] <- chain_state$pars
+    }
     density[i, ] <- chain_state$density
     ## TODO: also allow observations here if enabled
     progress(chain_id, i)
@@ -176,5 +185,5 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## Normally, we construct samples elsewhere, but it's least weird
   ## for now do do it here.
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, pars_full, density, initial, details, observations, state)
 }

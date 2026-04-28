@@ -207,6 +207,7 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
 
   burnin <- NULL
   thinning_factor <- samples$restart$thinning_factor
+  save_full_chains <- !is.null(samples$pars_full)
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor,
                               save_full_chains)
 
