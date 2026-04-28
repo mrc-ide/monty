@@ -207,7 +207,7 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
 
   burnin <- NULL
   thinning_factor <- samples$restart$thinning_factor
-  save_full_chains <- !is.null(samples$pars_full)
+  save_full_chains <- !is.null(samples$full_chains)
   steps <- monty_sample_steps(n_steps, burnin, thinning_factor,
                               save_full_chains)
 
@@ -425,9 +425,8 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   }
   if (!is.null(prev$full_chains) && !is.null(curr$full_chains)) {
     full_chains <- list(
-      pars_full = 
-        array_bind(prev$full_chains$pars, curr$full_chains$pars, on = 2),
-      density_full = 
+      pars = array_bind(prev$full_chains$pars, curr$full_chains$pars, on = 2),
+      density = 
         array_bind(prev$full_chains$density, curr$full_chains$density, on = 1)
     )
   } else {

@@ -501,11 +501,12 @@ test_that("can continue thinned chain, continues thinning", {
 
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 1, n_chains = 3,
-                       thinning_factor = 4)
+                       thinning_factor = 4, save_full_chains = TRUE)
 
   set.seed(1)
   res2a <- monty_sample(model, sampler, 60, 1, n_chains = 3,
-                        thinning_factor = 4, restartable = TRUE)
+                        thinning_factor = 4, restartable = TRUE,
+                        save_full_chains = TRUE)
   res2b <- monty_sample_continue(res2a, 40)
 
   expect_equal(res2b, res1)
