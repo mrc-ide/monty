@@ -480,6 +480,7 @@ monty_sample_steps <- function(n_steps, burnin = NULL, thinning_factor = NULL,
         call = call)
     }
   }
+  assert_logical(save_full_chains)
   ret <- list(total = n_steps,
               burnin = burnin,
               thinning_factor = thinning_factor,
