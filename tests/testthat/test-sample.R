@@ -19,7 +19,8 @@ test_that("sampler return value contains history", {
   res <- monty_sample(model, sampler, 100, 1)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "state", "observations"))
+    c("pars", "density", "initial", "details",
+      "state", "observations", "full_chains"))
   expect_equal(dim(res$pars), c(1, 100, 1))
   expect_equal(dimnames(res$pars), list("gamma", NULL, NULL))
   expect_equal(dim(res$density), c(100, 1))
@@ -391,9 +392,21 @@ test_that("can sample with burnin", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$full_chains, NULL)
+  
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3, burnin = 30)
   expect_equal(res2$pars, res1$pars[, 31:100, , drop = FALSE])
+  expect_equal(res2$density, res1$density[31:100, , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
+  
+  set.seed(1)
+  res3 <- monty_sample(model, sampler, 100, 3, burnin = 30,
+                       save_full_chains = TRUE)
+  expect_equal(res3$pars, res1$pars[, 31:100, , drop = FALSE])
+  expect_equal(res3$density, res1$density[31:100, , drop = FALSE])
+  expect_equal(res3$full_chains$pars, res1$pars)
+  expect_equal(res3$full_chains$density, res1$density)
 })
 
 
@@ -402,9 +415,21 @@ test_that("can sample with thinning", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$full_chains, NULL)
+  
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3, thinning_factor = 4)
   expect_equal(res2$pars, res1$pars[, seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res2$density, res1$density[seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
+  
+  set.seed(1)
+  res3 <- monty_sample(model, sampler, 100, 3, thinning_factor = 4,
+                       save_full_chains = TRUE)
+  expect_equal(res3$pars, res1$pars[, seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res3$density, res1$density[seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res3$full_chains$pars, res1$pars)
+  expect_equal(res3$full_chains$density, res1$density)
 })
 
 
@@ -413,15 +438,44 @@ test_that("can sample with burnin and thinning", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$full_chains, NULL)
+  
   ## Pick deliberately hard values here:
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3,
                        burnin = 25, thinning_factor = 10)
   expect_equal(res2$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res2$density, 
+               res1$density[seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
+  
   set.seed(1)
   res3 <- monty_sample(model, sampler, 100, 3,
                        burnin = 20, thinning_factor = 10)
   expect_equal(res3$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res3$density,
+               res1$density[seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res3$full_chains, NULL)
+  
+  set.seed(1)
+  res4 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 25, thinning_factor = 10,
+                       save_full_chains = TRUE)
+  expect_equal(res4$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res4$density, 
+               res1$density[seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res4$full_chains$pars, res1$pars)
+  expect_equal(res4$full_chains$density, res1$density)
+  
+  set.seed(1)
+  res5 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 20, thinning_factor = 10,
+                       save_full_chains = TRUE)
+  expect_equal(res5$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res5$density,
+               res1$density[seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res5$full_chains$pars, res1$pars)
+  expect_equal(res5$full_chains$density, res1$density)
 })
 
 
@@ -447,11 +501,12 @@ test_that("can continue thinned chain, continues thinning", {
 
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 1, n_chains = 3,
-                       thinning_factor = 4)
+                       thinning_factor = 4, save_full_chains = TRUE)
 
   set.seed(1)
   res2a <- monty_sample(model, sampler, 60, 1, n_chains = 3,
-                        thinning_factor = 4, restartable = TRUE)
+                        thinning_factor = 4, restartable = TRUE,
+                        save_full_chains = TRUE)
   res2b <- monty_sample_continue(res2a, 40)
 
   expect_equal(res2b, res1)

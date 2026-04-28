@@ -139,25 +139,48 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   n_chains <- length(chain_state$density)
-  n_steps_record <- steps$total
-
+  
+  burnin <- steps$burnin
+  thinning_factor <- steps$thinning_factor
+  n_steps <- steps$total
+  n_steps_record <- ceiling((steps$total - burnin) / thinning_factor)
+  save_full_chains <- steps$save_full_chains
+  
   pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
   density <- matrix(NA_real_, n_steps_record, n_chains)
-
+  if (save_full_chains) {
+    full_chains <- list(pars = array(NA_real_, c(n_pars, n_steps, n_chains)),
+                        density = matrix(NA_real_, n_steps, n_chains))
+  } else {
+    full_chains <- NULL
+  }
+  
+  
   chain_id <- seq_len(n_chains)
 
-  for (i in seq_len(steps$total)) {
+  j <- 1L
+  for (i in seq_len(n_steps)) {
     chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
                                 model, rng)
-    pars[, i, ] <- chain_state$pars
-    density[i, ] <- chain_state$density
-    ## TODO: also allow observations here if enabled
+    if (i > burnin && i %% thinning_factor == 0) {
+      pars[, j, ] <- chain_state$pars
+      density[j, ] <- chain_state$density
+      ## TODO: also allow observations here if enabled
+      j <- j + 1L
+    }
+    if (save_full_chains) {
+      full_chains$pars[, i, ] <- chain_state$pars
+      full_chains$density[i, ] <- chain_state$density
+    }
     progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
   rownames(pars) <- model$parameters
-
+  if (save_full_chains) {
+    rownames(full_chains$pars) <- model$parameters
+  }
+  
   sampler_state <- sampler$state$dump(sampler_state)
   details <- sampler$state$details(sampler_state)
 
@@ -176,5 +199,6 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## Normally, we construct samples elsewhere, but it's least weird
   ## for now do do it here.
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details,
+                observations, state, full_chains)
 }
