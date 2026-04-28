@@ -251,7 +251,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
       j <- j + 1L
     }
     if (save_full_chains) {
-      history_pars_full[, j] <- chain_state$pars
+      history_pars_full[, i] <- chain_state$pars
     }
     progress(chain_id, i)
   }
