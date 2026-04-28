@@ -235,9 +235,13 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   history_density <- rep(NA_real_, n_steps_record)
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
-  history_pars_full <- 
-    if (save_full_chains) matrix(NA_real_, n_pars, n_steps) else NULL
-
+  if (save_full_chains) {
+    history_full_chains <- list(pars = matrix(NA_real_, n_pars, n_steps),
+                                density = rep(NA_real_, n_steps))
+  } else {
+    history_full_chains <- NULL
+  }
+  
   j <- 1L
   for (i in seq_len(n_steps)) {
     chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
@@ -251,7 +255,8 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
       j <- j + 1L
     }
     if (save_full_chains) {
-      history_pars_full[, i] <- chain_state$pars
+      history_full_chains$pars[, i] <- chain_state$pars
+      history_full_chains$density[i] <- chain_state$density
     }
     progress(chain_id, i)
   }
@@ -259,7 +264,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
   if (save_full_chains) {
-    rownames(history_pars_full) <- model$parameters    
+    rownames(history_full_chains$pars) <- model$parameters    
   }
 
   if (has_observer) {
@@ -274,9 +279,9 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## might hold things like start and stop times here in future.
   history <- list(
     pars = history_pars,
-    pars_full = history_pars_full,
     density = history_density,
-    observations = history_observation)
+    observations = history_observation,
+    full_chains = history_full_chains)
   state <- list(
     chain = chain_state,
     rng = monty_rng_state(rng),

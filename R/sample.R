@@ -368,17 +368,23 @@ combine_chains <- function(res, sampler, observer, include_state) {
   ## First, process the core history:
   history <- lapply(res, "[[", "history")
   pars <- array_bind(arrays = lapply(history, "[[", "pars"), after = 2)
-  if (!is.null(history[[1]]$pars_full)) {
-    pars_full <- 
-      array_bind(arrays = lapply(history, "[[", "pars_full"), after = 2)
-  } else {
-    pars_full <- NULL
-  } 
   density <- array_bind(arrays = lapply(history, "[[", "density"), after = 1)
   if (is.null(observer)) {
     observations <- NULL
   } else {
     observations <- observer$combine(lapply(history, "[[", "observations"))
+  }
+  
+  full_chains <- lapply(history, "[[", "full_chains")
+  if (!is.null(full_chains[[1]])) {
+    pars_full <- 
+      array_bind(arrays = lapply(full_chains, "[[", "pars"), after = 2)
+    density_full <- 
+      array_bind(arrays = lapply(full_chains, "[[", "density"), after = 1)
+    full_chains <- list(pars = pars_full,
+                        density = density_full)
+  } else {
+    full_chains <- NULL
   }
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
@@ -406,7 +412,8 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, pars_full, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details, observations, state,
+                full_chains)
 }
 
 
@@ -416,19 +423,24 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   } else {
     observations <- observer$append(prev$observations, curr$observations)
   }
-  if (!is.null(prev$pars_full) && !is.null(curr$pars_full)) {
-    pars_full <- array_bind(prev$pars_full, curr$pars_full, on = 2)
+  if (!is.null(prev$full_chains) && !is.null(curr$full_chains)) {
+    full_chains <- list(
+      pars_full = 
+        array_bind(prev$full_chains$pars, curr$full_chains$pars, on = 2),
+      density_full = 
+        array_bind(prev$full_chains$density, curr$full_chains$density, on = 1)
+    )
   } else {
-    pars_full <- NULL
+    full_chains <- NULL
   }
   
   samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
-                  pars_full = pars_full,
                   density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
                   details = curr$details,
                   state = curr$state,
-                  observations = observations)
+                  observations = observations,
+                  full_chains = full_chains)
   class(samples) <- "monty_samples"
   samples
 }
@@ -514,16 +526,16 @@ combine_state_chain <- function(state) {
 }
 
 
-monty_samples <- function(pars, pars_full, density, initial, details,
-                          observations, state) {
+monty_samples <- function(pars, density, initial, details, observations,
+                          state, full_chains) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
-                  pars_full = pars_full,
                   density = density,
                   initial = initial,
                   details = details,
                   state = state,
-                  observations = observations)
+                  observations = observations,
+                  full_chains = full_chains)
   class(samples) <- "monty_samples"
   samples
 }

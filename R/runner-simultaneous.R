@@ -149,9 +149,10 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   pars <- array(NA_real_, c(n_pars, n_steps_record, n_chains))
   density <- matrix(NA_real_, n_steps_record, n_chains)
   if (save_full_chains) {
-    pars_full <- array(NA_real_, c(n_pars, n_steps, n_chains))
+    full_chains <- list(pars = array(NA_real_, c(n_pars, n_steps, n_chains)),
+                        density = matrix(NA_real_, n_steps, n_chains))
   } else {
-    pars_full <- NULL
+    full_chains <- NULL
   }
   
   
@@ -168,7 +169,8 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
       j <- j + 1L
     }
     if (save_full_chains) {
-      pars_full[, i, ] <- chain_state$pars
+      full_chains$pars[, i, ] <- chain_state$pars
+      full_chains$density[i, ] <- chain_state$density
     }
     progress(chain_id, i)
   }
@@ -176,7 +178,7 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
   ## Pop the parameter names on last
   rownames(pars) <- model$parameters
   if (save_full_chains) {
-    rownames(pars_full) <- model$parameters
+    rownames(full_chains$pars) <- model$parameters
   }
   
   sampler_state <- sampler$state$dump(sampler_state)
@@ -197,5 +199,6 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
 
   ## Normally, we construct samples elsewhere, but it's least weird
   ## for now do do it here.
-  monty_samples(pars, pars_full, density, initial, details, observations, state)
+  monty_samples(pars, density, initial, details,
+                observations, state, full_chains)
 }

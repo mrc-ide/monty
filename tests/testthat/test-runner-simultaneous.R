@@ -94,20 +94,22 @@ test_that("can use simultaneous runner with burnin", {
   
   set.seed(1)
   res1 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner)
-  expect_equal(res1$pars_full, NULL)
+  expect_equal(res1$full_chains, NULL)
   
   set.seed(1)
   res2 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        burnin = 10)
   expect_equal(res2$pars, res1$pars[, 11:30, , drop = FALSE])
-  expect_equal(res2$pars_full, NULL)
+  expect_equal(res2$density, res1$density[11:30, , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
   
   set.seed(1)
   res3 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        burnin = 10, save_full_chains = TRUE)
   expect_equal(res3$pars, res1$pars[, 11:30, , drop = FALSE])
-  expect_equal(res3$pars_full, res1$pars)
-  
+  expect_equal(res3$density, res1$density[11:30, , drop = FALSE])
+  expect_equal(res3$full_chains$pars, res1$pars)
+  expect_equal(res3$full_chains$density, res1$density)
 })
 
 
@@ -120,49 +122,27 @@ test_that("can use simultaneous runner with thinning", {
   
   set.seed(1)
   res1 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner)
-  expect_equal(res1$pars_full, NULL)
+  expect_equal(res1$full_chains, NULL)
   
   set.seed(1)
   res2 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        thinning_factor = 2)
   expect_equal(res2$pars, res1$pars[, seq(2, 30, by = 2), , drop = FALSE])
-  expect_equal(res2$pars_full, NULL)
+  expect_equal(res2$density, res1$density[seq(2, 30, by = 2), , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
   
   set.seed(1)
   res3 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        thinning_factor = 2, save_full_chains = TRUE)
   expect_equal(res3$pars, res1$pars[, seq(2, 30, by = 2), , drop = FALSE])
-  expect_equal(res3$pars_full, res1$pars)
+  expect_equal(res3$density, res1$density[seq(2, 30, by = 2), , drop = FALSE])
+  expect_equal(res3$full_chains$pars, res1$pars)
+  expect_equal(res3$full_chains$density, res1$density)
   
 })
 
 
-test_that("can use simultaneous runner with thinning", {
-  m <- ex_simple_gamma1()
-  vcv <- array(1 * 10^c(-4, -3, -2, -1, 0), c(1, 1, 5))
-  sampler <- monty_sampler_random_walk(vcv = vcv)
-  runner <- monty_runner_simultaneous()
-  n_steps <- 30
-  
-  set.seed(1)
-  res1 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner)
-  expect_equal(res1$pars_full, NULL)
-  
-  set.seed(1)
-  res2 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
-                       thinning_factor = 2)
-  expect_equal(res2$pars, res1$pars[, seq(2, 30, by = 2), , drop = FALSE])
-  expect_equal(res2$pars_full, NULL)
-  
-  set.seed(1)
-  res3 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
-                       thinning_factor = 2, save_full_chains = TRUE)
-  expect_equal(res3$pars, res1$pars[, seq(2, 30, by = 2), , drop = FALSE])
-  expect_equal(res3$pars_full, res1$pars)
-})
-
-
-test_that("can use simultaneous runner with thinning", {
+test_that("can use simultaneous runner with burnin and thinning", {
   m <- ex_simple_gamma1()
   vcv <- array(1 * 10^c(-4, -3, -2, -1, 0), c(1, 1, 5))
   sampler <- monty_sampler_random_walk(vcv = vcv)
@@ -177,12 +157,15 @@ test_that("can use simultaneous runner with thinning", {
   res2 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        burnin = 15, thinning_factor = 2)
   expect_equal(res2$pars, res1$pars[, seq(16, 30, by = 2), , drop = FALSE])
-  expect_equal(res2$pars_full, NULL)
+  expect_equal(res2$density, res1$density[seq(16, 30, by = 2), , drop = FALSE])
+  expect_equal(res2$full_chains, NULL)
   
   set.seed(1)
   res3 <- monty_sample(m, sampler, n_steps, n_chains = 5, runner = runner,
                        burnin = 15, thinning_factor = 2,
                        save_full_chains = TRUE)
   expect_equal(res3$pars, res1$pars[, seq(16, 30, by = 2), , drop = FALSE])
-  expect_equal(res3$pars_full, res1$pars)
+  expect_equal(res3$density, res1$density[seq(16, 30, by = 2), , drop = FALSE])
+  expect_equal(res3$full_chains$pars, res1$pars)
+  expect_equal(res3$full_chains$density, res1$density)
 })
