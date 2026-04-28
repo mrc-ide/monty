@@ -392,9 +392,18 @@ test_that("can sample with burnin", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$pars_full, NULL)
+  
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3, burnin = 30)
   expect_equal(res2$pars, res1$pars[, 31:100, , drop = FALSE])
+  expect_equal(res2$pars_full, NULL)
+  
+  set.seed(1)
+  res3 <- monty_sample(model, sampler, 100, 3, burnin = 30,
+                       save_full_chains = TRUE)
+  expect_equal(res2$pars, res1$pars[, 31:100, , drop = FALSE])
+  expect_equal(res3$pars_full, res1$pars)
 })
 
 
@@ -403,9 +412,18 @@ test_that("can sample with thinning", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$pars_full, NULL)
+  
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3, thinning_factor = 4)
   expect_equal(res2$pars, res1$pars[, seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res2$pars_full, NULL)
+  
+  set.seed(1)
+  res3 <- monty_sample(model, sampler, 100, 3, thinning_factor = 4,
+                       save_full_chains = TRUE)
+  expect_equal(res3$pars, res1$pars[, seq(4, 100, by = 4), , drop = FALSE])
+  expect_equal(res3$pars_full, res1$pars)
 })
 
 
@@ -414,15 +432,34 @@ test_that("can sample with burnin and thinning", {
   sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
   set.seed(1)
   res1 <- monty_sample(model, sampler, 100, 3)
+  expect_equal(res1$pars_full, NULL)
+  
   ## Pick deliberately hard values here:
   set.seed(1)
   res2 <- monty_sample(model, sampler, 100, 3,
                        burnin = 25, thinning_factor = 10)
   expect_equal(res2$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res2$pars_full, NULL)
+  
   set.seed(1)
   res3 <- monty_sample(model, sampler, 100, 3,
                        burnin = 20, thinning_factor = 10)
   expect_equal(res3$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res3$pars_full, NULL)
+  
+  set.seed(1)
+  res4 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 25, thinning_factor = 10,
+                       save_full_chains = TRUE)
+  expect_equal(res4$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res4$pars_full, res1$pars)
+  
+  set.seed(1)
+  res5 <- monty_sample(model, sampler, 100, 3,
+                       burnin = 20, thinning_factor = 10,
+                       save_full_chains = TRUE)
+  expect_equal(res5$pars, res1$pars[, seq(30, 100, by = 10), , drop = FALSE])
+  expect_equal(res5$pars_full, res1$pars)
 })
 
 
