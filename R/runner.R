@@ -229,11 +229,14 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   thinning_factor <- steps$thinning_factor
   n_steps <- steps$total
   n_steps_record <- ceiling((steps$total - burnin) / thinning_factor)
+  save_full_chains <- steps$save_full_chains
 
   history_pars <- matrix(NA_real_, n_pars, n_steps_record)
   history_density <- rep(NA_real_, n_steps_record)
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
+  history_pars_full <- 
+    if (save_full_chains) matrix(NA_real_, n_pars, n_steps) else NULL
 
   j <- 1L
   for (i in seq_len(n_steps)) {
@@ -247,11 +250,17 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
       }
       j <- j + 1L
     }
+    if (save_full_chains) {
+      history_pars_full[, j] <- chain_state$pars
+    }
     progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
+  if (save_full_chains) {
+    rownames(history_pars_full) <- model$parameters    
+  }
 
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
@@ -265,6 +274,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   ## might hold things like start and stop times here in future.
   history <- list(
     pars = history_pars,
+    pars_full = history_pars_full,
     density = history_density,
     observations = history_observation)
   state <- list(

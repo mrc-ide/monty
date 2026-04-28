@@ -112,7 +112,7 @@
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL,
                          restartable = FALSE, burnin = NULL,
-                         thinning_factor = NULL) {
+                         thinning_factor = NULL, save_full_chains = FALSE) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
@@ -128,12 +128,14 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
 
   rng <- initial_rng(n_chains)
   pars <- initial_parameters(initial, model, rng, environment())
-  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor,
+                              save_full_chains)
 
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples <- combine_chains(res, sampler, observer, restartable)
+  samples <- combine_chains(res, sampler, observer, restartable,
+                            save_full_chains)
 
   if (restartable) {
     samples$restart <- list(model = model,
@@ -340,7 +342,8 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 }
 
 
-combine_chains <- function(res, sampler, observer, include_state) {
+combine_chains <- function(res, sampler, observer, include_state,
+                           save_full_chains) {
   ## If we used the simultaneous sampler, we've already constructed
   ## something useful here.
   if (inherits(res, "monty_samples")) {
@@ -355,6 +358,12 @@ combine_chains <- function(res, sampler, observer, include_state) {
   ## First, process the core history:
   history <- lapply(res, "[[", "history")
   pars <- array_bind(arrays = lapply(history, "[[", "pars"), after = 2)
+  if (save_full_chains) {
+    pars_full <- 
+      array_bind(arrays = lapply(history, "[[", "pars_full"), after = 2)
+  } else {
+    pars_full <- NULL
+  }
   density <- array_bind(arrays = lapply(history, "[[", "density"), after = 1)
   if (is.null(observer)) {
     observations <- NULL
@@ -387,7 +396,7 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, density, initial, details, observations, state)
+  monty_samples(pars, pars_full, density, initial, details, observations, state)
 }
 
 
@@ -430,6 +439,7 @@ direct_sample_within_domain <- function(model, rng, max_attempts = 100) {
 
 
 monty_sample_steps <- function(n_steps, burnin = NULL, thinning_factor = NULL,
+                               save_full_chains = FALSE,
                                call = parent.frame()) {
   if (inherits(n_steps, "monty_sample_steps")) {
     return(n_steps)
@@ -456,7 +466,8 @@ monty_sample_steps <- function(n_steps, burnin = NULL, thinning_factor = NULL,
   }
   ret <- list(total = n_steps,
               burnin = burnin,
-              thinning_factor = thinning_factor)
+              thinning_factor = thinning_factor,
+              save_full_chains = save_full_chains)
   class(ret) <- "monty_sample_steps"
   ret
 }
@@ -485,10 +496,11 @@ combine_state_chain <- function(state) {
 }
 
 
-monty_samples <- function(pars, density, initial, details, observations,
-                          state) {
+monty_samples <- function(pars, pars_full, density, initial, details,
+                          observations, state) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
+                  pars_full = pars_full,
                   density = density,
                   initial = initial,
                   details = details,
