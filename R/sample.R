@@ -82,10 +82,6 @@
 ##'   rows will be named with the names of the parameters, from your
 ##'   model.
 ##'
-##' * `pars_full`: If `save_full_chains = TRUE`, an array representing `pars`
-##'   without discarding the burnin and thinning. If `save_full_chains = FALSE`,
-##'   this will be `NULL`.
-##'
 ##' * `density`: A matrix of model log densities, with `n_steps` rows
 ##'   and `n_chains` columns.
 ##'
@@ -100,6 +96,10 @@
 ##'
 ##' * `observations`: Additional details reported by the model.  This
 ##'   one is also subject to change.
+##'
+##' * `full-chains`: If `save_full_chains = TRUE`, an list containing `pars`
+##'   and `density` without discarding the burnin and thinning.
+##'   If `save_full_chains = FALSE`, this will be `NULL`.
 ##'
 ##' @export
 ##' @examples

@@ -93,9 +93,6 @@ parameter, sample and chain, so that \code{pars[i, j, k]} is the
 \code{i}th parameter from the \code{j}th sample from the \code{k}th chain.  The
 rows will be named with the names of the parameters, from your
 model.
-\item \code{pars_full}: If \code{save_full_chains = TRUE}, an array representing \code{pars}
-without discarding the burnin and thinning. If \code{save_full_chains = FALSE},
-this will be \code{NULL}.
 \item \code{density}: A matrix of model log densities, with \code{n_steps} rows
 and \code{n_chains} columns.
 \item \code{initial}: A record of the initial conditions, a matrix with as
@@ -107,6 +104,9 @@ be a list of length \code{n_chains} (or \code{NULL}) and the details
 depend on the sampler.  This one is subject to change.
 \item \code{observations}: Additional details reported by the model.  This
 one is also subject to change.
+\item \code{full-chains}: If \code{save_full_chains = TRUE}, an list containing \code{pars}
+and \code{density} without discarding the burnin and thinning.
+If \code{save_full_chains = FALSE}, this will be \code{NULL}.
 }
 }
 \description{
