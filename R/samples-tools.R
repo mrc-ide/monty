@@ -90,7 +90,7 @@ monty_samples_subset <- function(samples, i, save_full_chains = FALSE) {
                                   density = samples$density)
     }
   } else {
-    samples$full_chains <- NULL
+    samples["full_chains"] <- list(NULL)
   }
   
   len <- dim(samples$density)
