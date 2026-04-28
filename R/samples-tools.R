@@ -36,12 +36,19 @@
 ##'
 ##' @param burnin Number of steps to discard as burnin from the start
 ##'   of the chain.
+##'   
+##' @param save_full_chains Logical, indicating whether or not the full chains
+##'   of the parameters (without discarding the burnin and thinning) should
+##'   additionally be saved. This is useful if you are thinning to reduce the
+##'   size of observations but still want to retain the full chains of the
+##'   parameters for evaluation purposes.
 ##'
 ##' @return A `monty_samples` object (as for [monty_sample()]),
 ##'   typically with fewer samples.
 ##'
 ##' @export
-monty_samples_thin <- function(samples, thinning_factor = NULL, burnin = NULL) {
+monty_samples_thin <- function(samples, thinning_factor = NULL, burnin = NULL,
+                               save_full_chains = FALSE) {
   assert_is(samples, "monty_samples")
 
   n_samples <- ncol(samples$pars)
@@ -71,11 +78,21 @@ monty_samples_thin <- function(samples, thinning_factor = NULL, burnin = NULL) {
     return(samples)
   }
 
-  monty_samples_subset(samples, keep)
+  monty_samples_subset(samples, keep, save_full_chains)
 }
 
 
-monty_samples_subset <- function(samples, i) {
+monty_samples_subset <- function(samples, i, save_full_chains = FALSE) {
+  
+  if (save_full_chains) {
+    if (is.null(samples$full_chains)) {
+      samples$full_chains <- list(pars = samples$pars,
+                                  density = samples$density)
+    }
+  } else {
+    samples$full_chains <- NULL
+  }
+  
   len <- dim(samples$density)
 
   samples$pars <- samples$pars[, i, , drop = FALSE]
