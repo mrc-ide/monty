@@ -134,8 +134,7 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples <- combine_chains(res, sampler, observer, restartable,
-                            save_full_chains)
+  samples <- combine_chains(res, sampler, observer, restartable)
 
   if (restartable) {
     samples$restart <- list(model = model,
@@ -198,7 +197,8 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
 
   burnin <- NULL
   thinning_factor <- samples$restart$thinning_factor
-  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor,
+                              save_full_chains)
 
   res <- runner$continue(state, model, sampler, steps)
   observer <- if (model$properties$has_observer) model$observer else NULL
@@ -342,8 +342,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 }
 
 
-combine_chains <- function(res, sampler, observer, include_state,
-                           save_full_chains) {
+combine_chains <- function(res, sampler, observer, include_state) {
   ## If we used the simultaneous sampler, we've already constructed
   ## something useful here.
   if (inherits(res, "monty_samples")) {
@@ -358,12 +357,12 @@ combine_chains <- function(res, sampler, observer, include_state,
   ## First, process the core history:
   history <- lapply(res, "[[", "history")
   pars <- array_bind(arrays = lapply(history, "[[", "pars"), after = 2)
-  if (save_full_chains) {
+  if (!is.null(history[[1]]$pars_full)) {
     pars_full <- 
       array_bind(arrays = lapply(history, "[[", "pars_full"), after = 2)
   } else {
     pars_full <- NULL
-  }
+  } 
   density <- array_bind(arrays = lapply(history, "[[", "density"), after = 1)
   if (is.null(observer)) {
     observations <- NULL
@@ -406,7 +405,14 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   } else {
     observations <- observer$append(prev$observations, curr$observations)
   }
+  if (!is.null(prev$pars_full) && !is.null(curr$pars_full)) {
+    pars_full <- array_bind(prev$pars_full, curr$pars_full, on = 2)
+  } else {
+    pars_full <- NULL
+  }
+  
   samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
+                  pars_full = pars_full,
                   density = array_bind(prev$density, curr$density, on = 1),
                   initial = prev$initial,
                   details = curr$details,
