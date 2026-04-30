@@ -5,7 +5,8 @@ test_that("can draw samples from a trivial model", {
 
   expect_equal(
     names(res),
-    c("pars", "density", "initial", "details", "state", "data", "observations"))
+    c("pars", "density", "initial", "details", "data",
+      "observations", "state", "full_chains"))
   expect_equal(dim(res$pars), c(1, 100, 1))
 })
 
@@ -34,7 +35,8 @@ test_that("can draw samples from a random model", {
   res <- monty_sample(m, sampler, 20)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "state", "data", "observations"))
+    c("pars", "density", "initial", "details", "data",
+      "observations", "state", "full_chains"))
 })
 
 
@@ -48,7 +50,8 @@ test_that("can observe a model", {
   res <- monty_sample(m, sampler, 20, n_chains = 3)
   expect_setequal(
     names(res),
-    c("pars", "density", "initial", "details", "state", "data", "observations"))
+    c("pars", "density", "initial", "details", "data",
+      "observations", "state", "full_chains"))
   expect_equal(names(res$observations),
                "trajectories")
   expect_equal(dim(res$observations$trajectories),

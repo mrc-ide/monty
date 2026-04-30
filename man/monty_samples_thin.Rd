@@ -4,7 +4,12 @@
 \alias{monty_samples_thin}
 \title{Thin samples}
 \usage{
-monty_samples_thin(samples, thinning_factor = NULL, burnin = NULL)
+monty_samples_thin(
+  samples,
+  thinning_factor = NULL,
+  burnin = NULL,
+  save_full_chains = FALSE
+)
 }
 \arguments{
 \item{samples}{A \code{monty_samples} object, from running \code{\link[=monty_sample]{monty_sample()}}}
@@ -17,6 +22,12 @@ chain, and exclude points counting backwards.}
 
 \item{burnin}{Number of steps to discard as burnin from the start
 of the chain.}
+
+\item{save_full_chains}{Logical, indicating whether or not the full chains
+of the parameters (without discarding the burnin and thinning) should
+additionally be saved. This is useful if you are thinning to reduce the
+size of observations but still want to retain the full chains of the
+parameters for evaluation purposes.}
 }
 \value{
 A \code{monty_samples} object (as for \code{\link[=monty_sample]{monty_sample()}}),

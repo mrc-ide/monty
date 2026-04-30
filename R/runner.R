@@ -1,4 +1,3 @@
-##' Run MCMC chains in series (one after another).  This is the
 ##' simplest chain runner, and the default used by [monty_sample()].
 ##' It has nothing that can be configured (yet).
 ##'
@@ -234,6 +233,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   thinning_factor <- steps$thinning_factor
   n_steps <- steps$total
   n_steps_record <- ceiling((steps$total - burnin) / thinning_factor)
+  save_full_chains <- steps$save_full_chains
 
   history_pars <- matrix(NA_real_, n_pars, n_steps_record)
   history_density <- rep(NA_real_, n_steps_record)
@@ -246,7 +246,13 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   } else {
     history_data <- NULL
   }
-
+  if (save_full_chains) {
+    history_full_chains <- list(pars = matrix(NA_real_, n_pars, n_steps),
+                                density = rep(NA_real_, n_steps))
+  } else {
+    history_full_chains <- NULL
+  }
+  
   j <- 1L
   for (i in seq_len(n_steps)) {
     if (has_augmented_data) {
@@ -268,11 +274,18 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
       }
       j <- j + 1L
     }
+    if (save_full_chains) {
+      history_full_chains$pars[, i] <- chain_state$pars
+      history_full_chains$density[i] <- chain_state$density
+    }
     progress(chain_id, i)
   }
 
   ## Pop the parameter names on last
   rownames(history_pars) <- model$parameters
+  if (save_full_chains) {
+    rownames(history_full_chains$pars) <- model$parameters    
+  }
 
   if (has_observer) {
     history_observation <- model$observer$finalise(history_observation)
@@ -288,7 +301,8 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
     pars = history_pars,
     density = history_density,
     observations = history_observation,
-    data = history_data)
+    data = history_data,
+    full_chains = history_full_chains)
   state <- list(
     chain = chain_state,
     rng = monty_rng_state(rng),
