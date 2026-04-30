@@ -8,12 +8,8 @@ test_that("Empirical VCV calculated correctly with forget_rate = 0", {
 
   expect_setequal(
     names(res),
-<<<<<<< HEAD
-    c("pars", "density", "initial", "details", "data", "observations", "state"))
-=======
-    c("pars", "density", "initial", "details",
+    c("pars", "density", "initial", "details", "data",
       "observations", "state", "full_chains"))
->>>>>>> save-full-chains
 
   ## forget_rate = 0 so full chain should be included in VCV
   expect_equal(res$details$weight[[1]], 1000)
