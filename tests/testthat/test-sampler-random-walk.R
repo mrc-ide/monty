@@ -5,8 +5,8 @@ test_that("can draw samples from a trivial model", {
 
   expect_equal(
     names(res),
-    c("pars", "density", "initial", "details", "data",
-      "observations", "state", "full_chains"))
+    c("pars", "density", "initial", "details", "state", "data",
+      "observations", "full_chains"))
   expect_equal(dim(res$pars), c(1, 100, 1))
 })
 
