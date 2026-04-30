@@ -419,7 +419,6 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, density, initial, details, observations, data, state)
   monty_samples(pars, density, initial, details, observations, data, state,
                 full_chains)
 }
