@@ -97,7 +97,7 @@
 ##' * `observations`: Additional details reported by the model.  This
 ##'   one is also subject to change.
 ##'
-##' * `full-chains`: If `save_full_chains = TRUE`, an list containing `pars`
+##' * `full_chains`: If `save_full_chains = TRUE`, a list including `pars`
 ##'   and `density` without discarding the burnin and thinning.
 ##'   If `save_full_chains = FALSE`, this will be `NULL`.
 ##'
@@ -374,6 +374,8 @@ combine_chains <- function(res, sampler, observer, include_state) {
   } else {
     observations <- observer$combine(lapply(history, "[[", "observations"))
   }
+
+  initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
   
   full_chains <- lapply(history, "[[", "full_chains")
   if (!is.null(full_chains[[1]])) {
@@ -381,13 +383,11 @@ combine_chains <- function(res, sampler, observer, include_state) {
       array_bind(arrays = lapply(full_chains, "[[", "pars"), after = 2)
     density_full <- 
       array_bind(arrays = lapply(full_chains, "[[", "density"), after = 1)
-    full_chains <- list(pars = pars_full,
-                        density = density_full)
+    full_chains <- monty_samples(pars_full, density_full, initial,
+                                 NULL, NULL, NULL, NULL)
   } else {
     full_chains <- NULL
   }
-
-  initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
 
   ## Then process the internal state of all the components
   state <- lapply(res, "[[", "state")
@@ -423,25 +423,24 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
   } else {
     observations <- observer$append(prev$observations, curr$observations)
   }
-  if (!is.null(prev$full_chains) && !is.null(curr$full_chains)) {
-    full_chains <- list(
-      pars = array_bind(prev$full_chains$pars, curr$full_chains$pars, on = 2),
-      density = 
-        array_bind(prev$full_chains$density, curr$full_chains$density, on = 1)
-    )
+  if (!is.null(prev$full_chains)) {
+    pars_full <- 
+      array_bind(prev$full_chains$pars, curr$full_chains$pars, on = 2)
+    density_full <- 
+      array_bind(prev$full_chains$density, curr$full_chains$density, on = 1)
+    full_chains <- monty_samples(pars_full, density_full, prev$initial,
+                                 NULL, NULL, NULL, NULL)
   } else {
     full_chains <- NULL
   }
   
-  samples <- list(pars = array_bind(prev$pars, curr$pars, on = 2),
-                  density = array_bind(prev$density, curr$density, on = 1),
-                  initial = prev$initial,
-                  details = curr$details,
-                  state = curr$state,
-                  observations = observations,
-                  full_chains = full_chains)
-  class(samples) <- "monty_samples"
-  samples
+  monty_samples(pars = array_bind(prev$pars, curr$pars, on = 2),
+                density = array_bind(prev$density, curr$density, on = 1),
+                initial = prev$initial,
+                details = curr$details,
+                observations = observations,
+                state = curr$state,
+                full_chains = full_chains)
 }
 
 
