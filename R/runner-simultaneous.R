@@ -200,8 +200,7 @@ monty_run_chains_simultaneous2 <- function(chain_state, sampler_state,
     model_rng = model_rng)
   
   if (save_full_chains) {
-    full_chains <- monty_samples(full_chains$pars, full_chains$density, initial,
-                                 NULL, NULL, NULL, NULL)
+    full_chains <- monty_samples(full_chains$pars, full_chains$density, initial)
   }
 
   ## Normally, we construct samples elsewhere, but it's least weird

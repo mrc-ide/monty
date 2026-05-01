@@ -87,8 +87,7 @@ monty_samples_subset <- function(samples, i, save_full_chains = FALSE) {
   if (save_full_chains) {
     if (is.null(samples$full_chains)) {
       samples$full_chains <- 
-        monty_samples(samples$pars, samples$density, samples$initial,
-                      NULL, NULL, NULL, NULL)
+        monty_samples(samples$pars, samples$density, samples$initial)
     }
   } else {
     samples["full_chains"] <- list(NULL)
