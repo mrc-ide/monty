@@ -454,11 +454,6 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
                 data = data,
                 state = curr$state,
                 full_chains = full_chains)
-
-=======
-                state = curr$state,
-                full_chains = full_chains)
->>>>>>> save-full-chains
 }
 
 
