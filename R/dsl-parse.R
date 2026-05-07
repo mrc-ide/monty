@@ -63,6 +63,14 @@ dsl_parse_expr_stochastic <- function(expr, call) {
 
 dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
+
+  is_group <- rlang::is_call(lhs, "|")
+  if (is_group) {
+    group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
+    lhs <- lhs[[2]]
+  } else {
+    group <- NULL
+  }
   
   is_array <- rlang::is_call(lhs, "[")
   special <- "~"
@@ -85,6 +93,7 @@ dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   list(
     name = name,
     array = array,
+    group = group,
     depends = depends)
 }
 
@@ -170,6 +179,14 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
     special <- NULL
   }
   
+  is_group <- rlang::is_call(lhs, "|")
+  if (is_group) {
+    group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
+    lhs <- lhs[[2]]
+  } else {
+    group <- NULL
+  }
+  
   is_array <- rlang::is_call(lhs, "[")
   if (is_array) {
     name <- 
@@ -190,6 +207,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
   list(name = name,
        special = special,
        array = array,
+       group = group,
        depends = depends)
 }
 
@@ -357,6 +375,26 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
   
   ret$depends <- NULL
   ret
+}
+
+
+dsl_parse_expr_check_lhs_group <- function(group_expr, expr, call) {
+  if (is.symbol(group_expr)) {
+    name <- group_expr
+    type <- "all"
+    groups <- NULL
+  } else if (rlang::is_call(group_expr, "==")) {
+    name <- group_expr[[2]]
+    type <- "single"
+    groups <- group_expr[[3]]
+  } else if (rlang::is_call(group_expr, "!=")) {
+    name <- group_expr[[2]]
+    type <- "exclude"
+    groups <- group_expr[[3]]
+  }
+  group <- list(name = name,
+                type = type,
+                groups = groups)
 }
 
 
