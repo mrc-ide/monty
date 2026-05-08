@@ -11,8 +11,20 @@ test_that("can run a PT sampler", {
   res <- monty_sample(posterior, sampler, 50, n_chains = 4)
 
   expect_type(res$details, "list")
-  expect_setequal(names(res$details), c("accept_swap", "sampler"))
+  expect_setequal(names(res$details),
+                  c("accept_swap", "attempt_swap", "beta", "sampler"))
   expect_equal(dim(res$details$accept_swap), c(10, 4))
+  expect_equal(dim(res$details$attempt_swap), c(10, 4))
+  expect_true(all(res$details$attempt_swap >= res$details$accept_swap))
+
+  beta <- res$details$beta
+  expect_length(beta, 11)
+  expect_equal(beta[[1]], 1)
+  expect_equal(beta[[11]], 0)
+  expect_true(all(diff(beta) < 0))
+  expect_equal(validate_parallel_tempering_beta(10, beta), beta)
+  expect_equal(which.max(abs(diff(beta))), 1)
+
   expect_null(res$details$sampler)
 })
 
@@ -37,7 +49,8 @@ test_that("can sample with base model", {
   res <- monty_sample(posterior, sampler, 100, n_chains = 4)
 
   expect_type(res$details, "list")
-  expect_setequal(names(res$details), c("accept_swap", "sampler"))
+  expect_setequal(names(res$details),
+                  c("accept_swap", "attempt_swap", "beta", "sampler"))
   expect_equal(dim(res$details$accept_swap), c(10, 4))
   expect_null(res$details$sampler)
 })
@@ -155,4 +168,169 @@ test_that("can't use pt with models that don't accept multiple pars", {
     monty_sample(m, sampler, 30, n_chains = 3),
     "Parallel Tempering [Random walk] requires multiple parameters",
     fixed = TRUE)
+})
+
+
+test_that("can use hmc with parallel tempering", {
+  ## We just do a short run here at present to make sure that things
+  ## work.  The model here is quite slow, mostly because of the prior;
+  ## something that we can probably improve later.  Proving that this
+  ## does the right thing statistically requires running for a long
+  ## time (a few minutes probably) and we should add some long running
+  ## tests later.
+  set.seed(1)
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(n_integration_steps = 3, debug = TRUE))
+  res <- monty_sample(posterior, sampler, 7, n_chains = 2)
+
+  ## The collection here has not quite behaved as expected, and we can
+  ## probably replicate this in the simultaneous sampler, as it's
+  ## probably in the join there?
+  expect_s3_class(res, "monty_samples")
+  expect_setequal(names(res$details$sampler), c("pars", "accept"))
+  ## 1 parameter x (3 + 1) hmc steps x 10 rungs x 7 mcmc steps x 2 chains
+  ##
+  ## Note that the hot chain never turns up here, as it comes from the
+  ## direct sample
+  expect_equal(dim(res$details$sampler$pars), c(1, 4, 10, 7, 2))
+  ## 10 rungs x 7 mcmc steps x 2 chains
+  expect_equal(dim(res$details$sampler$accept), c(10, 7, 2))
+})
+
+
+test_that("can continue a parallel tempering chain using hmc", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  
+  set.seed(1)
+  ## We do this using debug = TRUE in order to test that the sampler details
+  ## are correct. Without debug the results will be the same (just with no
+  ## sampler details) so it's unnecessary to test that as well
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(debug = TRUE))
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_hmc(debug = TRUE))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  
+  expect_equal(res2$pars, cmp$pars)
+  expect_equal(res2$details$sampler$pars, cmp$details$sampler$pars)
+  expect_equal(res2$details$sampler$accept, cmp$details$sampler$accept)
+})
+
+
+test_that("tempering a model with no gradient produces one with no grad", {
+  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
+  a <- monty_model(list(parameters = "x",
+                        density = identity,
+                        gradient = identity,
+                        direct_sample = identity),
+                   properties = properties)
+  b <- monty_model(list(parameters = "x",
+                        density = density,
+                        direct_sample = identity),
+                   properties = properties)
+
+  aa <- parallel_tempering_scale(a, list(base = a))
+  expect_true(aa$properties$has_gradient)
+  expect_true(is.function(aa$gradient))
+
+  ab <- parallel_tempering_scale(a, list(base = b))
+  expect_false(ab$properties$has_gradient)
+  expect_null(ab$gradient)
+
+  ba <- parallel_tempering_scale(b, list(base = a))
+  expect_false(ba$properties$has_gradient)
+  expect_null(ba$gradient)
+
+  bb <- parallel_tempering_scale(b, list(base = b))
+  expect_false(bb$properties$has_gradient)
+  expect_null(bb$gradient)
+})
+
+
+test_that("can use adaptive random walk with parallel tempering", {
+  ## We just do a short run here at present to make sure that things
+  ## work.  The model here is quite slow, mostly because of the prior;
+  ## something that we can probably improve later.  Proving that this
+  ## does the right thing statistically requires running for a long
+  ## time (a few minutes probably) and we should add some long running
+  ## tests later.
+  set.seed(1)
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  res <- monty_sample(posterior, sampler, 7, n_chains = 2)
+  
+  expect_s3_class(res, "monty_samples")
+  expect_setequal(names(res$details$sampler),
+                  c("autocorrelation", "iteration", "mean", "scaling_history",
+                    "scaling_weight", "vcv", "weight"))
+  
+  ## Note that the hot chain never turns up here, as it comes from the
+  ## direct sample
+  ## 1 parameter x 1 parameter x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$autocorrelation), c(1, 1, 10, 2))
+  expect_equal(dim(res$details$sampler$vcv), c(1, 1, 10, 2))
+  ## 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$iteration), c(10, 2))
+  expect_equal(dim(res$details$sampler$scaling_weight), c(10, 2))
+  expect_equal(dim(res$details$sampler$weight), c(10, 2))
+  ## 1 parameter x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$mean), c(1, 10, 2))
+  ## 8 samples (7 + 1 for initial) x 10 rungs x 2 chains
+  expect_equal(dim(res$details$sampler$scaling_history), c(8, 10, 2))
+})
+
+
+test_that("can continue a parallel tempering chain using adaptive", {
+  likelihood <- ex_mixture(5)
+  prior <- monty_dsl({
+    x ~ Normal(0, 10)
+  })
+  posterior <- likelihood + prior
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  res1 <- monty_sample(posterior, sampler, 30, n_chains = 4, restartable = TRUE)
+  res2 <- monty_sample_continue(res1, 70)
+  
+  set.seed(1)
+  sampler <- monty_sampler_parallel_tempering(
+    n_rungs = 10,
+    sampler = monty_sampler_adaptive(initial_vcv = matrix(0.1)))
+  cmp <- monty_sample(posterior, sampler, 100, n_chains = 4)
+  
+  expect_equal(res2$pars, cmp$pars)
+  expect_equal(res2$details$sampler$autocorrelation, 
+               cmp$details$sampler$autocorrelation)
+  expect_equal(res2$details$sampler$iteration, cmp$details$sampler$iteration)
+  expect_equal(res2$details$sampler$mean, cmp$details$sampler$mean)
+  expect_equal(res2$details$sampler$scaling_history,
+               cmp$details$sampler$scaling_history)
+  expect_equal(res2$details$sampler$scaling_weight,
+               cmp$details$sampler$scaling_weight)
+  expect_equal(res2$details$sampler$vcv, cmp$details$sampler$vcv)
+  expect_equal(res2$details$sampler$weight, cmp$details$sampler$weight)
 })

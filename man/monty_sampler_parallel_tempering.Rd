@@ -79,3 +79,29 @@ with many such peaks and will never mix properly.
 }
 }
 
+\section{Tuning the beta values}{
+The argument \code{beta} controls the spacing of temperature among
+chains.  Ideally, this is set so that adjacent chains all have the
+same probability of swapping, which generally means that the
+\code{beta} values themselves will \emph{not} be equidistant.  Creating the
+appropriate vector of betas (or "annealing schedule") requires
+running a pilot run, then computing new \code{beta} values, then
+running another (new) chain with the new beta values, repeating
+this iteration a few times until the beta values stabilise.
+Rumour has it, this should only take a few iterations.
+
+The updated values of \code{beta} are stored in the \code{details} of your
+samples after running.  So if you have a set of samples called
+\code{s}, then \code{s$details$beta} will contain new beta values that you
+can use on the next run.
+
+It is important not to concatenate chains that are computed with
+different \code{beta} values as they will not generally represent
+samples from the target distribution (as an extreme case, consider
+one set of beta values where we never accept swaps onto the target
+distribution and another where we always do; we obviously cannot
+concatenate these).  Therefore, every time that you change beta
+values you should start a new chain.  You can do this with
+\link{monty_sample_continue} so long as you pass \code{append = FALSE}.
+}
+

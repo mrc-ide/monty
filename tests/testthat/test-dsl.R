@@ -213,10 +213,138 @@ test_that("can apply a domain", {
 
 test_that("can use truncated normal in dsl", {
   expect_warning(
-    prior <- monty::monty_dsl({
+    prior <- monty_dsl({
       beta ~ TruncatedNormal(mean = 0.2, sd = 0.1, min = 0.05, max = 0.5)
     }),
     "Not creating a gradient function for this model")
   expect_s3_class(prior, "monty_model")
   expect_false(prior$properties$has_gradient)
+})
+
+
+test_that("can use arrays in dsl", {
+  ## 1d arrays
+  expect_warning(
+    m <- monty_dsl({
+      lambda[] <- 2 * i
+      x[] ~ Exponential(lambda[i])
+      dim(x, lambda) <- 3
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m$density(seq_len(3)), 
+               sum(dexp(seq_len(3), 2 * seq_len(3), log = TRUE)))
+  domain <- rbind(c(0, Inf), c(0, Inf), c(0, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- vnapply(c(2, 4, 6), function(x) monty_random_exponential_rate(x, r))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
+  
+  
+  ## 1d arrays with multiline
+  expect_warning(
+    m2 <- monty_dsl({
+      lambda[1:2] <- 2 * i
+      lambda[n] <- 2 * i + 1
+      x[1] ~ Exponential(lambda[i])
+      x[2:n] ~ Exponential(lambda[i]^2)
+      dim(x, lambda) <- n
+    }, fixed = list(n = 3)),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m2, "monty_model")
+  expect_false(m2$properties$has_gradient)
+  expect_equal(m2$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m2$density(seq_len(3)), 
+               sum(dexp(seq_len(3), c(2, 16, 49), log = TRUE)))
+  domain <- rbind(c(0, Inf), c(0, Inf), c(0, Inf))
+  rownames(domain) <- m2$parameters
+  expect_equal(m2$domain, domain)
+  expect_equal(m2$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- vnapply(c(2, 16, 49), function(x) monty_random_exponential_rate(x, r))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m2$direct_sample(r), cmp)
+  
+  
+  ## sequentially-dependent 1d arrays
+  expect_warning(
+    m <- monty_dsl({
+      lambda[1] <- 1
+      lambda[2:3] <- lambda[i - 1] + 1
+      x[1] ~ Normal(0, lambda[i])
+      x[2:3] ~ Normal(x[i - 1], lambda[i])
+      dim(x, lambda) <- 3
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("x[1]", "x[2]", "x[3]"))
+  expect_equal(m$density(seq_len(3)), 
+               sum(dnorm(seq_len(3), c(0, 1, 2), seq_len(3), log = TRUE)))
+  domain <- rbind(c(-Inf, Inf), c(-Inf, Inf), c(-Inf, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- numeric(3)
+  cmp[1] <- monty_random_normal(0, 1, r)
+  cmp[2] <- monty_random_normal(cmp[1], 2, r)
+  cmp[3] <- monty_random_normal(cmp[2], 3, r)
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
+  
+  
+  ## 2d arrays
+  expect_warning(
+    m3 <- monty_dsl({
+      lambda[, ] <- 2 * i + j
+      x[, ] ~ Exponential(lambda[i, j])
+      dim(x, lambda) <- c(2, 3)
+    }),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m3, "monty_model")
+  expect_false(m3$properties$has_gradient)
+  expect_equal(m3$parameters, c("x[1,1]", "x[2,1]", 
+                                "x[1,2]", "x[2,2]",
+                                "x[1,3]", "x[2,3]"))
+  ## calculate lambda[i, j] = 2 * i + j
+  lambda <- array(2 * seq_len(2), c(2, 3)) + t(array(seq_len(3), c(3, 2)))
+  
+  expect_equal(m3$density(seq_len(6)), 
+               sum(dexp(seq_len(6), c(lambda), log = TRUE)))
+  domain <- t(array(c(0, Inf), c(2, 6)))
+  rownames(domain) <- m3$parameters
+  expect_equal(m3$domain, domain)
+  expect_equal(m3$gradient, NULL)
+  
+  ## direct sampling will have i as the outer loop and j as the inner loop
+  ## so we need to sample in that order and then match the model's parameter
+  ## order
+  r <- monty_rng_create(seed = 42)
+  cmp <- 
+    rbind(vnapply(lambda[1, ], function(x) monty_random_exponential_rate(x, r)),
+          vnapply(lambda[2, ], function(x) monty_random_exponential_rate(x, r)))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m3$direct_sample(r), c(cmp))
+})
+
+
+test_that("cannot use reserved words in fixed", {
+  expect_error(
+    monty_dsl({a <- 1}, 
+              fixed = list(i = 1, j = 2, dim = 3, dim_a = 4)),
+    "Element names 'i', 'j', 'dim', and 'dim_a' in 'fixed' not allowed",
+    fixed = TRUE)
 })

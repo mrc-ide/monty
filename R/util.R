@@ -45,7 +45,7 @@ check_vcv_matrix <- function(vcv, name, call) {
 
 is_positive_definite <- function(x, tol = sqrt(.Machine$double.eps)) {
   ev <- eigen(x, symmetric = TRUE)
-  all(ev$values >= -tol * abs(ev$values[1]))
+  all(ev$values >= -tol * abs(ev$values[1])) && qr(x)$rank == nrow(x)
 }
 
 
@@ -81,7 +81,7 @@ vcapply <- function(...) {
 
 
 rbind_list <- function(x) {
-  stopifnot(all(vlapply(x, is.matrix)))
+  stopifnot(all(vlapply(x, is.matrix)) || all(vlapply(x, is.data.frame)))
   if (length(x) == 1) {
     return(x[[1]])
   }
@@ -228,4 +228,47 @@ is_testing <- function() {
 
 return_null <- function(...) {
   NULL
+}
+
+
+collector <- function(init = character(0)) {
+  env <- new.env(parent = emptyenv())
+  env$res <- init
+  list(
+    add = function(x) env$res <- c(env$res, x),
+    get = function() env$res,
+    length = function() length(env$res))
+}
+
+
+data_frame <- function(...) {
+  data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+}
+
+
+uses_unary_minus <- function(expr) {
+  if (rlang::is_call(expr, "-") && length(expr) == 2) {
+    return(TRUE)
+  } else if (is.recursive(expr)) {
+    any(vlapply(expr[-1], uses_unary_minus))
+  } else {
+    FALSE
+  }
+}
+
+rank_description <- function(rank) {
+  if (rank == 0) {
+    "scalar"
+  } else if (rank == 1) {
+    "vector"
+  } else if (rank == 2) {
+    "matrix"
+  } else {
+    sprintf("%d-dimensional array", rank)
+  }
+}
+
+
+row_match <- function(df, row) {
+  apply(df, 1, function(y) all(y == row))
 }

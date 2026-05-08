@@ -2,6 +2,15 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
   if (isFALSE(required)) {
     return(NULL)
   }
+  is_array <- vlapply(exprs, function(e) !is.null(e$lhs$array))
+  if (any(is_array)) {
+    cli::cli_warn(
+      c(paste("Not creating a gradient function for this model as we do not",
+              "support gradient functions for models with arrays yet"),
+        i = paste("Pass 'gradient = FALSE' to disable creating the",
+                  "gradient function, which will disable this warning")))
+    return(NULL)
+  }
   rlang::try_fetch({
     exprs <- adjoint_rewrite_stochastic(parameters, exprs)
     adjoint_create(parameters, exprs)
@@ -48,32 +57,41 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
     if (eq$type == "assignment") {
       eq
     } else {
-      args <- set_names(c(as.name(eq$name), eq$distribution$args),
-                        names(formals(eq$distribution$density)))
-      density_expr <- eq$distribution$expr$density
+      lhs <- eq$lhs
+      lhs$name <- paste0(prefix_density, lhs$name)
+      args <- set_names(c(as.name(eq$lhs$name), eq$rhs$distribution$args),
+                        names(formals(eq$rhs$distribution$density)))
+      density_expr <- eq$rhs$distribution$expr$density
       if (is.null(density_expr)) {
         dsl_parse_error(
-          "Density for '{eq$distribution$name}' not differentiable",
+          "Density for '{eq$rhs$distribution$name}' not differentiable",
           "E206", eq$expr, call)
       }
-      rhs <- maths$rewrite(substitute_(density_expr, list2env(args)))
-      name <- paste0(prefix_density, eq$name)
+      rhs <- 
+        list(expr = maths$rewrite(substitute_(density_expr, list2env(args))),
+             depends = c(eq$lhs$name, eq$rhs$depends))
+      
       list(type = "assignment",
-           name = name,
-           depends = c(eq$name, eq$depends),
+           special = NULL,
+           lhs = lhs,
            rhs = rhs,
-           expr = call("<-", as.name(name), rhs),
+           expr = call("<-", as.name(lhs$name), rhs$expr),
            original = eq)
     }
   }
 
   parts <- paste0(prefix_density, parameters)
+  lhs_root <- list(name = "",
+                   array = NULL,
+                   depends = NULL)
+  rhs_root <- list(expr = maths$plus_fold(lapply(parts, as.name)),
+                   depends = parts)
   root <- list(type = "root",
-               name = "",
-               depends = parts,
-               rhs = maths$plus_fold(lapply(parts, as.name)))
+               special = NULL,
+               lhs = lhs_root,
+               rhs = rhs_root)
   exprs <- lapply(exprs, f)
-  names(exprs) <- vcapply(exprs, "[[", "name")
+  names(exprs) <- vcapply(exprs, function(x) x$lhs$name)
   c(exprs, list(root))
 }
 
@@ -82,7 +100,7 @@ adjoint_rewrite_stochastic <- function(parameters, exprs, call = NULL) {
 ## the set of equations.
 adjoint_create <- function(parameters, exprs, call = NULL) {
   prefix_adjoint <- "__adjoint_"
-  deps <- lapply(exprs, function(e) e$depends)
+  deps <- lapply(exprs, function(e) e$rhs$depends)
 
   ## Adjoint expressions will be collected here:
   adj <- list()
@@ -90,7 +108,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
   ## Helper to stop us retaining "__adjoint_x" variables where they
   ## have constant numeric values.
   lookup_or_value <- function(nm) {
-    value <- adj[[nm]]$rhs
+    value <- adj[[nm]]$rhs$expr
     if (is.numeric(value)) value else as.name(nm)
   }
 
@@ -101,7 +119,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
   ## differentiated.
   differentiate_or_rethrow <- function(eq, nm) {
     rlang::try_fetch(
-      differentiate(eq$rhs, nm),
+      differentiate(eq$rhs$expr, nm),
       monty_differentiation_failure = function(e) {
         expr <- (eq$original %||% eq)$expr
         dsl_parse_error("Failed to differentiate this model",
@@ -116,7 +134,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
     if (nzchar(nm)) {
       i <- vlapply(deps, function(x) any(nm %in% x))
       parts <- lapply(exprs[i], function(eq) {
-        maths$times(lookup_or_value(paste0(prefix_adjoint, eq$name)),
+        maths$times(lookup_or_value(paste0(prefix_adjoint, eq$lhs$name)),
                     differentiate_or_rethrow(eq, nm))
       })
       rhs <- maths$plus_fold(parts)
@@ -125,10 +143,11 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
     }
     name <- paste0(prefix_adjoint, nm)
     adj[[name]] <- list(type = "assignment",
-                        name = name,
-                        rhs = rhs,
-                        expr = call("<-", as.name(name), rhs),
-                        depends = all.vars(rhs))
+                        lhs = list(name = name,
+                                   array = NULL),
+                        rhs = list(expr = rhs,
+                                   depends = all.vars(rhs)),
+                        expr = call("<-", as.name(name), rhs))
   }
 
   ## At this point we have a set of equations where we are interested
@@ -140,7 +159,7 @@ adjoint_create <- function(parameters, exprs, call = NULL) {
   keep <- nms_gradient
   for (i in rev(names(adj))) {
     if (i %in% keep) {
-      keep <- union(adj[[i]]$depends, keep)
+      keep <- union(adj[[i]]$rhs$depends, keep)
     }
   }
 

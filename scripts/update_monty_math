@@ -4,6 +4,7 @@
 ## TODO: tgamma?
 fn1 <- c("round", "ceil", "floor", "trunc", "sqrt",
          "exp", "expm1", "log", "log2", "log10", "log1p",
+         "erf", "erfc", "tgamma", "lgamma",
          "cos", "sin", "tan",
          "acos", "asin", "atan",
          "cosh", "sinh", "tanh",
@@ -40,8 +41,8 @@ inline float {{name}}(float x, float y) {
 #endif"
 
 glue_whisker <- function(template, data) {
-  glue::glue(template, .envir = data, .open = "{{", .close = "}}",
-             .trim = FALSE)
+  glue::glue(template, .envir = as.environment(data), .open = "{{",
+             .close = "}}", .trim = FALSE)
 }
 
 code <- c(

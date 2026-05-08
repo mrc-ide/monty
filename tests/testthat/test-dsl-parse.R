@@ -85,34 +85,32 @@ test_that("assignments and relationships must be distinct", {
 test_that("variables are not used out of order", {
   res <- expect_error(
     monty_dsl_parse({
-      b <- Normal(a, 1)
-      a <- Normal(0, 1)
+      b ~ Normal(a, 1)
+      a ~ Normal(0, 1)
     }),
     "Invalid use of variable 'a'")
-  expect_equal(res$src, quote(b <- Normal(a, 1)))
-  expect_equal(res$context,
-               list("'a' is defined later:" = quote(a <- Normal(0, 1))))
-})
-
-
-test_that("variables must be defined somewhere", {
-  res <- expect_error(
-    monty_dsl_parse({
-      a <- Normal(0, 1)
-      b <- Normal(a, sd)
-    }),
-    "Invalid use of variable 'sd'")
-  expect_equal(res$src, quote(b <- Normal(a, sd)))
+  expect_equal(res$src, quote(b ~ Normal(a, 1)))
+  expect_equal(names(res$context),
+               "'a' is defined later:")
+  expect_equal(res$context[[1]], list(quote(a ~ Normal(0, 1))))
 })
 
 
 test_that("require that stochastic relationships assign to a symbol", {
   expect_error(
     dsl_parse_expr_stochastic(quote(f(a) ~ Normal(0, 1))),
-    "Expected lhs of '~' relationship to be a symbol")
+    "Invalid special function 'f()' on the lhs of a `~` relationship", 
+    fixed = TRUE)
   expect_error(
     dsl_parse_expr_stochastic(quote(1 ~ Normal(0, 1))),
-    "Expected lhs of '~' relationship to be a symbol")
+    "Invalid target '1' on the lhs of a `~` relationship", fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_stochastic(quote(f(a)[] ~ Normal(0, 1))),
+    "Invalid special function 'f()' on the lhs of a `~` array relationship", 
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_stochastic(quote(1[] ~ Normal(0, 1))),
+    "Invalid target '1' on the lhs of a `~` array relationship", fixed = TRUE)
 })
 
 
@@ -124,23 +122,33 @@ test_that("require that stochastic relationships use known distributions", {
 })
 
 
-test_that("collect all dependncies in rhs", {
+test_that("collect all dependencies in rhs", {
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(a + b * c, a / d)))
-  expect_setequal(res$depends, c("a", "b", "c", "d"))
+  expect_setequal(res$rhs$depends, c("a", "b", "c", "d"))
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(f(a), g(10))))
-  expect_equal(res$depends, "a")
+  expect_equal(res$rhs$depends, "a")
   res <- dsl_parse_expr_stochastic(quote(a ~ Normal(0, 1)))
-  expect_equal(res$depends, character())
+  expect_equal(res$rhs$depends, character())
 })
 
 
 test_that("require that assignments assign to a symbol", {
   expect_error(
     dsl_parse_expr_assignment(quote(f(a) <- 10)),
-    "Expected lhs of assignment to be a symbol")
+    "Invalid special function 'f()' on the lhs of assignment",
+    fixed = TRUE)
   expect_error(
     dsl_parse_expr_assignment(quote(1 <- 10)),
-    "Expected lhs of assignment to be a symbol")
+    "Invalid target '1' on the lhs of assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_assignment(quote(f(a)[] <- 10)),
+    "Invalid special function 'f()' on the lhs of array assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse_expr_assignment(call("<-", call("[", 1), 10)),
+    "Invalid target '1' on the lhs of array assignment",
+    fixed = TRUE)
 })
 
 
@@ -225,9 +233,6 @@ test_that("validate fixed data for dsl", {
   expect_error(
     check_dsl_fixed(list(a = 1, b = 2, a = 2)),
     "'fixed' must have unique names")
-  expect_error(
-    check_dsl_fixed(list(a = 1, b = 2:3, c = numeric(10))),
-    "All elements of 'fixed' must currently be scalars")
   expect_equal(
     check_dsl_fixed(list(a = 1, b = 2)),
     list(a = 1, b = 2))
@@ -238,4 +243,409 @@ test_that("assignments cannot shadow names of fixed variables", {
   expect_error(
     dsl_parse(list(quote(a <- 1)), fixed = list(a = 1)),
     "Value 'a' in 'fixed' is shadowed by assignment")
+})
+
+
+test_that("dim call on lhs requires variables", {
+  expect_error(
+    dsl_parse(list(quote(dim() <- 1))),
+    "Invalid call to 'dim()' on lhs; no variables given",
+    fixed = TRUE)
+})
+
+
+test_that("arguments to dim call on lhs must be unnamed", {
+  expect_error(
+    dsl_parse(list(quote(dim(x = a) <- 1))),
+    "Invalid call to 'dim()' on lhs; arguments must be unnamed",
+    fixed = TRUE)
+})
+
+
+test_that("arguments to dim call on lhs must be symbols", {
+  expect_error(
+    dsl_parse(list(quote(dim(f(x)) <- 1))),
+    "Invalid call to 'dim()' on lhs; 'f(x)' is not a symbol",
+    fixed = TRUE)
+})
+
+
+test_that("dim call on rhs only takes a symbol", {
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(b[])))),
+    "When using 'dim()' on the right-hand-side, it takes only an array name",
+    fixed = TRUE)
+})
+
+
+test_that("rhs of dim equation restricts use of functions", {
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- f(1)))),
+    "Invalid function used on rhs of 'dim()': 'f'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- f(1 * a)))),
+    "Invalid functions used on rhs of 'dim()': 'f' and '*'",
+    fixed = TRUE)
+})
+
+
+test_that("dimensions of a variable cannot be given multiple times", {
+  expect_error(
+    dsl_parse(list(quote(dim(x) <- 1), quote(dim(x) <- 2))),
+    "The variable x was given dimensions multiple times",
+    fixed = TRUE)
+})
+
+
+test_that("index access on rhs determined by dimensions on lhs", {
+  expect_error(
+    dsl_parse(list(quote(x[] <- j))),
+    "Invalid index access used on rhs of equation: 'j'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(x[, ] <- k))),
+    "Invalid index access used on rhs of equation: 'k'",
+    fixed = TRUE)
+})
+
+
+test_that("cannot use restricted names as lhs target", {
+  expect_error(
+    dsl_parse(list(quote(k <- 5))),
+    "Can't assign to reserved name 'k'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(j[] ~ Poisson(3)))),
+    "Can't assign to reserved name 'j'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(dim <- 1))),
+    "Can't assign to reserved name 'dim'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(dim_a <- 1))),
+    "Invalid name 'dim_a' starts with reserved prefix 'dim'",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(pi <- 1))),
+    "Do not use `pi` on the left-hand-side of an expression",
+    fixed = TRUE)
+})
+
+
+test_that("only special functions allowed on lhs", {
+  expect_error(
+    dsl_parse(list(quote(dym(1) <- 1))),
+    "Invalid special function 'dym()' on the lhs of assignment",
+    fixed = TRUE)
+  expect_error(
+    dsl_parse(list(quote(exp(x) <- 1))),
+    "Invalid special function 'exp()' on the lhs of assignment",
+    fixed = TRUE)
+})
+
+
+test_that("arrays require a dim equation", {
+  expect_error(
+    dsl_parse(list(quote(x[] <- Exponential(1)))),
+    "Missing 'dim()' for expression assigned as an array: 'x'",
+    fixed = TRUE)
+}) 
+
+
+test_that("array equations require [] on the lhs", {
+  expect_error(
+    dsl_parse(list(quote(x[] ~ Exponential(1)), 
+                   quote(x ~ Exponential(1)), 
+                   quote(dim(x) <- 3))),
+    "Array expressions must always use '[]' on the lhs",
+    fixed = TRUE)
+})
+
+
+test_that("can alias dims", {
+  res <- dsl_parse(
+    list(quote(a[] <- exp(i)),
+         quote(b[] ~ Normal(0, a[i])),
+         quote(dim(a) <- 3),
+         quote(dim(b) <- dim(a))),
+    gradient_required = FALSE)
+  expect_equal(res$arrays$alias[res$arrays$name == "b"], "a")
+  expect_identical(res$arrays$dims[res$arrays$name == "b"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  
+  res <- dsl_parse(
+    list(quote(a[] <- exp(i)),
+         quote(b[] ~ Normal(0, a[i])),
+         quote(c[] ~ Exponential(3)),
+         quote(dim(a) <- 3),
+         quote(dim(b, c) <- dim(a))),
+    gradient_required = FALSE)
+  expect_equal(res$arrays$alias[res$arrays$name %in% c("b", "c")], c("a", "a"))
+  expect_identical(res$arrays$dims[res$arrays$name == "b"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  expect_identical(res$arrays$dims[res$arrays$name == "c"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  
+  res <- dsl_parse(
+    list(quote(a[] <- exp(i)),
+         quote(b[] ~ Normal(0, a[i])),
+         quote(c[] ~ Exponential(3)),
+         quote(dim(c) <- dim(b)),
+         quote(dim(b) <- dim(a)),
+         quote(dim(a) <- 3)),
+    gradient_required = FALSE)
+  expect_equal(res$arrays$alias[res$arrays$name %in% c("b", "c")], c("a", "a"))
+  expect_identical(res$arrays$dims[res$arrays$name == "b"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+  expect_identical(res$arrays$dims[res$arrays$name == "c"], 
+                   res$arrays$dims[res$arrays$name == "a"])
+})
+
+
+test_that("array equations cannot be interleaved", {
+  expect_error(
+    dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                   quote(y ~ Uniform(0, 1)),
+                   quote(x[2:3] ~ Exponential(3)), 
+                   quote(dim(x) <- 3))),
+    paste("Multiline array equations must be contiguous statements,",
+          "but 'x' is interleaved with 'y'"),
+    fixed = TRUE)
+})
+
+
+test_that("lhs indexing for array equations is restricted", {
+  expect_error(dsl_parse(list(quote(x[TRUE] ~ Exponential(1)))),
+    "Invalid value for array index lhs",
+    fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[a:b + 1] ~ Exponential(1)))),
+               "Invalid use of range operator ':' on lhs of array assignment",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[f(1)] ~ Exponential(1)))),
+               "Invalid function used in lhs of array assignment: 'f'",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[-1] ~ Exponential(1)))),
+               "Invalid use of unary minus in lhs of array assignment",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[i] ~ Exponential(1)))),
+               paste("Invalid use of special variable in lhs of array",
+                     "assignment: 'i'"),
+               fixed = TRUE)
+})
+
+
+test_that("unknown variables result in an error", {
+  expect_error(dsl_parse(list(quote(x ~ Exponential(a)))),
+               "Unknown variable used: 'a'",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x ~ Exponential(a * b)))),
+               "Unknown variables used: 'a' and 'b'",
+               fixed = TRUE)
+  
+  err <- expect_error(dsl_parse(list(quote(x ~ Exponential(aaa))),
+                                fixed = list(aa = 1)),
+                      "Unknown variable used: 'aaa'",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Did you mean 'aa'?"))
+  
+  expect_error(dsl_parse(list(quote(aab <- 1),
+                              quote(x ~ Exponential(aaa))),
+                         fixed = list(aa = 1)),
+               "Unknown variable used: 'aaa'",
+               fixed = TRUE)
+})
+
+
+test_that("cannot use variables on rhs of dim if not in fixed", {
+  expect_error(dsl_parse(list(quote(dim(x) <- a))),
+               "Dimension value not found in 'fixed': 'a'",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(dim(x) <- a)),
+                         fixed = list(a = c(1, 2))),
+               "Dimension values in 'fixed' must be scalars",
+               fixed = TRUE)
+})
+
+
+test_that("dim() on rhs requires a dim assignment", {
+  expect_error(dsl_parse(list(quote(dim(a) <- dim(b)),
+                              quote(dim(b) <- dim(c)))),
+               "No dim assignment found for variable 'c' used in dim() on rhs",
+               fixed = TRUE)
+  
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(c)),
+                   quote(dim(b) <- dim(d)))),
+    "No dim assignments found for variables 'c' and 'd' used in dim() on rhs",
+    fixed = TRUE)
+})
+
+
+test_that("dim assignments cannot be cyclic", {
+  expect_error(dsl_parse(list(quote(dim(a) <- dim(a)))),
+               "Cyclic dependency detected within dim equation for 'a'",
+               fixed = TRUE)
+  
+  expect_error(
+    dsl_parse(list(quote(dim(a) <- dim(b)),
+                   quote(dim(b) <- dim(a)))),
+    "Cyclic dependency detected within dim equations for 'a' and 'b'",
+    fixed = TRUE)
+})
+
+
+test_that("cannot have model without any stochastic relationships", {
+  expect_error(dsl_parse(list(quote(x <- 1))),
+               "No stochastic relationships (with '~') found in your model",
+               fixed = TRUE)
+})
+
+
+test_that("array rank usage matches dim declaration", {
+  expect_error(dsl_parse(list(quote(x[, ] <- 1),
+                              quote(dim(x) <- 2))),
+               paste("Array rank in expression differs from the rank declared",
+                     "with `dim`"),
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- a[1, 1]),
+                              quote(dim(x) <- 2),
+                              quote(dim(a) <- 2))),
+               paste("Array rank in expression differs from the rank declared",
+                     "with `dim`"),
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x),
+                              quote(dim(x, y) <- 2))),
+               "Trying to use vector 'x' without index",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[, ] <- 1),
+                              quote(y[, ] <- x),
+                              quote(dim(x, y) <- c(2, 2)))),
+               "Trying to use matrix 'x' without index",
+               fixed = TRUE)
+})
+
+
+test_that("can't use empty index or : on rhs", {
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x[]),
+                              quote(dim(x, y) <- 2))),
+               "Can't use an empty index while accessing arrays on the rhs",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- x[1:2]),
+                              quote(dim(x, y) <- 2))),
+               paste("Can't use the range operator `:` while accessing arrays",
+                     "on the rhs"),
+               fixed = TRUE)
+})
+
+
+test_that("length, nrow, ncol must only apply to array symbols", {
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- length(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `length()` expects an array name without indexes.",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- nrow(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `nrow()` expects an array name without indexes.",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[] <- 1),
+                              quote(y[] <- ncol(x[1])),
+                              quote(dim(x, y) <- 2))),
+               "The function `ncol()` expects an array name without indexes.",
+               fixed = TRUE)
+})
+
+
+test_that("out-of-bounds access is prevented", {
+  err <- expect_error(dsl_parse(list(quote(x[1:5] ~ Exponential(5)),
+                                     quote(dim(x) <- 4))),
+                      "Out-of-bounds access of 'x' on lhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'x' has size 4",
+                           x = "Trying to access element: 5"))
+  
+  err <- expect_error(dsl_parse(list(quote(x[5] ~ Exponential(5)),
+                                     quote(dim(x) <- 4))),
+                      "Out-of-bounds access of 'x' on lhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'x' has size 4",
+                           x = "Trying to access element: 5"))
+  
+  err <- expect_error(dsl_parse(list(quote(a[] <- 2),
+                                     quote(x[] ~ Exponential(a[i])),
+                                     quote(dim(x) <- 4),
+                                     quote(dim(a) <- 3))),
+                      "Out-of-bounds access of 'a' on rhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'a' has size 3",
+                           x = "Trying to access element: 4"))
+  
+  err <- expect_error(dsl_parse(list(quote(a[] <- 2),
+                                     quote(x[] <- a[i - 1]),
+                                     quote(dim(x) <- 4),
+                                     quote(dim(a) <- 3))),
+                      "Out-of-bounds access of 'a' on rhs",
+                      fixed = TRUE)
+  expect_equal(err$body, c(i = "Dimension 1 of 'a' has size 3",
+                           x = "Trying to access element: 0"))
+  
+})
+
+
+test_that("array coverage is checked", {
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                              quote(x[] ~ Exponential(5)),
+                              quote(dim(x) <- 4))),
+               "Multiple definitions for array element x[1]",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[1:3] ~ Exponential(1)),
+                              quote(dim(x) <- 4))),
+               "Missing definition for array element x[4]",
+               fixed = TRUE)
+  expect_error(dsl_parse(list(quote(x[1:2] ~ Exponential(1)),
+                              quote(x[3:4] <- 1),
+                              quote(dim(x) <- 4))),
+               paste("Equations for an array must all be of the same type, but",
+                     "'x' has some elements defined by assignment (with '<-'),",
+                     "and some by stochastic relationship (with '~')"),
+               fixed = TRUE)
+})
+
+
+test_that("cannot use array elements out-of-order", {
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(x[2])),
+                              quote(x[2] ~ Exponential(1)),
+                              quote(dim(x) <- 2))),
+               "Array element x[2] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1] ~ Exponential(1)),
+                              quote(x[2] ~ Exponential(x[3])),
+                              quote(x[3] ~ Exponential(x[2])),
+                              quote(dim(x) <- 3))),
+               "Array element x[3] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1, ] <- exp(x[2, 2])),
+                              quote(x[2, ] <- 1),
+                              quote(dim(x) <- c(2, 2)))),
+               "Array element x[2, 2] used on the rhs before being defined",
+               fixed = TRUE)
+  
+  expect_error(dsl_parse(list(quote(x[1, ] <- 1),
+                              quote(x[2, ] <- x[j, i]),
+                              quote(dim(x) <- c(2, 2)))),
+               "Array element x[2, 2] used on the rhs before being defined",
+               fixed = TRUE)
 })

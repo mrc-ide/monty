@@ -137,8 +137,21 @@ sampler_hmc_combine <- function(state, control) {
     array_bind(arrays = lapply(state, "[[", name), ...)
   }
 
-  list(pars = join("pars", on = 4),
-       accept = join("accept", on = 2))
+  ## With the parallel tempering algorithm we already have more than
+  ## one chain worth and we need to combine differently, pushing the
+  ## apparent chain (which really means rung) *before* the state.  We
+  ## need to do this at combine, rather than dump, because the dump is
+  ## also used in the simultaneous sampler.
+  is_parallel_tempering <- ncol(state[[1]]$accept) > 1
+  if (is_parallel_tempering) {
+    pars <- aperm(join("pars", on = 5), c(1, 2, 4, 3, 5))
+    accept <- aperm(join("accept", on = 3), c(2, 1, 3))
+  } else {
+    pars <- join("pars", on = 4)
+    accept <- join("accept", on = 2)
+  }
+
+  list(pars = pars, accept = accept)
 }
 
 
@@ -149,9 +162,16 @@ sampler_hmc_restore <- function(chain_id, state_chain, state_sampler, control,
   if (is.null(state_sampler)) {
     history <- NULL
   } else {
-    history <- list(
-      pars = state_sampler$pars[, , , chain_id, drop = FALSE],
-      accept = state_sampler$accept[, chain_id, drop = FALSE])
+    is_parallel_tempering <- length(dim(state_sampler$accept)) > 2
+    if (is_parallel_tempering) {
+      history <- list(
+        pars = state_sampler$pars[, , , , chain_id, drop = FALSE],
+        accept = state_sampler$accept[, , chain_id, drop = FALSE])
+    } else {
+      history <- list(
+        pars = state_sampler$pars[, , , chain_id, drop = FALSE],
+        accept = state_sampler$accept[, chain_id, drop = FALSE])
+    }
   }
   list(transform = hmc_transform(model, pars),
        sample_momentum = hmc_momentum(control, model, pars),
@@ -343,8 +363,15 @@ hmc_history_recorder <- function(control, pars, history = NULL) {
     env$pars <- as.vector(history$pars)
     env$accept <- as.vector(history$accept)
   } else {
-    env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))
-    env$accept <- as.vector(t(history$accept))
+    is_parallel_tempering <- length(dim(history$accept)) > 2
+    if (is_parallel_tempering) {
+      env$pars <- as.vector(aperm(history$pars, c(1, 3, 2, 4, 5)))
+      env$accept <- as.vector(history$accept)
+    } else {
+      env$pars <- as.vector(aperm(history$pars, c(1, 4, 2, 3)))
+      env$accept <- as.vector(t(history$accept))
+    }
+    
   }
 
   add <- function(i, pars) {
