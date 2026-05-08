@@ -236,8 +236,11 @@ test_that("process can't duplicate existing var with grouped packer", {
   process <- function(res) {
     list(x = res$x + res$y)
   }
+  
+  packer <- monty_packer_grouped(c("a", "b"), c("x", "y"), process = process)
+  
   expect_error(
-    monty_packer_grouped(c("a", "b"), c("x", "y"), process = process),
+    packer$unpack(1:4),
     "'process\\(\\)' is trying to overwrite")
 })
 

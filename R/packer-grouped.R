@@ -224,8 +224,19 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     x
   }
 
-  idx <- unpack(seq_len(len))
-
+  #idx <- unpack(seq_len(len))
+  
+  ## This is a simplified version of unpack above to create index
+  base <- c(set_names(vector("list", length(nms)), nms))
+  base[shared] <- d_shared$packer$unpack(d_shared$index_packed)
+  idx <- rep(list(base), n_groups)
+  x_varied <- matrix(d_varied$index_packed, n_varied, n_groups)
+  for (i in seq_len(n_groups)) {
+    idx[[i]][varied] <- d_varied$packer$unpack(x_varied[, i])
+  }
+  names(idx) <- groups
+  
+  
   ## This would be really quite hard, and I'm not sure how effective?
   ## But we might want it later to support multistage simulation in
   ## dust2.
