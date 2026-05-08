@@ -227,7 +227,7 @@ test_that("Can print a grouped packer", {
   expect_match(res$messages, "<monty_packer_grouped>",
                fixed = TRUE, all = FALSE)
   expect_match(res$messages,
-               "Packing 4 values: 'x | a>', 'y | a>', 'x | b>', and 'y | b",
+               "Packing 4 values: 'x | a', 'y | a', 'x | b', and 'y | b",
                fixed = TRUE, all = FALSE)
 })
 
