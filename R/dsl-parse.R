@@ -3,9 +3,11 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
                       domain = NULL, groups = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
+  group_data <- dsl_parse_groups(exprs, fixed, groups, call)
+  
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  group_data <- dsl_parse_groups(exprs, fixed, groups, call)
+  
   
   #exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
   
@@ -17,7 +19,7 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
       "E216", NULL, call)
   }
   assigned <- setdiff(unique(name), parameters)
-  browser()
+  
   packer <- dsl_packer(parameters, arrays, groups, group_data)
 
   if (!is.null(domain)) {
@@ -28,7 +30,8 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
 
   list(parameters = parameters, assigned = assigned, packer = packer,
        exprs = exprs, arrays = arrays, adjoint = adjoint,
-       fixed = fixed, domain = domain)
+       fixed = fixed, domain = domain, groups = unname(unlist(groups)),
+       group_data = group_data)
 }
 
 
