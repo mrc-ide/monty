@@ -1,11 +1,13 @@
 ## The default of gradient_required = TRUE here helps with tests
 dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
-                      domain = NULL, call = NULL) {
+                      domain = NULL, groups = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
+  group_data <- dsl_parse_groups(exprs, fixed, groups, call)
+  
+  #exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
@@ -15,8 +17,8 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
       "E216", NULL, call)
   }
   assigned <- setdiff(unique(name), parameters)
-  
-  packer <- dsl_packer(parameters, arrays)
+  browser()
+  packer <- dsl_packer(parameters, arrays, groups, group_data)
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, packer$names(), call = call)
@@ -925,7 +927,7 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
 }
 
 
-dsl_packer <- function(parameters, arrays) {
+dsl_packer <- function(parameters, arrays, groups, group_data) {
   is_array <- parameters %in% arrays$name
   scalar <- if (all(is_array)) NULL else parameters[!is_array]
   if (any(is_array)) {
@@ -935,5 +937,19 @@ dsl_packer <- function(parameters, arrays) {
   } else {
     array <- NULL
   }
-  monty_packer(scalar, array)
+  
+  if (is.null(group_data)) {
+    monty_packer(scalar, array)
+  } else {
+    shared <- setdiff(parameters, group_data)
+    monty_packer_grouped(groups$region, scalar, array, shared = shared)
+  }
+}
+
+
+dsl_parse_groups <- function(exprs, fixed, groups, call) {
+  is_group <- vlapply(exprs, function(x) !is.null(x$lhs$group))
+  pars_grouped <- vcapply(exprs[is_group], function(x) x$lhs$name)
+  
+  pars_grouped
 }

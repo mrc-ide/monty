@@ -59,7 +59,7 @@
 ##' # You can also pass strings
 ##' monty_dsl("a ~ Normal(0, 1)")
 monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL,
-                      domain = NULL) {
+                      domain = NULL, groups = NULL) {
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
     x <- rlang::eval_tidy(quo)
@@ -69,7 +69,7 @@ monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL,
   call <- environment()
   fixed <- check_dsl_fixed(fixed)
   exprs <- dsl_preprocess(x, type, call)
-  dat <- dsl_parse(exprs, gradient, fixed, domain, call)
+  dat <- dsl_parse(exprs, gradient, fixed, domain, groups, call)
   dsl_generate(dat)
 }
 
