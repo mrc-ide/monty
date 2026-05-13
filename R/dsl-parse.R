@@ -7,7 +7,7 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
+  exprs <- dsl_parse_check_system(exprs, arrays, fixed, group_data, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
@@ -24,12 +24,11 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
     domain <- validate_domain(domain, packer$names(), call = call)
   }
 
-  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
+  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required, )
 
   list(parameters = parameters, assigned = assigned, packer = packer,
        exprs = exprs, arrays = arrays, adjoint = adjoint,
-       fixed = fixed, domain = domain, groups = unname(unlist(groups)),
-       group_data = group_data)
+       fixed = fixed, domain = domain, group_data = group_data)
 }
 
 
@@ -135,6 +134,15 @@ dsl_parse_expr_assignment <- function(expr, call) {
     rhs <- dsl_parse_expr_assignment_rhs(expr, call)
   }
   
+  if (rhs$type == "group") {
+    if (!is.null(special) || !is.null(lhs$array)) {
+      dsl_parse_error(
+        "Calls to 'group()' must be assigned to a symbol",
+        "E118", expr, call)
+    }
+    special <- "group"
+  }
+  
   rhs$depends <- dsl_parse_expr_check_index_usage(
     rhs$depends, lhs$array, expr, call)
   
@@ -218,10 +226,21 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
 dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
   
+  if (rlang::is_call(rhs, "group")) {
+    if (length(rhs) != 1) {
+      dsl_parse_error("Calls to 'group()' must have no arguments",
+                       "E117", expr, call)
+    }
+    type <- "group"
+  } else {
+    type <- "expression"
+  }
+  
   depends <- all.vars(rhs)
   
   list(expr = rhs,
-       depends = depends)
+       depends = depends,
+       type = type)
   
 }
 
@@ -448,14 +467,19 @@ dsl_parse_dim_name <- function(name) {
 }
 
 
-dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
+dsl_parse_check_system <- function(exprs, arrays, fixed, group_data, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
+  
+  is_group <- special == "group"
+  exprs <- exprs[!is_group]
+  special <- special[!is_group]
+  
   is_dim <- special == "dim"
   
   exprs <- dsl_parse_check_system_arrays(exprs, fixed, arrays, is_dim, call)
   dsl_parse_check_duplicates(exprs, arrays, call)
   dsl_parse_check_fixed(exprs, fixed, call)
-  dsl_parse_check_usage(exprs, fixed, call)
+  dsl_parse_check_usage(exprs, fixed, group_data, call)
   
   exprs
 }
@@ -878,9 +902,10 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 }
 
 
-dsl_parse_check_usage <- function(exprs, fixed, call) {
+dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
   name <- vcapply(exprs, function(x) x$lhs$name)
   names_fixed <- names(fixed)
+  names_group <- group_data$name
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
     if (!is.null(e$lhs$array)) {
@@ -888,7 +913,7 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
     } else {
       depends <- e$rhs$depends
     }
-    err <- setdiff(depends, c(name[seq_len(i - 1)], names_fixed))
+    err <- setdiff(depends, c(name[seq_len(i - 1)], names_fixed, names_group))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
@@ -949,8 +974,20 @@ dsl_packer <- function(parameters, arrays, groups, group_data) {
 
 
 dsl_parse_groups <- function(exprs, fixed, groups, call) {
-  is_group <- vlapply(exprs, function(x) !is.null(x$lhs$group))
-  pars_grouped <- vcapply(exprs[is_group], function(x) x$lhs$name)
+  is_group <- vlapply(exprs, function(x) isTRUE(x$special == "group"))
+  if (sum(is_group) > 1) {
+    ## error for more than one grouping variable currently
+  }
   
-  pars_grouped
+  name <- exprs[[which(is_group)]]$lhs$name
+  if(name != names(groups)) {
+    ## error that name does not match name in groups
+  }
+  
+  is_grouped <- vlapply(exprs, function(x) !is.null(x$lhs$group))
+  pars_grouped <- vcapply(exprs[is_grouped], function(x) x$lhs$name)
+  
+  list(name = name,
+       groups = unlist(unname(groups)),
+       pars_grouped = pars_grouped)
 }
