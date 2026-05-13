@@ -3,6 +3,7 @@ dsl_generate <- function(dat) {
   env$packer <- dat$packer
   env$fixed <- dat$fixed
   env$parameters <- dat$parameters
+  env$groups <- dat$groups
 
   meta <- list(
     pars = quote(pars),
@@ -10,7 +11,7 @@ dsl_generate <- function(dat) {
     density = quote(density),
     fixed = quote(fixed),
     fixed_contents = names(env$fixed))
-browser()
+
   density <- dsl_generate_density(dat, env, meta)
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
   gradient <- dsl_generate_gradient(dat, env, meta)
@@ -84,11 +85,18 @@ dsl_generate_direct_sample <- function(dat, env, meta) {
   }
   initial <- dsl_generate_initialise_arrays(dat, "pars", meta)
   exprs <- lapply(dat$exprs, dsl_generate_sample_expr, dat$groups, meta)
+  if (is.null(dat$groups)) {
+    tidy <- call("<-", meta[["pars"]], bquote(.(meta[["pars"]])[parameters]))
+  } else {
+    tidy <- call("<-", bquote(.(meta[["pars"]])[[group]]), 
+                 bquote(.(meta[["pars"]])[[group]][parameters]))
+    tidy <- dsl_generate_group_loops(tidy, dat$groups, meta)
+  }
+  
   body <- unlist(c(call("<-", meta[["pars"]], quote(list())),
                    initial,
                    exprs,
-                   call("<-", meta[["pars"]], 
-                        bquote(.(meta[["pars"]])[parameters])),
+                   tidy,
                    bquote(packer$pack(.(meta[["pars"]])))))
   as_function(alist(rng = ), body, env)
 }
@@ -147,8 +155,9 @@ dsl_generate_assignment <- function(expr, groups, dest, meta) {
 dsl_generate_density_stochastic <- function(expr, groups, meta) {
   array <- expr$lhs$array
   name <- as.name(expr$lhs$name)
-  group <- expr$lhs$group
-  if (!is.null(group)) {
+  is_group <- !is.null(expr$lhs$group)
+  has_groups <- !is.null(groups)
+  if (is_group) {
     lhs <- bquote(.(meta[["density"]])[[group]][[.(expr$lhs$name)]])
   } else {
     lhs <- bquote(.(meta[["density"]])[[.(expr$lhs$name)]])
@@ -161,14 +170,20 @@ dsl_generate_density_stochastic <- function(expr, groups, meta) {
   rhs <- rlang::call2(expr$rhs$distribution$density,
                       name, !!!expr$rhs$distribution$args)
   expr <- rlang::call2("<-", lhs,
-                       dsl_generate_density_rewrite_lookup(rhs, "pars", meta))
+                       dsl_generate_density_rewrite_lookup(rhs, "pars", meta,
+                                                           has_groups))
     
   if (!is.null(array)) {
     expr <- dsl_generate_array_loops(expr, array, meta)
   }
-  if (!is.null(group)) {
-    expr <- dsl_generate_group_loops(expr, groups, meta)
+  if (has_groups) {
+    if (is_group) {
+      expr <- dsl_generate_group_loops(expr, groups, meta)
+    } else {
+      expr <- dsl_generate_group_loops(expr, groups[1], meta)
+    }
   }
+  
   
   expr
 }
@@ -176,9 +191,9 @@ dsl_generate_density_stochastic <- function(expr, groups, meta) {
 
 dsl_generate_sample_stochastic <- function(expr, groups, meta) {
   array <- expr$lhs$array
-  group <- expr$lhs$group
+  is_group <- !is.null(expr$lhs$group)
   
-  if (!is.null(group)) {
+  if (!is.null(groups)) {
     lhs <- bquote(.(meta[["pars"]])[[group]][[.(expr$lhs$name)]])
   } else {
     lhs <- bquote(.(meta[["pars"]])[[.(expr$lhs$name)]])
@@ -193,21 +208,35 @@ dsl_generate_sample_stochastic <- function(expr, groups, meta) {
   rhs <- rlang::call2(expr$rhs$distribution$sample, !!!args, quote(rng))
   expr <- rlang::call2("<-", lhs, rhs)
   
-  if (!is.null(array)) {
-    expr <- dsl_generate_array_loops(expr, array, meta)
+  if (!is.null(groups)) {
+    if (is_group) {
+      expr <- dsl_generate_group_loops(expr, groups, meta)
+    } else {
+      ## shared parameter so we need to sample once and then assign in the rest
+      ## of the groups
+      expr2 <- call("<-", lhs, substitute_(lhs, list(group = groups[1])))
+      expr <- unlist(c(dsl_generate_group_loops(expr, groups[1], meta),
+                       dsl_generate_group_loops(expr2, groups[-1], meta)))
+    }
   }
-  if (!is.null(group)) {
-    expr <- dsl_generate_group_loops(expr, groups, meta)
+  
+  if (!is.null(array)) {
+    if (is.null(groups)) {
+      expr <- dsl_generate_array_loops(expr, array, meta)
+    } else {
+      expr <- lapply(expr, dsl_generate_array_loops, array, meta)
+    }
   }
   
   expr
 }
 
 
-dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
+dsl_generate_density_rewrite_lookup <- function(expr, dest, meta,
+                                                is_group = FALSE) {
   if (is.recursive(expr)) {
     expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
-                       dest, meta)
+                       dest, meta, is_group)
     as.call(expr)
   } else if (is.name(expr)) {
     if (deparse(expr) %in% INDEX) {
@@ -216,7 +245,14 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta) {
     if (as.character(expr) %in% meta$fixed_contents) {
       dest <- meta$fixed
     }
-    call("[[", meta[[as.character(dest)]], as.character(expr))
+    if (is_group) {
+      expr <- call("[[", 
+                   call("[[", meta[[as.character(dest)]], quote(group)),
+                   as.character(expr))
+    } else {
+      expr <- call("[[", meta[[as.character(dest)]], as.character(expr))
+    }
+    expr
   } else {
     expr
   }
@@ -275,13 +311,14 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, group_data,
 
 
 dsl_generate_group_loops <- function(expr, groups, meta) {
-  generate_group_loop <- function(g) substitute_(expr, list(group = g))
+  generate_group_loop <- function(g) {
+    substitute_(expr, list(group = g))
+  }
   lapply(groups, generate_group_loop)
 }
 
 
 dsl_generate_domain <- function(dat, meta, packer) {
-  browser()
   n <- length(packer$names())
   domain <- cbind(rep(-Inf, n), rep(Inf, n))
   rownames(domain) <- packer$names()
@@ -294,7 +331,8 @@ dsl_generate_domain <- function(dat, meta, packer) {
     if (e$type == "assignment") {
       dsl_generate_domain_assignment(e, env, dat$fixed, dat$arrays)
     } else { # type is "stochastic"
-      domain <- dsl_generate_domain_stochastic(domain, e, env, dat$fixed)
+      domain <- dsl_generate_domain_stochastic(domain, e, env, dat$fixed,
+                                               dat$groups)
     }
   }
   
@@ -329,11 +367,18 @@ dsl_generate_domain_assignment <- function(expr, env, fixed, arrays) {
 }
 
 
-dsl_generate_domain_stochastic <- function(domain, expr, env, fixed) {
+dsl_generate_domain_stochastic <- function(domain, expr, env, fixed, groups) {
   distr <- expr$rhs$distribution
   
   if (is.null(expr$lhs$array)) {
-    domain[expr$lhs$name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
+    if (is.null(expr$lhs$group)) {
+      domain[expr$lhs$name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
+    } else {
+      for (g in groups) {
+        name <- paste(expr$lhs$name, "|", g)
+        domain[name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
+      }
+    }
   } else {
     array <- expr$lhs$array
     
@@ -346,11 +391,19 @@ dsl_generate_domain_stochastic <- function(domain, expr, env, fixed) {
     idx <- expand.grid(rev(idx))
     idx <- idx[, rev(names(idx)), drop = FALSE]
     for (i in seq_len(nrow(idx))) {
+      
       args <- 
         lapply(distr$args, 
                function(x) substitute_(x, as.list(idx[i, , drop = FALSE])))
       name_i <- paste0(expr$lhs$name, "[", paste(idx[i, ], collapse = ","), "]")
-      domain[name_i, ] <- dsl_domain_eval(distr$domain, args, env)
+      if (is.null(expr$lhs$group)) {
+        domain[name_i, ] <- dsl_domain_eval(distr$domain, args, env)
+      } else {
+        for (g in groups) {
+          name <- paste(name_i, "|", g)
+          domain[name, ] <- dsl_domain_eval(distr$domain, args, env)
+        }
+      }
     }
   }
   

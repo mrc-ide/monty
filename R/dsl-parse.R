@@ -7,9 +7,7 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  
-  
-  #exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
+  exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
