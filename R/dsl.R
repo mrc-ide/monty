@@ -76,7 +76,7 @@ monty_dsl <- function(x, type = NULL, gradient = NULL, fixed = NULL,
 
 
 monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL,
-                            domain = NULL) {
+                            domain = NULL, groups = NULL) {
   call <- environment()
   quo <- rlang::enquo(x)
   if (rlang::quo_is_symbol(quo)) {
@@ -86,7 +86,7 @@ monty_dsl_parse <- function(x, type = NULL, gradient = NULL, fixed = NULL,
   }
   fixed <- check_dsl_fixed(fixed, call)
   exprs <- dsl_preprocess(x, type, call)
-  dsl_parse(exprs, gradient, fixed, domain, call)
+  dsl_parse(exprs, gradient, fixed, domain, groups, call)
 }
 
 

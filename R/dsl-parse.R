@@ -18,13 +18,13 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   }
   assigned <- setdiff(unique(name), parameters)
   
-  packer <- dsl_packer(parameters, arrays, groups, group_data)
+  packer <- dsl_packer(parameters, arrays, group_data)
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, packer$names(), call = call)
   }
 
-  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required, )
+  adjoint <- dsl_parse_adjoint(parameters, exprs, gradient_required)
 
   list(parameters = parameters, assigned = assigned, packer = packer,
        exprs = exprs, arrays = arrays, adjoint = adjoint,
@@ -904,8 +904,12 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 
 dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
   name <- vcapply(exprs, function(x) x$lhs$name)
-  names_fixed <- names(fixed)
+  groups <- group_data$groups
   names_group <- group_data$name
+  names_fixed_shared <- setdiff(names(fixed), groups)
+  names_fixed_grouped <- unique(unlist(lapply(fixed[groups], names)))
+  names_fixed <- c(names_fixed_shared, names_fixed_grouped)
+  
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
     if (!is.null(e$lhs$array)) {
@@ -913,7 +917,8 @@ dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
     } else {
       depends <- e$rhs$depends
     }
-    err <- setdiff(depends, c(name[seq_len(i - 1)], names_fixed, names_group))
+    err <- setdiff(depends,
+                   c(name[seq_len(i - 1)], names_fixed, names_group, groups))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
@@ -953,7 +958,7 @@ dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
 }
 
 
-dsl_packer <- function(parameters, arrays, groups, group_data) {
+dsl_packer <- function(parameters, arrays, group_data) {
   is_array <- parameters %in% arrays$name
   scalar <- if (all(is_array)) NULL else parameters[!is_array]
   if (any(is_array)) {
@@ -964,29 +969,36 @@ dsl_packer <- function(parameters, arrays, groups, group_data) {
     array <- NULL
   }
   
-  if (is.null(group_data)) {
+  if (is.null(group_data$groups)) {
     monty_packer(scalar, array)
   } else {
-    shared <- setdiff(parameters, group_data)
-    monty_packer_grouped(groups$region, scalar, array, shared = shared)
+    shared <- setdiff(parameters, group_data$pars_grouped)
+    monty_packer_grouped(group_data$groups, scalar, array, shared = shared)
   }
 }
 
 
 dsl_parse_groups <- function(exprs, fixed, groups, call) {
   is_group <- vlapply(exprs, function(x) isTRUE(x$special == "group"))
-  if (sum(is_group) > 1) {
-    ## error for more than one grouping variable currently
-  }
-  
-  name <- exprs[[which(is_group)]]$lhs$name
-  if(name != names(groups)) {
-    ## error that name does not match name in groups
-  }
   
   is_grouped <- vlapply(exprs, function(x) !is.null(x$lhs$group))
   pars_grouped <- vcapply(exprs[is_grouped], function(x) x$lhs$name)
   
+  if (sum(is_group) == 0) {
+    if (sum(is_grouped) > 0) {
+      ## TODO add error for no grouping variable equation when using groups
+    }
+    name <- NULL
+    pars_grouped <- NULL
+  } else if (sum(is_group) > 1) {
+    ## TODO add error for more than one grouping variable
+  } else {
+    name <- exprs[[which(is_group)]]$lhs$name
+    if(name != names(groups)) {
+      ## TODO: add error that name does not match name in groups
+    }
+  }
+
   list(name = name,
        groups = unlist(unname(groups)),
        pars_grouped = pars_grouped)
