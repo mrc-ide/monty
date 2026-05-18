@@ -224,9 +224,8 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     x
   }
 
-  #idx <- unpack(seq_len(len))
-  
-  ## This is a simplified version of unpack above to create index
+  ## This is a simplified version of unpack above to create index,
+  ## here we can ignore fixed data and the process function
   base <- c(set_names(vector("list", length(nms)), nms))
   base[shared] <- d_shared$packer$unpack(d_shared$index_packed)
   idx <- rep(list(base), n_groups)
