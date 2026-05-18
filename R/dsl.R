@@ -42,6 +42,8 @@
 ##'   model, at least for now.  See [monty_model] for details on the
 ##'   format.  The provided parameters must match the parameters of
 ##'   your model.
+##'   
+##' @param groups An optional list of group names for each group variable
 ##'
 ##' @return A [monty_model] object derived from the expressions you
 ##'   provide.
