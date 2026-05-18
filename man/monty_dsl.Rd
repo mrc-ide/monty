@@ -4,7 +4,14 @@
 \alias{monty_dsl}
 \title{Domain Specific Language for monty}
 \usage{
-monty_dsl(x, type = NULL, gradient = NULL, fixed = NULL, domain = NULL)
+monty_dsl(
+  x,
+  type = NULL,
+  gradient = NULL,
+  fixed = NULL,
+  domain = NULL,
+  groups = NULL
+)
 }
 \arguments{
 \item{x}{The model as an expression.  This may be given as an
