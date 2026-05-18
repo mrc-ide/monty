@@ -348,3 +348,32 @@ test_that("cannot use reserved words in fixed", {
     "Element names 'i', 'j', 'dim', and 'dim_a' in 'fixed' not allowed",
     fixed = TRUE)
 })
+
+
+test_that("Can use groups in dsl", {
+  expect_warning(
+    m <- monty_dsl({
+      alpha ~ Exponential(mean = 3)
+      beta | region ~ Normal(0, 1)
+      region <- group()
+    }, groups = list(region = c("a", "b"))),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("alpha", "beta | a", "beta | b"))
+  expect_equal(m$density(seq_len(3)), 
+               dexp(1, 1 / 3, TRUE) + sum(dnorm(2:3, 0, 1, TRUE)))
+  domain <- rbind(c(0, Inf), c(-Inf, Inf), c(-Inf, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- numeric(3)
+  cmp[1] <- monty_random_exponential_mean(3, r)
+  cmp[2] <- monty_random_normal(0, 1, r)
+  cmp[3] <- monty_random_normal(0, 1, r)
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
+})
