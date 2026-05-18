@@ -8,7 +8,7 @@ test_that("can use a grouped packer", {
     c("x", "y", "z"))
   expect_equal(
     p$names(),
-    c("b", "c", "a<x>", "d<x>", "a<y>", "d<y>", "a<z>", "d<z>"))
+    c("b", "c", "a | x", "d | x", "a | y", "d | y", "a | z", "d | z"))
   expect_equal(
     p$unpack(1:8),
     list(x = list(a = 3, b = 1, c = 2, d = 4),
@@ -28,11 +28,12 @@ test_that("can use a grouped packer with no shared parameters", {
     scalar = c("a", "b", "c", "d"))
   expect_equal(
     p$names(),
-    c("a<x>", "b<x>", "c<x>", "d<x>", "a<y>", "b<y>", "c<y>", "d<y>"))
+    c("a | x", "b | x", "c | x", "d | x", "a | y", "b | y", "c | y", "d | y"))
   expect_equal(p$unpack(1:8),
                list(x = list(a = 1, b = 2, c = 3, d = 4),
                     y = list(a = 5, b = 6, c = 7, d = 8)))
   expect_equal(p$pack(p$unpack(1:8)), 1:8)
+  expect_equal(p$index(), p$unpack(1:8))
 })
 
 
@@ -48,6 +49,7 @@ test_that("can use a grouped packer with no varied parameters", {
                list(x = list(a = 1, b = 2, c = 3, d = 4),
                     y = list(a = 1, b = 2, c = 3, d = 4)))
   expect_equal(p$pack(p$unpack(1:4)), 1:4)
+  expect_equal(p$index(), p$unpack(1:4))
 })
 
 
@@ -64,6 +66,7 @@ test_that("can use a grouped packer with arrays", {
          y = list(a = 10, b = 11, c = 12:14, d = matrix(1:4, 2, 2)),
          z = list(a = 15, b = 16, c = 17:19, d = matrix(1:4, 2, 2))))
   expect_equal(p$pack(p$unpack(1:19)), 1:19)
+  expect_equal(p$index(), p$unpack(1:19))
 })
 
 
@@ -78,6 +81,9 @@ test_that("can use a grouped packer with fixed input", {
     list(x = list(a = 2, b = 3, c = 4, d = 1, m = 1:4),
          y = list(a = 5, b = 6, c = 7, d = 1, m = 1:4)))
   expect_equal(p$pack(p$unpack(1:7)), 1:7)
+  ## due to using fixed input, this will differ from p$unpack(1:7)
+  expect_equal(p$index(), list(x = list(a = 2, b = 3, c = 4, d = 1),
+                               y = list(a = 5, b = 6, c = 7, d = 1)))
 })
 
 
@@ -227,7 +233,7 @@ test_that("Can print a grouped packer", {
   expect_match(res$messages, "<monty_packer_grouped>",
                fixed = TRUE, all = FALSE)
   expect_match(res$messages,
-               "Packing 4 values: 'x<a>', 'y<a>', 'x<b>', and 'y<b>",
+               "Packing 4 values: 'x | a', 'y | a', 'x | b', and 'y | b",
                fixed = TRUE, all = FALSE)
 })
 
@@ -236,8 +242,11 @@ test_that("process can't duplicate existing var with grouped packer", {
   process <- function(res) {
     list(x = res$x + res$y)
   }
+  
+  packer <- monty_packer_grouped(c("a", "b"), c("x", "y"), process = process)
+  
   expect_error(
-    monty_packer_grouped(c("a", "b"), c("x", "y"), process = process),
+    packer$unpack(1:4),
     "'process\\(\\)' is trying to overwrite")
 })
 

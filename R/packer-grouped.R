@@ -177,7 +177,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
   ## group:parameter
   names_expanded <- c(d_shared$packer$names(),
                       outer(d_varied$packer$names(), groups,
-                            function(g, p) sprintf("%s<%s>", g, p)))
+                            function(g, p) sprintf("%s | %s", g, p)))
 
   unpack <- function(x) {
     if (!is.null(dim(x))) {
@@ -224,8 +224,18 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     x
   }
 
-  idx <- unpack(seq_len(len))
-
+  ## This is a simplified version of unpack above to create index,
+  ## here we can ignore fixed data and the process function
+  base <- c(set_names(vector("list", length(nms)), nms))
+  base[shared] <- d_shared$packer$unpack(d_shared$index_packed)
+  idx <- rep(list(base), n_groups)
+  x_varied <- matrix(d_varied$index_packed, n_varied, n_groups)
+  for (i in seq_len(n_groups)) {
+    idx[[i]][varied] <- d_varied$packer$unpack(x_varied[, i])
+  }
+  names(idx) <- groups
+  
+  
   ## This would be really quite hard, and I'm not sure how effective?
   ## But we might want it later to support multistage simulation in
   ## dust2.
