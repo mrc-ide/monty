@@ -7,8 +7,6 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  fixed <- dsl_parse_fixed(fixed, group_data)
-  
   exprs <- dsl_parse_check_system(exprs, arrays, fixed, group_data, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
@@ -998,13 +996,4 @@ dsl_parse_groups <- function(exprs, fixed, groups, call) {
   list(name = name,
        groups = unlist(unname(groups)),
        pars_grouped = pars_grouped)
-}
-
-dsl_parse_fixed <- function(fixed, group_data) {
-  if (!is.null(group_data$groups)) {
-    fixed_shared <- fixed[setdiff(names(fixed), group_data$groups)]
-    fixed <- fixed[group_data$groups]
-    fixed <- lapply(fixed, function(x) c(fixed_shared, x))
-  }
-  fixed
 }

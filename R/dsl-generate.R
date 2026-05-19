@@ -245,8 +245,11 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta,
     if (deparse(expr) %in% INDEX) {
       return(expr)
     }
-    if (as.character(expr) %in% meta$fixed_contents) {
+    if (as.character(expr) %in% meta$fixed_contents$names) {
       dest <- meta$fixed
+      if (!(as.character(expr) %in% meta$fixed_contents$grouped)) {
+        is_group <- FALSE
+      }
     }
     if (is_group) {
       expr <- call("[[", 
@@ -296,9 +299,11 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, group_data,
                                                 dest, meta) {
   dims <- arrays$dims[arrays$name == name][[1]]
   
+  has_groups <- !is.null(group_data$groups)
   is_grouped <- name %in% group_data$pars_grouped
   
-  if (is_grouped) {
+  is_initialise_grouped <- has_groups && (is_grouped || dest != "density")
+  if (is_initialise_grouped) {
     lhs <- bquote(.(meta[[as.character(dest)]])[[group]][[.(name)]])
   } else {
     lhs <- bquote(.(meta[[as.character(dest)]])[[.(name)]])
@@ -306,7 +311,7 @@ dsl_generate_initialise_arrays_expr <- function(name, arrays, group_data,
   
   expr <- call("<-", lhs, call("array", 0, rlang::call2("c", !!!dims)))
   
-  if (is_grouped) {
+  if (is_initialise_grouped) {
     expr <- dsl_generate_group_loops(expr, group_data$groups, meta)
   }
   
@@ -437,12 +442,16 @@ dsl_domain_eval <- function(domain, args, env) {
 
 dsl_fixed_contents <- function(fixed, group_data) {
   if (is.null(group_data$groups)) {
-    contents <- names(fixed)
+    names <- names(fixed)
+    grouped <- NULL
   } else {
-    contents <- unique(unlist(lapply(fixed, names)))
+    shared <- setdiff(names(fixed), group_data$groups)
+    grouped <- names(fixed[[group_data$groups[1]]])
+    names <- c(shared, grouped)
   }
   
-  contents
+  list(names = names,
+       grouped = grouped)
 }
 
 

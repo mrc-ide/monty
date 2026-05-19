@@ -485,3 +485,54 @@ test_that("Can use groups in dsl with assignments", {
   r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
 })
+
+
+test_that("Can use groups in dsl with arrays", {
+  fixed = list(n = 3, mean_beta = c(-1, 0, 1), a = list(z = 2), b = list(z = 3))
+  expect_warning(
+    m <- monty_dsl({
+      alpha ~ Exponential(mean = 3)
+      beta[] ~ Normal(mean_beta[i], 1)
+      lambda[1:2] <- 2 * i
+      lambda[n] <- 2 * i + 1
+      gamma | region <- alpha * z
+      x[1] | region ~ Exponential(lambda[i] + gamma)
+      x[2:n] | region ~ Exponential(lambda[i]^2 + gamma)
+      dim(x, lambda, beta, mean_beta) <- n
+      region <- group()
+    }, groups = list(region = c("a", "b")), fixed = fixed),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, 
+               c("alpha", "beta[1]", "beta[2]", "beta[3]", "x[1] | a",
+                 "x[2] | a",  "x[3] | a", "x[1] | b", "x[2] | b", "x[3] | b"))
+  lambda <- c(2, 4, 7)
+  expect_equal(m$density(2:11), 
+               dexp(2, 1 / 3, log = TRUE) + 
+                 sum(dnorm(3:5, fixed$mean_beta, 1, log = TRUE)) +
+                 dexp(6, lambda[1] + 2 * fixed$a$z, log = TRUE) +
+                 dexp(9, lambda[1] + 2 * fixed$b$z, log = TRUE) +
+                 sum(dexp(7:8, lambda[2:3]^2 + 2 * fixed$a$z, log = TRUE)) +
+                 sum(dexp(10:11, lambda[2:3]^2 + 2 * fixed$b$z, log = TRUE)))
+  domain <- rbind(c(0, Inf), 
+                  t(array(c(-Inf, Inf), c(2, 3))),
+                  t(array(c(0, Inf), c(2, 6))))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- numeric(10)
+  cmp[1] <- monty_random_exponential_mean(3, r)
+  cmp[2:4] <- vnapply(fixed$mean_beta, function(x) monty_random_normal(x, 1, r))
+  cmp[5] <- monty_random_exponential_rate(lambda[1] + cmp[1] * fixed$a$z, r)
+  cmp[8] <- monty_random_exponential_rate(lambda[1] + cmp[1] * fixed$b$z, r)
+  cmp[6:7] <- vnapply(lambda[2:3]^2 + cmp[1] * fixed$a$z, 
+                      function(x) monty_random_exponential_rate(x, r))
+  cmp[9:10] <- vnapply(lambda[2:3]^2 + cmp[1] * fixed$b$z, 
+                      function(x) monty_random_exponential_rate(x, r))
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
+})
