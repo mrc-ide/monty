@@ -124,10 +124,9 @@ dsl_generate_sample_expr <- function(expr, group_data, meta) {
 
 dsl_generate_assignment <- function(expr, group_data, dest, meta) {
   array <- expr$lhs$array
-  group <- expr$lhs$group
   has_groups <- !is.null(group_data$groups)
   
-  if (!is.null(group)) {
+  if (has_groups) {
     lhs <- bquote(.(meta[[dest]])[[group]][[.(expr$lhs$name)]])
   } else {
     lhs <- bquote(.(meta[[dest]])[[.(expr$lhs$name)]])
@@ -146,7 +145,7 @@ dsl_generate_assignment <- function(expr, group_data, dest, meta) {
     expr <- dsl_generate_array_loops(expr, array, meta)
   }
   
-  if (!is.null(group)) {
+  if (has_groups) {
     expr <- dsl_generate_group_loops(expr, group_data$groups, meta)
   }
   
@@ -239,24 +238,15 @@ dsl_generate_sample_stochastic <- function(expr, group_data, meta) {
 dsl_generate_density_rewrite_lookup <- function(expr, dest, meta,
                                                 is_group = FALSE) {
   if (is.recursive(expr)) {
-    if (rlang::is_call(expr, "|")) {
-      expr <- 
-        dsl_generate_density_rewrite_lookup(expr[[2]], dest, meta, TRUE)
-      expr
-    } else {
-      expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
-                         dest, meta, is_group)
-      as.call(expr)
-    }
+    expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
+                       dest, meta, is_group)
+    as.call(expr)
   } else if (is.name(expr)) {
     if (deparse(expr) %in% INDEX) {
       return(expr)
     }
-    if (as.character(expr) %in% meta$fixed_contents$names) {
+    if (as.character(expr) %in% meta$fixed_contents) {
       dest <- meta$fixed
-      if (!(as.character(expr) %in% meta$fixed_contents$grouped)) {
-        is_group <- FALSE
-      }
     }
     if (is_group) {
       expr <- call("[[", 
@@ -287,6 +277,7 @@ dsl_generate_array_loops <- function(expr, array, meta) {
   expr
 }
 
+
 dsl_generate_initialise_arrays <- function(dat, dest, meta) {
   parameters <- dat$parameters[dat$parameters %in% dat$arrays$name]
   assigned <- dat$assigned[dat$assigned %in% dat$arrays$name]
@@ -299,6 +290,7 @@ dsl_generate_initialise_arrays <- function(dat, dest, meta) {
     lapply(parameters, dsl_generate_initialise_arrays_expr,
            arrays, group_data, dest, meta))
 }
+
 
 dsl_generate_initialise_arrays_expr <- function(name, arrays, group_data,
                                                 dest, meta) {
@@ -445,16 +437,12 @@ dsl_domain_eval <- function(domain, args, env) {
 
 dsl_fixed_contents <- function(fixed, group_data) {
   if (is.null(group_data$groups)) {
-    names <- names(fixed)
-    grouped <- NULL
+    contents <- names(fixed)
   } else {
-    shared <- setdiff(names(fixed), group_data$groups)
-    grouped <- names(fixed[[group_data$groups[1]]])
-    names <- c(shared, grouped)
+    contents <- unique(unlist(lapply(fixed, names)))
   }
   
-  list(names = names,
-       grouped = grouped)
+  contents
 }
 
 

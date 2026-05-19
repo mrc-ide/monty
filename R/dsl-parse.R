@@ -7,6 +7,8 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
+  fixed <- dsl_parse_fixed(fixed, group_data)
+  
   exprs <- dsl_parse_check_system(exprs, arrays, fixed, group_data, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
@@ -905,7 +907,6 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
   name <- vcapply(exprs, function(x) x$lhs$name)
   groups <- group_data$groups
-  names_group <- group_data$name
   names_fixed_shared <- setdiff(names(fixed), groups)
   names_fixed_grouped <- unique(unlist(lapply(fixed[groups], names)))
   names_fixed <- c(names_fixed_shared, names_fixed_grouped)
@@ -917,8 +918,7 @@ dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
     } else {
       depends <- e$rhs$depends
     }
-    err <- setdiff(depends,
-                   c(name[seq_len(i - 1)], names_fixed, names_group, groups))
+    err <- setdiff(depends, c(name[seq_len(i - 1)], names_fixed))
     if (length(err) > 0) {
       ## Out of order:
       out_of_order <- intersect(name, err)
@@ -1002,4 +1002,13 @@ dsl_parse_groups <- function(exprs, fixed, groups, call) {
   list(name = name,
        groups = unlist(unname(groups)),
        pars_grouped = pars_grouped)
+}
+
+dsl_parse_fixed <- function(fixed, group_data) {
+  if (!is.null(group_data$groups)) {
+    fixed_shared <- fixed[setdiff(names(fixed), group_data$groups)]
+    fixed <- fixed[group_data$groups]
+    fixed <- lapply(fixed, function(x) c(fixed_shared, x))
+  }
+  fixed
 }
