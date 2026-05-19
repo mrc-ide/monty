@@ -407,14 +407,10 @@ dsl_parse_expr_check_lhs_group <- function(group_expr, expr, call) {
     name <- group_expr
     type <- "all"
     groups <- NULL
-  } else if (rlang::is_call(group_expr, "==")) {
-    name <- group_expr[[2]]
-    type <- "single"
-    groups <- group_expr[[3]]
-  } else if (rlang::is_call(group_expr, "!=")) {
-    name <- group_expr[[2]]
-    type <- "exclude"
-    groups <- group_expr[[3]]
+    ## TODO: add setup for group expressions with e.g.
+    ## == for a single group
+    ## != for excluding a single group
+    ## %in% for subsets
   }
   group <- list(name = name,
                 type = type,
