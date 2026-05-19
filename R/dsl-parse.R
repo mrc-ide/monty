@@ -66,8 +66,8 @@ dsl_parse_expr_stochastic <- function(expr, call) {
 dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
 
-  is_group <- rlang::is_call(lhs, "|")
-  if (is_group) {
+  is_grouped <- rlang::is_call(lhs, "|")
+  if (is_grouped) {
     group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
     lhs <- lhs[[2]]
   } else {
@@ -190,8 +190,8 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
     special <- NULL
   }
   
-  is_group <- rlang::is_call(lhs, "|")
-  if (is_group) {
+  is_grouped <- rlang::is_call(lhs, "|")
+  if (is_grouped) {
     group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
     lhs <- lhs[[2]]
   } else {

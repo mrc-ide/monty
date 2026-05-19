@@ -156,9 +156,9 @@ dsl_generate_assignment <- function(expr, group_data, dest, meta) {
 dsl_generate_density_stochastic <- function(expr, group_data, meta) {
   array <- expr$lhs$array
   name <- as.name(expr$lhs$name)
-  is_group <- !is.null(expr$lhs$group)
+  is_grouped <- !is.null(expr$lhs$group)
   has_groups <- !is.null(group_data$groups)
-  if (is_group) {
+  if (is_grouped) {
     lhs <- bquote(.(meta[["density"]])[[group]][[.(expr$lhs$name)]])
   } else {
     lhs <- bquote(.(meta[["density"]])[[.(expr$lhs$name)]])
@@ -178,7 +178,7 @@ dsl_generate_density_stochastic <- function(expr, group_data, meta) {
     expr <- dsl_generate_array_loops(expr, array, meta)
   }
   if (has_groups) {
-    if (is_group) {
+    if (is_grouped) {
       expr <- dsl_generate_group_loops(expr, group_data$groups, meta)
     } else {
       expr <- dsl_generate_group_loops(expr, group_data$groups[1], meta)
@@ -192,7 +192,7 @@ dsl_generate_density_stochastic <- function(expr, group_data, meta) {
 
 dsl_generate_sample_stochastic <- function(expr, group_data, meta) {
   array <- expr$lhs$array
-  is_group <- !is.null(expr$lhs$group)
+  is_grouped <- !is.null(expr$lhs$group)
   has_groups <- !is.null(group_data$groups)
   
   if (has_groups) {
@@ -212,7 +212,7 @@ dsl_generate_sample_stochastic <- function(expr, group_data, meta) {
   
   if (has_groups) {
     groups <- group_data$groups
-    if (is_group) {
+    if (is_grouped) {
       expr <- dsl_generate_group_loops(expr, groups, meta)
     } else {
       ## shared parameter so we need to sample once and then assign in the rest
@@ -236,10 +236,10 @@ dsl_generate_sample_stochastic <- function(expr, group_data, meta) {
 
 
 dsl_generate_density_rewrite_lookup <- function(expr, dest, meta,
-                                                is_group = FALSE) {
+                                                is_grouped = FALSE) {
   if (is.recursive(expr)) {
     expr[-1] <- lapply(expr[-1], dsl_generate_density_rewrite_lookup,
-                       dest, meta, is_group)
+                       dest, meta, is_grouped)
     as.call(expr)
   } else if (is.name(expr)) {
     if (deparse(expr) %in% INDEX) {
@@ -248,10 +248,10 @@ dsl_generate_density_rewrite_lookup <- function(expr, dest, meta,
     if (as.character(expr) %in% meta$fixed_contents$names) {
       dest <- meta$fixed
       if (!(as.character(expr) %in% meta$fixed_contents$grouped)) {
-        is_group <- FALSE
+        is_grouped <- FALSE
       }
     }
-    if (is_group) {
+    if (is_grouped) {
       expr <- call("[[", 
                    call("[[", meta[[as.character(dest)]], quote(group)),
                    as.character(expr))
