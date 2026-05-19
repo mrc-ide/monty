@@ -377,29 +377,30 @@ test_that("Can use groups in dsl", {
   
   r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
+})
 
-  
-  ## Model with dependency
+
+test_that("Can use groups in dsl with dependency", {
   expect_warning(
-    m2 <- monty_dsl({
+    m <- monty_dsl({
       alpha ~ Exponential(mean = 3)
       beta | region ~ Normal(0, alpha)
-      gamma | region ~ Normal(beta | region, 1)
+      gamma | region ~ Normal(beta, 1)
       region <- group()
     }, groups = list(region = c("a", "b"))),
     "Not creating a gradient function for this model")
-  expect_s3_class(m2, "monty_model")
-  expect_false(m2$properties$has_gradient)
-  expect_equal(m2$parameters, c("alpha", "beta | a", "gamma | a", 
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("alpha", "beta | a", "gamma | a", 
                                 "beta | b", "gamma | b"))
-  expect_equal(m2$density(2:6), 
+  expect_equal(m$density(2:6), 
                dexp(2, 1 / 3, TRUE) + sum(dnorm(c(3, 5), 0, 2, TRUE)) + 
                  sum(dnorm(c(4, 6), c(3, 5), 1, TRUE)))
   domain <- rbind(c(0, Inf), c(-Inf, Inf), c(-Inf, Inf),
                   c(-Inf, Inf), c(-Inf, Inf))
-  rownames(domain) <- m2$parameters
-  expect_equal(m2$domain, domain)
-  expect_equal(m2$gradient, NULL)
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
   
   r <- monty_rng_create(seed = 42)
   cmp <- numeric(5)
@@ -410,29 +411,31 @@ test_that("Can use groups in dsl", {
   cmp[5] <- monty_random_normal(cmp[4], 1, r)
   
   r <- monty_rng_create(seed = 42)
-  expect_equal(m2$direct_sample(r), cmp)
+  expect_equal(m$direct_sample(r), cmp)
+})
   
-  
+
+test_that("Can use groups in dsl with fixed data", {
   ## Model with fixed data
   fixed <- list(beta_mean = 2,
                 a = list(beta_sd = 3),
                 b = list(beta_sd = 4))
   expect_warning(
-    m3 <- monty_dsl({
+    m <- monty_dsl({
       alpha ~ Exponential(mean = 3)
-      beta | region ~ Normal(beta_mean, beta_sd | region)
+      beta | region ~ Normal(beta_mean, beta_sd)
       region <- group()
     }, groups = list(region = c("a", "b")), fixed = fixed),
     "Not creating a gradient function for this model")
-  expect_s3_class(m3, "monty_model")
-  expect_false(m3$properties$has_gradient)
-  expect_equal(m3$parameters, c("alpha", "beta | a", "beta | b"))
-  expect_equal(m3$density(2:4), 
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("alpha", "beta | a", "beta | b"))
+  expect_equal(m$density(2:4), 
                dexp(2, 1 / 3, TRUE) + sum(dnorm(3:4, 2, 3:4, TRUE)))
   domain <- rbind(c(0, Inf), c(-Inf, Inf), c(-Inf, Inf))
-  rownames(domain) <- m3$parameters
-  expect_equal(m3$domain, domain)
-  expect_equal(m3$gradient, NULL)
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
   
   r <- monty_rng_create(seed = 42)
   cmp <- numeric(3)
@@ -441,5 +444,44 @@ test_that("Can use groups in dsl", {
   cmp[3] <- monty_random_normal(2, 4, r)
   
   r <- monty_rng_create(seed = 42)
-  expect_equal(m3$direct_sample(r), cmp)
+  expect_equal(m$direct_sample(r), cmp)
+})
+
+
+test_that("Can use groups in dsl with assignments", {
+  fixed <- list(a = list(z = 3),
+                b = list(z = 2))
+  expect_warning(
+    m <- monty_dsl({
+      x <- 3
+      alpha ~ Exponential(mean = x)
+      beta | region ~ Normal(0, 1)
+      y | region <- alpha * beta * z
+      gamma | region ~ Normal(y, 1)
+      region <- group()
+    }, groups = list(region = c("a", "b")), fixed = fixed),
+    "Not creating a gradient function for this model")
+  expect_s3_class(m, "monty_model")
+  expect_false(m$properties$has_gradient)
+  expect_equal(m$parameters, c("alpha", "beta | a", "gamma | a", 
+                                "beta | b", "gamma | b"))
+  expect_equal(m$density(2:6), 
+               dexp(2, 1 / 3, TRUE) + sum(dnorm(c(3, 5), 0, 1, TRUE)) +
+                 sum(dnorm(c(4, 6), 2 * c(3 * 3, 5 * 2), 1, TRUE)))
+  domain <- rbind(c(0, Inf), c(-Inf, Inf), c(-Inf, Inf),
+                  c(-Inf, Inf), c(-Inf, Inf))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+  expect_equal(m$gradient, NULL)
+  
+  r <- monty_rng_create(seed = 42)
+  cmp <- numeric(5)
+  cmp[1] <- monty_random_exponential_mean(3, r)
+  cmp[2] <- monty_random_normal(0, 1, r)
+  cmp[4] <- monty_random_normal(0, 1, r)
+  cmp[3] <- monty_random_normal(cmp[1] * cmp[2] * 3, 1, r)
+  cmp[5] <- monty_random_normal(cmp[1] * cmp[4] * 2, 1, r)
+  
+  r <- monty_rng_create(seed = 42)
+  expect_equal(m$direct_sample(r), cmp)
 })
