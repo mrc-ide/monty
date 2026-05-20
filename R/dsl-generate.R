@@ -338,7 +338,8 @@ dsl_generate_domain <- function(dat, meta, packer) {
   }
   for (e in dat$exprs) {
     if (e$type == "assignment") {
-      dsl_generate_domain_assignment(e, env, dat$fixed, dat$arrays)
+      dsl_generate_domain_assignment(e, env, dat$fixed, dat$arrays,
+                                     dat$group_data$groups)
     } else { # type is "stochastic"
       domain <- dsl_generate_domain_stochastic(domain, e, env, dat$fixed,
                                                dat$group_data$groups)
@@ -355,38 +356,66 @@ dsl_generate_domain <- function(dat, meta, packer) {
 }
 
 
-dsl_generate_domain_assignment <- function(expr, env, fixed, arrays) {
+dsl_generate_domain_assignment <- function(expr, env, fixed, arrays, groups) {
+  is_grouped <- !is.null(expr$lhs$group)
   if (is.null(expr$lhs$array)) {
-    env[[expr$lhs$name]] <- dsl_static_eval(expr$rhs$expr, env) 
+    if (is_grouped) {
+      for (g in groups) {
+        env_g <- c(mget(setdiff(names(env), groups), env), env[[g]])
+        env[[g]][[expr$lhs$name]] <- dsl_static_eval(expr$rhs$expr, env_g) 
+      }
+    } else {
+      env[[expr$lhs$name]] <- dsl_static_eval(expr$rhs$expr, env) 
+    }
   } else {
     name <- expr$lhs$name
-    if (is.null(env[[name]])) {
-      dims <- unlist(arrays$dims[arrays$name == name])
-      env[[name]] <- array(NA_real_, dims)
-    }
     array <- expr$lhs$array
-    
     idx <- generate_index_grid(array, fixed)
-    for (i in seq_len(nrow(idx))) {
-      rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
-      rhs_val <- dsl_static_eval(rhs, env)
-      env[[name]] <- do.call(`[<-`, c(list(env[[name]]), idx[i, ], rhs_val))
+    if (is_grouped) {
+      for (g in groups) {
+        if (is.null(env[[g]][[name]])) {
+          dims <- unlist(arrays$dims[arrays$name == name])
+          env[[g]][[name]] <- array(NA_real_, dims)
+        }
+      
+        for (i in seq_len(nrow(idx))) {
+          rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
+          env_g <- c(mget(setdiff(names(env), groups), env), env[[g]])
+          rhs_val <- dsl_static_eval(rhs, env_g)
+          env[[g]][[name]] <- 
+            do.call(`[<-`, c(list(env[[g]][[name]]), idx[i, ], rhs_val))
+        }
+      }
+    } else {
+      if (is.null(env[[name]])) {
+        dims <- unlist(arrays$dims[arrays$name == name])
+        env[[name]] <- array(NA_real_, dims)
+      }
+      
+      for (i in seq_len(nrow(idx))) {
+        rhs <- substitute_(expr$rhs$expr, as.list(idx[i, , drop = FALSE]))
+        rhs_val <- dsl_static_eval(rhs, env)
+        env[[name]] <- do.call(`[<-`, c(list(env[[name]]), idx[i, ], rhs_val))
+      }
     }
+    
   }
 }
 
 
 dsl_generate_domain_stochastic <- function(domain, expr, env, fixed, groups) {
   distr <- expr$rhs$distribution
+  is_grouped <- !is.null(expr$lhs$group)
   
   if (is.null(expr$lhs$array)) {
-    if (is.null(expr$lhs$group)) {
-      domain[expr$lhs$name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
-    } else {
+    if (is_grouped) {
       for (g in groups) {
         name <- paste(expr$lhs$name, "|", g)
-        domain[name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
+        env_g <- c(mget(setdiff(names(env), groups), env), env[[g]])
+        domain[name, ] <- dsl_domain_eval(distr$domain, distr$args, env_g)
       }
+    } else {
+      domain[expr$lhs$name, ] <- dsl_domain_eval(distr$domain, distr$args, env)
     }
   } else {
     array <- expr$lhs$array
@@ -405,13 +434,14 @@ dsl_generate_domain_stochastic <- function(domain, expr, env, fixed, groups) {
         lapply(distr$args, 
                function(x) substitute_(x, as.list(idx[i, , drop = FALSE])))
       name_i <- paste0(expr$lhs$name, "[", paste(idx[i, ], collapse = ","), "]")
-      if (is.null(expr$lhs$group)) {
-        domain[name_i, ] <- dsl_domain_eval(distr$domain, args, env)
-      } else {
+      if (is_grouped) {
         for (g in groups) {
           name <- paste(name_i, "|", g)
-          domain[name, ] <- dsl_domain_eval(distr$domain, args, env)
+          env_g <- c(mget(setdiff(names(env), groups), env), env[[g]])
+          domain[name, ] <- dsl_domain_eval(distr$domain, args, env_g)
         }
+      } else {
+        domain[name_i, ] <- dsl_domain_eval(distr$domain, args, env)
       }
     }
   }
