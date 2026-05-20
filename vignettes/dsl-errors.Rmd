@@ -223,6 +223,26 @@ Usually, this error can be fixed by omitting the `i` from the left hand side as 
 x[] <- 2 * a[i]
 ```
 
+# `E117`
+
+Invalid call to `group()` used on the right hand side.  This function takes no arguments.
+
+Example:
+
+```
+region <- group(3)
+```
+
+# `E118`
+
+Invalid assignment of `group()`.  If you use `group()` on the right hand side of an expression, then the left hand side must be a symbol.
+
+Example:
+
+```
+f(region) <- group()
+```
+
 
 # `E201`
 

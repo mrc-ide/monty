@@ -1,11 +1,13 @@
 ## The default of gradient_required = TRUE here helps with tests
 dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
-                      domain = NULL, call = NULL) {
+                      domain = NULL, groups = NULL, call = NULL) {
   exprs <- lapply(exprs, dsl_parse_expr, call)
 
+  group_data <- dsl_parse_groups(exprs, fixed, groups, call)
+  
   arrays <- dsl_parse_arrays(exprs, fixed, call)
   
-  exprs <- dsl_parse_check_system(exprs, arrays, fixed, call)
+  exprs <- dsl_parse_check_system(exprs, arrays, fixed, group_data, call)
   
   name <- vcapply(exprs, function(x) x$lhs$name)
   parameters <- unique(name[vcapply(exprs, "[[", "type") == "stochastic"])
@@ -16,7 +18,7 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
   }
   assigned <- setdiff(unique(name), parameters)
   
-  packer <- dsl_packer(parameters, arrays)
+  packer <- dsl_packer(parameters, arrays, group_data)
 
   if (!is.null(domain)) {
     domain <- validate_domain(domain, packer$names(), call = call)
@@ -26,7 +28,7 @@ dsl_parse <- function(exprs, gradient_required = TRUE, fixed = NULL,
 
   list(parameters = parameters, assigned = assigned, packer = packer,
        exprs = exprs, arrays = arrays, adjoint = adjoint,
-       fixed = fixed, domain = domain)
+       fixed = fixed, domain = domain, group_data = group_data)
 }
 
 
@@ -63,6 +65,14 @@ dsl_parse_expr_stochastic <- function(expr, call) {
 
 dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   lhs <- expr[[2]]
+
+  is_grouped <- rlang::is_call(lhs, "|")
+  if (is_grouped) {
+    group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
+    lhs <- lhs[[2]]
+  } else {
+    group <- NULL
+  }
   
   is_array <- rlang::is_call(lhs, "[")
   special <- "~"
@@ -85,6 +95,7 @@ dsl_parse_expr_stochastic_lhs <- function(expr, call) {
   list(
     name = name,
     array = array,
+    group = group,
     depends = depends)
 }
 
@@ -121,6 +132,15 @@ dsl_parse_expr_assignment <- function(expr, call) {
     rhs <- dsl_parse_expr_assignment_rhs_dim(expr, call)
   } else {
     rhs <- dsl_parse_expr_assignment_rhs(expr, call)
+  }
+  
+  if (rhs$type == "group") {
+    if (!is.null(special) || !is.null(lhs$array)) {
+      dsl_parse_error(
+        "Calls to 'group()' must be assigned to a symbol",
+        "E118", expr, call)
+    }
+    special <- "group"
   }
   
   rhs$depends <- dsl_parse_expr_check_index_usage(
@@ -170,6 +190,14 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
     special <- NULL
   }
   
+  is_grouped <- rlang::is_call(lhs, "|")
+  if (is_grouped) {
+    group <- dsl_parse_expr_check_lhs_group(lhs[[3]], expr, call)
+    lhs <- lhs[[2]]
+  } else {
+    group <- NULL
+  }
+  
   is_array <- rlang::is_call(lhs, "[")
   if (is_array) {
     name <- 
@@ -190,6 +218,7 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
   list(name = name,
        special = special,
        array = array,
+       group = group,
        depends = depends)
 }
 
@@ -197,10 +226,21 @@ dsl_parse_expr_assignment_lhs <- function(expr, call) {
 dsl_parse_expr_assignment_rhs <- function(expr, call) {
   rhs <- expr[[3]]
   
+  if (rlang::is_call(rhs, "group")) {
+    if (length(rhs) != 1) {
+      dsl_parse_error("Calls to 'group()' must have no arguments",
+                       "E117", expr, call)
+    }
+    type <- "group"
+  } else {
+    type <- "expression"
+  }
+  
   depends <- all.vars(rhs)
   
   list(expr = rhs,
-       depends = depends)
+       depends = depends,
+       type = type)
   
 }
 
@@ -360,6 +400,22 @@ dsl_parse_expr_check_lhs_index <- function(name, dim, index, expr, call) {
 }
 
 
+dsl_parse_expr_check_lhs_group <- function(group_expr, expr, call) {
+  if (is.symbol(group_expr)) {
+    name <- group_expr
+    type <- "all"
+    groups <- NULL
+    ## TODO: add setup for group expressions with e.g.
+    ## == for a single group
+    ## != for excluding a single group
+    ## %in% for subsets
+  }
+  group <- list(name = name,
+                type = type,
+                groups = groups)
+}
+
+
 dsl_parse_index <- function(name_data, dim, value) {
   name_index <- INDEX[[dim]]
   if (rlang::is_missing(value)) {
@@ -407,14 +463,19 @@ dsl_parse_dim_name <- function(name) {
 }
 
 
-dsl_parse_check_system <- function(exprs, arrays, fixed, call) {
+dsl_parse_check_system <- function(exprs, arrays, fixed, group_data, call) {
   special <- vcapply(exprs, function(x) x$special %||% "")
+  
+  is_group <- special == "group"
+  exprs <- exprs[!is_group]
+  special <- special[!is_group]
+  
   is_dim <- special == "dim"
   
   exprs <- dsl_parse_check_system_arrays(exprs, fixed, arrays, is_dim, call)
   dsl_parse_check_duplicates(exprs, arrays, call)
   dsl_parse_check_fixed(exprs, fixed, call)
-  dsl_parse_check_usage(exprs, fixed, call)
+  dsl_parse_check_usage(exprs, fixed, group_data, call)
   
   exprs
 }
@@ -837,9 +898,13 @@ dsl_parse_check_fixed <- function(exprs, fixed, call) {
 }
 
 
-dsl_parse_check_usage <- function(exprs, fixed, call) {
+dsl_parse_check_usage <- function(exprs, fixed, group_data, call) {
   name <- vcapply(exprs, function(x) x$lhs$name)
-  names_fixed <- names(fixed)
+  groups <- group_data$groups
+  names_fixed_shared <- setdiff(names(fixed), groups)
+  names_fixed_grouped <- unique(unlist(lapply(fixed[groups], names)))
+  names_fixed <- c(names_fixed_shared, names_fixed_grouped)
+  
   for (i in seq_along(exprs)) {
     e <- exprs[[i]]
     if (!is.null(e$lhs$array)) {
@@ -887,7 +952,7 @@ dsl_parse_check_usage <- function(exprs, fixed, call) {
 }
 
 
-dsl_packer <- function(parameters, arrays) {
+dsl_packer <- function(parameters, arrays, group_data) {
   is_array <- parameters %in% arrays$name
   scalar <- if (all(is_array)) NULL else parameters[!is_array]
   if (any(is_array)) {
@@ -897,5 +962,38 @@ dsl_packer <- function(parameters, arrays) {
   } else {
     array <- NULL
   }
-  monty_packer(scalar, array)
+  
+  if (is.null(group_data$groups)) {
+    monty_packer(scalar, array)
+  } else {
+    shared <- setdiff(parameters, group_data$pars_grouped)
+    monty_packer_grouped(group_data$groups, scalar, array, shared = shared)
+  }
+}
+
+
+dsl_parse_groups <- function(exprs, fixed, groups, call) {
+  is_group <- vlapply(exprs, function(x) isTRUE(x$special == "group"))
+  
+  is_grouped <- vlapply(exprs, function(x) !is.null(x$lhs$group))
+  pars_grouped <- vcapply(exprs[is_grouped], function(x) x$lhs$name)
+  
+  if (sum(is_group) == 0) {
+    if (sum(is_grouped) > 0) {
+      ## TODO add error for no grouping variable equation when using groups
+    }
+    name <- NULL
+    pars_grouped <- NULL
+  } else if (sum(is_group) > 1) {
+    ## TODO add error for more than one grouping variable
+  } else {
+    name <- exprs[[which(is_group)]]$lhs$name
+    if(name != names(groups)) {
+      ## TODO: add error that name does not match name in groups
+    }
+  }
+
+  list(name = name,
+       groups = unlist(unname(groups)),
+       pars_grouped = pars_grouped)
 }

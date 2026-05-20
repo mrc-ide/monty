@@ -649,3 +649,19 @@ test_that("cannot use array elements out-of-order", {
                "Array element x[2, 2] used on the rhs before being defined",
                fixed = TRUE)
 })
+
+
+test_that("group call on rhs takes no arguments", {
+  expect_error(
+    dsl_parse(list(quote(region <- group(3)))),
+    "Calls to 'group()' must have no arguments",
+    fixed = TRUE)
+})
+
+
+test_that("group call on rhs must assign to a symbol", {
+  expect_error(
+    dsl_parse(list(quote(region[] <- group()))),
+    "Calls to 'group()' must be assigned to a symbol",
+    fixed = TRUE)
+})
