@@ -539,3 +539,18 @@ test_that("Can use groups in dsl with arrays", {
   r <- monty_rng_create(seed = 42)
   expect_equal(m$direct_sample(r), cmp)
 })
+
+
+test_that("Can compute domain for uniform distribution variables with groups", {
+  fixed <- list(a = list(z = 2), b = list(z = 3))
+  expect_warning(
+    m <- monty_dsl({
+      alpha | region <- z + 1 
+      x |region ~ Uniform(0, alpha)
+      region <- group()
+    }, groups = list(region = c("a", "b")), fixed = fixed),
+    "Not creating a gradient function for this model")
+  domain <- rbind(c(0, 3), c(0, 4))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+})
