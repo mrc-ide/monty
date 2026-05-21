@@ -541,7 +541,21 @@ test_that("Can use groups in dsl with arrays", {
 })
 
 
-test_that("Can compute domain for uniform distribution variables with groups", {
+test_that("Can compute domain for uniform distribution with arrays", {
+  expect_warning(
+    m <- monty_dsl({
+      alpha[, ] <- i * j 
+      x[, ] ~ Uniform(0, alpha[i, j])
+      dim(alpha, x) <- c(2, 2)
+    }),
+    "Not creating a gradient function for this model")
+  domain <- rbind(c(0, 1), c(0, 2), c(0, 2), c(0, 4))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+})
+
+
+test_that("Can compute domain for uniform distribution with groups", {
   fixed <- list(a = list(z = 2), b = list(z = 3))
   expect_warning(
     m <- monty_dsl({
@@ -551,6 +565,22 @@ test_that("Can compute domain for uniform distribution variables with groups", {
     }, groups = list(region = c("a", "b")), fixed = fixed),
     "Not creating a gradient function for this model")
   domain <- rbind(c(0, 3), c(0, 4))
+  rownames(domain) <- m$parameters
+  expect_equal(m$domain, domain)
+})
+
+
+test_that("Can compute domain for uniform distribution with groups & arrays", {
+  fixed <- list(a = list(z = 2), b = list(z = 3))
+  expect_warning(
+    m <- monty_dsl({
+      alpha[] | region <- i + z
+      x[] |region ~ Uniform(0, alpha[i])
+      region <- group()
+      dim(alpha, x) <- 2
+    }, groups = list(region = c("a", "b")), fixed = fixed),
+    "Not creating a gradient function for this model")
+  domain <- rbind(c(0, 3), c(0, 4), c(0, 4), c(0, 5))
   rownames(domain) <- m$parameters
   expect_equal(m$domain, domain)
 })
