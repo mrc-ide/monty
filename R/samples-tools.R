@@ -106,3 +106,45 @@ monty_samples_subset <- function(samples, i) {
 
   samples
 }
+
+
+monty_flatten_chains <- function(samples) {
+  d <- dim(samples$pars)
+  n_samples <- d[[2]]
+  n_chains <- d[[3]]
+  
+  chain <- rep(seq_len(n_chains), each = n_samples)
+  
+  samples$pars <- array_flatten(samples$pars, c(2, 3))
+  samples$density <- array_flatten(samples$density, c(1, 2))
+  
+  for (obs in names(samples$observations)) {
+    d <- length(dim2(samples$observations[[obs]]))
+    samples$observations[[obs]] <- 
+      array_flatten(samples$observations[[obs]], c(d - 1L, d))
+  }
+  
+  attr(samples, "chain") <- chain
+  
+  samples
+}
+
+
+monty_unflatten_chains <- function(samples) {
+  chain <- attr(samples, "chain")
+  n_chains <- max(chain)
+  n_samples <- length(chain) / n_chains
+  
+  samples$pars <- array_reshape(samples$pars, 2, c(n_samples, n_chains))
+  samples$density <- array_reshape(samples$density, 1, c(n_samples, n_chains))
+  
+  for (obs in names(samples$observations)) {
+    d <- length(dim2(samples$observations[[obs]]))
+    samples$observations[[obs]] <- 
+      array_reshape(samples$observations[[obs]], d, c(n_samples, n_chains))
+  }
+  
+  attr(samples, "chain") <- NULL
+  
+  samples
+}
