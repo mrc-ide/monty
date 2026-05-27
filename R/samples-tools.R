@@ -108,7 +108,23 @@ monty_samples_subset <- function(samples, i) {
 }
 
 
+##' Flatten chains in the results of running [monty_sample()], wherein `pars`,
+##' `density` and typically objects in `observations` will have the last two
+##' dimensions representing 'samples' and 'chains'. Flattening the chains
+##' results in the chains dimension being collapsed into the samples dimension.
+##'
+##' @title Flatten chains
+##'
+##' @param samples A `monty_samples` object, from running [monty_sample()]
+##'
+##' @return A `monty_samples` object with the chains dimension collapsed into
+##'   the samples dimension.
+##'
+##' @export
 monty_flatten_chains <- function(samples) {
+  
+  check_can_flatten_chains(samples)
+  
   d <- dim(samples$pars)
   n_samples <- d[[2]]
   n_chains <- d[[3]]
@@ -119,9 +135,12 @@ monty_flatten_chains <- function(samples) {
   samples$density <- array_flatten(samples$density, c(1, 2))
   
   for (obs in names(samples$observations)) {
-    d <- length(dim2(samples$observations[[obs]]))
-    samples$observations[[obs]] <- 
-      array_flatten(samples$observations[[obs]], c(d - 1L, d))
+    d <- dim2(samples$observations[[obs]])
+    can_flatten <- d[length(d) - 1L] == n_samples && d[length(d)] == n_chains
+    if (can_flatten) {
+      samples$observations[[obs]] <- 
+        array_flatten(samples$observations[[obs]], c(length(d) - 1L, length(d)))
+    }
   }
   
   attr(samples, "chain") <- chain
@@ -130,7 +149,22 @@ monty_flatten_chains <- function(samples) {
 }
 
 
+##' Unflatten chains in `monty_samples` object that has previously had the
+##' chains flattened with [monty_flatten_chains()], reversing the effects of
+##' that function.
+##'
+##' @title Unflatten chains
+##'
+##' @param samples A `monty_samples` object, that has been run through
+##'   [monty_flatten_chains()]
+##'
+##' @return A `monty_samples` object with the chains dimension restored.
+##'
+##' @export
 monty_unflatten_chains <- function(samples) {
+  
+  check_can_unflatten_chains(samples)
+  
   chain <- attr(samples, "chain")
   n_chains <- max(chain)
   n_samples <- length(chain) / n_chains
@@ -147,4 +181,44 @@ monty_unflatten_chains <- function(samples) {
   attr(samples, "chain") <- NULL
   
   samples
+}
+
+
+check_can_flatten_chains <- function(samples, call = parent.frame()) {
+  if (!inherits(samples, "monty_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object",
+                   call = call)
+  }
+  
+  chain <- attr(samples, "chain")
+  if (!is.null(chain)) {
+    cli::cli_abort("Chains appear to have already been flattened",
+                   call = call)
+  }
+}
+
+
+check_can_unflatten_chains <- function(samples, call = parent.frame()) {
+  if (!inherits(samples, "monty_samples")) {
+    cli::cli_abort("Expected 'samples' to be a 'monty_samples' object",
+                   call = call)
+  }
+  
+  chain <- attr(samples, "chain")
+  if (is.null(chain)) {
+    cli::cli_abort("Chains do not appear to have been flattened previously",
+                   call = call)
+  }
+  
+  chain <- attr(samples, "chain")
+  n_chains <- max(chain)
+  n_samples <- length(chain) / n_chains
+  
+  chain_expected <- rep(seq_len(n_chains), each = n_samples)
+  
+  if (!identical(chain, chain_expected)) {
+    cli::cli_abort(
+      "Cannot unflatten chains as chain information not as expected",
+      call = call)
+  }
 }
