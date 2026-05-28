@@ -74,3 +74,28 @@ test_that("warn if samples contain unsubsettalble data", {
   expect_equal(res$observations$b, samples$observations$b)
   expect_equal(res$observations$c, samples$observations$c[, i, , drop = FALSE])
 })
+
+
+test_that("can flatten chains", {
+  m <- ex_sir_filter_posterior(save_trajectories = TRUE)
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
+  
+  set.seed(1)
+  res <- monty_sample(m, sampler, 20, n_chains = 3)
+  
+  res1 <- monty_flatten_chains(res)
+  expect_equal(res1$pars, array_flatten(res$pars, c(2, 3)))
+  expect_equal(res1$density, array_flatten(res$density, c(1, 2)))
+  expect_equal(res1$observations$trajectories,
+               array_flatten(res$observations$trajectories, c(3, 4)))
+  expect_equal(attr(res1, "chain"), rep(seq_len(3), each = 20))
+  
+  res2 <- monty_unflatten_chains(res1)
+  expect_equal(res2, res)
+  
+  
+  set.seed(1)
+  res3 <- monty_sample(m, sampler, 20, n_chains = 3, flatten_chains = TRUE)
+  expect_equal(res3, res1)
+})
