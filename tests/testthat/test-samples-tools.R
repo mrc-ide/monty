@@ -106,5 +106,29 @@ test_that("can flatten chains", {
   expect_equal(res4, res3)
   
   expect_equal(monty_samples_thin(res1, 3, 5),
-               monty_samples_flatten(monty_samples_thin(res, 3, 5)))
+               monty_flatten_chains(monty_samples_thin(res, 3, 5)))
+})
+
+
+test_that("Errors when flattening chains not possible", {
+  expect_error(monty_flatten_chains(1),
+               "Expected 'samples' to be a 'monty_samples' object")
+  
+  expect_error(monty_unflatten_chains(1),
+               "Expected 'samples' to be a 'monty_samples' object")
+  
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  res <- monty_sample(model, sampler, 100, n_chains = 3)
+  res1 <- monty_flatten_chains(res)
+  
+  expect_error(monty_flatten_chains(res1),
+               "Chains appear to have already been flattened")
+  expect_error(monty_unflatten_chains(res),
+               "Chains do not appear to have been flattened previously")
+  
+  attr(res1, "chain") <- 1
+  expect_error(monty_unflatten_chains(res1),
+               "Cannot unflatten chains as chain information not as expected")
+  
 })
