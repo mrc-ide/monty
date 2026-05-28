@@ -40,14 +40,14 @@ test_that("print information about restart", {
   res <- evaluate_promise(print(s))
   expect_no_match(
     res$messages,
-    "These samples can be restared with",
+    "These samples can be restarted with",
     fixed = TRUE, all = FALSE)
 
   s$restart <- list()
   res <- evaluate_promise(print(s))
   expect_match(
     res$messages,
-    "These samples can be restared with",
+    "These samples can be restarted with",
     fixed = TRUE, all = FALSE)
 })
 
