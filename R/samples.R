@@ -47,7 +47,7 @@ print.monty_samples <- function(x, ...) {
 
 ##' @exportS3Method posterior::as_draws_array
 as_draws_array.monty_samples <- function(x, ...) {
-  if (!is.null(attr(x, "chain"))) {
+  if (is_flattened(x)) {
     x <- monty_unflatten_chains(x)
   }
   arr <- aperm(x$pars, c(2, 3, 1))
@@ -64,7 +64,7 @@ as_draws_df.monty_samples <- function(x, ...) {
 
 ##' @exportS3Method coda::as.mcmc.list
 as.mcmc.list.monty_samples <- function(x, ...) {
-  if (!is.null(attr(x, "chain"))) {
+  if (is_flattened(x)) {
     x <- monty_unflatten_chains(x)
   }
   n_chains <- dim(x$pars)[[3]]
