@@ -132,3 +132,18 @@ test_that("Errors when flattening chains not possible", {
                "Cannot unflatten chains as chain information not as expected")
   
 })
+
+
+test_that("can print samples with flattened chains", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  samples <- monty_sample(model, sampler, 100, 1, n_chains = 3)
+  s <- monty_flatten_chains(samples)
+  
+  res <- evaluate_promise(withVisible(print(samples)))
+  expect_mapequal(res$result, list(value = samples, visible = FALSE))
+  expect_match(
+    res$messages,
+    "<monty_samples: 1 parameter x 100 samples x 3 chains>",
+    fixed = TRUE, all = FALSE)
+})
