@@ -104,4 +104,7 @@ test_that("can flatten chains", {
                        flatten_chains = TRUE)
   res4 <- monty_sample_continue(res4, 10)
   expect_equal(res4, res3)
+  
+  expect_equal(monty_samples_thin(res1, 3, 5),
+               monty_samples_flatten(monty_samples_thin(res, 3, 5)))
 })
