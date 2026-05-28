@@ -63,6 +63,11 @@
 ##'   10.  This ensures that the last step is in the sample.  The
 ##'   thinning factor cannot be changed when continuing a chain.
 ##'
+##' @param flatten_chains Logical, indicating whether or not the 
+##'   chains dimension is collapsed into the samples dimension in 
+##'   `pars`, `density` and (typically) objects in `observations`.
+##'   This can be reversed using [monty_unflatten_chains()].
+##'
 ##' @return A list of parameters and densities.  We provide conversion
 ##'   to formats used by other packages, notably
 ##'   [posterior::as_draws_array], [posterior::as_draws_df] and
@@ -112,7 +117,7 @@
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL,
                          restartable = FALSE, burnin = NULL,
-                         thinning_factor = NULL) {
+                         thinning_factor = NULL, flatten_chains = FALSE) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
@@ -143,6 +148,10 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
                             thinning_factor = thinning_factor)
   }
 
+  if (flatten_chains) {
+    samples <- monty_flatten_chains(samples)
+  }
+  
   samples
 }
 
@@ -184,6 +193,11 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   check_can_continue_samples(samples)
   assert_scalar_logical(restartable)
   assert_scalar_logical(append)
+  
+  flattened <- is_flattened(samples)
+  if (flattened) {
+    samples <- monty_unflatten_chains(samples)
+  }
 
   if (is.null(runner)) {
     runner <- samples$restart$runner
@@ -214,6 +228,10 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
                             runner = runner,
                             ## TODO: rethink this; I think it becomes control?
                             thinning_factor = thinning_factor)
+  }
+  
+  if (flattened) {
+    monty_flatten_chains(samples)
   }
 
   samples

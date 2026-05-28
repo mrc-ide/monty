@@ -43,6 +43,11 @@
 ##' @export
 monty_samples_thin <- function(samples, thinning_factor = NULL, burnin = NULL) {
   assert_is(samples, "monty_samples")
+  
+  flattened <- is_flattened(samples)
+  if (flattened) {
+    samples <- monty_unflatten_chains(samples)
+  }
 
   n_samples <- ncol(samples$pars)
 
@@ -67,11 +72,16 @@ monty_samples_thin <- function(samples, thinning_factor = NULL, burnin = NULL) {
     }
   }
 
-  if (all(keep)) {
-    return(samples)
+  if (!all(keep)) {
+    samples <- monty_samples_subset(samples, keep)
+    
   }
-
-  monty_samples_subset(samples, keep)
+  
+  if (flattened) {
+    samples <- monty_flatten_chains(samples)
+  }
+  
+  samples
 }
 
 
@@ -190,8 +200,7 @@ check_can_flatten_chains <- function(samples, call = parent.frame()) {
                    call = call)
   }
   
-  chain <- attr(samples, "chain")
-  if (!is.null(chain)) {
+  if (is_flattened(samples)) {
     cli::cli_abort("Chains appear to have already been flattened",
                    call = call)
   }
@@ -204,8 +213,7 @@ check_can_unflatten_chains <- function(samples, call = parent.frame()) {
                    call = call)
   }
   
-  chain <- attr(samples, "chain")
-  if (is.null(chain)) {
+  if (!is_flattened(samples)) {
     cli::cli_abort("Chains do not appear to have been flattened previously",
                    call = call)
   }
@@ -221,4 +229,9 @@ check_can_unflatten_chains <- function(samples, call = parent.frame()) {
       "Cannot unflatten chains as chain information not as expected",
       call = call)
   }
+}
+
+
+is_flattened <- function(samples) {
+  !is.null(attr(samples, "chain"))
 }

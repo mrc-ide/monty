@@ -30,7 +30,7 @@ print.monty_samples <- function(x, ...) {
   cli::cli_bullets(set_names(target_str, ">"))
   if (!is.null(x$restart)) {
     cli::cli_alert_info(
-      "These samples can be restared with {.help monty_sample_continue}")
+      "These samples can be restarted with {.help monty_sample_continue}")
   }
   if (!is.null(x$observations)) {
     cli::cli_alert_info(
