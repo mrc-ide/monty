@@ -231,7 +231,7 @@ monty_sample_continue <- function(samples, n_steps, restartable = FALSE,
   }
   
   if (flattened) {
-    monty_flatten_chains(samples)
+    samples <- monty_flatten_chains(samples)
   }
 
   samples

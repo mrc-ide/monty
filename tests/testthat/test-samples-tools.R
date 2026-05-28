@@ -98,4 +98,10 @@ test_that("can flatten chains", {
   set.seed(1)
   res3 <- monty_sample(m, sampler, 20, n_chains = 3, flatten_chains = TRUE)
   expect_equal(res3, res1)
+  
+  set.seed(1)
+  res4 <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE,
+                       flatten_chains = TRUE)
+  res4 <- monty_sample_continue(res4, 10)
+  expect_equal(res4, res3)
 })
