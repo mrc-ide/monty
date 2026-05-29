@@ -9,6 +9,14 @@ test_that("can print samples", {
     res$messages,
     "<monty_samples: 1 parameter x 100 samples x 3 chains>",
     fixed = TRUE, all = FALSE)
+  
+  s1 <- monty_flatten_chains(s)
+  res <- evaluate_promise(withVisible(print(s1)))
+  expect_mapequal(res$result, list(value = s1, visible = FALSE))
+  expect_match(
+    res$messages,
+    "<monty_samples: 1 parameter x 100 samples x 3 chains>",
+    fixed = TRUE, all = FALSE)
 })
 
 
