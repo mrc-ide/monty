@@ -83,8 +83,8 @@ parameters for evaluation purposes.}
 \value{
 A list of parameters and densities.  We provide conversion
 to formats used by other packages, notably
-\link[posterior:draws_array]{posterior::as_draws_array}, \link[posterior:draws_df]{posterior::as_draws_df} and
-\link[coda:mcmc.list]{coda::as.mcmc.list}; please let us know if you need conversion
+\link[posterior:as_draws_array]{posterior::as_draws_array}, \link[posterior:as_draws_df]{posterior::as_draws_df} and
+\link[coda:as.mcmc.list]{coda::as.mcmc.list}; please let us know if you need conversion
 to something else.  If you want to work directly with the
 output, the elements in the list include:
 \itemize{
@@ -104,7 +104,7 @@ be a list of length \code{n_chains} (or \code{NULL}) and the details
 depend on the sampler.  This one is subject to change.
 \item \code{observations}: Additional details reported by the model.  This
 one is also subject to change.
-\item \code{full-chains}: If \code{save_full_chains = TRUE}, an list containing \code{pars}
+\item \code{full_chains}: If \code{save_full_chains = TRUE}, a list including \code{pars}
 and \code{density} without discarding the burnin and thinning.
 If \code{save_full_chains = FALSE}, this will be \code{NULL}.
 }
