@@ -174,6 +174,12 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##'   restartable.  This will add additional data to the chains
 ##'   object.  Note that this is controlled at chain collection and
 ##'   not creation.
+##' 
+##' @param flatten_chains Logical, indicating whether or not the 
+##'   chains dimension is collapsed into the samples dimension in 
+##'   `pars`, `density` and (typically) objects in `observations`.
+##'   This can be reversed using [monty_unflatten_chains()].
+##'  
 ##'
 ##' @return A `monty_samples` object.
 ##'
@@ -181,7 +187,8 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##' @inherit monty_sample_manual_prepare examples
 monty_sample_manual_collect <- function(path, samples = NULL,
                                         restartable = FALSE,
-                                        append = TRUE) {
+                                        append = TRUE, 
+                                        flatten_chains = FALSE) {
   inputs <- readRDS(sample_manual_path(path)$inputs)
   path <- sample_manual_path(path, seq_len(inputs$n_chains))
   assert_scalar_logical(append)
@@ -218,6 +225,11 @@ monty_sample_manual_collect <- function(path, samples = NULL,
                             ## TODO: rethink this; I think it becomes control?
                             thinning_factor = thinning_factor)
   }
+  
+  if (flatten_chains) {
+    samples <- monty_flatten_chains(samples)
+  }
+  
   samples
 }
 
@@ -313,6 +325,11 @@ sample_manual_info_chain <- function(complete) {
 ##' @inherit monty_sample_manual_prepare return
 monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
+  
+  if (is_flattened(samples)) {
+    samples <- monty_unflatten_chains(samples)
+  }
+  
   restart <- samples$restart
   state <- samples$state
   n_chains <- n_chains_from_state(state)
