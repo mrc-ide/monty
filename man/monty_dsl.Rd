@@ -4,7 +4,14 @@
 \alias{monty_dsl}
 \title{Domain Specific Language for monty}
 \usage{
-monty_dsl(x, type = NULL, gradient = NULL, fixed = NULL, domain = NULL)
+monty_dsl(
+  x,
+  type = NULL,
+  gradient = NULL,
+  fixed = NULL,
+  domain = NULL,
+  groups = NULL
+)
 }
 \arguments{
 \item{x}{The model as an expression.  This may be given as an
@@ -46,6 +53,8 @@ Applying a domain will remove the ability to sample from the
 model, at least for now.  See \link{monty_model} for details on the
 format.  The provided parameters must match the parameters of
 your model.}
+
+\item{groups}{An optional list of group names for each group variable}
 }
 \value{
 A \link{monty_model} object derived from the expressions you

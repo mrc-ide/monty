@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master, 'mrc-*']
+    branches: [main, master, 'mrc-*', 'groups-main']
 
 name: R-CMD-check
 

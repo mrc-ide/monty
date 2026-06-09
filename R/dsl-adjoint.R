@@ -11,6 +11,15 @@ dsl_parse_adjoint <- function(parameters, exprs, required, call = NULL) {
                   "gradient function, which will disable this warning")))
     return(NULL)
   }
+  is_grouped <- vlapply(exprs, function(e) !is.null(e$lhs$group))
+  if (any(is_grouped)) {
+    cli::cli_warn(
+      c(paste("Not creating a gradient function for this model as we do not",
+              "support gradient functions for models with groups yet"),
+        i = paste("Pass 'gradient = FALSE' to disable creating the",
+                  "gradient function, which will disable this warning")))
+    return(NULL)
+  }
   rlang::try_fetch({
     exprs <- adjoint_rewrite_stochastic(parameters, exprs)
     adjoint_create(parameters, exprs)
