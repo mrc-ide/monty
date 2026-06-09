@@ -52,6 +52,7 @@ dsl_generate_density <- function(dat, env, meta) {
       "{",
       call("if", in_domain, rlang::call2("{", !!!body_exprs), call("{", -Inf)))
   }
+  
   vectorise_density_over_parameters(
     as_function(alist(x = ), body, env))
 }
@@ -158,11 +159,15 @@ dsl_generate_density_stochastic <- function(expr, group_data, meta) {
   name <- as.name(expr$lhs$name)
   is_grouped <- !is.null(expr$lhs$group)
   has_groups <- !is.null(group_data$groups)
+  
+  ## for grouped parameters we need to evaluate the density for each group,
+  ## while for shared parameters we need to evaluate the density once
   if (is_grouped) {
     lhs <- bquote(.(meta[["density"]])[[group]][[.(expr$lhs$name)]])
   } else {
     lhs <- bquote(.(meta[["density"]])[[.(expr$lhs$name)]])
   }
+  
   if (!is.null(array)) {
     idx <- lapply(array, function(x) as.name(x$name))
     lhs <- rlang::call2("[", lhs, !!!idx)
@@ -181,6 +186,9 @@ dsl_generate_density_stochastic <- function(expr, group_data, meta) {
     if (is_grouped) {
       expr <- dsl_generate_group_loops(expr, group_data$groups, meta)
     } else {
+      ## for shared parameters we evaluate the density once - parameters
+      ## are unpacked into a list for each group and we just use the value
+      ## of the shared parameter from group 1 (will be the same in each group)
       expr <- dsl_generate_group_loops(expr, group_data$groups[1], meta)
     }
   }
