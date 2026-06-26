@@ -9,6 +9,7 @@ test_that("can thin chain", {
   res1 <- monty_samples_thin(res, burnin = 100)
   expect_equal(res1$pars, res$pars[, -(1:100), , drop = FALSE])
   expect_equal(res1$density, res$density[-(1:100), , drop = FALSE])
+  expect_equal(res1$full_chains, NULL)
   expect_equal(res1, monty_samples_subset(res, 101:500))
 
   res2 <- monty_samples_thin(res, thinning_factor = 10)
@@ -18,6 +19,27 @@ test_that("can thin chain", {
   res3 <- monty_samples_thin(res, burnin = 123, thinning_factor = 17)
   i <- seq(126, 500, by = 17)
   expect_equal(res3, monty_samples_subset(res, i))
+  
+  res1a <- monty_samples_thin(res, burnin = 100, save_full_chains = TRUE)
+  expect_equal(res1a$pars, res$pars[, -(1:100), , drop = FALSE])
+  expect_equal(res1a$density, res$density[-(1:100), , drop = FALSE])
+  expect_equal(res1a, monty_samples_subset(res, 101:500, TRUE))
+  expect_equal(res1a$full_chains$pars, res$pars)
+  expect_equal(res1a$full_chains$density, res$density)
+  
+  res2a <- monty_samples_thin(res, thinning_factor = 10,
+                              save_full_chains = TRUE)
+  i <- seq(10, 500, by = 10)
+  expect_equal(res2a, monty_samples_subset(res, i, TRUE))
+  expect_equal(res2a$full_chains$pars, res$pars)
+  expect_equal(res2a$full_chains$density, res$density)
+  
+  res3a <- monty_samples_thin(res, burnin = 123, thinning_factor = 17,
+                              save_full_chains = TRUE)
+  i <- seq(126, 500, by = 17)
+  expect_equal(res3a, monty_samples_subset(res, i, TRUE))
+  expect_equal(res3a$full_chains$pars, res$pars)
+  expect_equal(res3a$full_chains$density, res$density)
 })
 
 
