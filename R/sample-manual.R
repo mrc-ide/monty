@@ -200,7 +200,8 @@ monty_sample_manual_collect <- function(path, samples = NULL,
     cli::cli_abort("Results missing for chain{?s} {as.character(which(msg))}")
   }
 
-  prev <- sample_manual_collect_check_samples(inputs, samples, append)
+  prev <- sample_manual_collect_check_samples(inputs, samples, append, 
+                                              flatten_chains)
 
   if (is.null(inputs$restart)) {
     model <- inputs$model
@@ -418,6 +419,7 @@ sample_manual_prepare_check_samples <- function(samples, save_samples,
 
 
 sample_manual_collect_check_samples <- function(inputs, samples, append,
+                                                flatten_chains,
                                                 call = parent.frame()) {
   if (!is.list(inputs$restart)) {
     if (!is.null(samples)) {
@@ -440,6 +442,9 @@ sample_manual_collect_check_samples <- function(inputs, samples, append,
         arg = "samples", call = call)
     }
   } else {
+    if (is_flattened(samples)) {
+      samples <- monty_unflatten_chains(samples)
+    }
     samples_ok <-
       identical(inputs$samples$value, samples) ||
       identical(inputs$samples$hash, rlang::hash(samples))
