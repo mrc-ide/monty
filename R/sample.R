@@ -127,11 +127,8 @@
 monty_sample <- function(model, sampler, n_steps, initial = NULL,
                          n_chains = 1L, runner = NULL,
                          restartable = FALSE, burnin = NULL,
-<<<<<<< HEAD
-                         thinning_factor = NULL, flatten_chains = FALSE) {
-=======
-                         thinning_factor = NULL, save_full_chains = FALSE) {
->>>>>>> main
+                         thinning_factor = NULL, save_full_chains = FALSE, 
+                         flatten_chains = FALSE) {
   assert_is(model, "monty_model")
   assert_is(sampler, "monty_sampler")
   if (is.null(runner)) {
