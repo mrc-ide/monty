@@ -12,7 +12,8 @@ monty_sample_manual_prepare(
   initial = NULL,
   n_chains = 1L,
   burnin = NULL,
-  thinning_factor = NULL
+  thinning_factor = NULL,
+  save_full_chains = FALSE
 )
 }
 \arguments{
@@ -73,6 +74,12 @@ is an even multiple of \code{thinning_factor}; so if
 \code{thinning_factor} is 10, then \code{n_steps} must be a multiple of
 10.  This ensures that the last step is in the sample.  The
 thinning factor cannot be changed when continuing a chain.}
+
+\item{save_full_chains}{Logical, indicating whether or not the full chains
+of the parameters (without discarding the burnin and thinning) should
+additionally be saved. This is useful if you are thinning to reduce the
+size of observations but still want to retain the full chains of the
+parameters for evaluation purposes.}
 }
 \value{
 Invisibly, the path used to store files (the same as the
