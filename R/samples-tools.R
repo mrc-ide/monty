@@ -200,9 +200,13 @@ monty_unflatten_chains <- function(samples) {
   samples$density <- array_reshape(samples$density, 1, c(n_samples, n_chains))
   
   for (obs in names(samples$observations)) {
-    d <- length(dim2(samples$observations[[obs]]))
-    samples$observations[[obs]] <- 
-      array_reshape(samples$observations[[obs]], d, c(n_samples, n_chains))
+    d <- dim2(samples$observations[[obs]])
+    can_unflatten <- d[length(d)] == n_samples * n_chains
+    if (can_unflatten) {
+      samples$observations[[obs]] <- 
+        array_reshape(samples$observations[[obs]], length(d), 
+                      c(n_samples, n_chains))
+    }
   }
   
   attr(samples, "chain") <- NULL
@@ -243,7 +247,7 @@ check_can_unflatten_chains <- function(samples, call = parent.frame()) {
   
   if (!identical(chain, chain_expected)) {
     cli::cli_abort(
-      "Cannot unflatten chains as chain information not as expected",
+      "'chain' attribute does not indicate chains of equal length",
       call = call)
   }
 }

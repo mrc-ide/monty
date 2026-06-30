@@ -151,6 +151,6 @@ test_that("Errors when flattening chains not possible", {
   
   attr(res1, "chain") <- 1
   expect_error(monty_unflatten_chains(res1),
-               "Cannot unflatten chains as chain information not as expected")
+               "'chain' attribute does not indicate chains of equal length")
   
 })
