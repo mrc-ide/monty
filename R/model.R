@@ -538,10 +538,6 @@ validate_model_parameter_groups <- function(model, properties, call) {
   ## issue but not about how to circumvent it with properties
   check_parameter_groups(parameter_groups, length(model$parameters),
                          name = "model$parameter_groups", call = call)
-  if (!("by_group" %in% names(formals(model$density)))) {
-    cli::cli_abort("Expected 'model$density' to have an argument 'by_group'",
-                   call = call)
-  }
   parameter_groups
 }
 
