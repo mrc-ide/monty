@@ -200,6 +200,8 @@ monty_model <- function(model, properties = NULL) {
   rng_state <- validate_model_rng_state(model, properties, call)
   parameter_groups <- validate_model_parameter_groups(model, properties, call)
   restore <- validate_model_restore(model, properties, call)
+  
+  groups <- if (properties$has_parameter_groups) model$groups else NULL
 
   ## Update properties based on what we found:
   properties$has_gradient <- !is.null(gradient)
@@ -213,6 +215,7 @@ monty_model <- function(model, properties = NULL) {
   ret <- list(model = model,
               parameters = parameters,
               parameter_groups = parameter_groups,
+              groups = groups,
               domain = domain,
               density = density,
               gradient = gradient,

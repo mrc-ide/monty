@@ -127,6 +127,7 @@ monty_model_combine <- function(a, b, properties = NULL,
   parameter_groups <- model_combine_parameter_groups(
     parts, parameters, properties$has_parameter_groups
   )
+  groups <- model_combine_groups(parts, properties$has_parameter_groups)
 
   data <- list(
     parts = unname(parts),
@@ -137,6 +138,7 @@ monty_model_combine <- function(a, b, properties = NULL,
     list(data = data,
          parameters = parameters,
          parameter_groups = parameter_groups,
+         groups = groups,
          domain = domain,
          density = density,
          gradient = gradient,
@@ -548,6 +550,23 @@ model_combine_parameter_groups <- function(parts, parameters,
     b$parameter_groups[match(b_only, b$parameters)]
   
   parameter_groups
+}
+
+
+model_combine_groups <- function(parts, has_parameter_groups) {
+  if (has_parameter_groups) {
+    groups_a <- parts[[1]]$groups
+    groups_b <- parts[[2]]$groups
+    if (!identical(groups_a, groups_b)) {
+      cli::cli_abort(
+        "Incompatible groups between your two models",
+        call = call)
+    }
+    groups <- groups_a
+  } else {
+    groups <- NULL
+  }
+  groups
 }
 
 

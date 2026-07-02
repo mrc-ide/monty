@@ -27,6 +27,7 @@ dsl_generate <- function(dat) {
   monty_model(
     list(parameters = env$packer$names(),
          parameter_groups = parameter_groups,
+         groups = env$groups,
          density = density,
          gradient = gradient,
          domain = domain,
