@@ -144,7 +144,8 @@ monty_sample <- function(model, sampler, n_steps, initial = NULL,
   res <- runner$run(pars, model, sampler, steps, rng)
 
   observer <- if (model$properties$has_observer) model$observer else NULL
-  samples <- combine_chains(res, sampler, observer, restartable)
+  has_groups <- model$properties$has_parameter_groups
+  samples <- combine_chains(res, sampler, observer, restartable, has_groups)
 
   if (restartable) {
     samples$restart <- list(model = model,
@@ -353,7 +354,7 @@ initial_parameters <- function(initial, model, rng, call = NULL) {
 }
 
 
-combine_chains <- function(res, sampler, observer, include_state) {
+combine_chains <- function(res, sampler, observer, include_state, has_groups) {
   ## If we used the simultaneous sampler, we've already constructed
   ## something useful here.
   if (inherits(res, "monty_samples")) {
@@ -374,6 +375,18 @@ combine_chains <- function(res, sampler, observer, include_state) {
   } else {
     observations <- observer$combine(lapply(history, "[[", "observations"))
   }
+  
+  if (has_groups) {
+    density_by_group <- lapply(history, "[[", "density_by_group")
+    density_shared <- 
+      array_bind(arrays = lapply(density_by_group, "[[", "shared"), after = 1)
+    density_groups <- 
+      array_bind(arrays = lapply(density_by_group, "[[", "groups"), after = 2)
+    density_by_group <- list(shared = density_shared,
+                             groups = density_groups)
+  } else {
+    density_by_group <- NULL
+  }
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
   
@@ -383,7 +396,21 @@ combine_chains <- function(res, sampler, observer, include_state) {
       array_bind(arrays = lapply(full_chains, "[[", "pars"), after = 2)
     density_full <- 
       array_bind(arrays = lapply(full_chains, "[[", "density"), after = 1)
-    full_chains <- monty_samples(pars_full, density_full, initial)
+    if (has_groups) {
+      density_by_group_full <- lapply(full_chains, "[[", "density_by_group")
+      density_shared_full <- 
+        array_bind(arrays = lapply(density_by_group_full, "[[", "shared"), 
+                   after = 1)
+      density_groups_full <- 
+        array_bind(arrays = lapply(density_by_group_full, "[[", "groups"), 
+                   after = 2)
+      density_by_group_full <- list(shared = density_shared_full,
+                                    groups = density_groups_full)
+    } else {
+      density_by_group_full
+    }
+    full_chains <- monty_samples(pars_full, density_full, initial, 
+                                 density_by_group_full)
   } else {
     full_chains <- NULL
   }
@@ -412,7 +439,7 @@ combine_chains <- function(res, sampler, observer, include_state) {
   }
 
   monty_samples(pars, density, initial, details, observations, state,
-                full_chains)
+                full_chains, density_by_group)
 }
 
 
@@ -524,10 +551,12 @@ combine_state_chain <- function(state) {
 
 monty_samples <- function(pars, density, initial,
                           details = NULL, observations = NULL,
-                          state = NULL, full_chains = NULL) {
+                          state = NULL, full_chains = NULL,
+                          density_by_group = NULL) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
                   density = density,
+                  density_by_group = density_by_group,
                   initial = initial,
                   details = details,
                   state = state,
