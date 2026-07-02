@@ -111,7 +111,8 @@ monty_model_combine <- function(a, b, properties = NULL,
 
   domain <- model_combine_domain(parts, parameters)
   density <- model_combine_density(parts, parameters,
-                                   properties$allow_multiple_parameters)
+                                   properties$allow_multiple_parameters,
+                                   properties$has_parameter_groups)
 
   gradient <- model_combine_gradient(
     parts, parameters, properties, call)
@@ -235,14 +236,12 @@ model_combine_domain <- function(parts, parameters) {
 
 
 model_combine_density <- function(parts, parameters,
-                                  allow_multiple_parameters) {
+                                  allow_multiple_parameters,
+                                  has_parameter_groups) {
   a <- parts[[1]]
   b <- parts[[2]]
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
-  
-  has_density_by_group <- "by_group" %in% names(formals(a$density)) &&
-    "by_group" %in% names(formals(b$density))
   
   if (allow_multiple_parameters) {
     function(x, ...) {
@@ -254,18 +253,16 @@ model_combine_density <- function(parts, parameters,
       }
     }
   } else {
-    if (has_density_by_group) {
-      function(x, by_group = FALSE, ...) {
-        density_a <- a$density(x[i_a], by_group, ...)
-        density_b <- b$density(x[i_b], by_group, ...)
+    if (has_parameter_groups) {
+      function(x, ...) {
+        density_a <- a$density(x[i_a], ...)
+        density_b <- b$density(x[i_b], ...)
         value <- density_a + density_b
-        if (by_group) {
-          value_by_group <- attr(density_a, "by_group") + 
-            attr(density_b, "by_group")
-          structure(value, "by_group" = value_by_group)
-        } else {
-          value
-        }
+        attr(value, "shared") <- 
+          attr(density_a, "shared") + attr(density_b, "shared")
+        attr(value, "groups") <- 
+          attr(density_a, "groups") + attr(density_b, "groups")
+        value
       }
     } else {
       function(x, ...) {
