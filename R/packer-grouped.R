@@ -237,8 +237,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
     idx[[i]][varied] <- d_varied$packer$unpack(x_varied[, i])
   }
   names(idx) <- groups
-  
-  
+
   ## This would be really quite hard, and I'm not sure how effective?
   ## But we might want it later to support multistage simulation in
   ## dust2.
