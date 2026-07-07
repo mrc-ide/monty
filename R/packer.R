@@ -301,6 +301,10 @@ monty_packer <- function(scalar = NULL, array = NULL, fixed = NULL,
       nms <- c(nms, tmp$names)
       shape[[nm]] <- tmp$shape
       idx[[nm]] <- seq_len(tmp$n) + len
+      if (length(tmp$shape) > 1) {
+        idx[[nm]] <- array(idx[[nm]], tmp$shape)
+      }
+      
       len <- len + tmp$n
     }
   }
