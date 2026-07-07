@@ -81,7 +81,7 @@ test_that("can use a grouped packer with fixed input", {
     list(x = list(a = 2, b = 3, c = 4, d = 1, m = 1:4),
          y = list(a = 5, b = 6, c = 7, d = 1, m = 1:4)))
   expect_equal(p$pack(p$unpack(1:7)), 1:7)
-  ## due to using fixed input, this will differ from p$unpack(1:7)
+  # due to using fixed input, this will differ from p$unpack(1:7)
   expect_equal(p$index(), list(x = list(a = 2, b = 3, c = 4, d = 1),
                                y = list(a = 5, b = 6, c = 7, d = 1)))
 })
