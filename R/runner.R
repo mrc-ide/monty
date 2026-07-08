@@ -224,6 +224,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   initial <- chain_state$pars
   n_pars <- length(model$parameters)
   has_observer <- model$properties$has_observer
+  has_groups <- model$properties$has_parameter_groups
 
   burnin <- steps$burnin
   thinning_factor <- steps$thinning_factor
@@ -233,9 +234,26 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
 
   history_pars <- matrix(NA_real_, n_pars, n_steps_record)
   history_density <- rep(NA_real_, n_steps_record)
+  if (has_groups) {
+    n_groups <- length(model$groups)
+    history_density_by_group <-
+      list(shared = rep(NA_real_, n_steps_record),
+           groups = matrix(NA_real_, n_groups, n_steps_record))
+  } else {
+    history_density_by_group <- NULL
+  }
+  
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
   if (save_full_chains) {
+    if (has_groups) {
+      n_groups <- length(model$groups)
+      full_chain_density_by_group <-
+        list(shared = rep(NA_real_, n_steps),
+             groups = matrix(NA_real_, n_groups, n_steps))
+    } else {
+      full_chain_density_by_group <- NULL
+    }
     history_full_chains <- list(pars = matrix(NA_real_, n_pars, n_steps),
                                 density = rep(NA_real_, n_steps))
   } else {
@@ -252,11 +270,23 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
       if (has_observer && !is.null(chain_state$observation)) {
         history_observation[[j]] <- chain_state$observation
       }
+      if (has_groups) {
+        history_density_by_group$shared[[j]] <- 
+          attr(chain_state$density, "shared")
+        history_density_by_group$groups[, j] <- 
+          attr(chain_state$density, "groups")
+      }
       j <- j + 1L
     }
     if (save_full_chains) {
       history_full_chains$pars[, i] <- chain_state$pars
       history_full_chains$density[i] <- chain_state$density
+      if (has_groups) {
+        history_full_chains$density_by_group$shared[[i]] <- 
+          attr(chain_state$density, "shared")
+        history_full_chains$density_by_group$groups[, j] <- 
+          attr(chain_state$density, "groups")
+      }
     }
     progress(chain_id, i)
   }
@@ -265,6 +295,13 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   rownames(history_pars) <- model$parameters
   if (save_full_chains) {
     rownames(history_full_chains$pars) <- model$parameters    
+  }
+  
+  if (has_groups) {
+    rownames(history_density_by_group$groups) <- model$groups
+    if (save_full_chains) {
+      rownames(history_full_chains$density_by_group$groups) <- model$groups    
+    }
   }
 
   if (has_observer) {
@@ -280,6 +317,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   history <- list(
     pars = history_pars,
     density = history_density,
+    density_by_group = history_density_by_group,
     observations = history_observation,
     full_chains = history_full_chains)
   state <- list(

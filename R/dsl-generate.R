@@ -5,6 +5,10 @@ dsl_generate <- function(dat) {
   env$parameters <- dat$parameters
   env$groups <- dat$group_data$groups
   
+  has_parameter_groups <- !is.null(env$groups)
+  parameter_groups <- 
+    if (has_parameter_groups) env$packer$parameter_groups() else NULL
+  
   meta <- list(
     pars = quote(pars),
     data = quote(data),
@@ -16,9 +20,14 @@ dsl_generate <- function(dat) {
   direct_sample <- dsl_generate_direct_sample(dat, env, meta)
   gradient <- dsl_generate_gradient(dat, env, meta)
   domain <- dsl_generate_domain(dat, meta, env$packer)
-  properties <- monty_model_properties(allow_multiple_parameters = TRUE)
+  
+  properties <- 
+    monty_model_properties(allow_multiple_parameters = TRUE,
+                           has_parameter_groups = has_parameter_groups)
   monty_model(
     list(parameters = env$packer$names(),
+         parameter_groups = parameter_groups,
+         groups = env$groups,
          density = density,
          gradient = gradient,
          domain = domain,
@@ -30,12 +39,35 @@ dsl_generate <- function(dat) {
 dsl_generate_density <- function(dat, env, meta) {
   initial <- dsl_generate_initialise_arrays(dat, "density", meta)
   exprs <- lapply(dat$exprs, dsl_generate_density_expr, dat$group_data, meta)
+  if (is.null(env$groups)) {
+    tidy <- call("sum", call("unlist", meta[["density"]]))
+  } else {
+    density_groups <- 
+    tidy <- 
+      c(call("<-", quote(density_groups), 
+             call("[", meta[["density"]], quote(groups))),
+        call("<-", quote(density_groups),
+             call("lapply", call("lapply", quote(density_groups),
+                       quote(unlist)), quote(sum))),
+        call("<-", quote(density_groups),
+              call("unlist", quote(density_groups))),
+        call("<-", meta[["density"]], 
+             call("sum", call("unlist", meta[["density"]]))),
+        call("<-", call("attr", meta[["density"]], "shared"), 
+             meta[["density"]]),
+        call("<-", call("attr", meta[["density"]], "groups"), 
+             quote(density_groups)),
+        call("<-", meta[["density"]],
+             call("+", meta[["density"]],
+                  call("sum", quote(density_groups)))),
+        meta[["density"]])
+  }
   
   body_exprs <- unlist(c(call("<-", meta[["pars"]], quote(packer$unpack(x))),
                          call("<-", meta[["density"]], quote(list())),
                          initial,
                          exprs,
-                         call("sum", call("unlist", meta[["density"]]))))
+                         tidy))
   if (is.null(dat$domain)) {
     body <- rlang::call2("{", !!!body_exprs)
   } else {
@@ -537,4 +569,3 @@ vectorise_gradient_over_parameters <- function(gradient, len) {
     }
   }
 }
-
