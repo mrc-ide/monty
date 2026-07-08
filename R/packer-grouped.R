@@ -177,7 +177,7 @@ monty_packer_grouped <- function(groups, scalar = NULL, array = NULL,
   ## group:parameter
   names_expanded <- c(d_shared$packer$names(),
                       outer(d_varied$packer$names(), groups,
-                            function(g, p) sprintf("%s<%s>", g, p)))
+                            function(g, p) sprintf("%s | %s", g, p)))
 
   unpack <- function(x) {
     if (!is.null(dim(x))) {

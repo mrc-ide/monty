@@ -8,7 +8,7 @@ test_that("can use a grouped packer", {
     c("x", "y", "z"))
   expect_equal(
     p$names(),
-    c("b", "c", "a<x>", "d<x>", "a<y>", "d<y>", "a<z>", "d<z>"))
+    c("b", "c", "a | x", "d | x", "a | y", "d | y", "a | z", "d | z"))
   expect_equal(
     p$unpack(1:8),
     list(x = list(a = 3, b = 1, c = 2, d = 4),
@@ -28,7 +28,7 @@ test_that("can use a grouped packer with no shared parameters", {
     scalar = c("a", "b", "c", "d"))
   expect_equal(
     p$names(),
-    c("a<x>", "b<x>", "c<x>", "d<x>", "a<y>", "b<y>", "c<y>", "d<y>"))
+    c("a | x", "b | x", "c | x", "d | x", "a | y", "b | y", "c | y", "d | y"))
   expect_equal(p$unpack(1:8),
                list(x = list(a = 1, b = 2, c = 3, d = 4),
                     y = list(a = 5, b = 6, c = 7, d = 8)))
@@ -233,7 +233,7 @@ test_that("Can print a grouped packer", {
   expect_match(res$messages, "<monty_packer_grouped>",
                fixed = TRUE, all = FALSE)
   expect_match(res$messages,
-               "Packing 4 values: 'x<a>', 'y<a>', 'x<b>', and 'y<b>",
+               "Packing 4 values: 'x | a', 'y | a', 'x | b', and 'y | b",
                fixed = TRUE, all = FALSE)
 })
 

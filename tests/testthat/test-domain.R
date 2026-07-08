@@ -60,8 +60,8 @@ test_that("Expand domain for grouped packer", {
   packer <- monty_packer_grouped(c("x", "y"), c("a", "b"))
   expect_equal(
     monty_domain_expand(rbind(a = 0:1), packer),
-    rbind("a<x>" = 0:1,
-          "a<y>" = 0:1))
+    rbind("a | x" = 0:1,
+          "a | y" = 0:1))
 })
 
 
@@ -69,8 +69,8 @@ test_that("Expand domain for grouped packer with arrays", {
   packer <- monty_packer_grouped(c("x", "y"), c("a", "b"), list(c = 3, d = 2))
   expected <- cbind(c(0, 0, 0, 0, 2, 0), c(1, 1, 1, 1, 3, 1))
   rownames(expected) <-
-    c("c[1]<x>", "c[2]<x>", "c[3]<x>", "c[1]<y>", "c[2]<y>", "c[3]<y>")
+    c("c[1] | x", "c[2] | x", "c[3] | x", "c[1] | y", "c[2] | y", "c[3] | y")
   expect_equal(
-    monty_domain_expand(rbind(c = 0:1, "c[2]<y>" = 2:3), packer),
+    monty_domain_expand(rbind(c = 0:1, "c[2] | y" = 2:3), packer),
     expected)
 })
