@@ -68,6 +68,8 @@ reference:
     - monty_packer_grouped
     - monty_domain_expand
     - monty_samples_thin
+    - monty_flatten_chains
+    - monty_unflatten_chains
     - with_trace_random
 
   - subtitle: Advanced

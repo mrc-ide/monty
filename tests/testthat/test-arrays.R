@@ -270,3 +270,35 @@ test_that("Can get the last entry in an array", {
   expect_error(array_select_last(array(1:720, c(2, 3, 4, 5, 6)), 2),
                "unsupported access")
 })
+
+
+test_that("flatten dimensions", {
+  x <- array(1:24, c(2, 3, 4))
+  expect_equal(array_flatten(x, 2:3),
+               matrix(1:24, c(2, 12)))
+  expect_equal(array_flatten(x, 1:2),
+               matrix(1:24, c(6, 4)))
+  expect_equal(array_flatten(x, 1:3),
+               1:24)
+})
+
+
+test_that("Prevent impossible flattening", {
+  x <- array(1:24, c(2, 3, 4))
+  expect_error(array_flatten(x, 1:2 + 0.4),
+               "Expected 'i' to be integer")
+  expect_error(array_flatten(x, 3:4),
+               "Values of 'i' must be in [1, 3]",
+               fixed = TRUE)
+  expect_error(array_flatten(x, 4:6),
+               "Values of 'i' must be in [1, 3]",
+               fixed = TRUE)
+  expect_error(array_flatten(x, 2),
+               "i must be vector of at least length 2")
+  expect_error(array_flatten(x, c(1, 3)),
+               "All values of 'i' must be consecutive integers")
+  expect_error(array_flatten(x, 3:2),
+               "All values of 'i' must be consecutive integers")
+  expect_error(array_flatten(x, c(2, 2, 3)),
+               "All values of 'i' must be consecutive integers")
+})

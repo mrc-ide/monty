@@ -2,8 +2,14 @@
 print.monty_samples <- function(x, ...) {
   d <- dim(x$pars)
   n_pars <- d[[1]]
-  n_samples <- d[[2]]
-  n_chains <- d[[3]]
+  chain <- attr(x, "chain")
+  if (!is.null(chain)) {
+    n_chains <- max(chain)
+    n_samples <- length(chain) / n_chains
+  } else {
+    n_samples <- d[[2]]
+    n_chains <- d[[3]]
+  }
   cli::cli_h1(
     paste("<monty_samples: {n_pars} parameter{?s} x {n_samples} sample{?s}",
           "x {n_chains} chain{?s}>"))
@@ -24,7 +30,7 @@ print.monty_samples <- function(x, ...) {
   cli::cli_bullets(set_names(target_str, ">"))
   if (!is.null(x$restart)) {
     cli::cli_alert_info(
-      "These samples can be restared with {.help monty_sample_continue}")
+      "These samples can be restarted with {.help monty_sample_continue}")
   }
   if (!is.null(x$observations)) {
     cli::cli_alert_info(
@@ -41,6 +47,9 @@ print.monty_samples <- function(x, ...) {
 
 ##' @exportS3Method posterior::as_draws_array
 as_draws_array.monty_samples <- function(x, ...) {
+  if (is_flattened(x)) {
+    x <- monty_unflatten_chains(x)
+  }
   arr <- aperm(x$pars, c(2, 3, 1))
   names(dimnames(arr)) <- c("chain", "iteration", "variable")
   class(arr) <- c("draws_array", "draws", "array")
@@ -55,6 +64,9 @@ as_draws_df.monty_samples <- function(x, ...) {
 
 ##' @exportS3Method coda::as.mcmc.list
 as.mcmc.list.monty_samples <- function(x, ...) {
+  if (is_flattened(x)) {
+    x <- monty_unflatten_chains(x)
+  }
   n_chains <- dim(x$pars)[[3]]
   coda::mcmc.list(lapply(seq_len(n_chains), function(i) {
     coda::mcmc(t(array_drop(x$pars[, , i, drop = FALSE], 3)))
