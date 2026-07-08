@@ -96,3 +96,61 @@ test_that("warn if samples contain unsubsettalble data", {
   expect_equal(res$observations$b, samples$observations$b)
   expect_equal(res$observations$c, samples$observations$c[, i, , drop = FALSE])
 })
+
+
+test_that("can flatten chains", {
+  m <- ex_sir_filter_posterior(save_trajectories = TRUE)
+  vcv <- matrix(c(0.0006405, 0.0005628, 0.0005628, 0.0006641), 2, 2)
+  sampler <- monty_sampler_random_walk(vcv = vcv)
+  
+  set.seed(1)
+  res <- monty_sample(m, sampler, 20, n_chains = 3)
+  
+  res1 <- monty_flatten_chains(res)
+  expect_equal(res1$pars, array_flatten(res$pars, c(2, 3)))
+  expect_equal(res1$density, array_flatten(res$density, c(1, 2)))
+  expect_equal(res1$observations$trajectories,
+               array_flatten(res$observations$trajectories, c(3, 4)))
+  expect_equal(attr(res1, "chain"), rep(seq_len(3), each = 20))
+  
+  res2 <- monty_unflatten_chains(res1)
+  expect_equal(res2, res)
+  
+  
+  set.seed(1)
+  res3 <- monty_sample(m, sampler, 20, n_chains = 3, flatten_chains = TRUE)
+  expect_equal(res3, res1)
+  
+  set.seed(1)
+  res4 <- monty_sample(m, sampler, 10, n_chains = 3, restartable = TRUE,
+                       flatten_chains = TRUE)
+  res4 <- monty_sample_continue(res4, 10)
+  expect_equal(res4, res3)
+  
+  expect_equal(monty_samples_thin(res1, 3, 5),
+               monty_flatten_chains(monty_samples_thin(res, 3, 5)))
+})
+
+
+test_that("Errors when flattening chains not possible", {
+  expect_error(monty_flatten_chains(1),
+               "Expected 'samples' to be a 'monty_samples' object")
+  
+  expect_error(monty_unflatten_chains(1),
+               "Expected 'samples' to be a 'monty_samples' object")
+  
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  res <- monty_sample(model, sampler, 100, n_chains = 3)
+  res1 <- monty_flatten_chains(res)
+  
+  expect_error(monty_flatten_chains(res1),
+               "Chains appear to have already been flattened")
+  expect_error(monty_unflatten_chains(res),
+               "Chains do not appear to have been flattened previously")
+  
+  attr(res1, "chain") <- 1
+  expect_error(monty_unflatten_chains(res1),
+               "'chain' attribute does not indicate chains of equal length")
+  
+})

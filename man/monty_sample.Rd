@@ -14,7 +14,8 @@ monty_sample(
   restartable = FALSE,
   burnin = NULL,
   thinning_factor = NULL,
-  save_full_chains = FALSE
+  save_full_chains = FALSE,
+  flatten_chains = FALSE
 )
 }
 \arguments{
@@ -79,6 +80,11 @@ of the parameters (without discarding the burnin and thinning) should
 additionally be saved. This is useful if you are thinning to reduce the
 size of observations but still want to retain the full chains of the
 parameters for evaluation purposes.}
+
+\item{flatten_chains}{Logical, indicating whether or not the
+chains dimension is collapsed into the samples dimension in
+\code{pars}, \code{density} and (typically) objects in \code{observations}.
+This can be reversed using \code{\link[=monty_unflatten_chains]{monty_unflatten_chains()}}.}
 }
 \value{
 A list of parameters and densities.  We provide conversion
