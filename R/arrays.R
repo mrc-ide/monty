@@ -172,6 +172,42 @@ array_drop <- function(x, i, call = NULL) {
 }
 
 
+array_flatten <- function(x, i, call = NULL) {
+  dx <- dim2(x)
+  assert_integer(i)
+  if (any(i < 1 | i > length(dx))) {
+    cli::cli_abort(
+      sprintf("Values of 'i' must be in [1, %d]", length(dx)),
+      call = call)
+  }
+  if (length(i) < 2) {
+    cli::cli_abort(
+      "i must be vector of at least length 2",
+      call = call)
+  }
+  if (any(diff(i) != 1)) {
+    cli::cli_abort(
+      "All values of 'i' must be consecutive integers",
+      call = call)
+  }
+  
+  dn <- dimnames2(x)
+  
+  dx[[i[[1L]]]] <- prod(dx[i])
+  dx_new <- dx[seq_along(dx)[-i[-1]]]
+  if (length(dx_new) == 1L) {
+    dx_new <- NULL
+  }
+  dim(x) <- dx_new
+  
+  ## Can't preserve dimension names on modified dimensions
+  if (!is.null(dn)) {
+    dimnames(x) <- append(dn[-i], list(NULL), i[1])
+  }
+  
+  x
+}
+
 
 array_nth_dimension <- function(x, k, i) {
   rank <- length(dim2(x))

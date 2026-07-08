@@ -8,7 +8,8 @@ monty_sample_manual_collect(
   path,
   samples = NULL,
   restartable = FALSE,
-  append = TRUE
+  append = TRUE,
+  flatten_chains = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,11 @@ not creation.}
 
 \item{append}{Logical, indicating if we should append the results
 of the resumed chain together with the original chain.}
+
+\item{flatten_chains}{Logical, indicating whether or not the
+chains dimension is collapsed into the samples dimension in
+\code{pars}, \code{density} and (typically) objects in \code{observations}.
+This can be reversed using \code{\link[=monty_unflatten_chains]{monty_unflatten_chains()}}.}
 }
 \value{
 A \code{monty_samples} object.

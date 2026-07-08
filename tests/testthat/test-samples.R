@@ -9,6 +9,14 @@ test_that("can print samples", {
     res$messages,
     "<monty_samples: 1 parameter x 100 samples x 3 chains>",
     fixed = TRUE, all = FALSE)
+  
+  s1 <- monty_flatten_chains(s)
+  res <- evaluate_promise(withVisible(print(s1)))
+  expect_mapequal(res$result, list(value = s1, visible = FALSE))
+  expect_match(
+    res$messages,
+    "<monty_samples: 1 parameter x 100 samples x 3 chains>",
+    fixed = TRUE, all = FALSE)
 })
 
 
@@ -40,14 +48,14 @@ test_that("print information about restart", {
   res <- evaluate_promise(print(s))
   expect_no_match(
     res$messages,
-    "These samples can be restared with",
+    "These samples can be restarted with",
     fixed = TRUE, all = FALSE)
 
   s$restart <- list()
   res <- evaluate_promise(print(s))
   expect_match(
     res$messages,
-    "These samples can be restared with",
+    "These samples can be restarted with",
     fixed = TRUE, all = FALSE)
 })
 
@@ -66,6 +74,14 @@ test_that("can convert to posterior draws types", {
   expect_s3_class(s_arr, "draws_array")
   expect_equal(dimnames(s_arr),
                list(chain = NULL, iteration = NULL, variable = "gamma"))
+  
+  s1 <- monty_flatten_chains(s)
+  s1_df <- posterior::as_draws_df(s1)
+  expect_equal(s1_df, s_df)
+  
+  s1_arr <- posterior::as_draws_array(s1)
+  expect_equal(s1_arr, s_arr)
+  
 })
 
 
@@ -79,4 +95,8 @@ test_that("can convert to coda type", {
   expect_s3_class(s_coda, "mcmc.list")
   expect_length(s_coda, 3)
   expect_s3_class(s_coda[[1]], "mcmc")
+  
+  s1 <- monty_flatten_chains(s)
+  s1_coda <- coda::as.mcmc.list(s1)
+  expect_equal(s1_coda, s_coda)
 })
