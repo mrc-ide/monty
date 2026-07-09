@@ -56,8 +56,9 @@ test_that("can use integer vectors for array inputs", {
 
 
 test_that("can create packer with only arrays", {
-  xp <- monty_packer(array = list(a = 2, b = 3))
-  expect_equal(xp$unpack(1:5), list(a = 1:2, b = 3:5))
+  xp <- monty_packer(array = list(a = 2, b = 3, c = c(2, 2)))
+  expect_equal(xp$unpack(1:9), list(a = 1:2, b = 3:5, c = array(6:9, c(2, 2))))
+  expect_equal(xp$index(), xp$unpack(1:9))
 })
 
 

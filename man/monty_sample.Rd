@@ -13,7 +13,9 @@ monty_sample(
   runner = NULL,
   restartable = FALSE,
   burnin = NULL,
-  thinning_factor = NULL
+  thinning_factor = NULL,
+  save_full_chains = FALSE,
+  flatten_chains = FALSE
 )
 }
 \arguments{
@@ -72,12 +74,23 @@ is an even multiple of \code{thinning_factor}; so if
 \code{thinning_factor} is 10, then \code{n_steps} must be a multiple of
 10.  This ensures that the last step is in the sample.  The
 thinning factor cannot be changed when continuing a chain.}
+
+\item{save_full_chains}{Logical, indicating whether or not the full chains
+of the parameters (without discarding the burnin and thinning) should
+additionally be saved. This is useful if you are thinning to reduce the
+size of observations but still want to retain the full chains of the
+parameters for evaluation purposes.}
+
+\item{flatten_chains}{Logical, indicating whether or not the
+chains dimension is collapsed into the samples dimension in
+\code{pars}, \code{density} and (typically) objects in \code{observations}.
+This can be reversed using \code{\link[=monty_unflatten_chains]{monty_unflatten_chains()}}.}
 }
 \value{
 A list of parameters and densities.  We provide conversion
 to formats used by other packages, notably
-\link[posterior:draws_array]{posterior::as_draws_array}, \link[posterior:draws_df]{posterior::as_draws_df} and
-\link[coda:mcmc.list]{coda::as.mcmc.list}; please let us know if you need conversion
+\link[posterior:as_draws_array]{posterior::as_draws_array}, \link[posterior:as_draws_df]{posterior::as_draws_df} and
+\link[coda:as.mcmc.list]{coda::as.mcmc.list}; please let us know if you need conversion
 to something else.  If you want to work directly with the
 output, the elements in the list include:
 \itemize{
@@ -97,6 +110,9 @@ be a list of length \code{n_chains} (or \code{NULL}) and the details
 depend on the sampler.  This one is subject to change.
 \item \code{observations}: Additional details reported by the model.  This
 one is also subject to change.
+\item \code{full_chains}: If \code{save_full_chains = TRUE}, a list including \code{pars}
+and \code{density} without discarding the burnin and thinning.
+If \code{save_full_chains = FALSE}, this will be \code{NULL}.
 }
 }
 \description{
@@ -118,7 +134,7 @@ plot(pars, pch = 19, cex = 0.75, col = "#0000ff55")
 
 # If you have the posterior package you might prefer converting to
 # its format for performing diagnoses:
-\dontshow{if (requireNamespace("posterior")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("posterior")) withAutoprint(\{ # examplesIf}
 res <- posterior::as_draws_df(samples)
 posterior::summarise_draws(res)
 

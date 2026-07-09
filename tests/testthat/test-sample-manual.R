@@ -391,3 +391,32 @@ test_that("can continue a manually sampled chain, twice", {
 
   expect_equal(res_c$pars, cmp_c$pars)
 })
+
+
+test_that("can flatten chains with manual sampling", {
+  model <- ex_simple_gamma1()
+  sampler <- monty_sampler_random_walk(vcv = diag(1) * 0.01)
+  
+  set.seed(1)
+  res1a <- monty_sample(model, sampler, 100, n_chains = 2, restartable = TRUE,
+                        flatten_chains = TRUE)
+  res1b <- monty_sample_continue(res1a, 50)
+  
+  set.seed(1)
+  path_a <- withr::local_tempdir()
+  monty_sample_manual_prepare(model, sampler, 100, path_a, n_chains = 2)
+  monty_sample_manual_run(1, path_a)
+  monty_sample_manual_run(2, path_a)
+  res2a <- monty_sample_manual_collect(path_a, restartable = TRUE,
+                                       flatten_chains = TRUE)
+  expect_equal(res1a$pars, res2a$pars)
+  
+  path_b <- withr::local_tempdir()
+  monty_sample_manual_prepare_continue(res2a, 50, path_b)
+  monty_sample_manual_run(1, path_b)
+  monty_sample_manual_run(2, path_b)
+  res2b <- monty_sample_manual_collect(path_b, res2a,
+                                       flatten_chains = TRUE)
+  
+  expect_equal(res2b$pars, res1b$pars)
+})

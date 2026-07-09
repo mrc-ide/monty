@@ -33,6 +33,7 @@ test_that("can use a grouped packer with no shared parameters", {
                list(x = list(a = 1, b = 2, c = 3, d = 4),
                     y = list(a = 5, b = 6, c = 7, d = 8)))
   expect_equal(p$pack(p$unpack(1:8)), 1:8)
+  expect_equal(p$index(), p$unpack(1:8))
 })
 
 
@@ -48,6 +49,7 @@ test_that("can use a grouped packer with no varied parameters", {
                list(x = list(a = 1, b = 2, c = 3, d = 4),
                     y = list(a = 1, b = 2, c = 3, d = 4)))
   expect_equal(p$pack(p$unpack(1:4)), 1:4)
+  expect_equal(p$index(), p$unpack(1:4))
 })
 
 
@@ -64,6 +66,7 @@ test_that("can use a grouped packer with arrays", {
          y = list(a = 10, b = 11, c = 12:14, d = matrix(1:4, 2, 2)),
          z = list(a = 15, b = 16, c = 17:19, d = matrix(1:4, 2, 2))))
   expect_equal(p$pack(p$unpack(1:19)), 1:19)
+  expect_equal(p$index(), p$unpack(1:19))
 })
 
 
@@ -78,6 +81,9 @@ test_that("can use a grouped packer with fixed input", {
     list(x = list(a = 2, b = 3, c = 4, d = 1, m = 1:4),
          y = list(a = 5, b = 6, c = 7, d = 1, m = 1:4)))
   expect_equal(p$pack(p$unpack(1:7)), 1:7)
+  # due to using fixed input, this will differ from p$unpack(1:7)
+  expect_equal(p$index(), list(x = list(a = 2, b = 3, c = 4, d = 1),
+                               y = list(a = 5, b = 6, c = 7, d = 1)))
 })
 
 
@@ -236,8 +242,11 @@ test_that("process can't duplicate existing var with grouped packer", {
   process <- function(res) {
     list(x = res$x + res$y)
   }
+  
+  packer <- monty_packer_grouped(c("a", "b"), c("x", "y"), process = process)
+  
   expect_error(
-    monty_packer_grouped(c("a", "b"), c("x", "y"), process = process),
+    packer$unpack(1:4),
     "'process\\(\\)' is trying to overwrite")
 })
 

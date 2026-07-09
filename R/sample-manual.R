@@ -60,10 +60,12 @@
 ##' monty_sample_manual_cleanup(path)
 monty_sample_manual_prepare <- function(model, sampler, n_steps, path,
                                         initial = NULL, n_chains = 1L,
-                                        burnin = NULL, thinning_factor = NULL) {
+                                        burnin = NULL, thinning_factor = NULL,
+                                        save_full_chains = FALSE) {
   ## This break exists to hide the 'seed' argument from the public
   ## interface.  We will use this from the callr version though.
-  steps <- monty_sample_steps(n_steps, burnin, thinning_factor)
+  steps <- monty_sample_steps(n_steps, burnin, thinning_factor,
+                              save_full_chains)
   sample_manual_prepare(model, sampler, steps, path, initial, n_chains)
 }
 
@@ -174,6 +176,12 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##'   restartable.  This will add additional data to the chains
 ##'   object.  Note that this is controlled at chain collection and
 ##'   not creation.
+##' 
+##' @param flatten_chains Logical, indicating whether or not the 
+##'   chains dimension is collapsed into the samples dimension in 
+##'   `pars`, `density` and (typically) objects in `observations`.
+##'   This can be reversed using [monty_unflatten_chains()].
+##'  
 ##'
 ##' @return A `monty_samples` object.
 ##'
@@ -181,7 +189,8 @@ monty_sample_manual_run <- function(chain_id, path, progress = NULL) {
 ##' @inherit monty_sample_manual_prepare examples
 monty_sample_manual_collect <- function(path, samples = NULL,
                                         restartable = FALSE,
-                                        append = TRUE) {
+                                        append = TRUE, 
+                                        flatten_chains = FALSE) {
   inputs <- readRDS(sample_manual_path(path)$inputs)
   path <- sample_manual_path(path, seq_len(inputs$n_chains))
   assert_scalar_logical(append)
@@ -191,7 +200,8 @@ monty_sample_manual_collect <- function(path, samples = NULL,
     cli::cli_abort("Results missing for chain{?s} {as.character(which(msg))}")
   }
 
-  prev <- sample_manual_collect_check_samples(inputs, samples, append)
+  prev <- sample_manual_collect_check_samples(inputs, samples, append, 
+                                              flatten_chains)
 
   if (is.null(inputs$restart)) {
     model <- inputs$model
@@ -218,6 +228,11 @@ monty_sample_manual_collect <- function(path, samples = NULL,
                             ## TODO: rethink this; I think it becomes control?
                             thinning_factor = thinning_factor)
   }
+  
+  if (flatten_chains) {
+    samples <- monty_flatten_chains(samples)
+  }
+  
   samples
 }
 
@@ -313,6 +328,11 @@ sample_manual_info_chain <- function(complete) {
 ##' @inherit monty_sample_manual_prepare return
 monty_sample_manual_prepare_continue <- function(samples, n_steps, path,
                                                  save_samples = "hash") {
+  
+  if (is_flattened(samples)) {
+    samples <- monty_unflatten_chains(samples)
+  }
+  
   restart <- samples$restart
   state <- samples$state
   n_chains <- n_chains_from_state(state)
@@ -399,6 +419,7 @@ sample_manual_prepare_check_samples <- function(samples, save_samples,
 
 
 sample_manual_collect_check_samples <- function(inputs, samples, append,
+                                                flatten_chains,
                                                 call = parent.frame()) {
   if (!is.list(inputs$restart)) {
     if (!is.null(samples)) {
@@ -421,6 +442,9 @@ sample_manual_collect_check_samples <- function(inputs, samples, append,
         arg = "samples", call = call)
     }
   } else {
+    if (is_flattened(samples)) {
+      samples <- monty_unflatten_chains(samples)
+    }
     samples_ok <-
       identical(inputs$samples$value, samples) ||
       identical(inputs$samples$hash, rlang::hash(samples))
