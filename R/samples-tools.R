@@ -161,6 +161,10 @@ monty_flatten_chains <- function(samples) {
   samples$pars <- array_flatten(samples$pars, c(2, 3))
   samples$density <- array_flatten(samples$density, c(1, 2))
   
+  if (!is.null(samples$data)) {
+    samples$data <- array_flatten(samples$data, c(2, 3))
+  }
+  
   for (obs in names(samples$observations)) {
     d <- dim2(samples$observations[[obs]])
     can_flatten <- d[length(d) - 1L] == n_samples && d[length(d)] == n_chains
@@ -198,6 +202,10 @@ monty_unflatten_chains <- function(samples) {
   
   samples$pars <- array_reshape(samples$pars, 2, c(n_samples, n_chains))
   samples$density <- array_reshape(samples$density, 1, c(n_samples, n_chains))
+  
+  if (!is.null(samples$data)) {
+    samples$data <- array_reshape(samples$data, 2, c(n_samples, n_chains))
+  }
   
   for (obs in names(samples$observations)) {
     d <- dim2(samples$observations[[obs]])
