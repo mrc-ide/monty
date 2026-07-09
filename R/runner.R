@@ -256,7 +256,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   j <- 1L
   for (i in seq_len(n_steps)) {
     if (has_augmented_data) {
-      res <- model$augmented_data_update(chain_state$pars, rng)
+      res <- model$augmented_data_update(chain_state$pars, sampler_state, rng)
       chain_state$data <- res$data
       chain_state$density <- res$density
       attr(chain_state$pars, "data") <- res$data

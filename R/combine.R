@@ -444,9 +444,9 @@ model_combine_augmented_data_update <- function(parts, parameters, properties,
   ## not.
   split_pars <- model_split_pars(a, b, parameters, properties)
 
-  function(pars, rng) {
+  function(pars, sampler_state, rng) {
     pars <- split_pars(pars)
-    ret <- a$augmented_data_update(pars$a, rng)
+    ret <- a$augmented_data_update(pars$a, sampler_state, rng)
     ret$density <- ret$density + b$density(pars$b)
     ret
   }

@@ -1,7 +1,7 @@
 initialise_state <- function(pars, model, rng) {
   initialise_rng_state(model, rng)
   if (model$properties$has_augmented_data) {
-    res <- model$augmented_data_update(pars, rng)
+    res <- model$augmented_data_update(pars, NULL, rng)
     density <- res$density
     data <- res$data
   } else {
