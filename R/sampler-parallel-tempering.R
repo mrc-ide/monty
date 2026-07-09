@@ -110,6 +110,7 @@ monty_sampler_parallel_tempering <- function(sampler, n_rungs = NULL,
                   base = base)
 
   properties <- monty_sampler_properties(
+    allow_augmented_data = FALSE,
     allow_multiple_parameters = FALSE,
     requires_allow_multiple_parameters = TRUE)
 

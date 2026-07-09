@@ -7,6 +7,7 @@ test_that("can create a minimal model", {
                                       has_direct_sample = FALSE,
                                       is_stochastic = FALSE,
                                       has_observer = FALSE,
+                                      has_augmented_data = FALSE,
                                       has_parameter_groups = FALSE,
                                       allow_multiple_parameters = FALSE))
   expect_equal(m$domain, rbind(a = c(-Inf, Inf)))
@@ -23,6 +24,7 @@ test_that("can create a more interesting model", {
                                       is_stochastic = FALSE,
                                       has_parameter_groups = FALSE,
                                       has_observer = FALSE,
+                                      has_augmented_data = FALSE,
                                       allow_multiple_parameters = TRUE))
   expect_equal(m$domain, rbind(gamma = c(0, Inf)))
   expect_equal(m$parameters, "gamma")

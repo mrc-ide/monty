@@ -1,10 +1,9 @@
-##' Combine two models by multiplication.  We'll need a better name
-##' here.  In Bayesian inference we will want to create a model that
-##' represents the multiplication of a likelihood and a prior (in log
-##' space) and it will be convenient to think about these models
-##' separately.  Multiplying probabilities (or adding on a log scale)
-##' is common enough that there may be other situations where we want
-##' to do this.
+##' Combine two models by multiplication.  In Bayesian inference we
+##' will want to create a model that represents the multiplication of
+##' a likelihood and a prior (in log space) and it will be convenient
+##' to think about these models separately.  Multiplying probabilities
+##' (or adding on a log scale) is common enough that there may be
+##' other situations where we want to do this.
 ##'
 ##' Here we describe the impact of combining a pair of models
 ##'
@@ -23,6 +22,9 @@
 ##'   that the combination is differentiable.  If the models disagree
 ##'   in their parameters, parameters that are missing from a model
 ##'   are assumed (reasonably) to have a zero gradient.
+##'
+##' * augmented_data`: A model uses augmented data if *either*
+##'   component uses augmented data.
 ##'
 ##' * `direct_sample`: this one is hard to do the right thing for.  If
 ##'   neither model can be directly sampled from that's fine, we
@@ -108,8 +110,7 @@ monty_model_combine <- function(a, b, properties = NULL,
     model_combine_allow_multiple_parameters(parts, properties)
 
   domain <- model_combine_domain(parts, parameters)
-  density <- model_combine_density(parts, parameters,
-                                   properties$allow_multiple_parameters)
+  density <- model_combine_density(parts, parameters, properties)
 
   gradient <- model_combine_gradient(
     parts, parameters, properties, call)
@@ -122,6 +123,9 @@ monty_model_combine <- function(a, b, properties = NULL,
   restore <- model_combine_restore(
     parts)
 
+  augmented_data_update <- model_combine_augmented_data_update(
+    parts, parameters, properties, call)
+
   data <- list(
     parts = unname(parts),
     is_prior = unname(is_prior))
@@ -133,6 +137,7 @@ monty_model_combine <- function(a, b, properties = NULL,
          domain = domain,
          density = density,
          gradient = gradient,
+         augmented_data_update = augmented_data_update,
          get_rng_state = stochastic$get_rng_state,
          set_rng_state = stochastic$set_rng_state,
          restore = restore,
@@ -228,25 +233,14 @@ model_combine_domain <- function(parts, parameters) {
 }
 
 
-model_combine_density <- function(parts, parameters,
-                                  allow_multiple_parameters) {
+model_combine_density <- function(parts, parameters, properties) {
   a <- parts[[1]]
   b <- parts[[2]]
-  i_a <- match(a$parameters, parameters)
-  i_b <- match(b$parameters, parameters)
-  if (allow_multiple_parameters) {
-    function(x, ...) {
-      if (is.matrix(x)) {
-        a$density(x[i_a, , drop = FALSE], ...) +
-          b$density(x[i_b, , drop = FALSE], ...)
-      } else {
-        a$density(x[i_a], ...) + b$density(x[i_b], ...)
-      }
-    }
-  } else {
-    function(x, ...) {
-      a$density(x[i_a], ...) + b$density(x[i_b], ...)
-    }
+  split_pars <- model_split_pars(a, b, parameters, properties)
+
+  function(x, ...) {
+    pars <- split_pars(x)
+    a$density(pars$a, ...) + b$density(pars$b, ...)
   }
 }
 
@@ -327,24 +321,28 @@ model_combine_gradient <- function(parts, parameters, properties, call = NULL) {
   }
 
   n_pars <- length(parameters)
+  split_pars <- model_split_pars(a, b, parameters, properties)
+
+  ## This needs slightly more than before, because we need to assign
+  ## into the gradient, so we recompute i_a and i_b here too:
   i_a <- match(a$parameters, parameters)
   i_b <- match(b$parameters, parameters)
 
   gradient_vector <- function(x, ...) {
     ret <- numeric(n_pars)
-    ret[i_a] <- ret[i_a] + a$gradient(x[i_a], ...)
-    ret[i_b] <- ret[i_b] + b$gradient(x[i_b], ...)
+    pars <- split_pars(x)
+    ret[i_a] <- ret[i_a] + a$gradient(pars$a, ...)
+    ret[i_b] <- ret[i_b] + b$gradient(pars$b, ...)
     ret
   }
 
   if (properties$allow_multiple_parameters) {
     function(x, ...) {
       if (is.matrix(x)) {
+        pars <- split_pars(x)
         ret <- matrix(0, n_pars, ncol(x))
-        ret[i_a, ] <-
-          ret[i_a, , drop = FALSE] + a$gradient(x[i_a, , drop = FALSE], ...)
-        ret[i_b, ] <-
-          ret[i_b, , drop = FALSE] + b$gradient(x[i_b, , drop = FALSE], ...)
+        ret[i_a, ] <- ret[i_a, , drop = FALSE] + a$gradient(pars$a, ...)
+        ret[i_b, ] <- ret[i_b, , drop = FALSE] + b$gradient(pars$b, ...)
         ret
       } else {
         gradient_vector(x, ...)
@@ -402,6 +400,55 @@ model_combine_direct_sample <- function(parts, parameters, properties,
   i <- match(parameters, model$parameters)
   function(...) {
     model$direct_sample(...)[i]
+  }
+}
+
+
+model_combine_augmented_data_update <- function(parts, parameters, properties,
+                                                call = NULL) {
+  if (isFALSE(properties$has_augmented_data)) {
+    return(NULL)
+  }
+
+  a <- parts[[1]]
+  b <- parts[[2]]
+  a_has_augmented_data <- a$properties$has_augmented_data
+  b_has_augmented_data <- b$properties$has_augmented_data
+
+  possible <- a_has_augmented_data || b_has_augmented_data
+  required <- isTRUE(properties$has_augmented_data)
+  if (!possible && !required) {
+    return(NULL)
+  }
+  if (required && !possible) {
+    cli::cli_abort(
+      c("Can't create a model that uses augmented data from these models",
+        i = paste("One model must use augmented data in order to be able",
+                  "to create a combined model that uses augmented data")),
+      call = call)
+  }
+
+  if (a_has_augmented_data && b_has_augmented_data) {
+    cli::cli_abort(
+      c("Can't create a model that uses augmented data from these models",
+        i = "Both models use augmented data and we do not allow this yet"),
+      call = call)
+  }
+
+  if (b_has_augmented_data) {
+    return(model_combine_augmented_data_update(
+      rev(parts), parameters, properties, call = call))
+  }
+
+  ## Below here, we can assume that 'a' has augmented data and 'b' does
+  ## not.
+  split_pars <- model_split_pars(a, b, parameters, properties)
+
+  function(pars, rng) {
+    pars <- split_pars(pars)
+    ret <- a$augmented_data_update(pars$a, rng)
+    ret$density <- ret$density + b$density(pars$b)
+    ret
   }
 }
 
@@ -467,5 +514,29 @@ model_combine_restore <- function(parts) {
   function() {
     a$restore()
     b$restore()
+  }
+}
+
+
+model_split_pars <- function(a, b, parameters, properties) {
+  i_a <- match(a$parameters, parameters)
+  i_b <- match(b$parameters, parameters)
+  if (properties$allow_multiple_parameters) {
+    function(pars) {
+      data <- attr(pars, "data")
+      if (is.matrix(pars)) {
+        list(a = structure(pars[i_a, , drop = FALSE], data = data),
+             b = structure(pars[i_b, , drop = FALSE], data = data))
+      } else {
+        list(a = structure(pars[i_a], data = data),
+             b = structure(pars[i_b], data = data))
+      }
+    }
+  } else {
+    function(pars) {
+      data <- attr(pars, "data")
+      list(a = structure(pars[i_a], data = data),
+           b = structure(pars[i_b], data = data))
+    }
   }
 }

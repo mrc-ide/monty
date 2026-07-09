@@ -179,3 +179,80 @@ drop_runner <- function(x) {
   x$restart$runner <- NULL
   x
 }
+
+
+ex_augmented <- function(p_group_1 = 0.25) {
+  x <- local({
+    n <- 100
+
+    m1 <- 0
+    m2 <- 3
+    p <- 0.25
+
+    x1 <- rnorm(n, m1)
+    x2 <- rnorm(n, m2)
+    z <- runif(n) < 0.25
+
+    z * x1 + (1 - z) * x2
+  })
+
+  augmented_data_update <- function(pars, rng) {
+    n <- length(x)
+
+    z_new <- as.integer(monty_random_n_uniform(n, 0, 1, rng) < p_group_1)
+    p <- pars[[1]]
+    m1 <- pars[[2]]
+    m2 <- pars[[3]]
+    density_new <- likelihood_fn(p, m1, m2, x, z_new)
+
+    z <- attr(pars, "data")
+    if (is.null(z)) {
+      z <- z_new
+      density <- density_new
+    } else {
+      ## This recalculates the *old* density, per group.  For an
+      ## expensive model that might not be ideal.
+      density <- likelihood_fn(p, m1, m2, x, z)
+
+      ## Our proposal ratio is not symmetric, we need to account for
+      ## this here:
+      proposal_ratio <- z * log(p_group_1) + (1 - z) * log(1 - p_group_1) -
+        z_new * log(p_group_1) - (1 - z_new) * log(1 - p_group_1)
+      p_accept <- pmin(1, exp(density_new - density + proposal_ratio))
+
+      accept <- monty_random_n_uniform(n, 0, 1, rng) < p_accept
+      if (any(accept)) {
+        z[accept] <- z_new[accept]
+        density[accept] <- density_new[accept]
+      }
+    }
+    list(data = z, density = sum(density))
+  }
+
+  likelihood_fn <- function(p, m1, m2, x, z) {
+    z * (log(p) + dnorm(x, m1, log = TRUE)) +
+      (1 - z) * (log(1 - p) + dnorm(x, m2, log = TRUE))
+  }
+
+  prior <- monty_dsl({
+    p ~ Beta(1, 1) # the same as Uniform(0, 1)
+    m1 ~ Normal(0, 5)
+    m2 ~ Normal(0, 5)
+  })
+
+  density <- function(pars) {
+    p <- pars[[1]]
+    m1 <- pars[[2]]
+    m2 <- pars[[3]]
+    z <- attr(pars, "data")
+    sum(likelihood_fn(p, m1, m2, x, z))
+  }
+
+  likelihood <- monty_model(
+    list(parameters = c("p", "m1", "m2"),
+         density = density,
+         augmented_data_update = augmented_data_update))
+
+  list(likelihood = likelihood,
+       prior = prior)
+}
