@@ -3,14 +3,57 @@
 root <- here::here()
 devtools::load_all(root)
 
-m <- monty_example("banana")
-sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000)
+m <- monty_example("gaussian", diag(2))
 
-set.seed(1)
-samples <- monty_sample(m, sampler, 10000)
+run_sampler <- function(name, sampler, seed, n_steps = 1500) {
+	set.seed(seed)
+	samples <- monty_sample(m, sampler, n_steps)
+	stopifnot(inherits(samples, "monty_samples"))
+	stopifnot(is.matrix(samples$pars) || is.array(samples$pars))
+	stopifnot(all(is.finite(samples$density)))
 
-stopifnot(inherits(samples, "monty_samples"))
-stopifnot(is.matrix(samples$pars) || is.array(samples$pars))
-stopifnot(all(is.finite(samples$density)))
+	pars <- t(drop(samples$pars))
+	list(
+		name = name,
+		mean = colMeans(pars),
+		cov = stats::cov(pars))
+}
 
+nuts <- run_sampler(
+	"NUTS",
+	monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000),
+	seed = 1)
+nuts_warmup_sampler <- monty_sampler_nuts(
+	epsilon = 0.1,
+	max_treedepth = 1000,
+	warmup_steps = 20,
+	adapt_step_size = TRUE)
+set.seed(11)
+nuts_warmup_samples <- monty_sample(m, nuts_warmup_sampler, 1500)
+stopifnot(isTRUE(nuts_warmup_samples$details$adapted))
+stopifnot(is.numeric(nuts_warmup_samples$details$epsilon))
+stopifnot(length(nuts_warmup_samples$details$epsilon) == 1)
+stopifnot(is.finite(nuts_warmup_samples$details$epsilon))
+stopifnot(abs(nuts_warmup_samples$details$epsilon - 0.1) > 1e-12)
+hmc <- run_sampler(
+	"HMC",
+	monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10),
+	seed = 2)
+rw <- run_sampler(
+	"Random walk",
+	monty_sampler_random_walk(vcv = diag(2) * 0.1),
+	seed = 3)
+
+stopifnot(all(is.finite(c(nuts$mean, hmc$mean, rw$mean))))
+stopifnot(all(diag(nuts$cov) > 0.2))
+stopifnot(all(diag(hmc$cov) > 0.2))
+stopifnot(all(diag(rw$cov) > 0.2))
+stopifnot(max(abs(unname(nuts$mean) - unname(hmc$mean))) < 1)
+stopifnot(max(abs(unname(nuts$mean) - unname(rw$mean))) < 1)
+
+fmt <- function(x) paste(format(round(x, 3), nsmall = 3), collapse = ", ")
+cat("NUTS mean:", fmt(nuts$mean), "\n")
+cat("NUTS warmup epsilon:", fmt(nuts_warmup_samples$details$epsilon), "\n")
+cat("HMC mean:", fmt(hmc$mean), "\n")
+cat("RW mean:", fmt(rw$mean), "\n")
 cat("NUTS basic test passed\n")

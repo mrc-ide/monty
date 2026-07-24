@@ -62,3 +62,59 @@ test_that("nuts does not support simultaneous runner yet", {
     "Can't use the simultaneous runner with this sampler",
     fixed = TRUE)
 })
+
+
+test_that("nuts is consistent with hmc and random walk on gaussian", {
+  m <- monty_example("gaussian", diag(2))
+
+  run_sampler <- function(sampler, seed) {
+    set.seed(seed)
+    res <- monty_sample(m, sampler, 1500)
+    pars <- t(drop(res$pars))
+    list(mean = colMeans(pars), cov = stats::cov(pars))
+  }
+
+  nuts <- run_sampler(monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000), 1)
+  hmc <- run_sampler(monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10), 2)
+  rw <- run_sampler(monty_sampler_random_walk(vcv = diag(2) * 0.1), 3)
+
+  expect_true(all(is.finite(c(nuts$mean, hmc$mean, rw$mean))))
+  expect_true(all(diag(nuts$cov) > 0.2))
+  expect_true(all(diag(hmc$cov) > 0.2))
+  expect_true(all(diag(rw$cov) > 0.2))
+
+  expect_lt(max(abs(unname(nuts$mean) - unname(hmc$mean))), 1)
+  expect_lt(max(abs(unname(nuts$mean) - unname(rw$mean))), 1)
+})
+
+
+test_that("nuts warmup can continue identically", {
+  m <- monty_example("banana")
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000,
+                                warmup_steps = 20, adapt_step_size = TRUE)
+
+  set.seed(1)
+  res1 <- monty_sample(m, sampler, 60, restartable = TRUE)
+
+  set.seed(1)
+  res2a <- monty_sample(m, sampler, 20, restartable = TRUE)
+  res2b <- monty_sample_continue(res2a, 40, restartable = TRUE)
+
+  expect_equal(res2b, res1)
+})
+
+
+test_that("nuts warmup exposes adapted epsilon details", {
+  m <- monty_example("banana")
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000,
+                                warmup_steps = 20, adapt_step_size = TRUE)
+
+  set.seed(1)
+  res <- monty_sample(m, sampler, 40)
+
+  expect_true(is.list(res$details))
+  expect_true(is.finite(res$details$epsilon))
+  expect_true(res$details$epsilon > 0)
+  expect_true(isTRUE(res$details$adapted))
+  expect_equal(res$details$warmup_steps, 20)
+})
