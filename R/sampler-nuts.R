@@ -161,7 +161,7 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
     } else {
       result_list <- build_tree(theta, r, u, v, j - 1, epsilon, theta_0,
                                 r_0, delta)
-      if (result_list$s_prop) {
+      if (isTRUE(result_list$s_prop)) {
         if (v == -1) {
           alternative_list <- build_tree(
             result_list$theta_minus, result_list$r_minus,
@@ -224,14 +224,14 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
         u, v, j, epsilon_step, theta, r0, control$max_treedepth)
     }
 
-    if (tree_list$s_prop) {
+    if (isTRUE(tree_list$s_prop)) {
       if (monty_random_real(rng) < min(1, tree_list$n_prop / n)) {
         theta_prop <- tree_list$theta_prop
       }
     }
 
     n <- n + tree_list$n_prop
-    s <- tree_list$s_prop &
+    s <- isTRUE(tree_list$s_prop) &
       ((tree_list$theta_plus - tree_list$theta_minus) %*% tree_list$r_minus >= 0) &
       ((tree_list$theta_plus - tree_list$theta_minus) %*% tree_list$r_plus >= 0)
     j <- j + 1L

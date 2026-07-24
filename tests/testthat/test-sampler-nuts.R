@@ -70,6 +70,32 @@ test_that("nuts validates dual averaging controls", {
 })
 
 
+test_that("nuts handles non-finite acceptance statistics during warmup", {
+  m <- monty_model(list(
+    parameters = "a",
+    density = function(x) {
+      if (all(abs(x) < 1e-12)) {
+        dnorm(0, log = TRUE)
+      } else {
+        NaN
+      }
+    },
+    gradient = function(x) 0
+  ))
+  sampler <- monty_sampler_nuts(
+    epsilon = 0.1,
+    warmup_steps = 1,
+    adapt_step_size = TRUE)
+
+  set.seed(1)
+  res <- monty_sample(m, sampler, 1, initial = 0)
+
+  expect_true(isTRUE(res$details$adapted))
+  expect_true(is.finite(res$details$epsilon))
+  expect_gt(res$details$epsilon, 0)
+})
+
+
 test_that("nuts does not support simultaneous runner yet", {
   m <- monty_example("banana")
   sampler <- monty_sampler_nuts(epsilon = 0.1)
