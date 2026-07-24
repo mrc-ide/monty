@@ -52,6 +52,24 @@ test_that("nuts requires deterministic models", {
 })
 
 
+test_that("nuts validates dual averaging controls", {
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, target_accept = 0),
+    "target_accept",
+    fixed = TRUE)
+
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, target_accept = 1),
+    "target_accept",
+    fixed = TRUE)
+
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, adapt_kappa = 1.1),
+    "adapt_kappa",
+    fixed = TRUE)
+})
+
+
 test_that("nuts does not support simultaneous runner yet", {
   m <- monty_example("banana")
   sampler <- monty_sampler_nuts(epsilon = 0.1)
