@@ -1,0 +1,16 @@
+#!/usr/bin/env Rscript
+
+root <- here::here()
+devtools::load_all(root)
+
+m <- monty_example("banana")
+sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000)
+
+set.seed(1)
+samples <- monty_sample(m, sampler, 10000)
+
+stopifnot(inherits(samples, "monty_samples"))
+stopifnot(is.matrix(samples$pars) || is.array(samples$pars))
+stopifnot(all(is.finite(samples$density)))
+
+cat("NUTS basic test passed\n")

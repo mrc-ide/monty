@@ -87,10 +87,10 @@ reference_nuts <- function() {
       v <- if (monty_random_real(rng) < 0.5) -1 else 1
       if(v==-1){
         tree_list <- build_tree(tree_list$theta_minus, tree_list$r_minus,
-                                u, v, j, control$epsilon, theta, r0, model, rng, control$D_max)
+                                u, v, j, control$epsilon, theta, r0, model, rng, control$max_treedepth)
       } else {
         tree_list <- build_tree(tree_list$theta_plus, tree_list$r_plus,
-                                u, v, j, control$epsilon, theta, r0, model, rng, control$D_max)
+                                u, v, j, control$epsilon, theta, r0, model, rng, control$max_treedepth)
       }
       if(tree_list$s_prop)
         if(monty_random_real(rng)<min(1,tree_list$n_prop/n))
@@ -108,9 +108,9 @@ reference_nuts <- function() {
     state_chain
   }
 
-  function(epsilon, D_max = 1000) {
+  function(epsilon, max_treedepth = 1000) {
     control <- list(epsilon = epsilon,
-                    D_max = D_max)
+                    max_treedepth = max_treedepth)
     monty_sampler(
       "NUTS Sampler",
       "NUTS sampler based on the original NUTS paper",
