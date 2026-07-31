@@ -21,11 +21,11 @@ run_sampler <- function(name, sampler, seed, n_steps = 1500) {
 
 nuts <- run_sampler(
 	"NUTS",
-	monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000),
-	seed = 1)
+		monty_sampler_nuts(epsilon = 0.1, max_delta = 1000),
+		seed = 1)
 nuts_warmup_sampler <- monty_sampler_nuts(
-	epsilon = 0.1,
-	max_treedepth = 1000,
+		epsilon = 0.1,
+		max_delta = 1000,
 	warmup_steps = 20,
 	adapt_step_size = TRUE)
 set.seed(11)

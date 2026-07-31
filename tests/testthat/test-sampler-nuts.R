@@ -1,12 +1,12 @@
 test_that("can run nuts", {
   m <- monty_example("banana")
-  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000)
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000)
 
   set.seed(1)
   res <- monty_sample(m, sampler, 30)
 
   set.seed(1)
-  reference <- reference_nuts()(epsilon = 0.1, max_treedepth = 1000)
+  reference <- reference_nuts()(epsilon = 0.1, max_delta = 1000)
   expected <- monty_sample(m, reference, 30)
 
   expect_equal(res, expected)
@@ -15,7 +15,7 @@ test_that("can run nuts", {
 
 test_that("can continue nuts without state", {
   m <- monty_example("banana")
-  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000)
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000)
 
   set.seed(1)
   res1 <- monty_sample(m, sampler, 30, restartable = TRUE)
@@ -70,6 +70,37 @@ test_that("nuts validates dual averaging controls", {
 })
 
 
+test_that("nuts validates epsilon", {
+  expect_error(
+    monty_sampler_nuts(epsilon = 0),
+    "epsilon",
+    fixed = TRUE)
+
+  expect_error(
+    monty_sampler_nuts(epsilon = -0.1),
+    "epsilon",
+    fixed = TRUE)
+})
+
+
+test_that("nuts validates max_treedepth and max_delta", {
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, max_treedepth = 0),
+    "max_treedepth",
+    fixed = TRUE)
+
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, max_delta = 0),
+    "max_delta",
+    fixed = TRUE)
+
+  expect_error(
+    monty_sampler_nuts(epsilon = 0.1, max_delta = -1),
+    "max_delta",
+    fixed = TRUE)
+})
+
+
 test_that("nuts handles non-finite acceptance statistics during warmup", {
   m <- monty_model(list(
     parameters = "a",
@@ -118,7 +149,7 @@ test_that("nuts is consistent with hmc and random walk on gaussian", {
     list(mean = colMeans(pars), cov = stats::cov(pars))
   }
 
-  nuts <- run_sampler(monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000), 1)
+  nuts <- run_sampler(monty_sampler_nuts(epsilon = 0.1, max_delta = 1000), 1)
   hmc <- run_sampler(monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10), 2)
   rw <- run_sampler(monty_sampler_random_walk(vcv = diag(2) * 0.1), 3)
 
@@ -134,7 +165,7 @@ test_that("nuts is consistent with hmc and random walk on gaussian", {
 
 test_that("nuts warmup can continue identically", {
   m <- monty_example("banana")
-  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000,
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000,
                                 warmup_steps = 20, adapt_step_size = TRUE)
 
   set.seed(1)
@@ -150,7 +181,7 @@ test_that("nuts warmup can continue identically", {
 
 test_that("nuts warmup exposes adapted epsilon details", {
   m <- monty_example("banana")
-  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 1000,
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000,
                                 warmup_steps = 20, adapt_step_size = TRUE)
 
   set.seed(1)
@@ -161,4 +192,44 @@ test_that("nuts warmup exposes adapted epsilon details", {
   expect_true(res$details$epsilon > 0)
   expect_true(isTRUE(res$details$adapted))
   expect_equal(res$details$warmup_steps, 20)
+})
+
+
+test_that("nuts respects max_treedepth as a real depth cap", {
+  ## A model with zero gradient never turns (momentum, and hence velocity,
+  ## is constant) and never diverges (leapfrog integration is exact when
+  ## the gradient is zero, so the energy never changes). This means tree
+  ## expansion can only ever be stopped by the max_treedepth cap, directly
+  ## exercising the loop guard rather than relying on the mirrored
+  ## reference implementation in helper-nuts.R.
+  m <- monty_model(list(
+    parameters = "a",
+    density = function(x) 0,
+    gradient = function(x) 0))
+  sampler <- monty_sampler_nuts(epsilon = 0.1, max_treedepth = 3)
+
+  set.seed(1)
+  res <- monty_sample(m, sampler, 5, initial = 0)
+
+  expect_true(all(is.finite(res$pars)))
+  expect_true(all(is.finite(res$density)))
+  expect_gt(res$details$n_max_treedepth_hit, 0)
+  expect_equal(res$details$n_divergent, 0)
+})
+
+
+test_that("nuts tracks divergent transitions", {
+  ## A very peaked target combined with a step size far too large for its
+  ## curvature reliably produces divergent transitions (large energy
+  ## error), directly exercising the max_delta divergence check.
+  m <- monty_model(list(
+    parameters = "a",
+    density = function(x) dnorm(x, mean = 0, sd = 0.001, log = TRUE),
+    gradient = function(x) -x / 0.001^2))
+  sampler <- monty_sampler_nuts(epsilon = 1, max_treedepth = 5)
+
+  set.seed(1)
+  res <- monty_sample(m, sampler, 5, initial = 0)
+
+  expect_gt(res$details$n_divergent, 0)
 })
