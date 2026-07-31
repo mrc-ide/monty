@@ -470,4 +470,4 @@ graphics::legend(
   
 )
 
-cat("\nDone. This script reproduces the main sampler comparisons from the docs in a CLI-friendly format.\n")
+cat("\nDone. This script reproduces the main sampler comparisons from the docs.\n")
