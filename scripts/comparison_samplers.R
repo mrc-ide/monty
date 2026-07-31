@@ -2,9 +2,9 @@
 
 # https://mrc-ide.github.io/odin-monty/samplers.html
 
-# Optional: install and load monty from the nuts_basic branch.
+# Optional: install and load monty from the nuts-basic branch.
 
-# MONTY_USE_NUTS_BASIC=true Rscript scripts/example_samplers
+# MONTY_USE_NUTS_BASIC=true Rscript scripts/comparison_samplers.R
 
 use_nuts_basic <- tolower(Sys.getenv("MONTY_USE_NUTS_BASIC", "false")) == "true"
 
@@ -16,7 +16,7 @@ if (use_nuts_basic) {
     
   }
   
-  remotes::install_github("mrc-ide/monty@nuts_basic", upgrade = "never")
+  remotes::install_github("mrc-ide/monty@nuts-basic", upgrade = "never")
   
   library(monty)
   
@@ -430,10 +430,6 @@ nuts_acf <- acf_curve(nuts_alpha_eval, lag_max = lag_max)
 
 rw_acf <- acf_curve(rw_alpha_eval, lag_max = lag_max)
 
-acf_png <- file.path(getwd(), "scripts", "example_samplers_acf_banana.png")
-
-grDevices::png(acf_png, width = 1000, height = 650)
-
 graphics::matplot(
   
   rw_acf$lag,
@@ -473,9 +469,5 @@ graphics::legend(
   bty = "n"
   
 )
-
-grDevices::dev.off()
-
-cat("ACF comparison plot written to:", acf_png, "\n")
 
 cat("\nDone. This script reproduces the main sampler comparisons from the docs in a CLI-friendly format.\n")

@@ -6,7 +6,8 @@
 \usage{
 monty_sampler_nuts(
   epsilon,
-  max_treedepth = 1000,
+  max_treedepth = 10,
+  max_delta = 1000,
   warmup_steps = 0L,
   adapt_step_size = warmup_steps > 0,
   target_accept = 0.8,
@@ -16,12 +17,19 @@ monty_sampler_nuts(
 )
 }
 \arguments{
-\item{epsilon}{Initial step size used by the leapfrog integrator. If
-warmup adaptation is enabled, this is the starting value.}
+\item{epsilon}{Initial step size used by the leapfrog integrator. Must be
+strictly positive. If warmup adaptation is enabled, this is the starting
+value.}
 
 \item{max_treedepth}{Maximum binary-tree depth used when expanding a NUTS
-trajectory. Larger values allow longer trajectories before stopping, but
-increase computational cost per iteration.}
+trajectory. This bounds the number of leapfrog steps taken per iteration
+to at most \code{2^max_treedepth}. Larger values allow longer trajectories
+before stopping, but increase computational cost per iteration.}
+
+\item{max_delta}{Maximum tolerated change in the Hamiltonian (energy)
+during tree expansion, used to detect divergent transitions.
+Trajectories that exceed this threshold are treated as divergent and
+stop expanding.}
 
 \item{warmup_steps}{Number of warmup iterations used to adapt step size.
 Set to 0 (the default) to disable warmup adaptation.}
@@ -52,16 +60,25 @@ Create a No-U-Turn Sampler (NUTS) for gradient-based sampling.
 NUTS is an extension of Hamiltonian Monte Carlo (HMC) that avoids choosing
 a fixed number of leapfrog integration steps. At each MCMC iteration, NUTS
 builds a binary tree of forward/backward trajectory segments and stops when
-the trajectory begins to turn back on itself (the U-turn criterion).
+the trajectory begins to turn back on itself (the U-turn criterion), a
+divergence is detected (numerical instability in the leapfrog integrator,
+seen as an implausibly large change in the Hamiltonian), or the tree
+reaches \code{max_treedepth}.
 
 This is currently a single-chain sampler that requires a differentiable and
 deterministic model. It uses the package RNG stream passed to the sampler
 step and does not advertise simultaneous multi-chain execution.
 
 The proposal uses leapfrog integration and a standard Normal momentum. Tree
-expansion is controlled by max_treedepth. During warmup, step size can be
-adapted towards target_accept using dual averaging. After warmup, the
-adapted step size is frozen and used for all remaining iterations.
+expansion is controlled by max_treedepth, and divergent trajectories are
+detected using max_delta. During warmup, step size can be adapted towards
+target_accept using dual averaging. After warmup, the adapted step size is
+frozen and used for all remaining iterations.
+
+The number of iterations that hit \code{max_treedepth} and the number of
+divergent transitions are tracked and exposed via \verb{$details} on the
+returned object (see \link{monty_sample}), mirroring the diagnostics reported
+by other NUTS implementations such as Stan.
 }
 \references{
 Hoffman MD, Gelman A (2014). The No-U-Turn Sampler: Adaptively Setting
