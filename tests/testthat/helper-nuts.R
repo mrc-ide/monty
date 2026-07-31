@@ -181,9 +181,6 @@ reference_nuts <- function() {
   }
 
   NUTS_sampler_dump <- function(state, control) {
-    if (is.null(state)) {
-      return(NULL)
-    }
     list(iteration = state$iteration,
          H_bar = state$H_bar,
          log_epsilon = state$log_epsilon,
@@ -196,24 +193,15 @@ reference_nuts <- function() {
   }
 
   NUTS_sampler_combine <- function(state, control) {
-    if (all(vlapply(state, is.null))) {
-      return(NULL)
-    }
     state[[1]]
   }
 
   NUTS_sampler_restore <- function(chain_id, state_chain, state_sampler,
                                    control, model) {
-    if (is.null(state_sampler)) {
-      return(NULL)
-    }
     list2env(state_sampler, parent = emptyenv())
   }
 
   NUTS_sampler_details <- function(state, control) {
-    if (is.null(state)) {
-      return(NULL)
-    }
     list(epsilon = state$epsilon,
          iteration = state$iteration,
          adapted = state$adapted,

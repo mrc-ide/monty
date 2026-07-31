@@ -308,9 +308,6 @@ sampler_nuts_update_epsilon <- function(state, control, accept_stat) {
 
 
 sampler_nuts_dump <- function(state, control) {
-  if (is.null(state)) {
-    return(NULL)
-  }
   list(iteration = state$iteration,
        H_bar = state$H_bar,
        log_epsilon = state$log_epsilon,
@@ -324,9 +321,6 @@ sampler_nuts_dump <- function(state, control) {
 
 
 sampler_nuts_combine <- function(state, control) {
-  if (all(vlapply(state, is.null))) {
-    return(NULL)
-  }
   ## NUTS currently only supports carrying forward a single chain's worth
   ## of adaptation and diagnostic state; when multiple chains are run we
   ## report state (including diagnostic counts) from the first chain only.
@@ -338,17 +332,11 @@ sampler_nuts_combine <- function(state, control) {
 
 sampler_nuts_restore <- function(chain_id, state_chain, state_sampler, control,
                                  model) {
-  if (is.null(state_sampler)) {
-    return(NULL)
-  }
   list2env(state_sampler, parent = emptyenv())
 }
 
 
 sampler_nuts_details <- function(state, control) {
-  if (is.null(state)) {
-    return(NULL)
-  }
   list(epsilon = state$epsilon,
        iteration = state$iteration,
        adapted = state$adapted,
