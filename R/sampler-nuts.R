@@ -157,9 +157,9 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
   leapfrog <- function(current_theta_r, epsilon) {
     theta <- current_theta_r$theta
     r <- current_theta_r$r
-    r <- r + epsilon * monty_model_gradient(model, theta) / 2
+    r <- drop(r + epsilon * monty_model_gradient(model, theta) / 2)
     theta <- theta + epsilon * r
-    r <- r + epsilon * monty_model_gradient(model, theta) / 2
+    r <- drop(r + epsilon * monty_model_gradient(model, theta) / 2)
     list(theta = theta, r = r)
   }
 
