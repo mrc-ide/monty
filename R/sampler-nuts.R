@@ -185,19 +185,12 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
         theta_r, u, v, j - 1, epsilon, theta_r_0, delta
       )
       if (isTRUE(result_list$s_prop)) {
-        if (v == -1) {
-          alternative_list <- build_tree(
-            result_list$minus,
-            u, v, j - 1, epsilon, theta_r_0, delta
-          )
-          result_list$minus <- alternative_list$minus
-        } else {
-          alternative_list <- build_tree(
-            result_list$plus,
-            u, v, j - 1, epsilon, theta_r_0, delta
-          )
-          result_list$plus <- alternative_list$plus
-        }
+        plus_or_minus <- if (v > 0) "plus" else "minus"
+        alternative_list <- build_tree(
+          result_list[[plus_or_minus]],
+          u, v, j - 1, epsilon, theta_r_0, delta
+        )
+        result_list[[plus_or_minus]] <- alternative_list[[plus_or_minus]]
 
         sum_n_prop <- result_list$n_prop + alternative_list$n_prop
         if (sum_n_prop > 0) {
@@ -223,10 +216,11 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
   theta <- state_chain$pars
   theta_prop <- theta
   r0 <- drop(monty_random_n_normal(length(theta), 0, 1, rng))
-  u <- monty_random_real(rng) * exp(-hamiltonian(list(theta = theta, r = r0)))
+  theta_r_0 <- list(theta = theta, r = r0)
+  u <- monty_random_real(rng) * exp(-hamiltonian(theta_r_0))
   tree_list <- list(
-    minus = list(theta = theta, r = r0),
-    plus = list(theta = theta, r = r0)
+    minus = theta_r_0,
+    plus = theta_r_0
   )
   j <- 0L
   n <- 1L
@@ -236,17 +230,11 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
 
   while (s && j < control$max_treedepth) {
     v <- if (monty_random_real(rng) < 0.5) -1 else 1
-    if (v == -1) {
-      tree_list <- build_tree(
-        tree_list$minus,
-        u, v, j, epsilon_step, list(theta = theta, r = r0), control$max_delta
-      )
-    } else {
-      tree_list <- build_tree(
-        tree_list$plus,
-        u, v, j, epsilon_step, list(theta = theta, r = r0), control$max_delta
-      )
-    }
+    plus_or_minus <- if (v > 0) "plus" else "minus"
+    tree_list <- build_tree(
+      tree_list[[plus_or_minus]],
+      u, v, j, epsilon_step, theta_r_0, control$max_delta
+    )
 
     if (isTRUE(tree_list$s_prop)) {
       if (monty_random_real(rng) < min(1, tree_list$n_prop / n)) {
