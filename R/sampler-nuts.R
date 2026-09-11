@@ -151,15 +151,15 @@ sampler_nuts_initialise <- function(state_chain, control, model, rng) {
 
 sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
   hamiltonian <- function(theta_r) {
-    sum(theta_r$r^2) / 2 - monty_model_density(model, theta_r$theta)
+    sum(theta_r$r^2) / 2 - model$density(theta_r$theta)
   }
 
   leapfrog <- function(current_theta_r, epsilon) {
     theta <- current_theta_r$theta
     r <- current_theta_r$r
-    r <- drop(r + epsilon * monty_model_gradient(model, theta) / 2)
+    r <- drop(r + epsilon * model$gradient(theta) / 2)
     theta <- theta + epsilon * r
-    r <- drop(r + epsilon * monty_model_gradient(model, theta) / 2)
+    r <- drop(r + epsilon * model$gradient(theta) / 2)
     list(theta = theta, r = r)
   }
 
