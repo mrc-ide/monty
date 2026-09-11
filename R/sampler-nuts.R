@@ -31,10 +31,6 @@
 ##' @param warmup_steps Number of warmup iterations used to adapt step size.
 ##'   Set to 0 (the default) to disable warmup adaptation.
 ##'
-##' @param adapt_step_size Logical, indicating if step size should be adapted
-##'   during warmup using dual averaging. Adaptation is only active when
-##'   warmup_steps > 0.
-##'
 ##' @param target_accept Target average acceptance probability used by
 ##'   dual-averaging adaptation. Must be in (0, 1). Larger values generally
 ##'   produce smaller step sizes.
@@ -72,10 +68,10 @@
 ##' @seealso [monty_sample], [monty_sampler_hmc]
 ##'
 ##' @export
-monty_sampler_nuts <- function(epsilon, max_treedepth = 10,
+monty_sampler_nuts <- function(epsilon = 0.1,
+                               max_treedepth = 10,
                                max_delta = 1000,
                                warmup_steps = 0L,
-                               adapt_step_size = warmup_steps > 0,
                                target_accept = 0.8,
                                adapt_gamma = 0.05,
                                adapt_t0 = 10,
@@ -85,7 +81,6 @@ monty_sampler_nuts <- function(epsilon, max_treedepth = 10,
   assert_scalar_size(max_treedepth, allow_zero = FALSE)
   assert_scalar_positive_numeric(max_delta, allow_zero = FALSE)
   assert_scalar_size(warmup_steps, allow_zero = TRUE)
-  assert_scalar_logical(adapt_step_size)
   assert_scalar_numeric(target_accept)
   assert_scalar_positive_numeric(adapt_gamma, allow_zero = FALSE)
   assert_scalar_positive_numeric(adapt_t0, allow_zero = FALSE)
@@ -106,7 +101,6 @@ monty_sampler_nuts <- function(epsilon, max_treedepth = 10,
     max_treedepth = max_treedepth,
     max_delta = max_delta,
     warmup_steps = warmup_steps,
-    adapt_step_size = adapt_step_size && warmup_steps > 0,
     target_accept = target_accept,
     adapt_gamma = adapt_gamma,
     adapt_t0 = adapt_t0,
@@ -272,7 +266,7 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
 
 
 sampler_nuts_update_epsilon <- function(state, control, accept_stat) {
-  if (!control$adapt_step_size || state$adapted) {
+  if (control$warmup_steps == 0 || state$adapted) {
     return(invisible(NULL))
   }
 

@@ -116,8 +116,7 @@ test_that("nuts handles non-finite acceptance statistics during warmup", {
   ))
   sampler <- monty_sampler_nuts(
     epsilon = 0.1,
-    warmup_steps = 1,
-    adapt_step_size = TRUE)
+    warmup_steps = 1)
 
   set.seed(1)
   res <- monty_sample(m, sampler, 1, initial = 0)
@@ -167,7 +166,7 @@ test_that("nuts is consistent with hmc and random walk on gaussian", {
 test_that("nuts warmup can continue identically", {
   m <- monty_example("banana")
   sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000,
-                                warmup_steps = 20, adapt_step_size = TRUE)
+                                warmup_steps = 20)
 
   set.seed(1)
   res1 <- monty_sample(m, sampler, 60, restartable = TRUE)
@@ -183,7 +182,7 @@ test_that("nuts warmup can continue identically", {
 test_that("nuts warmup exposes adapted epsilon details", {
   m <- monty_example("banana")
   sampler <- monty_sampler_nuts(epsilon = 0.1, max_delta = 1000,
-                                warmup_steps = 20, adapt_step_size = TRUE)
+                                warmup_steps = 20)
 
   set.seed(1)
   res <- monty_sample(m, sampler, 40)

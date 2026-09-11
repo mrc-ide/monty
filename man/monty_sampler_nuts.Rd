@@ -5,11 +5,10 @@
 \title{No-U-Turn Sampler}
 \usage{
 monty_sampler_nuts(
-  epsilon,
+  epsilon = 0.1,
   max_treedepth = 10,
   max_delta = 1000,
   warmup_steps = 0L,
-  adapt_step_size = warmup_steps > 0,
   target_accept = 0.8,
   adapt_gamma = 0.05,
   adapt_t0 = 10,
@@ -33,10 +32,6 @@ stop expanding.}
 
 \item{warmup_steps}{Number of warmup iterations used to adapt step size.
 Set to 0 (the default) to disable warmup adaptation.}
-
-\item{adapt_step_size}{Logical, indicating if step size should be adapted
-during warmup using dual averaging. Adaptation is only active when
-warmup_steps > 0.}
 
 \item{target_accept}{Target average acceptance probability used by
 dual-averaging adaptation. Must be in (0, 1). Larger values generally
