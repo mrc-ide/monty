@@ -193,6 +193,7 @@ test_that("nuts warmup exposes adapted epsilon details", {
   expect_true(res$details$epsilon > 0)
   expect_true(isTRUE(res$details$adapted))
   expect_equal(res$details$warmup_steps, 20)
+  expect_gt(abs(res$details$epsilon - 0.1), 1e-12)
 })
 
 
