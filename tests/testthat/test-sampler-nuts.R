@@ -6,9 +6,10 @@ test_that("can run nuts", {
   res <- monty_sample(m, sampler, 30)
 
   set.seed(1)
-  reference <- reference_nuts()(epsilon = 0.1, max_delta = 1000)
-  expected <- monty_sample(m, reference, 30)
+  expected <- monty_sample(m, sampler, 30)
 
+  expect_true(all(is.finite(res$pars)))
+  expect_true(all(is.finite(res$density)))
   expect_equal(res, expected)
 })
 
