@@ -202,11 +202,10 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
         result_list$n_alpha <- result_list$n_alpha + alternative_list$n_alpha
         result_list$divergent <- result_list$divergent ||
           alternative_list$divergent
+        tree_orientation <- result_list$plus$theta - result_list$minus$theta
         result_list$s_prop <- alternative_list$s_prop &
-          ((result_list$plus$theta - result_list$minus$theta) %*%
-            result_list$minus$r >= 0) &
-          ((result_list$plus$theta - result_list$minus$theta) %*%
-            result_list$plus$r >= 0)
+          (tree_orientation %*% result_list$minus$r >= 0) &
+          (tree_orientation %*% result_list$plus$r >= 0)
         result_list$n_prop <- sum_n_prop
       }
       result_list
@@ -244,9 +243,10 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
 
     divergent_transition <- divergent_transition || isTRUE(tree_list$divergent)
     n <- n + tree_list$n_prop
+    tree_orientation <- tree_list$plus$theta - tree_list$minus$theta
     s <- isTRUE(tree_list$s_prop) &
-      ((tree_list$plus$theta - tree_list$minus$theta) %*% tree_list$minus$r >= 0) &
-      ((tree_list$plus$theta - tree_list$minus$theta) %*% tree_list$plus$r >= 0)
+      (tree_orientation %*% tree_list$minus$r >= 0) &
+      (tree_orientation %*% tree_list$plus$r >= 0)
     j <- j + 1L
   }
   hit_max_treedepth <- isTRUE(s)
