@@ -72,12 +72,15 @@ points(s[1, ], s[2, ], pch = 19, col = "#00000055")
 
 ## Sampling with other samplers
 
-It is not generally possible to directly sample from a density (otherwise MCMC and similar methods would not exist!).  In these cases we need to use a sampler based on the density and if available possibly the gradient of the density.
+It is not generally possible to directly sample from a density (otherwise MCMC and similar methods would not exist!).  In these cases we need to use a sampler based on the density and if available possibly the gradient of the density.  We'll look at four samplers in turn -- random walk, HMC, an adaptive random walk, and NUTS -- before comparing them directly at the end.
+
+### Random walk
 
 We can start with a basic random-walk sampler:
 
 ```{r RW_sampling}
-sampler_rw <- monty_sampler_random_walk(vcv = diag(2) * 0.01)
+vcv_banana <- diag(2) * 0.01
+sampler_rw <- monty_sampler_random_walk(vcv = vcv_banana)
 res_rw <- monty_sample(m, sampler_rw, 1000)
 plot(t(drop(res_rw$pars)), type = "l", col = "#0000ff66",
      xlim = range(a), ylim = range(b))
@@ -91,7 +94,9 @@ matplot(t(drop(res_rw$pars)), lty = 1, type = "l", col = c(2, 4),
         xlab = "Step", ylab = "Value")
 ```
 
-We can probably improve the samples here by finding a better variance covariance matrix (VCV), but a single VCV will not hold well over the whole surface because it is not very similar to a multivariate normal (that is, the appropriate VCV will change depending on the position in parameter space)
+We can probably improve the samples here by finding a better variance covariance matrix (VCV), but a single VCV will not hold well over the whole surface because it is not very similar to a multivariate normal (that is, the appropriate VCV will change depending on the position in parameter space). We'll come back to this limitation below when looking at the adaptive sampler.
+
+### Hamiltonian Monte Carlo (HMC)
 
 Let's try the Hamiltonian Monte Carlo (HMC) sampler, which uses the gradient to move efficiently in parameter space:
 
@@ -111,3 +116,121 @@ matplot(t(drop(res_hmc$pars)), lty = 1, type = "l", col = c(2, 4),
 ```
 
 Clearly better!
+
+### Adaptive Metropolis-Hastings sampler
+
+As noted above, a single VCV does not suit the whole banana surface, which is part of why HMC (which does not need one) does so well here. The adaptive sampler [`monty_sampler_adaptive()`] takes a different approach: rather than requiring the gradient, it tunes its proposal VCV from the empirical covariance of the chain as it runs, which helps considerably on targets that are well approximated locally by a Gaussian.
+
+To see the adaptation itself clearly, we'll switch briefly to a simple correlated bivariate normal target, where the ideal proposal VCV is easy to reason about but not known in advance; we'll return to the banana model in the final comparison below:
+
+```{r}
+m_gaussian <- monty_example("gaussian", matrix(c(1, 0.8, 0.8, 1), 2, 2))
+vcv_initial <- diag(2) * 0.1
+```
+
+Starting from a poor (uncorrelated, too narrow) initial VCV, the random walk sampler struggles:
+
+```{r}
+sampler_rw_gaussian <- monty_sampler_random_walk(vcv = vcv_initial)
+res_rw_gaussian <- monty_sample(m_gaussian, sampler_rw_gaussian, 1000)
+```
+
+The adaptive sampler starts from the same initial VCV, but updates it as sampling progresses:
+
+```{r}
+sampler_adaptive <- monty_sampler_adaptive(initial_vcv = vcv_initial)
+res_adaptive <- monty_sample(m_gaussian, sampler_adaptive, 1000)
+```
+
+```{r}
+plot(drop(res_rw_gaussian$density), type = "l", col = 2,
+     xlab = "Step", ylab = "Log density")
+lines(drop(res_adaptive$density), col = 4)
+legend("bottomright", c("Random walk", "Adaptive"), col = c(2, 4), lty = 1)
+```
+
+The VCV that the adaptive sampler has converged on by the end of the chain is much closer to that of the target distribution than the initial one we provided:
+
+```{r}
+res_adaptive$details$vcv[, , 1]
+```
+
+If the `coda` package is available, we can compare the effective sample size of the two chains, which is typically much higher for the adaptive sampler on a correlated target like this one:
+
+```{r}
+coda::effectiveSize(coda::as.mcmc.list(res_rw_gaussian))
+coda::effectiveSize(coda::as.mcmc.list(res_adaptive))
+```
+
+### The No-U-Turn Sampler (NUTS)
+
+[`monty_sampler_nuts()`] is an extension of HMC that avoids having to choose a fixed number of integration steps; instead it grows a trajectory until it detects a "U-turn" or hits `max_treedepth`. Like HMC, it requires a differentiable and deterministic model. Returning to the banana model:
+
+```{r NUTS_sampling}
+sampler_nuts <- monty_sampler_nuts(epsilon = 0.1)
+res_nuts <- monty_sample(m, sampler_nuts, 1000)
+plot(t(drop(res_nuts$pars)), type = "l", col = "#0000ff33",
+     xlim = range(a), ylim = range(b))
+lines(z95[, 1], z95[, 2])
+```
+
+NUTS can also adapt its step size during a `warmup_steps` period using dual averaging, targeting a `target_accept` acceptance rate, which is often more convenient than choosing `epsilon` by hand:
+
+```{r}
+sampler_nuts_adapt <- monty_sampler_nuts(epsilon = 0.1, warmup_steps = 500,
+                                         target_accept = 0.8)
+res_nuts_adapt <- monty_sample(m, sampler_nuts_adapt, 1000)
+res_nuts_adapt$details$epsilon
+```
+
+## Comparing samplers
+
+Having introduced each sampler in turn, we can now compare all four directly on the banana model, using a common number of steps and starting point. For a fair comparison, the adaptive sampler here starts from `vcv_banana`, the same initial VCV as the random-walk sampler above, rather than the one we tuned on the Gaussian example above (which was a different scale entirely):
+
+```{r}
+n_steps <- 2000
+initial <- c(0, 0)
+
+samplers <- list(
+  "Random walk" = sampler_rw,
+  "HMC" = sampler_hmc,
+  "Adaptive" = monty_sampler_adaptive(initial_vcv = vcv_banana),
+  "NUTS" = sampler_nuts)
+
+timings <- numeric(length(samplers))
+res <- vector("list", length(samplers))
+names(timings) <- names(res) <- names(samplers)
+
+for (nm in names(samplers)) {
+  timings[[nm]] <- system.time(
+    res[[nm]] <- monty_sample(m, samplers[[nm]], n_steps, initial = initial)
+  )[["elapsed"]]
+}
+```
+
+Comparing the effective sample size (of `alpha`, per second of sampling time) gives a sense of how efficiently each sampler explores the surface:
+
+```{r}
+ess <- vapply(res, function(x) {
+  coda::effectiveSize(coda::as.mcmc.list(x))[["alpha"]]
+}, numeric(1))
+
+knitr::kable(data.frame(
+  sampler = names(res),
+  elapsed_sec = round(timings, 3),
+  ess_alpha = round(ess, 1),
+  ess_per_sec = round(ess / timings, 1)))
+```
+
+Finally, the autocorrelation of the `alpha` samples gives a visual sense of the same thing; gradient-based samplers (HMC, NUTS) decorrelate much faster than the random-walk based ones:
+
+```{r}
+acf_alpha <- lapply(res, function(x) stats::acf(drop(x$pars[1, , 1]),
+                                                lag.max = 50, plot = FALSE))
+cols <- c("#d73027", "#1a9850", "#fdae61", "#4575b4")
+matplot(acf_alpha[[1]]$lag, do.call(cbind, lapply(acf_alpha, "[[", "acf")),
+        type = "l", lty = 1, lwd = 2, col = cols,
+        xlab = "Lag", ylab = "ACF")
+abline(h = 0, lty = 3, col = "gray40")
+legend("topright", names(res), col = cols, lty = 1, lwd = 2, bty = "n")
+```
