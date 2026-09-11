@@ -249,6 +249,7 @@ sampler_nuts_step <- function(state_chain, state_sampler, control, model, rng) {
       (tree_orientation %*% tree_list$plus$r >= 0)
     j <- j + 1L
   }
+  ## isTRUE() strips the 1x1 matrix that %*% leaves s wrapped in.
   hit_max_treedepth <- isTRUE(s)
 
   state_sampler$n_divergent <-
