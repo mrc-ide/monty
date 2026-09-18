@@ -194,6 +194,7 @@ check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
   }
 }
 
+
 sample_u <- function(pars, rng) {
   multiple_parameters <- length(dim2(pars)) > 1
   n_sets <- if (multiple_parameters) ncol(pars) else 1L
