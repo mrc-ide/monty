@@ -105,7 +105,7 @@ sampler_random_walk_step <- function(state_chain, state_sampler, control,
   } else {
     density_next <- model$density(pars_next)
   }
-  accept <- density_next - state_chain$density > log(monty_random_real(rng))
+  accept <- density_next - state_chain$density > log(sample_u(pars_next, rng))
 
   update_state(state_chain, pars_next, density_next, accept, model)
 }
