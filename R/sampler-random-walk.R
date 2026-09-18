@@ -84,7 +84,6 @@ sampler_random_walk_initialise <- function(state_chain, control, model, rng) {
 
 sampler_random_walk_step <- function(state_chain, state_sampler, control,
                                      model, rng) {
-
   if (control$rerun) {
     rerun <- state_sampler$rerun(rng)
     if (any(rerun)) {
