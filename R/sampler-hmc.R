@@ -108,7 +108,7 @@ sampler_hmc_step <- function(state_chain, state_sampler, control, model, rng) {
   ## Accept or reject the state at end of trajectory, returning
   ## either the position at the end of the trajectory or the initial
   ## position
-  u <- monty_random_real(rng)
+  u <- sample_u(pars_next, rng)
   accept <- u < exp(density_next - state_chain$density + energy0 - energy_next)
 
   if (control$debug) {

@@ -245,7 +245,7 @@ sampler_random_walk_adaptive_step <- function(state_chain, state_sampler,
     make_random_walk_proposal_fn(vcv, model$domain, control$boundaries)
   pars_next <- proposal(state_chain$pars, rng)
 
-  u <- monty_random_real(rng)
+  u <- sample_u(pars_next, rng)
   reject_some <- control$boundaries == "reject" &&
     !all(i <- is_parameters_in_domain(pars_next, model$domain))
   if (reject_some) {

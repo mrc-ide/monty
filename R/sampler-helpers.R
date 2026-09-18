@@ -193,3 +193,13 @@ check_parameter_groups <- function(x, n_pars, name = deparse(substitute(x)),
       call = call)
   }
 }
+
+sample_u <- function(pars, rng) {
+  n_par_sets <- ncol(pars)
+  if (n_par_sets > 1 & length(rng) == 1) {
+    u <- monty_random_n_real(n_par_sets, rng)
+  } else {
+    u <- monty_random_real(rng)
+  }
+  u
+}
