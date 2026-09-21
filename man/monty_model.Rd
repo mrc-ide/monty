@@ -55,7 +55,8 @@ is \code{TRUE}, then this function must be able to handle the
 argument parameter being a matrix, and return a vector of
 densities.  If your model required augmented data (i.e.,
 \code{properties$has_augmented_data} is \code{TRUE}), then you will
-receive the data as an \emph{attribute} \code{data} of the parameters.
+receive the augmented data as an \emph{attribute} \code{augmented_data}
+of the parameters.
 \item \code{parameters}: A character vector of parameter names.  This
 vector is the source of truth for the length of the parameter
 vector.
@@ -91,7 +92,7 @@ gradient, where these are called with the same parameters.  This
 function is optional (and may not be well defined or possible to
 define).  If given, and if \code{density} requires \code{augmented_data},
 then this function will also receive the augmented data as the
-attribute \code{data} on the parameters.
+attribute \code{augmented_data} on the parameters.
 \item \code{set_rng_state}: A function to set the state (this is in
 contrast to the \code{rng} that is passed through to \code{direct_sample}
 as that is the \emph{sampler's} rng stream, but we assume models will

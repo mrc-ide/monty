@@ -2,7 +2,8 @@ test_that("require data for augmented model density", {
   m <- ex_augmented()
   expect_error(
     monty_model_density(m$likelihood, c(0, 0, 0)),
-    "parameters' does not have associated data, but this model requires it")
+    paste("parameters' does not have associated augmented data,",
+          "but this model requires it"))
 })
 
 
@@ -11,7 +12,7 @@ test_that("can run sampler with augmented data", {
   model <- m$prior + m$likelihood
   sampler <- monty_sampler_random_walk(vcv = diag(c(0.1, 0.5, 0.5)))
   res <- monty_sample(model, sampler, 10)
-  expect_equal(dim(res$data), c(100, 10, 1))
+  expect_equal(dim(res$augmented_data), c(100, 10, 1))
 })
 
 
@@ -51,10 +52,10 @@ test_that("can flatten chains with augmented data", {
   
   set.seed(1)
   res <- monty_sample(model, sampler, 10, n_chains = 2)
-  expect_equal(dim(res$data), c(100, 10, 2))
+  expect_equal(dim(res$augmented_data), c(100, 10, 2))
   
   res1 <- monty_flatten_chains(res)
-  expect_equal(dim(res1$data), c(100, 20))
+  expect_equal(dim(res1$augmented_data), c(100, 20))
   
   set.seed(1)
   res2 <- monty_sample(model, sampler, 10, n_chains = 2, flatten_chains = TRUE)

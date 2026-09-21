@@ -523,20 +523,22 @@ model_split_pars <- function(a, b, parameters, properties) {
   i_b <- match(b$parameters, parameters)
   if (properties$allow_multiple_parameters) {
     function(pars) {
-      data <- attr(pars, "data")
+      augmented_data <- attr(pars, "augmented_data")
       if (is.matrix(pars)) {
-        list(a = structure(pars[i_a, , drop = FALSE], data = data),
-             b = structure(pars[i_b, , drop = FALSE], data = data))
+        list(a = structure(pars[i_a, , drop = FALSE], 
+                           augmented_data = augmented_data),
+             b = structure(pars[i_b, , drop = FALSE], 
+                           augmented_data = augmented_data))
       } else {
-        list(a = structure(pars[i_a], data = data),
-             b = structure(pars[i_b], data = data))
+        list(a = structure(pars[i_a], augmented_data = augmented_data),
+             b = structure(pars[i_b], augmented_data = augmented_data))
       }
     }
   } else {
     function(pars) {
-      data <- attr(pars, "data")
-      list(a = structure(pars[i_a], data = data),
-           b = structure(pars[i_b], data = data))
+      augmented_data <- attr(pars, "augmented_data")
+      list(a = structure(pars[i_a], augmented_data = augmented_data),
+           b = structure(pars[i_b], augmented_data = augmented_data))
     }
   }
 }

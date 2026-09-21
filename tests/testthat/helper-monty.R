@@ -205,7 +205,7 @@ ex_augmented <- function(p_group_1 = 0.25) {
     m2 <- pars[[3]]
     density_new <- likelihood_fn(p, m1, m2, x, z_new)
 
-    z <- attr(pars, "data")
+    z <- attr(pars, "augmented_data")
     if (is.null(z)) {
       z <- z_new
       density <- density_new
@@ -226,7 +226,7 @@ ex_augmented <- function(p_group_1 = 0.25) {
         density[accept] <- density_new[accept]
       }
     }
-    list(data = z, density = sum(density))
+    list(augmented_data = z, density = sum(density))
   }
 
   likelihood_fn <- function(p, m1, m2, x, z) {
@@ -244,7 +244,7 @@ ex_augmented <- function(p_group_1 = 0.25) {
     p <- pars[[1]]
     m1 <- pars[[2]]
     m2 <- pars[[3]]
-    z <- attr(pars, "data")
+    z <- attr(pars, "augmented_data")
     sum(likelihood_fn(p, m1, m2, x, z))
   }
 

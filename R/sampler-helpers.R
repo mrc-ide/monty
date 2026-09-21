@@ -3,17 +3,18 @@ initialise_state <- function(pars, model, rng) {
   if (model$properties$has_augmented_data) {
     res <- model$augmented_data_update(pars, rng)
     density <- res$density
-    data <- res$data
+    augmented_data <- res$augmented_data
   } else {
     density <- model$density(pars)
-    data <- NULL
+    augmented_data <- NULL
   }
   if (model$properties$has_observer) {
     observation <- model$observer$observe()
   } else {
     observation <- NULL
   }
-  list(pars = pars, data = data, density = density, observation = observation)
+  list(pars = pars, augmented_data = augmented_data, 
+       density = density, observation = observation)
 }
 
 

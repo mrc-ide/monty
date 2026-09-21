@@ -210,8 +210,8 @@ monty_continue_chain <- function(chain_id, state, model, sampler, steps,
   state_chain <- lapply(state$chain, array_select_last, chain_id)
   state_chain$pars <- as.vector(state_chain$pars)
   if (model$properties$has_augmented_data) {
-    state_chain$data <- as.vector(state_chain$data)
-    attr(state_chain$pars, "data") <- state_chain$data
+    state_chain$augmented_data <- as.vector(state_chain$augmented_data)
+    attr(state_chain$pars, "augmented_data") <- state_chain$augmented_data
   }
 
   state_sampler <- sampler$state$restore(
@@ -240,11 +240,11 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   history_observation <-
     if (has_observer) vector("list", n_steps_record) else NULL
   if (has_augmented_data) {
-    n_data <- length(chain_state$data)
-    history_data <- matrix(NA_real_, n_data, n_steps_record)
-    attr(chain_state$pars, "data") <- chain_state$data
+    n_augmented_data <- length(chain_state$augmented_data)
+    history_augmented_data <- matrix(NA_real_, n_augmented_data, n_steps_record)
+    attr(chain_state$pars, "augmented_data") <- chain_state$augmented_data
   } else {
-    history_data <- NULL
+    history_augmented_data <- NULL
   }
   if (save_full_chains) {
     history_full_chains <- list(pars = matrix(NA_real_, n_pars, n_steps),
@@ -257,9 +257,9 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
   for (i in seq_len(n_steps)) {
     if (has_augmented_data) {
       res <- model$augmented_data_update(chain_state$pars, rng)
-      chain_state$data <- res$data
+      chain_state$augmented_data <- res$augmented_data
       chain_state$density <- res$density
-      attr(chain_state$pars, "data") <- res$data
+      attr(chain_state$pars, "augmented_data") <- res$augmented_data
     }
     chain_state <- sampler$step(chain_state, sampler_state, sampler$control,
                                 model, rng)
@@ -270,7 +270,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
         history_observation[[j]] <- chain_state$observation
       }
       if (has_augmented_data) {
-        history_data[, j] <- chain_state$data
+        history_augmented_data[, j] <- chain_state$augmented_data
       }
       j <- j + 1L
     }
@@ -301,7 +301,7 @@ monty_run_chain2 <- function(chain_id, chain_state, sampler_state, model,
     pars = history_pars,
     density = history_density,
     observations = history_observation,
-    data = history_data,
+    augmented_data = history_augmented_data,
     full_chains = history_full_chains)
   state <- list(
     chain = chain_state,

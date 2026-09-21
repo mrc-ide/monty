@@ -29,7 +29,7 @@
 ##'   "augmented data".  This is additional data required to compute
 ##'   the likelihood. You will need to provide an
 ##'   `augmented_data_update` function, and your density (and gradient
-##'   if your model has one) will need to respond to the `data`
+##'   if your model has one) will need to respond to the `augmented_data`
 ##'   attribute that will be present with parameters.  We will
 ##'   document this more fully in a vignette.
 ##'
@@ -116,7 +116,8 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   argument parameter being a matrix, and return a vector of
 ##'   densities.  If your model required augmented data (i.e.,
 ##'   `properties$has_augmented_data` is `TRUE`), then you will
-##'   receive the data as an *attribute* `data` of the parameters.
+##'   receive the augmented data as an *attribute* `augmented_data` 
+##'   of the parameters.
 ##'
 ##' * `parameters`: A character vector of parameter names.  This
 ##'   vector is the source of truth for the length of the parameter
@@ -156,7 +157,7 @@ monty_model_properties <- function(has_gradient = NULL,
 ##'   function is optional (and may not be well defined or possible to
 ##'   define).  If given, and if `density` requires `augmented_data`,
 ##'   then this function will also receive the augmented data as the
-##'   attribute `data` on the parameters.
+##'   attribute `augmented_data` on the parameters.
 ##'
 ##' * `set_rng_state`: A function to set the state (this is in
 ##'   contrast to the `rng` that is passed through to `direct_sample`
@@ -279,9 +280,12 @@ monty_model <- function(model, properties = NULL) {
 monty_model_density <- function(model, parameters) {
   require_monty_model(model)
   check_model_parameters(model, parameters)
-  if (model$properties$has_augmented_data && !has_attr(parameters, "data")) {
+  error_augmented_data <- model$properties$has_augmented_data && 
+    !has_attr(parameters, "augmented_data")
+  if (error_augmented_data) {
     cli::cli_abort(
-      "'parameters' does not have associated data, but this model requires it")
+      paste("'parameters' does not have associated augmented data,",
+            "but this model requires it"))
   }
   model$density(parameters)
 }

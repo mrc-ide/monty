@@ -39,7 +39,7 @@ default) to detect this from the model.}
 "augmented data".  This is additional data required to compute
 the likelihood. You will need to provide an
 \code{augmented_data_update} function, and your density (and gradient
-if your model has one) will need to respond to the \code{data}
+if your model has one) will need to respond to the \code{augmented_data}
 attribute that will be present with parameters.  We will
 document this more fully in a vignette.}
 
