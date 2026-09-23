@@ -272,3 +272,8 @@ rank_description <- function(rank) {
 row_match <- function(df, row) {
   apply(df, 1, function(y) all(y == row))
 }
+
+
+has_attr <- function(x, name) {
+  !is.null(attr(x, name, exact = TRUE))
+}

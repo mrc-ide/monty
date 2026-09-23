@@ -396,6 +396,13 @@ combine_chains <- function(res, sampler, observer, include_state) {
 
   initial <- array_bind(arrays = lapply(res, "[[", "initial"), after = 1)
   
+  augmented_data <- lapply(history, "[[", "augmented_data")
+  if (all(vlapply(augmented_data, is.null))) {
+    augmented_data <- NULL
+  } else {
+    augmented_data <- array_bind(arrays = augmented_data, after = 2)
+  }
+
   full_chains <- lapply(history, "[[", "full_chains")
   if (!is.null(full_chains[[1]])) {
     pars_full <- 
@@ -430,8 +437,8 @@ combine_chains <- function(res, sampler, observer, include_state) {
     state <- NULL
   }
 
-  monty_samples(pars, density, initial, details, observations, state,
-                full_chains)
+  monty_samples(pars, density, initial, details, observations, augmented_data,
+                state, full_chains)
 }
 
 
@@ -440,6 +447,12 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
     observations <- NULL
   } else {
     observations <- observer$append(prev$observations, curr$observations)
+  }
+  if (is.null(prev$augmented_data)) {
+    augmented_data <- NULL
+  } else {
+    augmented_data <- 
+      array_bind(prev$augmented_data, curr$augmented_data, on = 2)
   }
   if (!is.null(prev$full_chains)) {
     pars_full <- 
@@ -456,6 +469,7 @@ append_chains <- function(prev, curr, sampler, observer = NULL) {
                 initial = prev$initial,
                 details = curr$details,
                 observations = observations,
+                augmented_data = augmented_data,
                 state = curr$state,
                 full_chains = full_chains)
 }
@@ -533,9 +547,17 @@ combine_state_chain <- function(state) {
   if (all(vlapply(observation, is.null))) {
     observation <- NULL
   }
+  
+  augmented_data <- lapply(state, "[[", "augmented_data")
+  if (all(vlapply(augmented_data, is.null))) {
+    augmented_data <- NULL
+  } else {
+    augmented_data <- array_bind(arrays = augmented_data, after = Inf)
+  }
 
   list(
     pars = array_bind(arrays = lapply(state, "[[", "pars"), after = Inf),
+    augmented_data = augmented_data,
     density = vnapply(state, "[[", "density"),
     observation = observation)
 }
@@ -543,13 +565,15 @@ combine_state_chain <- function(state) {
 
 monty_samples <- function(pars, density, initial,
                           details = NULL, observations = NULL,
-                          state = NULL, full_chains = NULL) {
+                          augmented_data = NULL, state = NULL,
+                          full_chains = NULL) {
   rownames(initial) <- rownames(pars)
   samples <- list(pars = pars,
                   density = density,
                   initial = initial,
                   details = details,
                   state = state,
+                  augmented_data = augmented_data,
                   observations = observations,
                   full_chains = full_chains)
   class(samples) <- "monty_samples"

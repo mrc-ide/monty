@@ -7,6 +7,7 @@
 monty_sampler_properties(
   has_state = NULL,
   restartable = NULL,
+  allow_augmented_data = FALSE,
   allow_multiple_parameters = FALSE,
   requires_gradient = FALSE,
   requires_allow_multiple_parameters = FALSE,
@@ -23,6 +24,9 @@ can be restarted.  If \code{FALSE}, then users cannot use
 \code{restartable = TRUE} from \code{monty_sample()} (and therefore cannot
 use \code{monty_continue}).  This is optional because the presence of
 the state function \code{state_restore} implies this.}
+
+\item{allow_augmented_data}{Logical, indicating if the sampler can be
+used with a model that has augmented data.}
 
 \item{allow_multiple_parameters}{Logical, indicating if your
 sampler can accept a matrix of parameters in order to run

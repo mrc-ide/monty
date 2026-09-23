@@ -239,6 +239,9 @@ print.monty_sampler <- function(x, ...) {
 ##'   multiple chains at once (e.g., with the
 ##'   [monty_runner_simultaneous] runner, or as part of a parallel
 ##'   tempering scheme with [monty_sampler_parallel_tempering]).
+##'   
+##' @param allow_augmented_data Logical, indicating if the sampler can be
+##'   used with a model that has augmented data.
 ##'
 ##' @param requires_gradient Logical, indicating if the model must
 ##'   provide a gradient in order to be used with this sampler.
@@ -263,12 +266,14 @@ print.monty_sampler <- function(x, ...) {
 ##' monty_sampler_properties()
 monty_sampler_properties <- function(has_state = NULL,
                                      restartable = NULL,
+                                     allow_augmented_data = FALSE,
                                      allow_multiple_parameters = FALSE,
                                      requires_gradient = FALSE,
                                      requires_allow_multiple_parameters = FALSE,
                                      requires_deterministic = FALSE) {
   assert_scalar_logical(has_state, allow_null = TRUE)
   assert_scalar_logical(restartable, allow_null = TRUE)
+  assert_scalar_logical(allow_augmented_data)
   assert_scalar_logical(allow_multiple_parameters)
   assert_scalar_logical(requires_gradient)
   assert_scalar_logical(requires_allow_multiple_parameters)
@@ -276,6 +281,7 @@ monty_sampler_properties <- function(has_state = NULL,
   ret <- list(
     restartable = restartable,
     has_state = has_state,
+    allow_augmented_data = allow_augmented_data,
     allow_multiple_parameters = allow_multiple_parameters,
     requires_gradient = requires_gradient,
     requires_allow_multiple_parameters = requires_allow_multiple_parameters,
@@ -385,4 +391,22 @@ check_sampler_model <- function(model, sampler, name = "model") {
       "%s requires multiple parameters at once but '%s' does not allow this",
       sampler$name, name),
     when = sampler$properties$requires_allow_multiple_parameters)
+  allow_augmented_data(
+    sampler,
+    sprintf(
+      "'%s' has augmented data but %s does not allow this",
+      name, sampler$name),
+    when = model$properties$has_augmented_data)
+}
+
+allow_augmented_data <- function(sampler, message, ..., when = TRUE,
+                                 call = parent.frame()) {
+  if (when && !sampler$properties$allow_augmented_data) {
+    cli::cli_abort(
+      c(message,
+        i = paste("This model has augmented data (its 'has_augmented_data'",
+                  "property is TRUE) so can only be used with samplers that",
+                  "allow augmented data")),
+      ..., call = call)
+  }
 }

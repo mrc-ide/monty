@@ -180,6 +180,7 @@ monty_sampler_adaptive <- function(initial_vcv,
     boundaries = boundaries)
 
   properties <- monty_sampler_properties(
+    allow_augmented_data = TRUE,
     allow_multiple_parameters = TRUE,
     requires_deterministic = TRUE)
 

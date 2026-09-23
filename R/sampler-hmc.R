@@ -35,6 +35,7 @@ monty_sampler_hmc <- function(epsilon = 0.015, n_integration_steps = 10,
                   debug = debug)
 
   properties <- monty_sampler_properties(
+    allow_augmented_data = FALSE,
     allow_multiple_parameters = TRUE,
     requires_gradient = TRUE,
     requires_deterministic = TRUE)
